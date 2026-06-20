@@ -1,0 +1,99 @@
+# Horizon AIOS — Dropbox Ignore Template
+#
+# Copy to .dropboxignore at the root of your Dropbox folder.
+# Syntax is the same as .gitignore.
+# See horizon_bin/documentation/cloud_sync_exclusions.md for full guidance.
+
+# =============================================================================
+# HORIZON AIOS — machine-local and sensitive files
+# =============================================================================
+# Credentials and machine-local config
+**/horizon_bin/ai_os_etc/aios_local.conf
+**/.gitignore.user
+
+# Brain data (session-local, never sync)
+**/brains/
+
+# Operational logs (content only; scaffold dirs OK to sync)
+**/horizon_bin/logs/bootstrap/*
+**/horizon_bin/logs/brain_provisioning/*
+**/horizon_bin/logs/agents_output/*
+**/horizon_bin/logs/hooks/*
+**/horizon_bin/logs/brains/*
+!**/.gitkeep
+
+# Session handoffs (machine-local continuity)
+**/handoffs/
+
+# =============================================================================
+# SECURITY — secrets, keys, credentials
+# =============================================================================
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.der
+*.csr
+*.jks
+*.keystore
+*.gpg
+*.pgp
+id_rsa
+id_ed25519
+id_ecdsa
+id_dsa
+authorized_keys
+.ssh/
+secrets/
+.secrets/
+.credentials/
+.aws/
+.gcp/
+.azure/
+*.token
+*.jwt
+.vault-token
+*.tfstate
+*.tfstate.*
+.terraform/
+.kube/
+.docker/config.json
+*.kdbx
+*.kdb
+*.wallet
+wallet.dat
+mnemonic.txt
+.netrc
+.npmrc
+.pypirc
+.bash_history
+.zsh_history
+.fish_history
+
+# =============================================================================
+# LARGE FILES — ML models, datasets, build artifacts
+# =============================================================================
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.gguf
+*.ggml
+*.bin
+*.onnx
+*.h5
+*.hdf5
+*.pkl
+*.npy
+*.npz
+node_modules/
+__pycache__/
+.venv/
+venv/
+*.egg-info/
+build/
+dist/

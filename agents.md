@@ -44,6 +44,18 @@ Prefer CLI tools over read/write tools whenever possible. Shell commands consume
 
 Use Read/Write/Edit only when content must be reasoned about or precisely modified. Agents should apply this same principle — prefer `Bash`/`PowerShell` tool calls over file-content tools for mechanical operations.
 
+## OS-Layer Development Values
+
+When making architectural, design, or configuration decisions on the AIOS OS
+layer itself, load and consult the values document:
+
+    $HORIZON_DOCS/dev_values.md
+
+Do **not** import this file at session start — read it on demand when a
+decision benefits from it. This keeps session context lean. The values document
+is the reference for resolving tradeoffs between security, token economy,
+extensibility, documentation parity, and standardization.
+
 ## Commits
 
 Always use `git commit -s` when creating commits in this repository. The DCO (Developer Certificate of Origin) requires a `Signed-off-by:` line in every commit message. Never create a commit without the `-s` flag.
