@@ -307,7 +307,7 @@ Both should confirm the files exist.
 
 ## 7. Deploy Skills
 
-AIOS skills live at `$HORIZON_BIN/skills/`. Claude Code picks up skills from `~/.claude/skills/`. Deploy by copying or symlinking.
+AIOS skills live at `$HORIZON_BIN/skills/`. Each skill is a **directory** (not a flat `.md` file) containing a `SKILL.md` with YAML frontmatter. Claude Code reads skills from `~/.claude/skills/`.
 
 7.1 Create the target directory if it does not exist:
 
@@ -315,38 +315,27 @@ AIOS skills live at `$HORIZON_BIN/skills/`. Claude Code picks up skills from `~/
 mkdir -p ~/.claude/skills
 ```
 
-7.2 Copy all skill files into place. Repeat for each new skill when AIOS is updated:
+7.2 Copy all skill directories into place. Repeat for each new skill when AIOS is updated:
 
 ```bash
-cp "$HORIZON_BIN/skills/"*.md ~/.claude/skills/
+cp -r "$HORIZON_BIN/skills/"* ~/.claude/skills/
 ```
 
-Alternatively, create individual symlinks (preferred if you want changes to `$HORIZON_BIN/skills/` to take effect automatically):
-
-Linux / macOS:
-```bash
-for f in "$HORIZON_BIN/skills/"*.md; do
-  ln -sf "$f" ~/.claude/skills/
-done
-```
-
-Windows (PowerShell — requires developer mode or admin for symlinks; use copy if unavailable):
+Windows (PowerShell):
 ```powershell
-foreach ($f in Get-ChildItem "$env:HORIZON_BIN\skills\*.md") {
-  Copy-Item $f.FullName "$HOME\.claude\skills\"
-}
+Copy-Item "$env:HORIZON_BIN\skills\*" "$HOME\.claude\skills\" -Recurse -Force
 ```
 
-7.3 Verify: `ls ~/.claude/skills/` should list `handoff.md` and any other skills in `$HORIZON_BIN/skills/`.
+7.3 Verify: `ls ~/.claude/skills/` should list a `handoff/` directory (not `handoff.md`). Each skill directory must contain a `SKILL.md` file.
 
-7.4 Important: **skills are loaded when a Claude Code session starts, not hot-reloaded.** If you deploy a skill while a session is running, start a new session before testing it.
+7.4 **Skills load at session start, not hot-reloaded.** Start a new session after deploying.
 
-7.5 Troubleshooting — if a skill is not recognized after deploying:
+7.5 Troubleshooting — if a skill is not recognized:
 
-1. Confirm the file exists: `ls ~/.claude/skills/handoff.md`
-2. Start a **fresh** Claude Code session (not a continuation of a long-running one). Skills are session-scoped and very long sessions can lose skill registration.
-3. Confirm the skill file is valid: it must be a `.md` file whose content Claude Code can parse as a skill definition. The source-of-truth copy in `$HORIZON_BIN/skills/` is always canonical — if the deployed copy diverges, redeploy from source.
-4. Run `doctor.py` to confirm skills are detected: `python "$HORIZON_BIN/sbin/doctor.py"`
+1. Confirm the directory exists: `ls ~/.claude/skills/handoff/SKILL.md`
+2. Start a **fresh** Claude Code session. Long-running sessions can miss newly deployed skills.
+3. Confirm the `SKILL.md` has valid YAML frontmatter (`name:` and `description:` fields).
+4. Run `doctor.py`: `python "$HORIZON_BIN/sbin/doctor.py"`
 
 ---
 

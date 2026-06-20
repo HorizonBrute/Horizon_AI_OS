@@ -38,7 +38,8 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   └── ai_os_personalizations.md
 │   ├── documentation/                  # $HORIZON_DOCS — user-facing docs
 │   ├── skills/                         # AIOS skill definitions — source of truth (see Section 7)
-│   │   └── handoff.md                  # /handoff skill
+│   │   └── handoff/                    # /handoff skill (directory containing SKILL.md)
+│   │       └── SKILL.md
 │   ├── sounds/                         # Audio assets for event hooks
 │   │   ├── *.wav                       # Generic, vendor-agnostic sounds
 │   │   └── <vendor>_event_sounds/      # Vendor-specific voiced audio (see Section 3)
@@ -136,16 +137,16 @@ This convention applies to all vendor-scoped subdirectories in $HORIZON_BIN, not
 
 ### 7.1 Skills
 
-AIOS skills are markdown files that define slash commands (e.g., `/handoff`) available in Claude Code sessions. Skills have two canonical locations with distinct roles:
+AIOS skills define slash commands (e.g., `/handoff`) available in Claude Code sessions. Each skill is a **directory** (not a flat `.md` file) containing a `SKILL.md` with YAML frontmatter (`name:`, `description:`, optional `tools:`). Skills have two canonical locations:
 
 | Location | Role |
 |---|---|
-| `$HORIZON_BIN/skills/` | Source of truth — versioned with AIOS, committed to the OS repo |
-| `~/.claude/skills/` | Deployed copy — where Claude Code actually reads skills from |
+| `$HORIZON_BIN/skills/<name>/SKILL.md` | Source of truth — versioned with AIOS, committed to the OS repo |
+| `~/.claude/skills/<name>/SKILL.md` | Deployed copy — where Claude Code reads skills from |
 
-The deploy step (copying `$HORIZON_BIN/skills/*.md` to `~/.claude/skills/`) must be run manually whenever a skill is added or updated. See `$HORIZON_DOCS/getting_started/ReadMeToSetupYourSystem.md` Step 7 for the deploy commands.
+Deploy by copying directories: `cp -r "$HORIZON_BIN/skills/"* ~/.claude/skills/`. See `$HORIZON_DOCS/getting_started/ReadMeToSetupYourSystem.md` Step 7 for full commands.
 
-Invariant: never edit a skill directly in `~/.claude/skills/`. Always edit the source at `$HORIZON_BIN/skills/` and redeploy. The deployed copy is ephemeral — it is not committed.
+Invariant: never edit skills directly in `~/.claude/skills/`. Always edit the source at `$HORIZON_BIN/skills/` and redeploy. The deployed copy is ephemeral — it is not committed.
 
 ### 7.2 Handoffs Directory
 
