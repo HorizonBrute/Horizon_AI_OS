@@ -1,0 +1,24 @@
+# Horizon AIOS — User Personal Ignore Layer
+#
+# PURPOSE: List project folders and files on THIS machine that should not be
+# tracked by the OS repo. This file is machine-local and is never committed.
+#
+# SETUP: Copy this file to .gitignore.user and add your patterns there.
+#   cp .gitignore.user.template .gitignore.user    (bash)
+#   Copy-Item .gitignore.user.template .gitignore.user   (PowerShell)
+#
+# HOW IT WORKS: The pre-commit hook syncs .gitignore.user → .git/info/exclude
+# automatically. To take effect immediately without a commit, run:
+#   Get-Content .gitignore.user | Set-Content .git/info/exclude  (PowerShell)
+#   cp .gitignore.user .git/info/exclude           (bash)
+#
+# IMPORTANT: Any project folder that does not have its own `git init` MUST be
+# listed here or it will appear as untracked noise in `git status`. The AIOS
+# convention is to `git init` project folders to opt them out automatically;
+# this file is the fallback for folders that are not independent git repos.
+#
+# Examples (add your own below):
+#   MyProjectFolder/
+#   scratch/
+#   notes/
+#   *.private

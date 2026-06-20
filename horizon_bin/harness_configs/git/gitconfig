@@ -5,9 +5,43 @@
 	# with a real key fingerprint, every commit will fail. Run: gpg --list-secret-keys
 	# to find your fingerprint, then substitute it here.
 	signingkey = YOUR_GPG_FINGERPRINT
+
 [core]
-	excludesfile = HORIZON_ROOT_PATH\\.gitignore_global
+	# false = no line-ending conversion; avoids LF→CRLF warnings on Windows
+	autocrlf = false
+	quotePath = false
+
 [commit]
 	# Requires a valid signingkey in [user] above. See warning there.
 	gpgsign = true
 	signoff = true
+
+[advice]
+	# Suppress all contextual advice messages — errors only
+	detachedHead = false
+	addIgnoredFile = false
+	resolveConflict = false
+	commitBeforeMerge = false
+	pushUpdateRejected = false
+	statusAheadBehind = false
+	ignoredByPathspec = false
+	waitingForEditor = false
+	skippedCherryPicks = false
+	addEmptyPathspec = false
+	checkoutAmbiguousRemoteBranchName = false
+	diverging = false
+	forceDeleteBranch = false
+	pushAlreadyExists = false
+	pushFetchFirst = false
+	pushNeedsForce = false
+	statusHints = false
+	statusUoption = false
+	suggestDetachingHead = false
+	tagFetching = false
+
+[status]
+	# Show branch info by default; short format is less noisy
+	branch = true
+
+[fetch]
+	prune = true

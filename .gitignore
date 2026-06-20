@@ -8,17 +8,22 @@
 !.claude/CLAUDE.md
 !.claude/settings.json
 
-# User-personal ignore layer — edit .gitignore.user, not this file.
-# The pre-commit hook syncs .gitignore.user -> .git/info/exclude automatically.
-!.gitignore.user
+# =============================================================================
+# SECURITY — secrets, keys, credentials (comprehensive)
+# =============================================================================
 
-# =============================================================================
-# SECURITY — secrets, keys, credentials
-# =============================================================================
+# Environment files
 .env
 .env.*
 !.env.example
 !.env.template
+*.env.local
+*.env.production
+*.env.staging
+*.env.development
+*.env.test
+
+# Certificates & cryptographic material
 *.pem
 *.key
 *.p12
@@ -30,11 +35,21 @@
 *.jks
 *.keystore
 *.asc
+*.gpg
+*.pgp
+
+# SSH keys & config
 id_rsa
 id_ed25519
 id_ecdsa
 id_dsa
 *.pub
+authorized_keys
+known_hosts
+ssh_config
+.ssh/
+
+# Generic secret/credential directory patterns
 secrets/
 secrets.*
 secret.*
@@ -42,6 +57,8 @@ credentials
 credentials.*
 .credentials/
 .secrets/
+
+# Cloud provider credentials
 service_account*.json
 *_service_account.json
 *serviceaccount*.json
@@ -50,16 +67,111 @@ aws-credentials
 .aws/
 .gcp/
 .azure/
+firebase_credentials.json
+.firebase/
+
+# Token & auth files
 *.token
 *.tokens
+*.jwt
+*.refresh_token
 auth.json
+.vault-token
+.github_token
+.slack_token
+oauth_token
+oauth2_token
+.oauth/
+
+# Named config files that regularly contain credentials
 config/local.json
 config/secrets.json
+config/local.*
+config/production.*
+local.settings.json
+appsettings.Development.json
+appsettings.Local.json
+database.yml
+database.json
+database.env
+
+# Password-pattern filename globbing
 *apikey*
 *api_key*
 *access_token*
 *private_key*
+*secret_key*
+*client_secret*
+*password*
+*passwd*
 *.vault
+*-secret.json
+*-credentials.json
+*-key.json
+*secrets*.json
+*secrets*.yml
+*secrets*.yaml
+*credentials*.json
+*credentials*.yml
+
+# Password managers & credential stores
+*.kdbx
+*.kdb
+*.1pux
+*.lpdb
+*.lpss
+.password-store/
+
+# OS & app credential files
+.netrc
+.curlrc
+.wgetrc
+.htpasswd
+shadow
+passwd
+*.rdp
+
+# Package manager auth tokens
+.npmrc
+.yarnrc
+.pypirc
+.gem/credentials
+.pip/pip.conf
+.bundle/config
+.cargo/credentials
+
+# Terraform (tfstate contains all resource secrets)
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraformrc
+terraform.tfvars
+
+# Kubernetes & Docker secrets
+*-secret.yaml
+*-secret.yml
+kubeconfig
+.kube/
+.docker/config.json
+
+# Ansible
+*.vault.yml
+vault_password
+vault_pass.txt
+
+# Crypto wallets
+*.wallet
+wallet.dat
+mnemonic.txt
+seed.txt
+*-mnemonic*
+*-seed-phrase*
+
+# Shell history (may contain secrets typed inline)
+.bash_history
+.zsh_history
+.fish_history
+.history
 
 # =============================================================================
 # PYTHON — AI / ML primary language
@@ -471,13 +583,22 @@ handoffs/
 
 # Machine-local AIOS configuration (generated from template; never committed)
 horizon_bin/ai_os_etc/aios_local.conf
+
+# Machine-local personal project ignore list (copy .gitignore.user.template → .gitignore.user)
+.gitignore.user
 horizon_bin/harness_configs/claude_code/known_marketplaces.json
 horizon_bin/harness_configs/claude_code/project_settings.json
 
-# Operational logs — scaffold tracked, content gitignored
+# Operational logs — directory scaffold tracked, log content gitignored.
+# Pattern explanation: ignore everything under logs/, then un-ignore subdirs
+# so git traverses into them, then ignore subdir contents, then un-ignore
+# .gitkeep placeholders so empty dirs remain in the index.
 !horizon_bin/logs/
 horizon_bin/logs/*
-!horizon_bin/logs/**/.gitkeep
+!horizon_bin/logs/.gitkeep
+!horizon_bin/logs/*/
+horizon_bin/logs/*/*
+!horizon_bin/logs/*/.gitkeep
 
 # Windows Explorer metadata
 desktop.ini
@@ -489,7 +610,6 @@ brains/*
 !brains/.aioscommon/**
 
 # =============================================================================
-# HORIZON AIOS — explicit un-ignores (must come last to override *.user etc.)
+# HORIZON AIOS — explicit un-ignores (must come last)
 # =============================================================================
-!.gitignore.user
 !.gitattributes
