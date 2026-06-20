@@ -339,6 +339,15 @@ foreach ($f in Get-ChildItem "$env:HORIZON_BIN\skills\*.md") {
 
 7.3 Verify: `ls ~/.claude/skills/` should list `handoff.md` and any other skills in `$HORIZON_BIN/skills/`.
 
+7.4 Important: **skills are loaded when a Claude Code session starts, not hot-reloaded.** If you deploy a skill while a session is running, start a new session before testing it.
+
+7.5 Troubleshooting — if a skill is not recognized after deploying:
+
+1. Confirm the file exists: `ls ~/.claude/skills/handoff.md`
+2. Start a **fresh** Claude Code session (not a continuation of a long-running one). Skills are session-scoped and very long sessions can lose skill registration.
+3. Confirm the skill file is valid: it must be a `.md` file whose content Claude Code can parse as a skill definition. The source-of-truth copy in `$HORIZON_BIN/skills/` is always canonical — if the deployed copy diverges, redeploy from source.
+4. Run `doctor.py` to confirm skills are detected: `python "$HORIZON_BIN/sbin/doctor.py"`
+
 ---
 
 ## 8. Update Path-Sensitive Strings in the Repository
@@ -528,7 +537,7 @@ claude
 
 14.2 Confirm the statusline appears at the bottom of the terminal showing the current directory name, git branch (if in a repo), and a context usage bar. If the statusline is absent, check that `settings.json` `statusLine.command` points to the correct path.
 
-14.3 Run the `/handoff` skill to confirm skills are loaded. Type `/handoff` in the Claude Code session. Claude should execute the handoff skill and write a file to `$HORIZON_ROOT/handoffs/`.
+14.3 Run the `/handoff` skill to confirm skills are loaded. Type `/handoff` in the Claude Code session. Claude should execute the handoff skill and write a file to `$HORIZON_ROOT/handoffs/`. If the skill is not recognized, see Section 7.5 troubleshooting — the most common cause is testing in the same long-running session used during setup rather than starting a fresh session.
 
 14.4 Exit Claude Code cleanly. Confirm the WorkComplete sound plays. If no sound plays, verify the path in `hooks.Stop[0].hooks[0].command` in `settings.json`.
 
