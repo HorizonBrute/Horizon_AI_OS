@@ -61,19 +61,20 @@ def check_skills(horizon_bin):
     if not skills_src.is_dir():
         warn("Skills: source dir", f"{skills_src} does not exist (no skills to deploy)")
         return
-    skill_files = list(skills_src.glob("*.md"))
-    if not skill_files:
-        warn("Skills: source dir", "no .md skill files found in $HORIZON_BIN/skills/")
+    # Each skill is a directory containing SKILL.md, not a flat .md file
+    skill_dirs = [d for d in skills_src.iterdir() if d.is_dir() and (d / "SKILL.md").exists()]
+    if not skill_dirs:
+        warn("Skills: source dir", "no skill directories found in $HORIZON_BIN/skills/ (each must contain SKILL.md)")
         return
     if not skills_dst.is_dir():
-        fail("Skills: deployed", f"~/.claude/skills/ does not exist; run the deploy step from ReadMeToSetupYourSystem.md")
+        fail("Skills: deployed", "~/.claude/skills/ does not exist; run deploy step from ReadMeToSetupYourSystem.md §7")
         return
-    missing = [s for s in skill_files if not (skills_dst / s.name).exists()]
+    missing = [d for d in skill_dirs if not (skills_dst / d.name / "SKILL.md").exists()]
     if missing:
-        names = ", ".join(s.name for s in missing)
-        fail("Skills: deployed", f"not deployed: {names} — copy from $HORIZON_BIN/skills/ to ~/.claude/skills/")
+        names = ", ".join(d.name for d in missing)
+        fail("Skills: deployed", f"not deployed: {names} — use 'cp -r $HORIZON_BIN/skills/* ~/.claude/skills/'")
     else:
-        ok(f"Skills: {len(skill_files)} deployed")
+        ok(f"Skills: {len(skill_dirs)} deployed")
 
 
 # ---------------------------------------------------------------------------
