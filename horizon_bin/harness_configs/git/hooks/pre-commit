@@ -18,7 +18,6 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 
 removed=0
 while IFS= read -r git_dir; do
-    # Derive the subdirectory path relative to repo root
     subdir="${git_dir%/.git}"
     rel="${subdir#"$REPO_ROOT"/}"
 
@@ -26,7 +25,6 @@ while IFS= read -r git_dir; do
     [ "$rel" = ".git" ] && continue
     [ "$subdir" = "$REPO_ROOT" ] && continue
 
-    # Check if anything from this directory is currently in the index
     if git ls-files --error-unmatch "$rel" >/dev/null 2>&1 \
        || [ -n "$(git ls-files "$rel" 2>/dev/null)" ]; then
         echo "[AIOS] Nested repo detected: '$rel' — removing from OS repo index"

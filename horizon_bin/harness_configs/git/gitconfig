@@ -12,12 +12,11 @@
 	quotePath = false
 
 [commit]
-	# Requires a valid signingkey in [user] above. See warning there.
 	gpgsign = true
 	signoff = true
 
 [advice]
-	# Suppress all contextual advice messages — errors only
+	# All false — suppress contextual advice; show errors only
 	detachedHead = false
 	addIgnoredFile = false
 	resolveConflict = false
@@ -40,7 +39,6 @@
 	tagFetching = false
 
 [status]
-	# Show branch info by default; short format is less noisy
 	branch = true
 
 [fetch]

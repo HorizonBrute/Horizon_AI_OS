@@ -1,102 +1,51 @@
-# =============================================================================
 # Horizon AIOS — Machine-Local Configuration
-# =============================================================================
-# Copy this file to horizon_bin/ai_os_etc/aios_local.conf and edit as needed.
-# This file is git-ignored. NEVER commit aios_local.conf.
-# No credentials, tokens, or passwords should ever be placed in this file.
-# =============================================================================
+# Copy to horizon_bin/ai_os_etc/aios_local.conf and edit. Never commit. No credentials here.
 
 # ---------------------------------------------------------------------------
-# Sync behavior
+# Sync
 # ---------------------------------------------------------------------------
 
-# Whether to auto-sync AIOS files from an upstream remote.
-# Set to "no" to disable all automatic syncing.
-# Values: yes | no
-# Default: yes
+# yes | no
 SYNC_AIOS_FROM_REMOTE=yes
 
-# How often to sync. Used by setup_sync_schedule.py when installing the
-# scheduled task or cron job.
-# Values: hourly | daily | weekly
-# Default: daily
+# hourly | daily | weekly
 AIOS_SYNC_FREQ=daily
 
-# Time of day to run the sync (24-hour HH:MM format). Used for daily and
-# weekly schedules. Ignored for hourly.
-# Default: 03:00
+# HH:MM (24h). Used for daily/weekly; ignored for hourly.
 AIOS_SYNC_TIME=03:00
 
-# ---------------------------------------------------------------------------
-# Repository settings
-# ---------------------------------------------------------------------------
-
-# The git remote name (or full URL) to sync from.
-# If you have forked the official AIOS repo and set up your own upstream,
-# point this at your fork's remote name or URL.
-# Default: origin
+# Remote name or URL to sync from.
 AIOS_REPO_REMOTE=origin
 
-# The branch on the remote to sync from.
-# Default: main
+# Branch to sync from.
 AIOS_REPO_BRANCH=main
 
 # ---------------------------------------------------------------------------
-# Scheduled task notes (Windows)
+# Sync — unattended mode notes
 # ---------------------------------------------------------------------------
-# The default scheduled task runs ONLY when you are logged in. This avoids
-# the need to store credentials and works with your existing SSH agent.
-#
-# If you want the sync to run when you are NOT logged in (e.g., on a server
-# or always-on workstation), you must:
-#   1. Configure a passphrase-free SSH deploy key with read-only access to
-#      your upstream remote.
-#   2. Modify the scheduled task to run whether or not the user is logged on,
-#      and supply stored credentials via Task Scheduler's credential manager.
-#   3. Ensure ssh-agent (OpenSSH Authentication Agent service on Windows) is
-#      set to start automatically and loads your deploy key at boot.
-#
-# See: horizon_bin/documentation/sync_setup.md for full instructions.
-# ---------------------------------------------------------------------------
-
-# ---------------------------------------------------------------------------
-# Cron notes (Linux/macOS)
-# ---------------------------------------------------------------------------
-# Cron does not inherit your SSH agent. For unattended sync to work:
-#   1. Create a passphrase-free SSH deploy key dedicated to AIOS sync.
-#   2. Register it with your upstream remote as a read-only deploy key.
-#   3. Add it to ~/.ssh/config so git uses it automatically for that host.
-#
-# See: horizon_bin/documentation/sync_setup.md for full instructions.
-# ---------------------------------------------------------------------------
+# Default: runs only when logged in (uses your existing SSH agent).
+# Unattended (server/always-on): use a passphrase-free SSH deploy key with
+# read-only access. See horizon_bin/documentation/sync_setup.md.
 
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
 
-# Root directory for AIOS operational logs.
-# Default: $HORIZON_BIN/logs (derived at runtime). Override to redirect logs.
+# Override log root. Default: $HORIZON_BIN/logs (derived at runtime).
 # AIOS_LOG_DIR=/var/log/horizon-aios
 
-# Max age in days before logs are pruned by maintain_logs.py. 0 = disabled.
-# Default: 30
+# Days before logs are pruned. 0 = disabled.
 AIOS_LOG_MAX_DAYS=30
 
-# Max size in MB per log file before rotation. 0 = disabled.
-# Default: 10
+# Max MB per log file before rotation. 0 = disabled.
 AIOS_LOG_MAX_SIZE_MB=10
 
-# Number of rotated files to keep per log (e.g., aios_sync.log.1, .2).
-# Default: 5
+# Rotated files to keep per log.
 AIOS_LOG_MAX_ROTATIONS=5
 
 # ---------------------------------------------------------------------------
-# Handoffs directory maintenance
+# Handoffs
 # ---------------------------------------------------------------------------
 
-# Maximum total size of the handoffs/ directory in MB.
-# When the directory exceeds this size, the oldest files are deleted first
-# until it fits within the limit. Set to 0 to disable pruning.
-# Values: positive integer | 0
-# Default: 500
+# Max total MB for handoffs/ directory. Oldest deleted first. 0 = disabled.
 AIOS_HANDOFFS_MAX_SIZE_MB=500
