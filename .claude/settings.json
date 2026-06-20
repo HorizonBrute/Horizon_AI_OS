@@ -1,0 +1,66 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git rm *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\devroot\\\\GameDev\\\\SorceryPunk\\\\bin\" -Recurse -Exclude \".godot\")",
+      "Bash(Select-Object FullName)",
+      "PowerShell(head *)",
+      "Bash(cat)",
+      "Read(//tmp/**)",
+      "Bash(git checkout *)",
+      "Bash(git merge engine_refactor --no-ff -m ' *)",
+      "Bash(git branch *)",
+      "Grep",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(Move-Item *)",
+      "PowerShell(New-Item *)",
+      "PowerShell(Select-String *)"
+    ],
+    "defaultMode": "acceptEdits"
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash \"C:/devroot/horizon_bin/statusline/statusline.sh\""
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"C:/devroot/horizon_bin/sounds/play_sound.sh\" \"C:/devroot/horizon_bin/sounds/WorkComplete_ork.wav\""
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"C:/devroot/horizon_bin/sounds/play_sound.sh\" \"C:/devroot/horizon_bin/sounds/claude_event_sounds/InputNeeded.wav\"",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"C:/devroot/horizon_bin/sounds/play_sound.sh\" \"C:/devroot/horizon_bin/sounds/APIFail.wav\"",
+            "async": true
+          }
+        ]
+      }
+    ]
+  },
+  "effortLevel": "medium",
+  "autoUpdatesChannel": "latest",
+  "theme": "dark",
+  "verbose": true
+}

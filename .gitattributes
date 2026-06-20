@@ -1,0 +1,20 @@
+# Horizon AIOS — line ending policy
+# text=auto normalises line endings in the index; working copy gets OS-native endings.
+# Shell scripts and hooks are forced to LF so they remain executable on any platform.
+
+*                   text=auto
+
+# Force LF for all scripts — these must be LF to execute correctly on Linux/macOS
+*.sh                text eol=lf
+*.bash              text eol=lf
+horizon_bin/harness_configs/git/hooks/*  text eol=lf
+
+# PowerShell — keep CRLF on Windows, LF elsewhere
+*.ps1               text eol=crlf
+
+# Explicitly binary — no line-ending conversion
+*.wav               binary
+*.mp3               binary
+*.png               binary
+*.jpg               binary
+*.jpeg              binary

@@ -1,0 +1,8 @@
+[user]
+	name = Brian Dirk
+	email = lvcolloquialist@gmail.com
+	signingkey = 023A5633AF267C0915F430D0EAFF7B35438BDEAE
+[core]
+	excludesfile = C:\\devroot\\.gitignore_global
+[commit]
+	gpgsign = true

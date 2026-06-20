@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# Horizon AIOS pre-commit hook
+# Runs automatically before every commit on the root OS repo.
+#
+# 1. Detects any subdirectory that has acquired its own .git since it was
+#    last tracked, and removes it from the parent index so it stops being
+#    tracked. This makes "git init a project folder" the universal mechanism
+#    for opting a folder out of the OS repo.
+#
+# 2. Syncs .gitignore.user -> .git/info/exclude so user-personal ignore
+#    patterns are always current without any manual step.
+
+set -euo pipefail
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+
+# --- 1. Auto-remove newly-git-initted subdirectories ---
+
+removed=0
+while IFS= read -r git_dir; do
+    # Derive the subdirectory path relative to repo root
+    subdir="${git_dir%/.git}"
+    rel="${subdir#"$REPO_ROOT"/}"
+
+    # Skip if this is somehow our own .git
+    [ "$rel" = ".git" ] && continue
+    [ "$subdir" = "$REPO_ROOT" ] && continue
+
+    # Check if anything from this directory is currently in the index
+    if git ls-files --error-unmatch "$rel" >/dev/null 2>&1 \
+       || [ -n "$(git ls-files "$rel" 2>/dev/null)" ]; then
+        echo "[AIOS] Nested repo detected: '$rel' — removing from OS repo index"
+        git rm -r --cached "$rel" >/dev/null 2>&1
+        removed=1
+    fi
+done < <(find "$REPO_ROOT" -mindepth 2 -name '.git' -type d 2>/dev/null)
+
+if [ "$removed" -eq 1 ]; then
+    echo "[AIOS] One or more nested repos removed from index. They will appear"
+    echo "       in .gitignore or be ignored naturally on future commits."
+fi
+
+# --- 2. Sync .gitignore.user -> .git/info/exclude ---
+
+user_ignore="$REPO_ROOT/.gitignore.user"
+exclude_file="$REPO_ROOT/.git/info/exclude"
+
+if [ -f "$user_ignore" ]; then
+    {
+        printf "# Auto-synced from .gitignore.user — edit that file, not this one.\n"
+        printf "# Last synced: %s\n" "$(date)"
+        cat "$user_ignore"
+    } > "$exclude_file"
+fi
+
+exit 0

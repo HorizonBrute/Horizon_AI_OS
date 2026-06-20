@@ -1,0 +1,466 @@
+# =============================================================================
+# HORIZON AIOS — versioned config override
+# The global gitignore excludes .claude/ entirely. Override that here so
+# only the two versioned files are tracked; everything else stays excluded.
+# =============================================================================
+!.claude/
+.claude/*
+!.claude/CLAUDE.md
+!.claude/settings.json
+
+# User-personal ignore layer — edit .gitignore.user, not this file.
+# The pre-commit hook syncs .gitignore.user -> .git/info/exclude automatically.
+!.gitignore.user
+
+# =============================================================================
+# SECURITY — secrets, keys, credentials
+# =============================================================================
+.env
+.env.*
+!.env.example
+!.env.template
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.der
+*.csr
+*.jks
+*.keystore
+*.asc
+id_rsa
+id_ed25519
+id_ecdsa
+id_dsa
+*.pub
+secrets/
+secrets.*
+secret.*
+credentials
+credentials.*
+.credentials/
+.secrets/
+service_account*.json
+*_service_account.json
+*serviceaccount*.json
+gcp-key*.json
+aws-credentials
+.aws/
+.gcp/
+.azure/
+*.token
+*.tokens
+auth.json
+config/local.json
+config/secrets.json
+*apikey*
+*api_key*
+*access_token*
+*private_key*
+*.vault
+
+# =============================================================================
+# PYTHON — AI / ML primary language
+# =============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+instance/
+.webassets-cache
+.scrapy
+docs/_build/
+.pybuilder/
+target/
+.ipynb_checkpoints/
+profile_default/
+ipython_config.py
+.pdm.toml
+__pypackages__/
+celerybeat-schedule
+celerybeat.pid
+*.sage.py
+.venv
+venv/
+env/
+ENV/
+.env.bak
+venv.bak/
+.spyderproject.db
+.spyproject
+.ropeproject
+/site
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+cython_debug/
+
+# =============================================================================
+# JUPYTER / NOTEBOOKS
+# =============================================================================
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+profile_default/
+ipython_config.py
+*.nbconvert.ipynb
+
+# =============================================================================
+# AI / ML — models, weights, datasets
+# =============================================================================
+# Model weights & checkpoints
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.gguf
+*.ggml
+*.bin
+*.onnx
+*.tflite
+*.mlmodel
+*.pb
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.joblib
+*.npy
+*.npz
+
+# Training artifacts
+runs/
+wandb/
+mlruns/
+.mlflow/
+lightning_logs/
+outputs/
+checkpoints/
+saved_models/
+model_cache/
+.cache/huggingface/
+.cache/torch/
+hub/
+torch_cache/
+
+# Datasets (large files)
+data/raw/
+data/processed/
+datasets/
+*.csv.gz
+*.parquet
+*.arrow
+*.feather
+*.db
+*.sqlite
+*.sqlite3
+
+# Vector stores / embeddings
+chroma_db/
+faiss_index/
+*.faiss
+*.index
+pinecone_data/
+weaviate_data/
+
+# LLM / API response caches
+.langchain/
+.llamaindex/
+response_cache/
+
+# =============================================================================
+# NODE.JS / TYPESCRIPT — AI tooling, backends, frontends
+# =============================================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+pids/
+*.pid
+*.seed
+*.pid.lock
+lib-cov/
+coverage/
+*.lcov
+.nyc_output/
+.grunt/
+bower_components/
+.lock-wscript
+build/Release/
+.npm
+.eslintcache
+.stylelintcache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+.node_repl_history
+*.tgz
+.yarn-integrity
+.parcel-cache/
+.next/
+out/
+.nuxt/
+.cache/
+.vuepress/dist/
+.serverless/
+.fusebox/
+.dynamodb/
+.tern-port
+.vscode-test/
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# =============================================================================
+# DOCKER / CONTAINERS
+# =============================================================================
+.docker/
+docker-compose.override.yml
+docker-compose.local.yml
+.dockerenv
+
+# =============================================================================
+# DOTNET / C# — Unity-adjacent, backend services
+# =============================================================================
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+.vs/
+[Tt]humbs.db
+Desktop.ini
+*_i.c
+*_p.c
+*_h.h
+*.ilk
+*.meta
+*.obj
+*.iobj
+*.pch
+*.pdb
+*.ipdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.tmp_proj
+*_wpftmp.csproj
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+project.lock.json
+project.fragment.lock.json
+artifacts/
+**/Properties/launchSettings.json
+*.nupkg
+*.snupkg
+**/[Pp]ackages/
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+ScaffoldingReadMe.txt
+_UpgradeReport_Files/
+Backup*/
+UpgradeLog*.XML
+UpgradeLog*.htm
+ServiceFabricBackup/
+TestResult.xml
+*.coverage
+*.coveragexml
+In/
+Out/
+App_Data/
+publish/
+*.[Pp]ublish.xml
+*.azurePubxml
+*.pubxml
+*.publishproj
+PublishScripts/
+*.pfx
+*.publishsettings
+orleans.codegen.cs
+*SiteManager.xml
+FakesAssemblies/
+*.GhostDoc.xml
+.ncrunchsolution
+*.ncrunchproject
+*.dotCover
+*_NCrunch_*
+*.ncrunch*
+thumbs.db
+*.Cache
+ClientBin/
+~$*
+*.dbmdl
+*.dbproj.schemaview
+*.jfm
+*.pfx
+*.publishsettings
+node_modules/
+orleans.codegen.cs
+Generated_Code/
+_auto-generated-version.cs
+**/.localhistory/**
+healthchecksdb
+MigrationBackup/
+.ionide/
+Telerik.Sitefinity.VSExtension.slnex
+
+# =============================================================================
+# GODOT ENGINE
+# =============================================================================
+.godot/
+.import/
+export.cfg
+export_presets.cfg
+*.translation
+mono_crash.*.json
+*.res
+*.scn
+.mono/
+data_*/
+mono/
+.godot/editor/
+.godot/imported/
+
+# Godot build outputs
+build/
+export/
+*.x86
+*.x86_64
+*.arm32
+*.arm64
+*.exe
+*.app
+*.apk
+*.aab
+*.ipa
+
+# =============================================================================
+# GENERAL OS / EDITORS
+# =============================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encdata
+ehthumbs.db
+ehthumbs_vista.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# VS Code
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+.vscode/*.code-workspace
+.history/
+
+# JetBrains IDEs
+.idea/
+*.iws
+out/
+.idea_modules/
+atlassian-ide-plugin.xml
+
+# Vim / Emacs
+*~
+*.swp
+*.swo
+.#*
+\#*#
+Session.vim
+.netrwhist
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Temp
+tmp/
+temp/
+*.tmp
+*.bak
+*.orig
+
+# =============================================================================
+# HORIZON AIOS — explicit un-ignores (must come last to override *.user etc.)
+# =============================================================================
+!.gitignore.user
+!.gitattributes
