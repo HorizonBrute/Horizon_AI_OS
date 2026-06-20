@@ -1,0 +1,102 @@
+# =============================================================================
+# Horizon AIOS — Machine-Local Configuration
+# =============================================================================
+# Copy this file to horizon_bin/ai_os_etc/aios_local.conf and edit as needed.
+# This file is git-ignored. NEVER commit aios_local.conf.
+# No credentials, tokens, or passwords should ever be placed in this file.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Sync behavior
+# ---------------------------------------------------------------------------
+
+# Whether to auto-sync AIOS files from an upstream remote.
+# Set to "no" to disable all automatic syncing.
+# Values: yes | no
+# Default: yes
+SYNC_AIOS_FROM_REMOTE=yes
+
+# How often to sync. Used by setup_sync_schedule.py when installing the
+# scheduled task or cron job.
+# Values: hourly | daily | weekly
+# Default: daily
+AIOS_SYNC_FREQ=daily
+
+# Time of day to run the sync (24-hour HH:MM format). Used for daily and
+# weekly schedules. Ignored for hourly.
+# Default: 03:00
+AIOS_SYNC_TIME=03:00
+
+# ---------------------------------------------------------------------------
+# Repository settings
+# ---------------------------------------------------------------------------
+
+# The git remote name (or full URL) to sync from.
+# If you have forked the official AIOS repo and set up your own upstream,
+# point this at your fork's remote name or URL.
+# Default: origin
+AIOS_REPO_REMOTE=origin
+
+# The branch on the remote to sync from.
+# Default: main
+AIOS_REPO_BRANCH=main
+
+# ---------------------------------------------------------------------------
+# Scheduled task notes (Windows)
+# ---------------------------------------------------------------------------
+# The default scheduled task runs ONLY when you are logged in. This avoids
+# the need to store credentials and works with your existing SSH agent.
+#
+# If you want the sync to run when you are NOT logged in (e.g., on a server
+# or always-on workstation), you must:
+#   1. Configure a passphrase-free SSH deploy key with read-only access to
+#      your upstream remote.
+#   2. Modify the scheduled task to run whether or not the user is logged on,
+#      and supply stored credentials via Task Scheduler's credential manager.
+#   3. Ensure ssh-agent (OpenSSH Authentication Agent service on Windows) is
+#      set to start automatically and loads your deploy key at boot.
+#
+# See: horizon_bin/documentation/sync_setup.md for full instructions.
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Cron notes (Linux/macOS)
+# ---------------------------------------------------------------------------
+# Cron does not inherit your SSH agent. For unattended sync to work:
+#   1. Create a passphrase-free SSH deploy key dedicated to AIOS sync.
+#   2. Register it with your upstream remote as a read-only deploy key.
+#   3. Add it to ~/.ssh/config so git uses it automatically for that host.
+#
+# See: horizon_bin/documentation/sync_setup.md for full instructions.
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+
+# Root directory for AIOS operational logs.
+# Default: $HORIZON_BIN/logs (derived at runtime). Override to redirect logs.
+# AIOS_LOG_DIR=/var/log/horizon-aios
+
+# Max age in days before logs are pruned by maintain_logs.py. 0 = disabled.
+# Default: 30
+AIOS_LOG_MAX_DAYS=30
+
+# Max size in MB per log file before rotation. 0 = disabled.
+# Default: 10
+AIOS_LOG_MAX_SIZE_MB=10
+
+# Number of rotated files to keep per log (e.g., aios_sync.log.1, .2).
+# Default: 5
+AIOS_LOG_MAX_ROTATIONS=5
+
+# ---------------------------------------------------------------------------
+# Handoffs directory maintenance
+# ---------------------------------------------------------------------------
+
+# Maximum total size of the handoffs/ directory in MB.
+# When the directory exceeds this size, the oldest files are deleted first
+# until it fits within the limit. Set to 0 to disable pruning.
+# Values: positive integer | 0
+# Default: 500
+AIOS_HANDOFFS_MAX_SIZE_MB=500

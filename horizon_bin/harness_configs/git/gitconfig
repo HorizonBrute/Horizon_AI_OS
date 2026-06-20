@@ -1,8 +1,13 @@
 [user]
-	name = Brian Dirk
-	email = lvcolloquialist@gmail.com
-	signingkey = 023A5633AF267C0915F430D0EAFF7B35438BDEAE
+	name = YOUR_NAME
+	email = YOUR_EMAIL
+	# WARNING: gpgsign = true is set below. If you do not replace YOUR_GPG_FINGERPRINT
+	# with a real key fingerprint, every commit will fail. Run: gpg --list-secret-keys
+	# to find your fingerprint, then substitute it here.
+	signingkey = YOUR_GPG_FINGERPRINT
 [core]
-	excludesfile = C:\\devroot\\.gitignore_global
+	excludesfile = HORIZON_ROOT_PATH\\.gitignore_global
 [commit]
+	# Requires a valid signingkey in [user] above. See warning there.
 	gpgsign = true
+	signoff = true

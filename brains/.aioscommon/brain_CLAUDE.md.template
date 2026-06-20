@@ -1,0 +1,22 @@
+# Brain: [BRAIN_NAME]
+
+This is the CLAUDE.md for the [BRAIN_NAME] brain workspace.
+Copy this file to brains/<brain-name>/.claude/CLAUDE.md and customize.
+
+## Inherited config
+
+This brain inherits the AIOS base configuration:
+
+@[HORIZON_ROOT_PATH]/.claude/CLAUDE.md
+
+Replace [HORIZON_ROOT_PATH] with the absolute path to your $HORIZON_ROOT.
+The @ import syntax requires an absolute path.
+
+## Brain-specific instructions
+
+[Add brain-specific instructions here. This brain is scoped to its own folder
+and runs as its own OS user. It cannot access other brains' folders or sbin/.]
+
+## Role
+
+[Describe what this brain does and what it has access to.]

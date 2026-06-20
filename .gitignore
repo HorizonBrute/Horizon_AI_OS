@@ -460,6 +460,35 @@ temp/
 *.orig
 
 # =============================================================================
+# HORIZON AIOS — session artifacts and machine-local files
+# =============================================================================
+
+# Handoff session artifacts (machine-local continuity; not version history)
+handoffs/
+
+# Machine-local config overrides (configured from templates; never committed)
+*.local.json
+
+# Machine-local AIOS configuration (generated from template; never committed)
+horizon_bin/ai_os_etc/aios_local.conf
+horizon_bin/harness_configs/claude_code/known_marketplaces.json
+horizon_bin/harness_configs/claude_code/project_settings.json
+
+# Operational logs — scaffold tracked, content gitignored
+!horizon_bin/logs/
+horizon_bin/logs/*
+!horizon_bin/logs/**/.gitkeep
+
+# Windows Explorer metadata
+desktop.ini
+**/desktop.ini
+
+# Brain folders are user-local; only scaffold and common config are tracked
+brains/*
+!brains/.aioscommon
+!brains/.aioscommon/**
+
+# =============================================================================
 # HORIZON AIOS — explicit un-ignores (must come last to override *.user etc.)
 # =============================================================================
 !.gitignore.user

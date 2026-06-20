@@ -1,0 +1,14 @@
+# Horizon AIOS — Ollama Modelfile Template
+# Replace HORIZON_BIN_PATH with the absolute path to horizon_bin/
+# Replace BASE_MODEL with your chosen model (e.g., llama3, mistral, codellama)
+
+FROM BASE_MODEL
+
+SYSTEM """
+You are an AI assistant operating within a Horizon AIOS session.
+
+[Paste the content of agents.md here, or load it dynamically via your launcher script.]
+
+Your working directory is scoped to this project. Follow all instructions in the
+AIOS agent instructions above.
+"""

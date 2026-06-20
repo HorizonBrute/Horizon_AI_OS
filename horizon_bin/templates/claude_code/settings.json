@@ -1,0 +1,51 @@
+{
+  "permissions": {
+    "allow": [],
+    "defaultMode": "acceptEdits"
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NonInteractive -File HORIZON_BIN_PATH/statusline/statusline-context-alerts.ps1"
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "(New-Object Media.SoundPlayer 'HORIZON_BIN_PATH\\sounds\\WorkComplete_ork.wav').PlaySync()",
+            "shell": "powershell"
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "(New-Object Media.SoundPlayer 'HORIZON_BIN_PATH\\sounds\\claude_event_sounds\\InputNeeded.wav').PlaySync()",
+            "shell": "powershell",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "(New-Object Media.SoundPlayer 'HORIZON_BIN_PATH\\sounds\\APIFail.wav').PlaySync()",
+            "shell": "powershell",
+            "async": true
+          }
+        ]
+      }
+    ]
+  },
+  "effortLevel": "medium",
+  "autoUpdatesChannel": "latest",
+  "theme": "dark",
+  "verbose": true
+}

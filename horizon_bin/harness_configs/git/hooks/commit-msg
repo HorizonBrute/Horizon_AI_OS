@@ -1,0 +1,16 @@
+#!/bin/sh
+# Enforce DCO sign-off on every commit.
+# Installed by bootstrap.sh to .git/hooks/commit-msg
+
+COMMIT_MSG_FILE="$1"
+
+if ! grep -qE "^Signed-off-by: .+ <.+@.+>" "$COMMIT_MSG_FILE"; then
+    echo ""
+    echo "ERROR: Missing DCO sign-off."
+    echo ""
+    echo "All Horizon AIOS commits require a Signed-off-by line."
+    echo "Add one automatically with:  git commit -s"
+    echo "Or add it manually:          Signed-off-by: Your Name <your@email.com>"
+    echo ""
+    exit 1
+fi

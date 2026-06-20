@@ -1,0 +1,16 @@
+{
+  "_comment": "Template Claude Code settings for a brain workspace. Copy to brains/<brain-name>/.claude/settings.json and remove this comment key.",
+  "permissions": {
+    "allow": [
+      "Read(brains/[BRAIN_NAME]/**)",
+      "Write(brains/[BRAIN_NAME]/**)",
+      "Bash(cd brains/[BRAIN_NAME] && *)"
+    ],
+    "deny": [
+      "Read(horizon_bin/sbin/**)",
+      "Write(horizon_bin/**)",
+      "Bash(sudo *)",
+      "Bash(su *)"
+    ]
+  }
+}

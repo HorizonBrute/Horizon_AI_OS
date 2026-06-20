@@ -1,0 +1,5 @@
+{
+  "_comment": "Codex harness configuration template for Horizon AIOS. Remove this key before use.",
+  "_placeholder": "Replace HORIZON_BIN_PATH with the absolute path to horizon_bin/",
+  "instructions_file": "agents.md"
+}

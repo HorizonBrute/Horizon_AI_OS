@@ -50,7 +50,8 @@ foreach ($t in @(30, 40, 50, 60, 70, 80, 90)) {
 }
 
 if ($new_threshold -gt 0) {
-    $wav = "C:\devroot\horizon_bin\sounds\claude_event_sounds\claude_at_${new_threshold}_statusline.wav"
+    $HORIZON_BIN = Split-Path $PSScriptRoot -Parent
+    $wav = Join-Path $HORIZON_BIN "sounds\claude_event_sounds\claude_at_${new_threshold}_statusline.wav"
     if (Test-Path $wav) {
         $player = New-Object Media.SoundPlayer $wav
         $player.PlaySync()

@@ -1,0 +1,86 @@
+// OpenClaw configuration template for Horizon AIOS
+// Format: JSON5 (comments and trailing commas are allowed)
+// Location: copy to ~/.openclaw/openclaw.json and fill in your values
+// Run `openclaw onboard` or `openclaw configure` for the interactive setup wizard.
+// All fields are optional — safe defaults apply when omitted.
+{
+  // Gateway server settings
+  gateway: {
+    port: 18789,
+    auth: {
+      mode: "token",
+      token: "REPLACE_WITH_YOUR_TOKEN",
+    },
+  },
+
+  // Default agent/model settings
+  agents: {
+    defaults: {
+      // Model in provider/model-id format
+      model: "openai/gpt-4o",
+      // Optionally embed AIOS system context here or via a custom skill
+      // systemPrompt: "You are an AIOS agent. Root: $HORIZON_ROOT",
+    },
+    // Define named agents for specific channels or workflows
+    list: [
+      // {
+      //   id: "horizon-dev",
+      //   name: "Horizon Dev Agent",
+      //   model: "openai/gpt-4o",
+      //   skills: ["shell", "files"],
+      // },
+    ],
+  },
+
+  // Model provider definitions
+  models: {
+    // providers: {
+    //   openai: { apiKey: "REPLACE_WITH_OPENAI_KEY" },
+    //   anthropic: { apiKey: "REPLACE_WITH_ANTHROPIC_KEY" },
+    // },
+  },
+
+  // MCP (Model Context Protocol) server definitions
+  mcp: {
+    // servers: {
+    //   filesystem: { command: "mcp-server-filesystem", args: ["HORIZON_BIN_PATH"] },
+    // },
+  },
+
+  // Skills — custom skill directories (e.g., point to AIOS skill roots)
+  skills: {
+    // extraDirs: ["HORIZON_BIN_PATH/skills"],
+  },
+
+  // Channel integrations (fill in credentials for channels you use)
+  channels: {
+    // slack: {
+    //   botToken: "REPLACE_WITH_SLACK_BOT_TOKEN",
+    //   appToken: "REPLACE_WITH_SLACK_APP_TOKEN",
+    //   allowFrom: [],
+    // },
+    // discord: {
+    //   token: "REPLACE_WITH_DISCORD_BOT_TOKEN",
+    //   allowFrom: [],
+    // },
+    // whatsapp: {
+    //   allowFrom: [],
+    // },
+    // telegram: {
+    //   token: "REPLACE_WITH_TELEGRAM_BOT_TOKEN",
+    //   allowFrom: [],
+    // },
+  },
+
+  // Webhook hooks and integrations
+  hooks: {},
+
+  // Background job scheduling
+  cron: {},
+
+  // Logging configuration
+  logging: {
+    level: "info",
+    // file: "HORIZON_BIN_PATH/logs/openclaw.log",
+  },
+}
