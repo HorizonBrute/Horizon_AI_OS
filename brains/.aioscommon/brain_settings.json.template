@@ -7,8 +7,8 @@
       "Bash(cd brains/[BRAIN_NAME] && *)"
     ],
     "deny": [
-      "Read(horizon_bin/sbin/**)",
-      "Write(horizon_bin/**)",
+      "Read(horizon_system/sbin/**)",
+      "Write(horizon_system/**)",
       "Bash(sudo *)",
       "Bash(su *)"
     ]

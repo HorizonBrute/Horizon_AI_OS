@@ -33,7 +33,9 @@ Security invariants honored (see $HORIZON_ETC/security_invariants.md):
 """
 
 import argparse
+import datetime
 import getpass
+import json
 import os
 import platform
 import re
@@ -775,16 +777,13 @@ def phase4_verify(ctx, dry_run=False):
 
     print('  Next steps:')
     print(f'    1. Log in as "{brain_name}" and verify read+execute on $HORIZON_BIN.')
-    print(f'    2. Create $HORIZON_ROOT/brains/{brain_name}/.claude/settings.json')
-    print(f'       (scope it to the brain\'s allowed tools and permissions).')
-    print(f'    3. Create $HORIZON_ROOT/brains/{brain_name}/CLAUDE.md')
-    print(f'       (define the brain\'s persona and operational scope).')
-    print(f'    4. Import system instructions at the top of CLAUDE.md:')
-    print(f'       @$HORIZON_ROOT/CLAUDE.md')
-    print(f'    5. Place any credentials this brain needs in:')
+    print(f'    2. Review and customize the deployed workspace files (Phase 5):')
+    print(f'       $HORIZON_ROOT/brains/{brain_name}/.claude/CLAUDE.md')
+    print(f'       $HORIZON_ROOT/brains/{brain_name}/.claude/settings.json')
+    print(f'    3. Place any credentials this brain needs in:')
     print(f'       $HORIZON_ROOT/keys/{brain_name}/')
-    print(f'    6. Provision tools from $HORIZON_USRBIN into the brain folder as needed.')
-    print(f'    7. To run this brain as a scheduled/automated agent, configure a')
+    print(f'    4. Provision tools from $HORIZON_USRBIN into the brain folder as needed.')
+    print(f'    5. To run this brain as a scheduled/automated agent, configure a')
     print(f'       Task Scheduler task (Windows) or cron job (Unix) running as "{brain_name}".')
     print()
 
@@ -858,6 +857,121 @@ def _print_cleanup_instructions(brain_name, brain_dir, os_name):
         print(f'    rm -rf "{brain_dir}"')
         print(f'    # Also: gpasswd -d {brain_name} {BRAINS_GROUP}  (if user was added)')
     print()
+
+
+# ---------------------------------------------------------------------------
+# Phase 5: Deploy brain workspace templates and write provisioning manifest
+# ---------------------------------------------------------------------------
+
+def phase5_deploy_templates(ctx, dry_run=False):
+    """
+    Deploy .aioscommon templates into the brain's .claude/ workspace directory
+    and write a machine-readable provisioning manifest.
+
+    Creates:
+        brains/<brain_name>/.claude/CLAUDE.md       (from brain_CLAUDE.md.template)
+        brains/<brain_name>/.claude/settings.json   (from brain_settings.json.template)
+        brains/<brain_name>/.aios_provision.json    (provisioning record for auditors)
+
+    Non-fatal: if templates are missing or file writes fail, a warning is
+    printed and provisioning continues.  OS-level setup from Phases 1-3 is
+    complete regardless of whether this phase succeeds.
+    """
+    banner('Phase 5: Deploy Brain Workspace Templates')
+
+    brain_name   = ctx['brain_name']
+    brain_dir    = ctx['brain_dir']
+    horizon_root = ctx['horizon_root']
+
+    aioscommon_dir   = os.path.join(horizon_root, 'brains', '.aioscommon')
+    brain_claude_dir = os.path.join(brain_dir, '.claude')
+
+    if dry_run:
+        print(f'  [DRY-RUN] Would create {brain_claude_dir}')
+        print(f'  [DRY-RUN] Would deploy CLAUDE.md from {aioscommon_dir}/brain_CLAUDE.md.template')
+        print(f'  [DRY-RUN] Would deploy settings.json from {aioscommon_dir}/brain_settings.json.template')
+        print(f'  [DRY-RUN] Would write .aios_provision.json to {brain_dir}')
+        return
+
+    # 5.1 Create .claude/ directory
+    try:
+        os.makedirs(brain_claude_dir, exist_ok=True)
+        info(f'Created: {brain_claude_dir}')
+    except OSError as exc:
+        warn(f'Could not create {brain_claude_dir}: {exc}')
+        warn('Skipping template deployment — create .claude/ manually.')
+        return
+
+    # Use forward slashes in the @ import path (Claude Code expects this on all platforms)
+    horizon_root_fwd = horizon_root.replace('\\', '/')
+
+    # 5.2 Deploy CLAUDE.md
+    _deploy_template(
+        src=os.path.join(aioscommon_dir, 'brain_CLAUDE.md.template'),
+        dest=os.path.join(brain_claude_dir, 'CLAUDE.md'),
+        substitutions={
+            '[BRAIN_NAME]':        brain_name,
+            '[HORIZON_ROOT_PATH]': horizon_root_fwd,
+        },
+    )
+
+    # 5.3 Deploy settings.json (remove the _comment key warning — it's a template artifact)
+    _deploy_template(
+        src=os.path.join(aioscommon_dir, 'brain_settings.json.template'),
+        dest=os.path.join(brain_claude_dir, 'settings.json'),
+        substitutions={'[BRAIN_NAME]': brain_name},
+    )
+
+    # 5.4 Write provisioning manifest
+    _write_provision_manifest(ctx)
+
+    info(f'Phase 5: Deployed .claude/CLAUDE.md and .claude/settings.json for brain {brain_name}.')
+
+
+def _deploy_template(src, dest, substitutions):
+    """Read src, apply substitutions, write to dest. Warns and returns on failure."""
+    if not os.path.isfile(src):
+        warn(f'Template not found: {src}')
+        warn(f'  Skipping deployment of {os.path.basename(dest)}.')
+        return
+    try:
+        with open(src, 'r', encoding='utf-8') as fh:
+            content = fh.read()
+        for placeholder, value in substitutions.items():
+            content = content.replace(placeholder, value)
+        with open(dest, 'w', encoding='utf-8') as fh:
+            fh.write(content)
+        info(f'Deployed: {dest}')
+    except OSError as exc:
+        warn(f'Could not write {dest}: {exc}')
+
+
+def _write_provision_manifest(ctx):
+    """Write .aios_provision.json to the brain directory for audit purposes."""
+    brain_name     = ctx['brain_name']
+    brain_dir      = ctx['brain_dir']
+    horizon_root   = ctx['horizon_root']
+    brain_keys_dir = ctx['brain_keys_dir']
+
+    manifest = {
+        'brain_name':        brain_name,
+        'provisioned_at':    datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        'provisioned_by':    ctx['invoking_user'],
+        'horizon_root':      horizon_root,
+        'groups':            [BRAINS_GROUP, brain_name],
+        'brain_dir':         brain_dir,
+        'skills_bin_access': 'read+execute',
+        'sbin_access':       'deny',
+        'keys_dir':          brain_keys_dir if os.path.isdir(brain_keys_dir) else None,
+    }
+    dest = os.path.join(brain_dir, '.aios_provision.json')
+    try:
+        with open(dest, 'w', encoding='utf-8') as fh:
+            json.dump(manifest, fh, indent=2)
+            fh.write('\n')
+        info(f'Wrote provisioning manifest: {dest}')
+    except OSError as exc:
+        warn(f'Could not write provisioning manifest: {exc}')
 
 
 # ---------------------------------------------------------------------------
@@ -943,6 +1057,14 @@ def main():
     except Exception as exc:
         error(f'Unexpected error in Phase 4: {exc}')
         sys.exit(3)
+
+    # Phase 5: deploy workspace templates and write provisioning manifest
+    try:
+        phase5_deploy_templates(ctx, dry_run=args.dry_run)
+    except Exception as exc:
+        # Non-fatal: OS-level provisioning succeeded; log and continue.
+        warn(f'Phase 5 encountered an unexpected error: {exc}')
+        warn('Brain is provisioned at the OS level. Deploy templates manually.')
 
     sys.exit(0 if success else 3)
 
