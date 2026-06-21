@@ -244,7 +244,7 @@ if (Test-Path $GitDir) {
     # Install commit-msg hook (DCO sign-off enforcement)
     Copy-Item "$HORIZON_SYSTEM\harness_configs\git\hooks\commit-msg" "$HORIZON_ROOT\.git\hooks\commit-msg" -Force
     Ok "Installed commit-msg hook (DCO sign-off enforcement)."
-    Copy-Item "$HORIZON_SYSTEMharness_configsgithookspre-commit" "$HORIZON_ROOT.githookspre-commit" -Force
+    Copy-Item "$HORIZON_SYSTEM\harness_configs\git\hooks\pre-commit" "$HORIZON_ROOT\.git\hooks\pre-commit" -Force
     Ok "Installed pre-commit hook."
 } else {
     Info "$HORIZON_ROOT is not a git repository - skipping git hooks config."
@@ -326,11 +326,18 @@ if (-not (Test-Path $localConf)) {
     Write-Host "aios_local.conf already exists - skipping template copy." -ForegroundColor Green
 }
 
-# Ensure logs directory exists
-$logsDir = Join-Path $HORIZON_SYSTEM "logs"
+# Ensure logs directory exists at canonical location ($HORIZON_ROOT/logs/)
+$logsDir = Join-Path $HORIZON_ROOT "logs"
 if (-not (Test-Path $logsDir)) {
     New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
     Write-Host "Created logs/ directory." -ForegroundColor Green
+}
+
+# Ensure keys directory exists
+$keysDir = Join-Path $HORIZON_ROOT "keys"
+if (-not (Test-Path $keysDir)) {
+    New-Item -ItemType Directory -Path $keysDir -Force | Out-Null
+    Write-Host "Created keys/ directory." -ForegroundColor Green
 }
 
 if ($env:AIOSDeployMode -eq "docker") {

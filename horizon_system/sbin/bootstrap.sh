@@ -313,7 +313,8 @@ else
     echo "aios_local.conf already exists — skipping template copy."
 fi
 
-mkdir -p "$HORIZON_SYSTEM/logs"
+mkdir -p "$HORIZON_ROOT/logs"
+mkdir -p "$HORIZON_ROOT/keys"
 
 if [ "${AIOS_DEPLOY_MODE:-}" = "docker" ]; then
     info "Docker mode: skipping sync schedule setup (refresh via image rebuild or pull)."

@@ -6,9 +6,9 @@ import datetime
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-HORIZON_BIN = SCRIPT_DIR.parent
-HORIZON_ROOT = HORIZON_BIN.parent
-HORIZON_ETC = HORIZON_BIN / "ai_os_etc"
+HORIZON_SYSTEM = SCRIPT_DIR.parent
+HORIZON_ROOT = HORIZON_SYSTEM.parent
+HORIZON_ETC = HORIZON_SYSTEM / "ai_os_etc"
 CONFIG_FILE = HORIZON_ETC / "aios_local.conf"
 
 DEFAULTS = {
@@ -88,7 +88,7 @@ def prune_handoffs(handoffs_dir: Path, max_size_bytes: int):
 
 def main():
     config = read_config()
-    log_dir = Path(config["AIOS_LOG_DIR"]) if config["AIOS_LOG_DIR"] else HORIZON_BIN / "logs"
+    log_dir = Path(config["AIOS_LOG_DIR"]) if config["AIOS_LOG_DIR"] else HORIZON_ROOT / "logs"
 
     if not log_dir.exists():
         print(f"[INFO] Log directory {log_dir} does not exist — nothing to maintain.")

@@ -590,23 +590,23 @@ handoffs/
 *.local.json
 
 # Machine-local AIOS configuration (generated from template; never committed)
-horizon_bin/ai_os_etc/aios_local.conf
+horizon_system/ai_os_etc/aios_local.conf
 
 # Machine-local personal project ignore list (copy .gitignore.user.template → .gitignore.user)
 .gitignore.user
-horizon_bin/harness_configs/claude_code/known_marketplaces.json
-horizon_bin/harness_configs/claude_code/project_settings.json
+horizon_system/harness_configs/claude_code/known_marketplaces.json
+horizon_system/harness_configs/claude_code/project_settings.json
 
 # Operational logs — directory scaffold tracked, log content gitignored.
 # Pattern explanation: ignore everything under logs/, then un-ignore subdirs
 # so git traverses into them, then ignore subdir contents, then un-ignore
 # .gitkeep placeholders so empty dirs remain in the index.
-!horizon_bin/logs/
-horizon_bin/logs/*
-!horizon_bin/logs/.gitkeep
-!horizon_bin/logs/*/
-horizon_bin/logs/*/*
-!horizon_bin/logs/*/.gitkeep
+!logs/
+logs/*
+!logs/.gitkeep
+!logs/*/
+logs/*/*
+!logs/*/.gitkeep
 
 # Windows Explorer metadata
 desktop.ini

@@ -113,10 +113,10 @@ All contributed templates must use the `HORIZON_BIN_PATH` placeholder pattern an
 
 ## 7. /handoff Skill
 
-Generates a structured session handoff document. See `$HORIZON_BIN/skills_bin/handoff/SKILL.md`. Deploy via `bootstrap.ps1` Section 3 or by copying the `handoff/` directory to `~/.claude/skills/`.
+Generates a structured session handoff document. See `$HORIZON_SYSTEM/skills_sbin/handoff/SKILL.md`. The skill is live via the `~/.claude/skills/` junction created by bootstrap — no manual copy needed.
 
 ---
 
 ## 8. aios_overrides.md
 
-Optional per-project file that overrides handoff directory and display name. Place at the project root (not inside `.claude/`). See `horizon_bin/templates/aios_overrides.md` for the template and available keys.
+Optional per-project file that overrides handoff directory and display name. Place at the project root (not inside `.claude/`). See `$HORIZON_SYSTEM/templates/aios_overrides.md` for the template and available keys.

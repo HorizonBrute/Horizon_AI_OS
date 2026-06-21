@@ -96,13 +96,13 @@ Adding new content categories requires updating this document and the directory 
 
 ## 3. Sounds Directory Convention
 
-**Tier 1 — Root (`$HORIZON_BIN/sounds/*.wav`):**
+**Tier 1 — Root (`$HORIZON_SOUNDS/*.wav`):**
 - Generic sounds with no vendor-specific voice or branding.
 - Any AI harness integration may use these sounds.
 - Examples: `work_complete.wav` (generic completion sound), `api_fail.wav` (generic failure sound).
 - New sounds added here must be usable without referencing a specific AI product by voice or name.
 
-**Tier 2 — Vendor subdirectories (`$HORIZON_BIN/sounds/<vendor>_event_sounds/`):**
+**Tier 2 — Vendor subdirectories (`$HORIZON_SOUNDS/<vendor>_event_sounds/`):**
 - Audio that contains voiced references to a specific AI product or vendor (e.g., "Claude Code is waiting for your input").
 - Named using the pattern `<vendor>_event_sounds/` where `<vendor>` matches the harness vendor name in lowercase (e.g., `claude_event_sounds/`, `ollama_event_sounds/`).
 - These sounds are only appropriate for use with the matching harness.
@@ -163,7 +163,7 @@ Examples:
 - `ollama_event_sounds/` — for Ollama voiced audio.
 - `codex_event_sounds/` — for OpenAI Codex voiced audio.
 
-This convention applies to all vendor-scoped subdirectories in $HORIZON_BIN, not just sounds. If a new category of vendor-specific asset is added, the subdirectory name follows the same `<vendor>_<category>/` pattern.
+This convention applies to all vendor-scoped subdirectories in $HORIZON_SYSTEM, not just sounds. If a new category of vendor-specific asset is added, the subdirectory name follows the same `<vendor>_<category>/` pattern.
 
 ---
 
@@ -177,21 +177,14 @@ Skills are split across two source directories mirroring the bin/sbin security m
 
 | Directory | Access | Purpose |
 |---|---|---|
-| `$HORIZON_BIN/skills_bin/<name>/SKILL.md` | Group-readable — all brains may execute | Standard skills |
-| `$HORIZON_BIN/skills_sbin/<name>/SKILL.md` | Owner-only — brain users denied access | Privileged skills |
+| `$HORIZON_SYSTEM/skills_bin/<name>/SKILL.md` | Group-readable — all brains may execute | Standard skills |
+| `$HORIZON_SYSTEM/skills_sbin/<name>/SKILL.md` | Owner-only — brain users denied access | Privileged skills |
 
 Each directory contains an `index.md` listing all skills it holds. **Always check `index.md` first** before searching individual skill files. **When adding a skill, update the index in the same commit.**
 
-Deployed location (where Claude Code reads skills from):
+`~/.claude/skills/` is a junction (Windows) or symlink (Unix/macOS) pointing to `$HORIZON_SYSTEM/skills_sbin/` for the primary user, and to `$HORIZON_SYSTEM/skills_bin/` for brain users. Skills are live on disk with no copy step — only a Claude Code session restart is needed after adding or editing a skill. Bootstrap creates the primary user junction; `create_brain.py` creates the brain junction.
 
-| Source | Deployed to |
-|---|---|
-| `$HORIZON_BIN/skills_bin/` | `~/.claude/skills/` |
-| `$HORIZON_BIN/skills_sbin/` | `~/.claude/skills/` (primary user only — same filesystem permissions as sbin) |
-
-Deploy by copying directories: `cp -r "$HORIZON_BIN/skills_bin/"* ~/.claude/skills/`. See `$HORIZON_DOCS/getting_started/ReadMeToSetupYourSystem.md` for full commands.
-
-Invariant: never edit skills directly in `~/.claude/skills/`. Always edit at the source and redeploy. The deployed copy is ephemeral — it is not committed.
+Invariant: never edit skills directly in `~/.claude/skills/`. Always edit at the source in the repo. There is no deployed copy — the junction points directly to the source.
 
 ### 7.2 Handoffs Directory
 
@@ -207,7 +200,7 @@ Key properties:
 - Location: `<project-root>/aios_overrides.md` — never inside `.claude/`
 - Format: simple `key: value` pairs, one per line, `#` comment lines ignored
 - Discovery: AIOS skills walk upward from the current working directory to find it, stopping at `$HORIZON_ROOT`
-- Template: `$HORIZON_BIN/templates/aios_overrides.md` — copy to project root and configure
+- Template: `$HORIZON_SYSTEM/templates/aios_overrides.md` — copy to project root and configure
 
 Currently supported keys:
 - `handoffs_dir` — override the handoffs output directory for this project
@@ -346,6 +339,6 @@ Context threshold sounds use `resolve_sound.py` — they resolve through `aios_s
 
 ### 11.4 Per-Project Usage
 
-Copy `$HORIZON_BIN/templates/aios_statusline.conf` to the project or brain root. Uncomment and set only the keys to override.
+Copy `$HORIZON_SYSTEM/templates/aios_statusline.conf` to the project or brain root. Uncomment and set only the keys to override.
 
 Invariant: `aios_statusline.conf` is project-owned. Add it to `$HORIZON_ROOT/.gitignore` if it should stay machine-local.

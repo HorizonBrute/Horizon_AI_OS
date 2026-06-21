@@ -1,7 +1,7 @@
 # Audit Logging — AIOS Filesystem Monitor
 
-The AIOS filesystem monitor (`$HORIZON_BIN/sbin/monitor_aios.py`) watches
-`$HORIZON_BIN` for unexpected file changes and logs events as JSON lines.
+The AIOS filesystem monitor (`$HORIZON_SYSTEM/sbin/monitor_aios.py`) watches
+`$HORIZON_SYSTEM` for unexpected file changes and logs events as JSON lines.
 It runs as the administrative context; brain accounts must not have write
 access to the log directory.
 
@@ -11,7 +11,7 @@ access to the log directory.
 
 ```sh
 pip install watchdog
-python $HORIZON_BIN/sbin/monitor_aios.py
+python $HORIZON_SYSTEM/sbin/monitor_aios.py
 ```
 
 Logs write to `$HORIZON_ROOT/logs/aios_monitor/monitor_YYYYMMDD.log`.

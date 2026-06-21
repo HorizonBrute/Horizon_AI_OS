@@ -232,10 +232,10 @@ bash "$HORIZON_SYSTEM/sbin/bootstrap.sh"
 
 The script will:
 - Create `~/.claude/CLAUDE.md` with the `@` redirect (Step 6)
-- Deploy all skills from `$HORIZON_BIN/skills/` to `~/.claude/skills/` (Step 7)
+- Create `~/.claude/skills/` as a junction/symlink pointing to `$HORIZON_SYSTEM/skills_sbin/` (Step 7)
 - Offer to copy `settings.json` from the template (Step 8)
-- Create `$HORIZON_ROOT/handoffs/`
-- Wire git `core.hooksPath`
+- Create `$HORIZON_ROOT/handoffs/`, `$HORIZON_ROOT/logs/`, and `$HORIZON_ROOT/keys/`
+- Wire git `core.hooksPath` and install DCO hooks
 - Run a verification pass and print PASS/FAIL for each check
 
 If you prefer to run each step manually (or the bootstrap script fails), follow Steps 6–8 individually below.
@@ -309,37 +309,42 @@ Both should confirm the files exist.
 
 ---
 
-## 7. Deploy Skills
+## 7. Skills Redirect
 
-AIOS skills live at `$HORIZON_BIN/skills/`. Each skill is a **directory** (not a flat `.md` file) containing a `SKILL.md` with YAML frontmatter. Claude Code reads skills from `~/.claude/skills/`.
+AIOS skills live in `$HORIZON_SYSTEM/skills_sbin/` (primary user) and `$HORIZON_SYSTEM/skills_bin/` (brain users). Claude Code reads skills from `~/.claude/skills/`. Bootstrap wires this by creating `~/.claude/skills/` as a junction (Windows) or symlink (Unix/macOS) pointing directly to the source directory — there is no copy step. Skills are live on disk as soon as the repo is updated; only a session restart is needed to pick up changes.
 
-7.1 Create the target directory if it does not exist:
+7.1 The bootstrap script (Step 5) handles this automatically. To verify or create the redirect manually:
 
-```bash
-mkdir -p ~/.claude/skills
-```
-
-7.2 Copy all skill directories into place. Repeat for each new skill when AIOS is updated:
-
-```bash
-cp -r "$HORIZON_BIN/skills/"* ~/.claude/skills/
-```
-
-Windows (PowerShell):
+Windows (PowerShell — run as standard user, no admin required):
 ```powershell
-Copy-Item "$env:HORIZON_BIN\skills\*" "$HOME\.claude\skills\" -Recurse -Force
+# Remove existing directory if empty
+Remove-Item "$HOME\.claude\skills" -ErrorAction SilentlyContinue
+New-Item -ItemType Junction -Path "$HOME\.claude\skills" -Target "$env:HORIZON_SYSTEM\skills_sbin"
 ```
 
-7.3 Verify: `ls ~/.claude/skills/` should list a `handoff/` directory (not `handoff.md`). Each skill directory must contain a `SKILL.md` file.
+Linux / macOS (bash):
+```bash
+rm -rf ~/.claude/skills
+ln -s "$HORIZON_SYSTEM/skills_sbin" ~/.claude/skills
+```
 
-7.4 **Skills load at session start, not hot-reloaded.** Start a new session after deploying.
+7.2 Verify the redirect:
+```bash
+# Should show the junction/symlink target, not a real directory listing
+ls -la ~/.claude/skills
+```
+On Windows: `Get-Item "$HOME\.claude\skills" | Select-Object LinkType, Target`
+
+7.3 Verify a skill is present: `ls ~/.claude/skills/handoff/SKILL.md`
+
+7.4 **Skills load at session start, not hot-reloaded.** Start a new session after changes.
 
 7.5 Troubleshooting — if a skill is not recognized:
 
-1. Confirm the directory exists: `ls ~/.claude/skills/handoff/SKILL.md`
-2. Start a **fresh** Claude Code session. Long-running sessions can miss newly deployed skills.
+1. Confirm the junction/symlink exists: `Get-Item "$HOME\.claude\skills"` (Windows) or `ls -la ~/.claude/skills` (Unix)
+2. Start a **fresh** Claude Code session. Long-running sessions can miss newly available skills.
 3. Confirm the `SKILL.md` has valid YAML frontmatter (`name:` and `description:` fields).
-4. Run `doctor.py`: `python "$HORIZON_BIN/sbin/doctor.py"`
+4. Run `doctor.py`: `python "$env:HORIZON_SYSTEM\sbin\doctor.py"`
 
 ---
 
@@ -592,9 +597,9 @@ Projects are folders inside `$HORIZON_ROOT`. They automatically inherit the full
 
 Horizon AIOS supports multiple AI harnesses. To add support for a new harness (e.g., Cursor, Windsurf, Ollama):
 
-1. Create a template directory: `$HORIZON_BIN/templates/<harness_name>/`
-2. Add a config template using `HORIZON_BIN_PATH` and other placeholders instead of real paths. Document all placeholders in a `README.md` in the same directory.
-3. Wire event hooks to sounds in `$HORIZON_BIN/sounds/`. Use root-level generic sounds for cross-harness compatibility. If the harness has vendor-voiced audio, add it to `$HORIZON_BIN/sounds/<vendor>_event_sounds/`.
+1. Create a template directory: `$HORIZON_SYSTEM/templates/<harness_name>/`
+2. Add a config template using `HORIZON_SYSTEM_PATH` and other placeholders instead of real paths. Document all placeholders in a `README.md` in the same directory.
+3. Wire event hooks to sounds in `$HORIZON_SYSTEM/sounds/`. Use root-level generic sounds for cross-harness compatibility. If the harness has vendor-voiced audio, add it to `$HORIZON_SYSTEM/sounds/<vendor>_event_sounds/`.
 4. Add a statusline script to `$HORIZON_BIN/statusline/` if the harness supports one.
 5. Document the harness in `$HORIZON_DOCS/`.
 
@@ -604,7 +609,7 @@ See `$HORIZON_ETC/ai_os_personalizations.md` Section 3 for the full harness addi
 
 ## Adding a Brain
 
-A brain is an isolated AI persona running under a separate OS user account, scoped to its own directory subtree. All OS-level provisioning (user, groups, folder, permissions) is handled by `$HORIZON_BIN/scripts/create_brain.py`.
+A brain is an isolated AI persona running under a separate OS user account, scoped to its own directory subtree. All OS-level provisioning (user, groups, folder, permissions) is handled by `$HORIZON_SYSTEM/scripts/create_brain.py`.
 
 ### Dependencies
 
@@ -626,25 +631,25 @@ Running `create_brain.py` for a brain named `<brain-name>` produces:
 
 ```bash
 # Standard run (will prompt for password interactively)
-python $HORIZON_BIN/scripts/create_brain.py <brain-name>
+python $HORIZON_SYSTEM/scripts/create_brain.py <brain-name>
 
 # With an explicit HORIZON_ROOT (if running the script from outside the repo)
-python $HORIZON_BIN/scripts/create_brain.py <brain-name> --horizon-root /path/to/devroot
+python $HORIZON_SYSTEM/scripts/create_brain.py <brain-name> --horizon-root /path/to/devroot
 
 # Preview every action without executing (no changes made)
-python $HORIZON_BIN/scripts/create_brain.py <brain-name> --dry-run
+python $HORIZON_SYSTEM/scripts/create_brain.py <brain-name> --dry-run
 ```
 
 On Windows, open an **Administrator** PowerShell or Command Prompt first:
 
 ```powershell
-python "$env:HORIZON_BIN\scripts\create_brain.py" <brain-name>
+python "$env:HORIZON_SYSTEM\scripts\create_brain.py" <brain-name>
 ```
 
 On Unix:
 
 ```bash
-sudo python "$HORIZON_BIN/scripts/create_brain.py" <brain-name>
+sudo python "$HORIZON_SYSTEM/scripts/create_brain.py" <brain-name>
 ```
 
 ### Brain name rules
@@ -678,16 +683,19 @@ See `$HORIZON_ETC/security_invariants.md` for the full ownership and ACL model, 
 | User-facing documentation | `$HORIZON_DOCS` |
 | Global AI instructions (canonical) | `$HORIZON_ROOT/.claude/CLAUDE.md` |
 | Global settings (canonical) | `$HORIZON_ROOT/.claude/settings.json` |
-| Skills (source of truth) | `$HORIZON_BIN/skills/` |
-| Skills (deployed, Claude Code reads here) | `~/.claude/skills/` |
+| Skills (primary user source) | `$HORIZON_SYSTEM/skills_sbin/` |
+| Skills (brain user source) | `$HORIZON_SYSTEM/skills_bin/` |
+| Skills (Claude Code reads here — junction) | `~/.claude/skills/` → `skills_sbin/` |
 | Handoffs (default output) | `$HORIZON_ROOT/handoffs/` |
-| Sounds (generic) | `$HORIZON_BIN/sounds/*.wav` |
-| Sounds (vendor-voiced) | `$HORIZON_BIN/sounds/<vendor>_event_sounds/` |
+| Operational logs | `$HORIZON_ROOT/logs/` |
+| Credential store | `$HORIZON_ROOT/keys/` |
+| Sounds (generic) | `$HORIZON_SYSTEM/sounds/*.wav` |
+| Sounds (vendor-voiced) | `$HORIZON_SYSTEM/sounds/<vendor>_event_sounds/` |
 | Statusline scripts | `$HORIZON_BIN/statusline/` |
-| Harness config templates | `$HORIZON_BIN/templates/` |
-| aios_overrides.md template | `$HORIZON_BIN/templates/aios_overrides.md` |
-| Git hooks | `$HORIZON_BIN/harness_configs/git/hooks/` |
-| Git config (portable) | `$HORIZON_BIN/harness_configs/git/gitconfig` |
+| Harness config templates | `$HORIZON_SYSTEM/templates/` |
+| aios_overrides.md template | `$HORIZON_SYSTEM/templates/aios_overrides.md` |
+| Git hooks | `$HORIZON_SYSTEM/harness_configs/git/hooks/` |
+| Git config (portable) | `$HORIZON_SYSTEM/harness_configs/git/gitconfig` |
 | Full setup guide | `$HORIZON_DOCS/getting_started/ReadMeToSetupYourSystem.md` |
 | System config reference | `$HORIZON_DOCS/system/system_configuration_reference.md` |
 | File structure invariants | `$HORIZON_ETC/file_structure_invariants.md` |

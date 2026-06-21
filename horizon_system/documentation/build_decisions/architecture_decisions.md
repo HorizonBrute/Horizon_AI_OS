@@ -171,16 +171,6 @@ In the Docker deployment model, brain isolation is container-level rather than O
 
 ---
 
-### 2026-06-20 — `aios_overrides.md` placed at project root, not in `.claude/`
-
-**Decision:** Project-level AIOS override files live at `<project-root>/aios_overrides.md`, not inside `<project-root>/.claude/`.
-
-**Rationale:** The override file is a project-level configuration artifact, not a Claude Code-specific one. Placing it outside `.claude/` makes it visible at the project root (easy to find), potentially readable by other harnesses, and consistent with the principle that AIOS is harness-agnostic at the configuration layer.
-
-**Implications:** AIOS skills that search for overrides must look for `aios_overrides.md` at the current directory and walk upward, not look inside `.claude/`. This is a discovery protocol, not a path convention.
-
----
-
 ### 2026-06-20 — Skills have dual location: source and deployed copy
 
 **Decision:** AIOS skills (markdown files defining slash commands) are stored in two locations: `$HORIZON_BIN/skills/` (source of truth, committed to repo) and `~/.claude/skills/` (deployed copy, where Claude Code reads them).

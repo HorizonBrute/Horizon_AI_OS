@@ -24,11 +24,11 @@ Execute these steps in order. Do not skip any step.
 
 1.1 Identify the current working directory (`cwd`).
 
-1.2 Search upward from `cwd` for a file named `aios_overrides.md`, stopping when you reach `$HORIZON_ROOT` (`C:\devroot`) or the filesystem root, whichever comes first. Check each directory in the upward chain: `cwd`, then its parent, then its parent, and so on.
+1.2 Search upward from `cwd` for a file named `aios_overrides.md`, stopping when you reach `$HORIZON_ROOT` (the value of the `HORIZON_ROOT` environment variable) or the filesystem root, whichever comes first. Check each directory in the upward chain: `cwd`, then its parent, then its parent, and so on.
 
 1.3 If `aios_overrides.md` is found, parse it for the `handoffs_dir` key. The file uses a simple `key: value` format — find the line beginning with `handoffs_dir:` and extract the value. If the key is present and non-empty, use that path as the handoffs directory.
 
-1.4 If `aios_overrides.md` is not found, or does not contain `handoffs_dir`, use the default: `$HORIZON_ROOT/handoffs/` (resolved to its absolute path, e.g., `C:\devroot\handoffs\`).
+1.4 If `aios_overrides.md` is not found, or does not contain `handoffs_dir`, use the default: `$HORIZON_ROOT/handoffs/` (the value of the `HORIZON_ROOT` environment variable + `/handoffs/`).
 
 1.5 If `aios_overrides.md` contains a `project_display_name` key, use that value as the project name in the handoff header. Otherwise, derive the project name from the basename of the current working directory.
 

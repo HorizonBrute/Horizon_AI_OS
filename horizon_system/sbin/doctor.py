@@ -36,19 +36,28 @@ def fail(name, reason):
 # 1. Environment variables
 # ---------------------------------------------------------------------------
 def check_env_vars():
-    vars_ = ["HORIZON_ROOT", "HORIZON_SYSTEM", "HORIZON_BIN", "HORIZON_ETC", "HORIZON_DOCS"]
+    # Dir vars must exist on disk; non-dir vars just need to be set
+    dir_vars = ["HORIZON_ROOT", "HORIZON_SYSTEM", "HORIZON_BIN", "HORIZON_ETC", "HORIZON_DOCS",
+                "HORIZON_SOUNDS", "HORIZON_LOGS", "HORIZON_KEYS"]
+    str_vars = ["HORIZON_USRBIN", "HORIZON_PROJECTS"]
     results = {}
-    for v in vars_:
+    for v in dir_vars:
         val = os.environ.get(v)
         if not val:
             fail(f"Env: ${v}", "not set")
             results[v] = None
         elif not Path(val).is_dir():
-            fail(f"Env: ${v}", f"set to '{val}' but directory does not exist")
-            results[v] = None
+            warn(f"Env: ${v}", f"set to '{val}' but directory does not exist (create it or run bootstrap)")
+            results[v] = Path(val)
         else:
             ok(f"Env: ${v}")
             results[v] = Path(val)
+    for v in str_vars:
+        val = os.environ.get(v)
+        if not val:
+            warn(f"Env: ${v}", "not set — optional but expected on a full install")
+        else:
+            ok(f"Env: ${v}")
     return results
 
 
