@@ -13,6 +13,8 @@ Hardcoded paths are forbidden in committed files. Use these variables exclusivel
 | `$HORIZON_BIN` | `$HORIZON_ROOT\horizon_system\bin` | User-callable executables; brains have R+X here |
 | `$HORIZON_ETC` | `$HORIZON_ROOT\horizon_system\ai_os_etc` | OS configuration documents and invariants |
 | `$HORIZON_DOCS` | `$HORIZON_ROOT\horizon_system\documentation` | User-facing documentation |
+| `$HORIZON_SOUNDS` | `$HORIZON_SYSTEM\sounds` | Sound files, maps, and vendor audio |
+| `$HORIZON_LOGS` | `$HORIZON_ROOT\logs` | Centralized audit and operational logs |
 | `$HORIZON_USRBIN` | `$HORIZON_ROOT\usrbin` | Common application installs shared across brains and projects |
 | `$HORIZON_PROJECTS` | `$HORIZON_ROOT\Projects` | Primary user's personal project workspace |
 | `$HORIZON_KEYS` | `$HORIZON_ROOT\keys` | Designated location for brain-accessible credential files |
@@ -41,17 +43,27 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   ├── monitor_status.py           # One-word monitor status check (see agents.md Session Start)
 │   │   └── statusline/                 # Status line scripts for harness UI (see Section 11)
 │   ├── sbin/                           # Owner-only privileged scripts; brains: DENY
-│   │   └── bootstrap.ps1               # First-machine setup script (admin-only)
+│   │   ├── bootstrap.ps1               # Windows bootstrap (PowerShell)
+│   │   ├── bootstrap.sh                # Unix/Linux/macOS bootstrap
+│   │   ├── bootstrap_docker.sh         # Docker bootstrap wrapper
+│   │   ├── doctor.py                   # System health check
+│   │   ├── monitor_aios.py             # Filesystem audit monitor
+│   │   ├── maintain_logs.py            # Log pruning and rotation
+│   │   ├── setup_sync_schedule.py      # Upstream sync scheduler
+│   │   └── [other privileged scripts]
 │   ├── skills_bin/                     # Group-readable AIOS skills; brains: R+X explicit (see Section 7)
-│   │   ├── index.md                    # Skills index — check this first; update when adding a skill
-│   │   └── handoff/                    # /handoff skill (directory containing SKILL.md)
-│   │       └── SKILL.md
+│   │   └── index.md                    # Skills index — check this first; update when adding a skill
 │   ├── skills_sbin/                    # Owner-only privileged skills; brains: DENY (see Section 7)
-│   │   └── index.md
+│   │   ├── index.md
+│   │   ├── handoff/                    # /handoff skill (owner-only)
+│   │   │   └── SKILL.md
+│   │   └── skill-creation/             # /skill-creation skill (owner-only)
+│   │       └── SKILL.md
 │   ├── ai_os_etc/                      # $HORIZON_ETC — invariant OS documents (this file lives here)
 │   │   ├── security_invariants.md
 │   │   ├── file_structure_invariants.md
-│   │   └── ai_os_personalizations.md
+│   │   ├── ai_os_personalizations.md
+│   │   └── horizon_aios_agents.md      # Agent instructions (harness-agnostic)
 │   ├── documentation/                  # $HORIZON_DOCS — user-facing docs
 │   │   ├── deployment/                 # Deployment guides by mode (desktop.md, docker.md, etc.)
 │   │   ├── tested_configurations.md    # Verified harness/OS/deployment compatibility matrix
@@ -265,8 +277,8 @@ AIOS maps named events to sound files through a three-layer resolution chain. Ho
 For a given event, `$HORIZON_BIN/resolve_sound.py` checks in order:
 
 1. `aios_sounds.conf` at the nearest ancestor of cwd (walking up, stopping at `$HORIZON_ROOT`)
-2. `$HORIZON_BIN/harness_configs/<harness>/sounds.map` (if `--harness` is passed)
-3. `$HORIZON_BIN/sounds/sounds.map` (AIOS defaults)
+2. `$HORIZON_SYSTEM/harness_configs/<harness>/sounds.map` (if `--harness` is passed)
+3. `$HORIZON_SOUNDS/sounds.map` (AIOS defaults)
 
 First match wins. An empty value (`event_name =`) silences that event.
 
@@ -274,10 +286,10 @@ First match wins. An empty value (`event_name =`) silences that event.
 
 | File | Purpose |
 |---|---|
-| `$HORIZON_BIN/sounds/sounds.map` | AIOS default event→sound mapping |
-| `$HORIZON_BIN/harness_configs/<harness>/sounds.map` | Harness-specific events and overrides |
+| `$HORIZON_SOUNDS/sounds.map` | AIOS default event→sound mapping |
+| `$HORIZON_SYSTEM/harness_configs/<harness>/sounds.map` | Harness-specific events and overrides |
 | `$HORIZON_BIN/resolve_sound.py` | Resolver script — call from hooks |
-| `$HORIZON_BIN/templates/aios_sounds.conf` | Template for per-project overrides |
+| `$HORIZON_SYSTEM/templates/aios_sounds.conf` | Template for per-project overrides |
 | `<project-root>/aios_sounds.conf` | Per-project override (copy from template) |
 
 ### 10.3 Event Taxonomy
@@ -299,12 +311,12 @@ Harness-specific events use dot-prefix: `<harness>.<event>` (e.g., `claude.conte
 
 ```bash
 sound=$(python "$HORIZON_BIN/resolve_sound.py" task_complete --harness claude_code)
-[ -n "$sound" ] && bash "$HORIZON_BIN/sounds/play_sound.sh" "$sound"
+[ -n "$sound" ] && bash "$HORIZON_SOUNDS/play_sound.sh" "$sound"
 ```
 
 ### 10.5 Per-Project Override
 
-Copy `$HORIZON_BIN/templates/aios_sounds.conf` to the project or brain root. Uncomment and set only the events to override. Unset events fall through to the harness and AIOS defaults.
+Copy `$HORIZON_SYSTEM/templates/aios_sounds.conf` to the project or brain root. Uncomment and set only the events to override. Unset events fall through to the harness and AIOS defaults.
 
 Invariant: `aios_sounds.conf` is project-owned and committed to the project's own repo, not the OS repo. Add it to `$HORIZON_ROOT/.gitignore` if it should stay machine-local.
 
