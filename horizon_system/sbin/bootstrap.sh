@@ -31,8 +31,10 @@ HORIZON_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 HORIZON_BIN="$HORIZON_SYSTEM/bin"
 HORIZON_ETC="$HORIZON_SYSTEM/ai_os_etc"
 HORIZON_DOCS="$HORIZON_SYSTEM/documentation"
+HORIZON_SOUNDS="$HORIZON_SYSTEM/sounds"
+HORIZON_LOGS="$HORIZON_ROOT/logs"
 
-export HORIZON_SYSTEM HORIZON_ROOT HORIZON_BIN HORIZON_ETC HORIZON_DOCS
+export HORIZON_SYSTEM HORIZON_ROOT HORIZON_BIN HORIZON_ETC HORIZON_DOCS HORIZON_SOUNDS HORIZON_LOGS
 
 # -----------------------------------------------------------------------------
 # Helpers
@@ -67,9 +69,11 @@ echo "  HORIZON_SYSTEM = $HORIZON_SYSTEM"
 echo "  HORIZON_BIN    = $HORIZON_BIN"
 echo "  HORIZON_ETC    = $HORIZON_ETC"
 echo "  HORIZON_DOCS   = $HORIZON_DOCS"
+echo "  HORIZON_SOUNDS = $HORIZON_SOUNDS"
+echo "  HORIZON_LOGS   = $HORIZON_LOGS"
 
 if [ "${AIOS_DEPLOY_MODE:-}" = "docker" ]; then
-  info "Docker mode: HORIZON_* env vars are set in the Dockerfile — no shell profile changes needed."
+  info "Docker mode: HORIZON_* env vars (including HORIZON_SOUNDS, HORIZON_LOGS) are set in the Dockerfile — no shell profile changes needed."
 else
   echo ""
   echo "Add the following to your shell profile (~/.bashrc, ~/.zshrc, or ~/.bash_profile):"
@@ -80,6 +84,8 @@ else
   echo "    export HORIZON_BIN=\"\$HORIZON_SYSTEM/bin\""
   echo "    export HORIZON_ETC=\"\$HORIZON_SYSTEM/ai_os_etc\""
   echo "    export HORIZON_DOCS=\"\$HORIZON_SYSTEM/documentation\""
+  echo "    export HORIZON_SOUNDS=\"\$HORIZON_SYSTEM/sounds\""
+  echo "    export HORIZON_LOGS=\"\$HORIZON_ROOT/logs\""
   echo ""
   echo "  Then run: source ~/.bashrc  (or open a new terminal)"
 fi

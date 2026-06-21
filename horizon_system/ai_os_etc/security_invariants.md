@@ -162,7 +162,7 @@ Audit logging is a first-class security requirement.
 - Controlled exclusively by the administrative context
 - Covers: tool invocations, file paths accessed, network calls made, and any action that crosses the brain's own folder boundary
 
-**Implementation:** `$HORIZON_BIN/sbin/monitor_aios.py` watches `$HORIZON_BIN` for file change events using the `watchdog` library. It logs JSON-line events to `$HORIZON_ROOT/logs/aios_monitor/`. Run as the administrative context; brain accounts must not have write access to the log directory.
+**Implementation:** `$HORIZON_SYSTEM/sbin/monitor_aios.py` watches `$HORIZON_BIN` for file change events using the `watchdog` library. It logs JSON-line events to `$HORIZON_ROOT/logs/aios_monitor/`. Run as the administrative context; brain accounts must not have write access to the log directory.
 
 This detects file changes (writes/creates/deletes). Read detection requires OS-level audit (`auditd` on Linux, Windows Security Audit) — documented as an optional extension.
 
