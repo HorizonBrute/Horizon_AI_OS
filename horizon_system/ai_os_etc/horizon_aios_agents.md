@@ -68,7 +68,8 @@ When adding any skill, update the appropriate index.md in the same commit.
 
 When making architectural or design decisions on the AIOS OS layer, read on demand:
 
-    $HORIZON_DOCS/dev_values.md
+    $HORIZON_DOCS/dev_values.md       — engineering values and rules
+    $HORIZON_DOCS/philosophy.md       — conceptual vocabulary (Brain vs. AIOS, blue team answerability, BYOH)
 
 Do **not** import at session start.
 

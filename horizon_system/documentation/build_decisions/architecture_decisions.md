@@ -69,6 +69,16 @@ Entries are in reverse-chronological order at the top (newest first). Each entry
 
 ---
 
+### 2026-06-21 — Formalized Brain vs. AIOS vocabulary; created philosophy.md
+
+**Decision:** The conceptual distinction between a "Brain" (an atomic expert system — an App) and an "AI Operating System" (the config, harness, security, and logging layer that Brains run on top of) is now formally documented in `$HORIZON_DOCS/philosophy.md`. The term "Brain" in all AIOS documentation refers specifically to a purpose-scoped agentic workflow running as an isolated OS user account. What the broader industry often calls an "AI OS" (a highly tuned expert system for a specific domain) maps to "Brain" in Horizon vocabulary.
+
+**Rationale:** The vocabulary was implicit in the implementation but never stated. Contributors, auditors, and new AI sessions had to infer the distinction from context. The gap also meant the "blue team answerability" design goals — what is the agent doing, how is it doing it, how is it enforced, what data/tools does it have access to — were scattered across technical documents rather than stated as a unified design objective. `philosophy.md` also documents the IaC/containerization deployment model, the BYOH principle, and an evaluation of where the current implementation aligns with or falls short of these values.
+
+**Implications:** Any document, skill, or AI instruction that introduces a new use of "brain," "AIOS," or "second brain" must be consistent with the vocabulary in `philosophy.md`. Architectural decisions that affect the Brain/AIOS boundary (e.g., adding capabilities to `sbin` vs. provisioning them to individual brains) should be evaluated against the conceptual separation documented there.
+
+---
+
 ### 2026-06-20 — Two-group model per brain (brains common group + brain-specific group)
 
 **Decision:** Each brain belongs to two groups: `brains` (common AIOS group, grants read+execute on `$HORIZON_BIN`) and `<brain-name>` (brain-specific group, grants full control on the brain's own folder). The invoking primary user is added to the brain-specific group for oversight but is not added to every brain's group.
