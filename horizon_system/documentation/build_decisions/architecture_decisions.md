@@ -22,13 +22,12 @@ This section is the authoritative reference for which files have a source-of-tru
 
 | File / Directory | Source (in repo) | Deployed / Machine-Local | Sync Mechanism | In Git Repo |
 |---|---|---|---|---|
-| Skills (all .md files) | `$HORIZON_BIN/skills/` | `~/.claude/skills/` | Bootstrap script or manual `cp` | Source only — deployed copy is NOT committed |
 | CLAUDE.md instructions | `$HORIZON_ROOT/.claude/CLAUDE.md` | `~/.claude/CLAUDE.md` | One-time stub creation (@ redirect, not a copy) | Source only — stub is machine-local |
-| settings.json template | `$HORIZON_BIN/templates/claude_code/settings.json` | `~/.claude/settings.json` | Manual review and hard link / copy at setup time | Template only — local copy is NOT committed |
+| settings.json template | `$HORIZON_SYSTEM/templates/claude_code/settings.json` | `~/.claude/settings.json` | Manual review and hard link / copy at setup time | Template only — local copy is NOT committed |
 
 **Note on settings.json:** The deployed `~/.claude/settings.json` is not a simple copy of the template. It contains machine-specific paths (embedded in hook commands and statusLine). The bootstrap script offers to copy the template as a starting point; the user must substitute real paths. See `$HORIZON_DOCS/getting_started/ReadMeToSetupYourSystem.md` Step 8.
 
-**Note on skills sync:** After any skill is added or updated in `$HORIZON_BIN/skills/`, the deployed copy in `~/.claude/skills/` must be updated manually (or by re-running the bootstrap script). There is currently no watch/auto-sync mechanism. Invariant: never edit skills directly in `~/.claude/skills/` — always edit the source and redeploy.
+**Note on skills:** Skills are no longer synced via copy. `~/.claude/skills/` is a junction (Windows) or symlink (Unix) pointing directly to `$HORIZON_SYSTEM/skills_sbin/` for the primary user, and to `$HORIZON_SYSTEM/skills_bin/` for brain users. Changes to skills in the repo are live immediately — only a Claude Code session restart is needed. See the 2026-06-21 ADR entry for the junction redirect decision.
 
 ### 2.2 Local-Only Files (not in repo, not synced)
 
@@ -50,15 +49,16 @@ These files are committed to the OS repo and present on every machine after clon
 |---|---|---|
 | Canonical AI instructions | `$HORIZON_ROOT/.claude/CLAUDE.md` | System-level instructions for all Claude sessions |
 | Devroot permissions | `$HORIZON_ROOT/.claude/settings.json` | Devroot-scoped tool permissions only (no hooks, no statusLine) |
-| Skills (source) | `$HORIZON_BIN/skills/` | Source of truth; deployed copy lives in `~/.claude/skills/` |
-| Sounds (generic) | `$HORIZON_BIN/sounds/*.wav` | Vendor-agnostic event audio |
-| Sounds (vendor-voiced) | `$HORIZON_BIN/sounds/<vendor>_event_sounds/` | Vendor-specific voiced audio |
+| Skills (primary user) | `$HORIZON_SYSTEM/skills_sbin/` | Live via junction at `~/.claude/skills/` → no copy needed |
+| Skills (brain users) | `$HORIZON_SYSTEM/skills_bin/` | Live via junction at brain `~/.claude/skills/` → no copy needed |
+| Sounds (generic) | `$HORIZON_SYSTEM/sounds/*.wav` | Vendor-agnostic event audio |
+| Sounds (vendor-voiced) | `$HORIZON_SYSTEM/sounds/<vendor>_event_sounds/` | Vendor-specific voiced audio |
 | Statusline scripts | `$HORIZON_BIN/statusline/` | Terminal statusline scripts for Claude Code |
-| Harness configs | `$HORIZON_BIN/harness_configs/` | Per-harness config templates (git hooks, etc.) |
-| Config templates | `$HORIZON_BIN/templates/` | Setup templates; contain placeholders, not real paths |
-| Invariant documents | `$HORIZON_BIN/ai_os_etc/` | File structure, security, and personalization invariants |
-| Documentation | `$HORIZON_BIN/documentation/` | User-facing docs including this file |
-| Privileged scripts | `$HORIZON_BIN/sbin/` | Owner-only; brain users may not access |
+| Harness configs | `$HORIZON_SYSTEM/harness_configs/` | Per-harness config templates (git hooks, etc.) |
+| Config templates | `$HORIZON_SYSTEM/templates/` | Setup templates; contain placeholders, not real paths |
+| Invariant documents | `$HORIZON_ETC/` | File structure, security, and personalization invariants |
+| Documentation | `$HORIZON_DOCS/` | User-facing docs including this file |
+| Privileged scripts | `$HORIZON_SYSTEM/sbin/` | Owner-only; brain users may not access |
 | Gitignore | `$HORIZON_ROOT/.gitignore` | Repo-wide ignore rules |
 
 ---
@@ -66,6 +66,16 @@ These files are committed to the OS repo and present on every machine after clon
 ## 3. Architectural Decisions Log
 
 Entries are in reverse-chronological order at the top (newest first). Each entry is immutable once added.
+
+---
+
+### 2026-06-21 — Skills redirect via junction/symlink supersedes copy-based deploy
+
+**Decision:** Supersedes "2026-06-20 — Skills have dual location: source and deployed copy." `~/.claude/skills/` is now a directory junction (Windows) or symlink (Unix/macOS) pointing directly to `$HORIZON_SYSTEM/skills_sbin/` for the primary user, and to `$HORIZON_SYSTEM/skills_bin/` for brain users. No copy step exists; skills are live on disk as soon as they are written to the repo directory.
+
+**Rationale:** The copy-based model required a manual deploy step after every skill change, with no way to detect drift between source and deployed copies. Per-skill symlinks inside `~/.claude/skills/` were considered but rejected as inelegant (one symlink per skill, all pointing into the same source tree). Redirecting the entire directory via a single junction/symlink is simpler, drift-proof, and consistent with how other AIOS config files are managed (the CLAUDE.md stub uses the same pattern). Windows directory junctions require no administrator rights, keeping the bootstrap friction-free.
+
+**Implications:** Skills are split across two source directories mirroring the bin/sbin security model: `skills_sbin/` (primary user only) and `skills_bin/` (brain-readable). Bootstrap creates the primary user junction to `skills_sbin/`; `create_brain.py` creates the brain junction to `skills_bin/`. A session restart is the only action needed after adding or editing a skill. The "deployed copy" concept no longer applies to skills.
 
 ---
 
@@ -205,19 +215,13 @@ In the Docker deployment model, brain isolation is container-level rather than O
 
 These pairs are the most likely to drift and require attention after any update.
 
-### 4.1 Skills: `$HORIZON_BIN/skills/*` → `~/.claude/skills/*`
+### 4.1 Skills: `$HORIZON_SYSTEM/skills_sbin/` (live via junction)
 
-After adding or updating any skill in `$HORIZON_SYSTEM/skills_bin/`, the deployed copy must be refreshed:
+Skills no longer require a copy/sync step. `~/.claude/skills/` is a junction (Windows) or symlink (Unix/macOS) pointing directly to `$HORIZON_SYSTEM/skills_sbin/`. Changes to skill files in the repo are live on disk immediately.
 
-```bash
-# Re-run bootstrap (handles all sync steps)
-bash "$HORIZON_SYSTEM/sbin/bootstrap.sh"
+The only action needed after adding or editing a skill: **restart the Claude Code session** so it re-reads `~/.claude/skills/`.
 
-# Or manually copy updated skills only
-cp -r "$HORIZON_SYSTEM/skills_bin/"* ~/.claude/skills/
-```
-
-Signs of drift: a skill change in the repo has no effect in Claude Code sessions. Check whether `~/.claude/skills/` has the updated version.
+Signs of a problem: a skill change in the repo has no effect after session restart. Verify that `~/.claude/skills/` is a junction/symlink (not a real directory) and that its target is `$HORIZON_SYSTEM/skills_sbin/`. Re-run bootstrap if the junction is missing.
 
 ### 4.2 Template-derived settings: `$HORIZON_BIN/templates/claude_code/settings.json` → `~/.claude/settings.json`
 
@@ -237,7 +241,7 @@ Anyone who clones the Horizon AIOS repo will not have these. They must be create
 
 2. `~/.claude/CLAUDE.md` — Machine-local stub containing a single `@` redirect to the repo's CLAUDE.md. Created during bootstrap (one line, never changes).
 
-3. `~/.claude/skills/*.md` — Deployed copies of skills. Copied from `$HORIZON_BIN/skills/` during bootstrap.
+3. `~/.claude/skills/` — A junction (Windows) or symlink (Unix/macOS) created by bootstrap pointing to `$HORIZON_SYSTEM/skills_sbin/`. Not a deployed copy — skills are live on disk. The junction itself is machine-local; the skills it points to are in the repo.
 
 4. `$HORIZON_ROOT/.git/config` — Local git configuration, including `core.hooksPath` which wires the pre-commit hook. Set by bootstrap via `git config core.hooksPath`.
 

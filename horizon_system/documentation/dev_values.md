@@ -51,8 +51,9 @@ commit as the feature it describes.**
 
 - **Terseness invariant:** All context-loaded documentation (invariants, agents.md, CLAUDE.md, @ imports) must be as short as the content allows. Every sentence that can be removed without losing a rule or invariant must be removed. Verbosity compounds cost every session.
 - Significant additions and architectural decisions are recorded in
-  `architecture_decisions.md` with a unique sequential entry number. This is
-  the "serial number" for decisions — it makes reasoning traceable across time.
+  `architecture_decisions.md`. Each entry is identified by its ISO date and
+  a short title (`YYYY-MM-DD — Title`). The date + title combination is the
+  identifier — it makes reasoning traceable across time.
 - File structure changes require updating `file_structure_invariants.md`
   simultaneously.
 - Setup changes require updating `ReadMeToSetupYourSystem.md` simultaneously.

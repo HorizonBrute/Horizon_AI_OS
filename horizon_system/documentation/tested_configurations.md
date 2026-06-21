@@ -14,6 +14,7 @@ Configurations not listed here may work but have not been validated. Contributio
 | Claude Code (CLI) | ≥1.0 | — | Linux (native) | Desktop / Server | Partial | bootstrap.sh runs; symlink skills redirect implemented. Brain OS user isolation and sbin Deny ACLs not yet end-to-end tested on Linux. | [deployment/desktop.md](deployment/desktop.md) |
 | Claude Code (CLI) | ≥1.0 | — | Linux (container) | Docker | Template only | Dockerfile and bootstrap_docker.sh written; not yet run against a full brain provisioning cycle. See gap notes below. | [deployment/docker.md](deployment/docker.md) |
 | Claude Code (desktop app) | ≥1.0 | — | macOS (native) | Desktop | Untested | bootstrap.sh is macOS-compatible (POSIX). ACL steps require macOS equivalents (chmod/chown, dscl for user accounts). No one has validated end-to-end. | — |
+| Ollama | any | any local model | Linux / macOS / Windows | Desktop / Server | Minimal stub | No hook system, no sounds integration, no skills equivalent. Only integration: paste `agents.md` content into brain's Modelfile `SYSTEM` block. Brain OS isolation still applies. See Known Gaps by Harness below. | `$HORIZON_SYSTEM/harness_configs/ollama/Modelfile.template` |
 
 ---
 
@@ -49,6 +50,19 @@ A configuration is **Verified** when all of the following have been exercised:
 ### macOS
 - No one has run bootstrap on macOS. POSIX paths should work; `launchd` plist would be needed for sync schedule instead of cron/systemd.
 - `create_brain.py` has no macOS-specific branch; `dscl` (Directory Services) is the macOS equivalent of `useradd`.
+
+---
+
+## Known Gaps by Harness
+
+### Ollama
+Ollama has no event hook system. The AIOS hook taxonomy (sounds on task complete, permission request, failure) does not apply — Ollama provides no mechanism to fire external commands on model events.
+
+What works: OS-level brain isolation (separate user accounts, NTFS ACLs / POSIX permissions), brain directory scoping, `$HORIZON_KEYS` credential containment, audit logging via `monitor_aios.py`. The AIOS OS layer is fully in effect; only the harness-level integration (hooks, skills) is absent.
+
+What does not work: sounds, statusline, `/handoff` skill, any skill that depends on a Claude Code session context.
+
+To use Ollama with AIOS: provision a brain account normally via `create_brain.py`, then add the AIOS agent instructions to the Modelfile SYSTEM block manually using `$HORIZON_SYSTEM/harness_configs/ollama/Modelfile.template` as a starting point.
 
 ---
 
