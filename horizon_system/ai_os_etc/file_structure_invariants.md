@@ -53,12 +53,15 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   ├── file_structure_invariants.md
 │   │   └── ai_os_personalizations.md
 │   ├── documentation/                  # $HORIZON_DOCS — user-facing docs
+│   │   ├── deployment/                 # Deployment guides by mode (docker.md, etc.)
+│   │   ├── tested_configurations.md    # Verified harness/OS/deployment compatibility matrix
 │   ├── sounds/                         # Audio assets for event hooks
 │   │   ├── sounds.map                  # AIOS default event→sound mapping (see Section 10)
 │   │   ├── *.wav                       # Generic, vendor-agnostic sounds
 │   │   └── <vendor>_event_sounds/      # Vendor-specific voiced audio (see Section 3)
 │   ├── templates/                      # Setup templates for harnesses and brains
 │   │   ├── claude_code/                # Claude Code-specific templates
+│   │   ├── docker/                     # Docker deployment templates (Dockerfile, docker-compose.yml, .dockerignore)
 │   │   ├── aios_overrides.md           # Template for project-level AIOS config overrides
 │   │   ├── aios_sounds.conf            # Template for per-project sound overrides (see Section 10)
 │   │   └── aios_statusline.conf        # Template for per-project statusline config (see Section 11)

@@ -1,0 +1,90 @@
+# Horizon AIOS — Docker Compose Template
+# =============================================================================
+# Usage:
+#   1. Copy this file to your preferred deployment directory (or use from repo).
+#   2. Set ANTHROPIC_API_KEY in your environment or a .env file alongside this file.
+#   3. Uncomment and set volume host paths for brains/ and keys/ if needed.
+#   4. docker compose up -d
+#   5. docker exec -it horizon-aios claude    # start Claude Code session
+#
+# BYOH: The aios service sets up the OS layer. Your harness (Claude Code, Codex,
+# etc.) is invoked inside the running container via `docker exec`.
+#
+# Brain containers: each brain runs as a separate service. Uncomment the
+# brain-template service and duplicate it per brain. Brain containers share
+# the aios-skills volume (read-only) for access to skills_bin.
+# =============================================================================
+version: "3.9"
+
+services:
+
+  # -------------------------------------------------------------------------
+  # aios — the primary AIOS OS layer container
+  # -------------------------------------------------------------------------
+  aios:
+    build:
+      context: ../../..        # HORIZON_ROOT — build from repo root
+      dockerfile: horizon_system/templates/docker/Dockerfile
+    image: horizon-aios:latest
+    container_name: horizon-aios
+    hostname: horizon-aios
+    tty: true
+    stdin_open: true
+    restart: unless-stopped
+
+    environment:
+      # Required: pass your Anthropic API key (or other harness key)
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # Optional: AIOS operational config (overrides aios_local.conf values)
+      # - AIOS_LOG_MAX_DAYS=30
+      # - AIOS_LOG_MAX_SIZE_MB=10
+
+    volumes:
+      # Persist mutable AIOS state outside the image
+      - aios-logs:/aios/horizon_system/logs
+      - aios-handoffs:/aios/handoffs
+
+      # Brain directories — mount from host for persistence across image rebuilds.
+      # Replace HOST_BRAINS_PATH with an absolute path on your host machine.
+      # - /HOST_BRAINS_PATH:/aios/brains
+
+      # Credential store — mount from host; NEVER bake keys into the image.
+      # Replace HOST_KEYS_PATH with an absolute path on your host machine.
+      # - /HOST_KEYS_PATH:/aios/keys
+
+    # Expose ports only if a brain or service inside the container needs them.
+    # ports:
+    #   - "8080:8080"
+
+  # -------------------------------------------------------------------------
+  # brain-template — duplicate and rename per brain (e.g., brain-dev, brain-research)
+  # Brain containers receive skills_bin read-only; they have no access to sbin.
+  # -------------------------------------------------------------------------
+  # brain-BRAINNAME:
+  #   image: horizon-aios:latest        # or a specialized brain image
+  #   container_name: brain-BRAINNAME
+  #   hostname: brain-BRAINNAME
+  #   tty: true
+  #   stdin_open: true
+  #   restart: unless-stopped
+  #   user: "aios"                      # non-root; adjust to brain-specific user if needed
+  #   working_dir: /aios/brains/BRAINNAME
+  #   read_only: false
+  #   environment:
+  #     - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY_BRAINNAME}   # per-brain key
+  #   volumes:
+  #     # Brain's own directory — writable by this container only
+  #     - /HOST_BRAINS_PATH/BRAINNAME:/aios/brains/BRAINNAME
+  #     # Skills (read-only access to skills_bin)
+  #     - aios-skills-bin:/aios/horizon_system/skills_bin:ro
+  #     # Keys (read-only, this brain's subdirectory only)
+  #     - /HOST_KEYS_PATH/BRAINNAME:/aios/keys/BRAINNAME:ro
+  #   command: ["bash"]
+
+volumes:
+  aios-logs:
+    driver: local
+  aios-handoffs:
+    driver: local
+  # aios-skills-bin:
+  #   driver: local

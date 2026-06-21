@@ -69,6 +69,18 @@ Entries are in reverse-chronological order at the top (newest first). Each entry
 
 ---
 
+### 2026-06-21 — Docker deployment model: brain isolation via containers, not OS users
+
+**Decision:** Added Docker deployment templates (`horizon_system/templates/docker/`): Dockerfile, docker-compose.yml, .dockerignore. Added `bootstrap_docker.sh` to `sbin/` as a thin wrapper around `bootstrap.sh` that sets `AIOS_DEPLOY_MODE=docker` (suppresses shell profile instructions and sync schedule setup). Added `documentation/deployment/docker.md` and `documentation/tested_configurations.md`.
+
+In the Docker deployment model, brain isolation is container-level rather than OS-user-level. Each brain runs as a separate Docker container. The AIOS OS layer runs in the primary `horizon-aios` container; brains are defined as additional services in `docker-compose.yml` with per-brain volume mounts for their directories and keys. The audit log volume is not mounted into brain containers.
+
+**Rationale:** IaC/containerization compatibility is a first-class design goal (see `philosophy.md §5`). The native OS user model and the Docker container model are isomorphic at the security boundary level — both use OS-enforced isolation with explicit provisioning of tools and credentials per brain. Docker adds network isolation and makes deployment reproducible and portable. The two models coexist: the Docker templates wrap the native AIOS layer without modifying it.
+
+**Implications:** `create_brain.py` is not yet Docker-aware — it provisions OS accounts, not containers. Brain container provisioning in Docker is currently manual (duplicate the compose service template). This is tracked as a gap in `tested_configurations.md`. The Dockerfile is harness-agnostic except for Claude Code CLI installation; the BYOH principle is documented in the Dockerfile and `docker.md`.
+
+---
+
 ### 2026-06-21 — Formalized Brain vs. AIOS vocabulary; created philosophy.md
 
 **Decision:** The conceptual distinction between a "Brain" (an atomic expert system — an App) and an "AI Operating System" (the config, harness, security, and logging layer that Brains run on top of) is now formally documented in `$HORIZON_DOCS/philosophy.md`. The term "Brain" in all AIOS documentation refers specifically to a purpose-scoped agentic workflow running as an isolated OS user account. What the broader industry often calls an "AI OS" (a highly tuned expert system for a specific domain) maps to "Brain" in Horizon vocabulary.

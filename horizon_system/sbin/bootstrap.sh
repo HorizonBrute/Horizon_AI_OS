@@ -68,17 +68,21 @@ echo "  HORIZON_BIN    = $HORIZON_BIN"
 echo "  HORIZON_ETC    = $HORIZON_ETC"
 echo "  HORIZON_DOCS   = $HORIZON_DOCS"
 
-echo ""
-echo "Add the following to your shell profile (~/.bashrc, ~/.zshrc, or ~/.bash_profile):"
-echo "  (Replace the HORIZON_ROOT value with your actual path if different)"
-echo ""
-echo "    export HORIZON_ROOT=\"$HORIZON_ROOT\""
-echo "    export HORIZON_SYSTEM=\"\$HORIZON_ROOT/horizon_system\""
-echo "    export HORIZON_BIN=\"\$HORIZON_SYSTEM/bin\""
-echo "    export HORIZON_ETC=\"\$HORIZON_SYSTEM/ai_os_etc\""
-echo "    export HORIZON_DOCS=\"\$HORIZON_SYSTEM/documentation\""
-echo ""
-echo "  Then run: source ~/.bashrc  (or open a new terminal)"
+if [ "${AIOS_DEPLOY_MODE:-}" = "docker" ]; then
+  info "Docker mode: HORIZON_* env vars are set in the Dockerfile — no shell profile changes needed."
+else
+  echo ""
+  echo "Add the following to your shell profile (~/.bashrc, ~/.zshrc, or ~/.bash_profile):"
+  echo "  (Replace the HORIZON_ROOT value with your actual path if different)"
+  echo ""
+  echo "    export HORIZON_ROOT=\"$HORIZON_ROOT\""
+  echo "    export HORIZON_SYSTEM=\"\$HORIZON_ROOT/horizon_system\""
+  echo "    export HORIZON_BIN=\"\$HORIZON_SYSTEM/bin\""
+  echo "    export HORIZON_ETC=\"\$HORIZON_SYSTEM/ai_os_etc\""
+  echo "    export HORIZON_DOCS=\"\$HORIZON_SYSTEM/documentation\""
+  echo ""
+  echo "  Then run: source ~/.bashrc  (or open a new terminal)"
+fi
 
 # -----------------------------------------------------------------------------
 # SECTION 2: ~/.claude/CLAUDE.md stub
@@ -302,14 +306,17 @@ fi
 
 mkdir -p "$HORIZON_SYSTEM/logs"
 
-if [ "$YES_ALL" = "true" ]; then
+if [ "${AIOS_DEPLOY_MODE:-}" = "docker" ]; then
+    info "Docker mode: skipping sync schedule setup (refresh via image rebuild or pull)."
+elif [ "$YES_ALL" = "true" ]; then
     setup_sched=y
+    echo "$setup_sched" | grep -qi "^y" && python3 "$HORIZON_SYSTEM/sbin/setup_sync_schedule.py" --yes
 else
     printf "Set up daily auto-sync from upstream? [y/N] "
     read -r setup_sched
-fi
-if echo "$setup_sched" | grep -qi "^y"; then
-    python3 "$HORIZON_SYSTEM/sbin/setup_sync_schedule.py" $([ "$YES_ALL" = "true" ] && echo "--yes")
-else
-    echo "Skipped. Run later: python3 $HORIZON_SYSTEM/sbin/setup_sync_schedule.py"
+    if echo "$setup_sched" | grep -qi "^y"; then
+        python3 "$HORIZON_SYSTEM/sbin/setup_sync_schedule.py"
+    else
+        echo "Skipped. Run later: python3 $HORIZON_SYSTEM/sbin/setup_sync_schedule.py"
+    fi
 fi

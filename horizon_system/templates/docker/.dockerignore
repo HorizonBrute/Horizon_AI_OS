@@ -1,0 +1,33 @@
+# Horizon AIOS — Docker Build Context Exclusions
+# Keep the build context clean: exclude mutable state, credentials, and local-only files.
+
+# Git history — large; not needed in image
+.git
+.gitignore
+
+# Mutable state directories — these are volume-mounted at runtime
+handoffs/
+brains/
+keys/
+horizon_system/logs/
+
+# Local config and machine-specific overrides — never bake into image
+horizon_system/ai_os_etc/aios_local.conf
+*.local.json
+*.local.conf
+
+# Python byte-compiled files
+__pycache__/
+*.pyc
+*.pyo
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Credentials
+.env
+*.env
+*.pem
+*.key
