@@ -236,7 +236,7 @@ The script will:
 - Create `~/.claude/CLAUDE.md` with the `@` redirect (Step 6)
 - Create `~/.claude/skills/` as a junction/symlink pointing to `$HORIZON_SYSTEM/skills_sbin/` (Step 7)
 - Offer to copy `settings.json` from the template (Step 8)
-- Create `$HORIZON_ROOT/handoffs/`, `$HORIZON_ROOT/logs/`, and `$HORIZON_ROOT/keys/`
+- Create `$HORIZON_ROOT/handoffs/` and `$HORIZON_ROOT/logs/`
 - Wire git `core.hooksPath` and install DCO hooks
 - Run a verification pass and print PASS/FAIL for each check
 
@@ -655,7 +655,7 @@ Brain names must match `^[a-z][a-z0-9_]{1,31}$`: start with a lowercase letter, 
 ### After provisioning
 
 The script handles the following automatically:
-- Generates a cryptographically random 64-character account password and stores it at `$HORIZON_ROOT/keys/<brain-name>/account_password.txt` (admin read-only; brain user is explicitly denied access). The password is never printed to the terminal.
+- Generates a cryptographically random 64-character account password and stores it in the OS native keystore (Windows Credential Manager / macOS Keychain / Linux Secret Service) via `brain_credential.py` in sbin. The password is never written to any file and is never printed to the terminal.
 - Deploys `.claude/CLAUDE.md` and `.claude/settings.json` from `.aioscommon` templates into the brain's folder.
 - Writes a shell profile for the brain user that sets all `HORIZON_*` environment variables and changes the working directory to the brain's folder on interactive login.
 
@@ -663,12 +663,12 @@ Complete the brain's configuration manually after provisioning:
 
 1. Customize `$HORIZON_ROOT/brains/<brain-name>/.claude/CLAUDE.md` to define the brain's persona and operational scope.
 2. Customize `$HORIZON_ROOT/brains/<brain-name>/.claude/settings.json` to scope allowed tools.
-3. Place any credentials this brain needs in `$HORIZON_ROOT/keys/<brain-name>/`.
+3. Place any credentials this brain needs in the brain's own folder or the OS credential store.
 
-**Account password:** Required for Windows `runas` invocations and Task Scheduler. Read it from `$HORIZON_ROOT/keys/<brain-name>/account_password.txt` (the primary user can read this file; the brain user cannot). To reset the password: `Set-LocalUser -Name <brain-name> -Password (Read-Host -AsSecureString)` (Windows) or `sudo passwd <brain-name>` (Linux/macOS).
+**Account password:** Required for Windows `runas` invocations and Task Scheduler. Retrieve it from the OS keystore: `python $HORIZON_SYSTEM/sbin/brain_credential.py get <brain-name>` (must be run as Administrator / root). To rotate the password (updates both the OS account and keystore): `python $HORIZON_SYSTEM/sbin/brain_credential.py rotate <brain-name>`.
 
 **Scheduled tasks and cron jobs:**
-- Windows: Task Scheduler → "Run as user" → enter `<brain-name>` and retrieve password from keys file.
+- Windows: Task Scheduler → "Run as user" → enter `<brain-name>` and retrieve password via `brain_credential.py get <brain-name>` (run as Administrator).
 - Linux/macOS: `sudo crontab -u <brain-name> -e` — no password needed when using sudo.
 
 The script prints a summary and next-steps reminder at the end of every run.
@@ -696,7 +696,6 @@ See `$HORIZON_ETC/security_invariants.md` for the full ownership and ACL model, 
 | Skills (Claude Code reads here — junction) | `~/.claude/skills/` → `skills_sbin/` |
 | Handoffs (default output) | `$HORIZON_ROOT/handoffs/` |
 | Operational logs | `$HORIZON_ROOT/logs/` |
-| Credential store | `$HORIZON_ROOT/keys/` |
 | Sounds (generic) | `$HORIZON_SYSTEM/sounds/*.wav` |
 | Sounds (vendor-voiced) | `$HORIZON_SYSTEM/sounds/<vendor>_event_sounds/` |
 | Statusline scripts | `$HORIZON_BIN/statusline/` |

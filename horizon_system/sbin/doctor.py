@@ -38,7 +38,7 @@ def fail(name, reason):
 def check_env_vars():
     # Dir vars must exist on disk; non-dir vars just need to be set
     dir_vars = ["HORIZON_ROOT", "HORIZON_SYSTEM", "HORIZON_BIN", "HORIZON_ETC", "HORIZON_DOCS",
-                "HORIZON_SOUNDS", "HORIZON_LOGS", "HORIZON_KEYS"]
+                "HORIZON_SOUNDS", "HORIZON_LOGS"]
     str_vars = ["HORIZON_USRBIN", "HORIZON_PROJECTS"]
     results = {}
     for v in dir_vars:

@@ -27,7 +27,6 @@ $HORIZON_ETC      = Join-Path $HORIZON_SYSTEM "ai_os_etc"
 $HORIZON_DOCS     = Join-Path $HORIZON_SYSTEM "documentation"
 $HORIZON_USRBIN   = Join-Path $HORIZON_ROOT "usrbin"
 $HORIZON_PROJECTS = Join-Path $HORIZON_ROOT "Projects"
-$HORIZON_KEYS     = Join-Path $HORIZON_ROOT "keys"
 $HORIZON_LOGS     = Join-Path $HORIZON_ROOT "logs"
 $HORIZON_SOUNDS   = Join-Path $HORIZON_SYSTEM "sounds"
 
@@ -38,7 +37,6 @@ $env:HORIZON_ETC      = $HORIZON_ETC
 $env:HORIZON_DOCS     = $HORIZON_DOCS
 $env:HORIZON_USRBIN   = $HORIZON_USRBIN
 $env:HORIZON_PROJECTS = $HORIZON_PROJECTS
-$env:HORIZON_KEYS     = $HORIZON_KEYS
 $env:HORIZON_LOGS     = $HORIZON_LOGS
 $env:HORIZON_SOUNDS   = $HORIZON_SOUNDS
 
@@ -91,7 +89,6 @@ if ($env:AIOSDeployMode -eq "docker") {
     Write-Host "    `$env:HORIZON_DOCS     = `"`$env:HORIZON_SYSTEM\documentation`""
     Write-Host "    `$env:HORIZON_USRBIN   = `"`$env:HORIZON_ROOT\usrbin`""
     Write-Host "    `$env:HORIZON_PROJECTS = `"`$env:HORIZON_ROOT\Projects`""
-    Write-Host "    `$env:HORIZON_KEYS     = `"`$env:HORIZON_ROOT\keys`""
     Write-Host "    `$env:HORIZON_LOGS     = `"`$env:HORIZON_ROOT\logs`""
     Write-Host "    `$env:HORIZON_SOUNDS   = `"`$env:HORIZON_SYSTEM\sounds`""
     Write-Host ""
@@ -331,13 +328,6 @@ $logsDir = Join-Path $HORIZON_ROOT "logs"
 if (-not (Test-Path $logsDir)) {
     New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
     Write-Host "Created logs/ directory." -ForegroundColor Green
-}
-
-# Ensure keys directory exists
-$keysDir = Join-Path $HORIZON_ROOT "keys"
-if (-not (Test-Path $keysDir)) {
-    New-Item -ItemType Directory -Path $keysDir -Force | Out-Null
-    Write-Host "Created keys/ directory." -ForegroundColor Green
 }
 
 if ($env:AIOSDeployMode -eq "docker") {

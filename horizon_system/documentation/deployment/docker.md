@@ -45,7 +45,6 @@ The Docker image bakes in the AIOS layer (repo contents + bootstrap). Mutable st
 | `/aios/horizon_system/logs` | `aios-logs` | Audit and operational logs |
 | `/aios/handoffs` | `aios-handoffs` | Session handoff documents |
 | `/aios/brains` | Host path (commented out) | Brain directories — set `HOST_BRAINS_PATH` in compose file |
-| `/aios/keys` | Host path (commented out) | Credential store — set `HOST_KEYS_PATH` in compose file |
 
 Edit `horizon_system/templates/docker/docker-compose.yml` to mount host paths before starting.
 
@@ -58,7 +57,7 @@ In a native AIOS deployment, each brain is an OS user account. In Docker, each b
 **Brain container model:**
 1. Uncomment and duplicate the `brain-template` service block in `docker-compose.yml`.
 2. Give the brain its own named volume for `/aios/brains/BRAINNAME`.
-3. Mount a per-brain API key from the host into `/aios/keys/BRAINNAME` (read-only).
+3. Inject credentials for the brain via environment variables (set in the compose service definition); retrieve from the OS credential store or a secrets manager on the host.
 4. Mount `skills_bin` read-only into `/aios/horizon_system/skills_bin`.
 5. The brain container has no access to `sbin/` or `skills_sbin/` — enforce with Docker security options or read-only mounts.
 

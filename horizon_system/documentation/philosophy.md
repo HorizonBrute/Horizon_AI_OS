@@ -21,6 +21,8 @@ That framing maps more cleanly to "App" than "OS."
 
 **Why this matters:** If you conflate Brain with AIOS, you build a single large system that is opaque, hard to audit, and difficult to contain. The separation enables: independent deployment of brains, per-brain access control, per-brain audit trails, and a stable shared OS layer that can be updated without disrupting individual brains.
 
+**The harness is bound by the OS, not by itself.** Because the harness runs as the brain OS user, it cannot modify the AIOS-layer protections that govern it. This is an OS-enforced property: even a fully compromised harness cannot write to `$HORIZON_SYSTEM`, access `sbin/`, or escalate to the administrative context. The security boundary is maintained by the operating system independently of anything the harness does or is instructed to do. See `$HORIZON_ETC/security_invariants.md §5` for the full invariant.
+
 ---
 
 ## 2. The Second Brain: Goal State
@@ -52,7 +54,7 @@ Horizon AIOS is not a security framework. It is a configuration layer that redir
 
 - **User isolation** is done by the OS (NTFS ACLs / POSIX permissions), not by AIOS code.
 - **Audit logging** uses the OS filesystem and optionally `auditd` / Windows Security Audit — tools the security team already knows.
-- **Credential containment** uses the OS filesystem (per-brain directory permissions on `$HORIZON_KEYS`), not a custom secrets store.
+- **Credential containment** uses OS-native credential stores accessed via `brain_credential.py` in sbin, not a custom secrets store.
 - **Centralized logging** follows the standard log taxonomy the ops team already has tooling for.
 - **Access control** is enforced by `icacls` / `chmod` — not reimplemented.
 
@@ -147,7 +149,7 @@ Any workflow or knowledge base set up in AIOS-standard format is portable across
 | Lean into existing IT infra | OS user accounts for brain isolation; NTFS ACLs / `icacls`; no custom access control layer |
 | Least privilege, enforced | Zero-default access posture; explicit Deny ACEs on `sbin`; `create_brain.py` provisions the minimum; every tool grant requires a one-sentence justification |
 | Audit trail | `monitor_aios.py` writes to `$HORIZON_ROOT/logs/`; log dir has Deny ACE for brain users; documented in `security_invariants.md` §8 |
-| Credential containment | Per-brain subdirectories in `$HORIZON_KEYS`; no brain has default key access; scoped read-only grants |
+| Credential containment | OS-native credential stores via `brain_credential.py` in sbin; no brain has default key access; scoped credential grants |
 | IaC-ready paths | All paths are env vars; no hardcoded values in committed files |
 | Reproducible bootstrap | `bootstrap.ps1` / `bootstrap.sh` cover setup end-to-end |
 | Brain isolation | Separate OS user accounts; own folder only by default; blast radius limited |

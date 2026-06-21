@@ -26,7 +26,7 @@ Mitigations: narrow tool access + audit trail (anomalous actions are detectable)
 **Threat 2 — Credential and Data Containment**
 A hallucinating, misconfigured, or compromised brain can only cause harm proportional to the credentials and data it holds. A brain with no API key cannot authenticate; a brain with no filesystem access outside its folder cannot read other brains' data.
 
-Mitigations: credential containment (`$HORIZON_KEYS` with per-brain filesystem permissions) + zero-default access posture + least privilege on both tools and credentials.
+Mitigations: OS-native credential storage (managed by `brain_credential.py` in sbin) + zero-default access posture + least privilege on both tools and credentials.
 
 These two models are defense-in-depth layers: even if injection succeeds (Threat 1 fails), containment limits blast radius (Threat 2). Even if a brain has broad tool access (Threat 2 partially relaxed), the audit trail can detect and surface the injection (Threat 1 compensating control).
 
@@ -69,7 +69,6 @@ Each "brain" is an isolated AI persona running as a separate OS user account, sc
 | `$HORIZON_SYSTEM/skills_bin/` | Read + Execute (explicit grant — not inherited from `$HORIZON_BIN`) |
 | `$HORIZON_SYSTEM/skills_sbin/` | **DENY** (explicit) |
 | `$HORIZON_USRBIN/` | None (tools provisioned selectively per brain) |
-| `$HORIZON_KEYS/` | None (`keys/<brain-name>/` granted per-brain read-only) |
 | `$HORIZON_ROOT/logs/` | **DENY** (explicit — audit log must not be writable by brains) |
 | `$HORIZON_PROJECTS/` | No default convention — per-project decision |
 | `$HORIZON_ROOT/` | None |
@@ -125,6 +124,20 @@ Every component of Horizon AIOS — scripts, brain users, AI harnesses, hooks �
 
 When in doubt, grant less and expand as needed. Never grant access speculatively. Tool access should map directly to the brain's stated expert function — if you cannot explain why a brain needs a tool in one sentence, do not provision it.
 
+### The Harness Cannot Modify Its Own Constraints
+
+The AI harness (Claude Code, Ollama, or any other) runs as the brain OS user. Because the brain OS user has no write access to `$HORIZON_SYSTEM` and is explicitly denied `sbin/`, the harness has **no capacity to modify the AIOS-level protections that govern it** — not even its own security constraints.
+
+This is an OS-enforced property, not an application-enforced one. It holds regardless of what the harness does or is instructed to do:
+
+- A prompt injection attack that achieves arbitrary code execution as the brain user is still trapped inside the brain's folder with whatever tools were provisioned to it.
+- The harness cannot write to `$HORIZON_SYSTEM`, cannot access `sbin/`, cannot reach the admin account's credential store, and cannot modify its own ACLs or permission grants.
+- The harness cannot escalate to the administrative context through any path that AIOS controls — escalation requires OS-level credentials that the brain account does not hold.
+
+This is stronger than application-layer deny lists (such as Claude Code's `deny` array in `settings.json`). Those are defense-in-depth reinforcement. The OS ACL is the enforcement layer — it operates independently of the application and cannot be bypassed by the application.
+
+**Implication for threat modeling:** A fully compromised brain (Threat 1 — prompt injection succeeding completely) still cannot compromise the AIOS layer or other brains. Blast radius is bounded by what that brain's OS account can reach, which is bounded by what the administrative context provisioned to it.
+
 ---
 
 ## 6. No Sensitive Data in Committed Files
@@ -140,19 +153,7 @@ The Horizon AIOS git repository is designed for community release. This means:
 
 ---
 
-## 7. Credential Containment — `$HORIZON_KEYS`
-
-`$HORIZON_ROOT/keys/` is the only designated location for credential material brains may read. Credentials elsewhere are a configuration error.
-
-**Access model:** Per-brain subdirectories (`keys/<brain-name>/`). The administrative context sets OS filesystem permissions: the named brain's account gets read-only on its subdirectory; all other accounts are denied. No brain has default access to the `keys/` root or any sibling's directory.
-
-**Credential scoping:** Keys provisioned to a brain must be scoped to the minimum permissions that brain's function requires. A read-only API key is preferable to a read-write key if the brain only reads. A key scoped to one resource is preferable to a wildcard key.
-
-**Git:** All key content is gitignored. The directory scaffold is tracked. Never commit credentials, even in examples.
-
----
-
-## 8. Audit Trail
+## 7. Audit Trail
 
 Audit logging is a first-class security requirement.
 

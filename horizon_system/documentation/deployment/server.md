@@ -51,7 +51,6 @@ export HORIZON_ETC=$HORIZON_SYSTEM/ai_os_etc
 export HORIZON_DOCS=$HORIZON_SYSTEM/documentation
 export HORIZON_SOUNDS=$HORIZON_SYSTEM/sounds
 export HORIZON_LOGS=$HORIZON_ROOT/logs
-export HORIZON_KEYS=$HORIZON_ROOT/keys
 ```
 
 ### Disabling sounds on server
@@ -90,7 +89,7 @@ Group=BRAINNAME
 WorkingDirectory=/opt/aios/brains/BRAINNAME
 Environment=HORIZON_ROOT=/opt/aios
 Environment=HORIZON_SYSTEM=/opt/aios/horizon_system
-Environment=ANTHROPIC_API_KEY_FILE=/opt/aios/keys/BRAINNAME/api_key
+Environment=ANTHROPIC_API_KEY=<inject from OS credential store or wrapper script>
 ExecStart=/usr/local/bin/claude --dangerously-skip-permissions
 Restart=on-failure
 RestartSec=10

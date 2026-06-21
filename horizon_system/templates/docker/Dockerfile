@@ -66,7 +66,6 @@ ENV HORIZON_SYSTEM=/aios/horizon_system
 ENV HORIZON_BIN=/aios/horizon_system/bin
 ENV HORIZON_ETC=/aios/horizon_system/ai_os_etc
 ENV HORIZON_DOCS=/aios/horizon_system/documentation
-ENV HORIZON_KEYS=/aios/keys
 ENV HORIZON_USRBIN=/aios/usrbin
 ENV HORIZON_PROJECTS=/aios/Projects
 
@@ -82,7 +81,6 @@ COPY --chown=aios:aios . .
 RUN mkdir -p /aios/horizon_system/logs \
              /aios/handoffs \
              /aios/brains \
-             /aios/keys \
     && chown -R aios:aios /aios
 
 # ---------------------------------------------------------------------------

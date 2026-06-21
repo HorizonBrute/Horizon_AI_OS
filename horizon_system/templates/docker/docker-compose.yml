@@ -3,7 +3,7 @@
 # Usage:
 #   1. Copy this file to your preferred deployment directory (or use from repo).
 #   2. Set ANTHROPIC_API_KEY in your environment or a .env file alongside this file.
-#   3. Uncomment and set volume host paths for brains/ and keys/ if needed.
+#   3. Uncomment and set volume host paths for brains/ if needed.
 #   4. docker compose up -d
 #   5. docker exec -it horizon-aios claude    # start Claude Code session
 #
@@ -48,10 +48,6 @@ services:
       # Replace HOST_BRAINS_PATH with an absolute path on your host machine.
       # - /HOST_BRAINS_PATH:/aios/brains
 
-      # Credential store — mount from host; NEVER bake keys into the image.
-      # Replace HOST_KEYS_PATH with an absolute path on your host machine.
-      # - /HOST_KEYS_PATH:/aios/keys
-
     # Expose ports only if a brain or service inside the container needs them.
     # ports:
     #   - "8080:8080"
@@ -77,8 +73,6 @@ services:
   #     - /HOST_BRAINS_PATH/BRAINNAME:/aios/brains/BRAINNAME
   #     # Skills (read-only access to skills_bin)
   #     - aios-skills-bin:/aios/horizon_system/skills_bin:ro
-  #     # Keys (read-only, this brain's subdirectory only)
-  #     - /HOST_KEYS_PATH/BRAINNAME:/aios/keys/BRAINNAME:ro
   #   command: ["bash"]
 
 volumes:

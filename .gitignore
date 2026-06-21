@@ -58,14 +58,6 @@ credentials.*
 .credentials/
 .secrets/
 
-# AIOS keys directory — scaffold tracked, key material gitignored.
-# Add per-brain key subdirs here; never commit key content.
-keys/*
-!keys/.gitkeep
-!keys/*/
-keys/*/*
-!keys/*/.gitkeep
-
 # Cloud provider credentials
 service_account*.json
 *_service_account.json

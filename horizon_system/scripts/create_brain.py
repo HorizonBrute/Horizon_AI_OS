@@ -12,8 +12,8 @@ Creates and configures everything needed for a new AI brain:
                      horizon_system/bin + skills_bin (group brains rx)
                      sbin/skills_sbin/logs locked to owner-only AFTER
                      all grants (security invariant)
-  - Password file:   $HORIZON_ROOT/keys/<brain-name>/account_password.txt
-                     (admin read-only; brain user is denied access)
+  - Password:        stored in OS native keystore (Windows Credential Manager /
+                     macOS Keychain / Linux Secret Service) via brain_credential.py
   - Shell profile:   sets HORIZON_* env vars and cds to brain folder on
                      interactive login as the brain user
 
@@ -35,7 +35,7 @@ Security invariants honored (see $HORIZON_ETC/security_invariants.md):
     - Brain user gets rwx on its own folder, rx on bin + skills_bin, nothing on sbin.
     - No credentials are stored in this script.
     - Account password is auto-generated (random 64-char) and stored in
-      keys/<brain-name>/account_password.txt (admin read-only, brain denied).
+      the OS native keystore via brain_credential.py (sbin/).
 """
 
 import argparse
@@ -48,6 +48,20 @@ import secrets
 import stat
 import subprocess
 import sys
+
+# ---------------------------------------------------------------------------
+# Optional credential store (brain_credential.py in sbin/)
+# ---------------------------------------------------------------------------
+
+try:
+    import sys as _sys
+    import os as _os
+    _sbin = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'sbin')
+    _sys.path.insert(0, _sbin)
+    from brain_credential import store_password as _store_password
+    _HAS_CRED_STORE = True
+except Exception:
+    _HAS_CRED_STORE = False
 
 
 # ---------------------------------------------------------------------------
@@ -202,8 +216,6 @@ def phase1_preflight(args):
     horizon_skills_sbin = os.path.join(horizon_system, 'skills_sbin')
     brains_dir          = os.path.join(horizon_root, 'brains')
     brain_dir           = os.path.join(brains_dir,   brain_name)
-    keys_dir            = os.path.join(horizon_root, 'keys')
-    brain_keys_dir      = os.path.join(keys_dir,     brain_name)
     logs_dir            = os.path.join(horizon_root, 'logs')
 
     for label, path in [('HORIZON_SYSTEM', horizon_system),
@@ -217,7 +229,6 @@ def phase1_preflight(args):
     # brains/ directory will be created in Phase 3 if it doesn't exist yet.
     info(f'brains dir       : {brains_dir}')
     info(f'brain dir        : {brain_dir}')
-    info(f'brain keys dir   : {brain_keys_dir}')
 
     # --- Current (invoking) user ---
     try:
@@ -245,8 +256,6 @@ def phase1_preflight(args):
         'horizon_skills_sbin':  horizon_skills_sbin,
         'brains_dir':           brains_dir,
         'brain_dir':            brain_dir,
-        'keys_dir':             keys_dir,
-        'brain_keys_dir':       brain_keys_dir,
         'logs_dir':             logs_dir,
     }
 
@@ -300,8 +309,8 @@ def phase2_create_user_and_groups(ctx, dry_run=False):
     Generate account password, create the brains group, brain-specific group,
     and brain user account.  Add users to appropriate groups.
 
-    The generated password is stored in ctx['password'] so Phase 3 can write
-    it to keys/<brain-name>/account_password.txt (admin-only, never printed).
+    The generated password is stored in ctx['password'] and persisted to the
+    OS native keystore via brain_credential.store_password (never printed).
     """
     banner('Phase 2: User and Group Creation')
 
@@ -309,16 +318,24 @@ def phase2_create_user_and_groups(ctx, dry_run=False):
     brain_name    = ctx['brain_name']
     invoking_user = ctx['invoking_user']
 
-    # Generate a random 64-char password; Phase 3 persists it to keys/
+    # Generate a random 64-char password and store in the OS keystore.
     password = _generate_password()
     ctx['password'] = password
-    info('Generated random account password — will be written to keys/<brain-name>/account_password.txt')
-    info('  Password will NOT be printed here. Retrieve it from the keys file when needed.')
+    info('Generated random account password — will be stored in the OS native keystore.')
+    info('  Password will NOT be printed here. Retrieve with: brain_credential.py get <name>')
 
     if os_name == 'Windows':
         _phase2_windows(brain_name, invoking_user, password, dry_run)
     else:
         _phase2_unix(brain_name, invoking_user, os_name, password, dry_run)
+
+    if _HAS_CRED_STORE:
+        if _store_password(brain_name, password):
+            info('Account password stored in OS keystore (keyring). Retrieve with: brain_credential.py get <name>')
+        else:
+            warn('Password not stored in keystore — reset manually if needed for runas/Task Scheduler.')
+    else:
+        warn('brain_credential module not found in sbin/ — password not stored. Reset manually if needed.')
 
 
 # ---- Windows implementation ----
@@ -517,8 +534,6 @@ def phase3_folders_and_permissions(ctx, dry_run=False):
     horizon_sbin         = ctx['horizon_sbin']
     horizon_skills_bin   = ctx['horizon_skills_bin']
     horizon_skills_sbin  = ctx['horizon_skills_sbin']
-    keys_dir             = ctx['keys_dir']
-    brain_keys_dir       = ctx['brain_keys_dir']
     logs_dir             = ctx['logs_dir']
 
     # 3.1 Create brain folder
@@ -528,85 +543,26 @@ def phase3_folders_and_permissions(ctx, dry_run=False):
     else:
         print(f'  [DRY-RUN] os.makedirs({brain_dir!r}, exist_ok=True)')
 
-    # 3.2 Create keys/<brain-name>/ directory
-    info(f'Creating brain keys folder: {brain_keys_dir}')
-    if not dry_run:
-        os.makedirs(brain_keys_dir, exist_ok=True)
-    else:
-        print(f'  [DRY-RUN] os.makedirs({brain_keys_dir!r}, exist_ok=True)')
-
-    # 3.3 Write the generated account password to the keys folder
-    _write_password_file(ctx, dry_run)
-
     if os_name == 'Windows':
         _phase3_windows(
             brain_name, invoking_user,
-            brain_dir, brain_keys_dir,
+            brain_dir,
             horizon_bin, horizon_sbin, horizon_skills_bin, horizon_skills_sbin, logs_dir,
             dry_run,
         )
     else:
         _phase3_unix(
             brain_name, invoking_user, os_name,
-            brain_dir, brain_keys_dir,
+            brain_dir,
             horizon_bin, horizon_sbin, horizon_skills_bin, horizon_skills_sbin, logs_dir,
             dry_run,
         )
 
 
-def _write_password_file(ctx, dry_run):
-    """
-    Write the brain account password to keys/<brain-name>/account_password.txt.
-
-    This file is admin-only: the brain user is explicitly denied access.
-    It is never printed to the terminal.  The admin retrieves it from the
-    file when needed (e.g. for Windows Task Scheduler or runas invocations).
-    """
-    brain_keys_dir = ctx['brain_keys_dir']
-    brain_name     = ctx['brain_name']
-    invoking_user  = ctx['invoking_user']
-    os_name        = ctx['os_name']
-    password       = ctx.get('password', '')
-    password_file  = os.path.join(brain_keys_dir, 'account_password.txt')
-
-    info(f'Writing account password to: {password_file}')
-    if dry_run:
-        print(f'  [DRY-RUN] Would write password to {password_file} (admin-only ACL)')
-        return
-
-    try:
-        with open(password_file, 'w', encoding='utf-8') as fh:
-            fh.write(password + '\n')
-        info(f'  Password file written.')
-    except OSError as exc:
-        warn(f'Could not write password file: {exc}')
-        warn(f'  Set the password manually: passwd {brain_name} (Unix) or Set-LocalUser (Windows)')
-        return
-
-    # Set ACL: admin read-only, brain user denied
-    if os_name == 'Windows':
-        run(['icacls', password_file,
-             '/inheritance:r',
-             '/grant', f'{invoking_user}:(F)',
-             '/deny',  f'{brain_name}:(F)'],
-            dry_run=dry_run)
-    else:
-        # 600 owned by invoking_user — brain user cannot read (different UID, no group access)
-        os.chmod(password_file, 0o600)
-        try:
-            import pwd as _pwd
-            uid = _pwd.getpwnam(invoking_user).pw_uid
-            os.chown(password_file, uid, -1)
-        except (KeyError, PermissionError):
-            pass  # chown failed — leave as root-owned (still unreadable by brain user)
-
-    info(f'  ACL set: admin read-only, brain user denied.')
-
-
 # ---- Windows permission implementation ----
 
 def _phase3_windows(brain_name, invoking_user,
-                    brain_dir, brain_keys_dir,
+                    brain_dir,
                     horizon_bin, horizon_sbin, horizon_skills_bin, horizon_skills_sbin, logs_dir,
                     dry_run):
     """
@@ -623,14 +579,6 @@ def _phase3_windows(brain_name, invoking_user,
          '/inheritance:r',
          '/grant', f'{brain_name}:(OI)(CI)F',
          '/grant', f'{invoking_user}:(OI)(CI)F'],
-        dry_run=dry_run)
-
-    # -- Brain keys dir: brain user denied, invoking user full --
-    info(f'Setting ACLs on brain keys folder: {brain_keys_dir}')
-    run(['icacls', brain_keys_dir,
-         '/inheritance:r',
-         '/grant', f'{invoking_user}:(OI)(CI)F',
-         '/deny',  f'{brain_name}:(OI)(CI)F'],
         dry_run=dry_run)
 
     # -- horizon_system/bin: grant brains group RX --
@@ -674,7 +622,7 @@ def _phase3_windows(brain_name, invoking_user,
 # ---- Unix permission implementation ----
 
 def _phase3_unix(brain_name, invoking_user, os_name,
-                 brain_dir, brain_keys_dir,
+                 brain_dir,
                  horizon_bin, horizon_sbin, horizon_skills_bin, horizon_skills_sbin, logs_dir,
                  dry_run):
     """
@@ -688,11 +636,6 @@ def _phase3_unix(brain_name, invoking_user, os_name,
     info(f'Setting ownership of brain folder: {brain_dir}')
     run(['chown', '-R', f'{brain_name}:{brain_name}', brain_dir], dry_run=dry_run)
     run(['chmod', '770', brain_dir], dry_run=dry_run)
-
-    # -- Brain keys dir: owned by invoking user, brain user has no access --
-    info(f'Setting ownership of brain keys folder: {brain_keys_dir}')
-    run(['chown', f'{invoking_user}:{invoking_user}', brain_keys_dir], dry_run=dry_run)
-    run(['chmod', '700', brain_keys_dir], dry_run=dry_run)
 
     # -- bin: set brains group and grant rx --
     info(f'Setting bin group to "{BRAINS_GROUP}" and granting rx')
@@ -741,10 +684,8 @@ def phase4_verify(ctx, dry_run=False):
     os_name             = ctx['os_name']
     brain_name          = ctx['brain_name']
     brain_dir           = ctx['brain_dir']
-    brain_keys_dir      = ctx['brain_keys_dir']
     horizon_sbin        = ctx['horizon_sbin']
     horizon_skills_sbin = ctx['horizon_skills_sbin']
-    password_file       = os.path.join(brain_keys_dir, 'account_password.txt')
 
     results = {}
 
@@ -769,14 +710,6 @@ def phase4_verify(ctx, dry_run=False):
     else:
         results['brain_dir_perms'] = None
         info('Brain folder permission check skipped (dry-run or folder missing)')
-
-    # -- Brain keys folder exists --
-    results['brain_keys_exists'] = os.path.isdir(brain_keys_dir)
-    _report_check(f'Brain keys folder exists: {brain_keys_dir}', results['brain_keys_exists'])
-
-    # -- Password file exists --
-    results['password_file_exists'] = os.path.isfile(password_file) or dry_run
-    _report_check(f'Account password file: {password_file}', results['password_file_exists'])
 
     # -- sbin / skills_sbin permissions (Unix only) --
     if os_name != 'Windows' and not dry_run:
@@ -804,16 +737,13 @@ def phase4_verify(ctx, dry_run=False):
     print(f'    2. Review and customize the deployed workspace files (Phase 5):')
     print(f'       $HORIZON_ROOT/brains/{brain_name}/.claude/CLAUDE.md')
     print(f'       $HORIZON_ROOT/brains/{brain_name}/.claude/settings.json')
-    print(f'    3. Place any credentials this brain needs in:')
-    print(f'       $HORIZON_ROOT/keys/{brain_name}/')
-    print(f'    4. Account password (for runas / Task Scheduler / scheduled jobs):')
-    print(f'       $HORIZON_ROOT/keys/{brain_name}/account_password.txt')
-    print(f'       (Admin read-only. Brain user is denied access to this file.)')
-    print(f'    5. Provision tools from $HORIZON_USRBIN into the brain folder as needed.')
-    print(f'    6. Shell profile written at brain home — sets HORIZON_* env vars and')
+    print(f'    3. Provision tools from $HORIZON_USRBIN into the brain folder as needed.')
+    print(f'    4. Retrieve account password: python brain_credential.py get {brain_name}')
+    print(f'       (Stored in OS keystore. Windows Task Scheduler: use this password when setting up scheduled tasks.)')
+    print(f'    5. Shell profile written at brain home — sets HORIZON_* env vars and')
     print(f'       changes to brain folder on interactive login as "{brain_name}".')
-    print(f'    7. To run as a scheduled/automated agent:')
-    print(f'         Windows: Task Scheduler → run as "{brain_name}" (use password from keys/)')
+    print(f'    6. To run as a scheduled/automated agent:')
+    print(f'         Windows: Task Scheduler → run as "{brain_name}" (use password from keystore)')
     print(f'         Linux:   sudo crontab -u {brain_name} -e')
     print(f'         macOS:   sudo crontab -u {brain_name} -e')
     print()
@@ -1097,10 +1027,9 @@ def _deploy_template(src, dest, substitutions):
 
 def _write_provision_manifest(ctx):
     """Write .aios_provision.json to the brain directory for audit purposes."""
-    brain_name     = ctx['brain_name']
-    brain_dir      = ctx['brain_dir']
-    horizon_root   = ctx['horizon_root']
-    brain_keys_dir = ctx['brain_keys_dir']
+    brain_name   = ctx['brain_name']
+    brain_dir    = ctx['brain_dir']
+    horizon_root = ctx['horizon_root']
 
     manifest = {
         'brain_name':        brain_name,
@@ -1111,8 +1040,7 @@ def _write_provision_manifest(ctx):
         'brain_dir':         brain_dir,
         'skills_bin_access': 'read+execute',
         'sbin_access':       'deny',
-        'keys_dir':          brain_keys_dir if os.path.isdir(brain_keys_dir) else None,
-        'password_file':     os.path.join(brain_keys_dir, 'account_password.txt'),
+        'credential_store':  'OS native keystore (brain_credential.py)',
     }
     dest = os.path.join(brain_dir, '.aios_provision.json')
     try:

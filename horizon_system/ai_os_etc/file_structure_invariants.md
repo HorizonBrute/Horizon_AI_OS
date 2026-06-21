@@ -17,7 +17,6 @@ Hardcoded paths are forbidden in committed files. Use these variables exclusivel
 | `$HORIZON_LOGS` | `$HORIZON_ROOT\logs` | Centralized audit and operational logs |
 | `$HORIZON_USRBIN` | `$HORIZON_ROOT\usrbin` | Common application installs shared across brains and projects |
 | `$HORIZON_PROJECTS` | `$HORIZON_ROOT\Projects` | Primary user's personal project workspace |
-| `$HORIZON_KEYS` | `$HORIZON_ROOT\keys` | Designated location for brain-accessible credential files |
 
 Rules:
 - Scripts resolve these variables at startup; never hardcode paths.
@@ -79,8 +78,6 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   └── aios_statusline.conf        # Template for per-project statusline config (see Section 11)
 │   ├── harness_configs/                # Harness-specific config (sounds maps, etc.)
 │   └── scripts/                        # Admin setup scripts (create_brain.py, etc.)
-├── keys/                               # $HORIZON_KEYS — credential store; per-brain subdirs with OS filesystem permissions (see Section 9)
-│   └── <brain-name>/                   # Admin: full access. Named brain account: read. All other brains: none.
 ├── usrbin/                             # $HORIZON_USRBIN — tool repository; admin draws from here to provision brains (see Section 8)
 │   └── [installed tools and apps]/     # Admin: full access. Brains: no default access — provisioned selectively per brain.
 └── Projects/                           # $HORIZON_PROJECTS — primary user's project workspace (see Section 8)
@@ -233,31 +230,6 @@ Check `$HORIZON_USRBIN` before installing new tools.
 **Single-user model:** AIOS currently presumes one primary user. The multi-user extension is multiple OS accounts each with their own brain user profile, all sharing the same AIOS configuration layer. Common configuration == one OS across multiple users; per-user state lives in each account's profile, not in `$HORIZON_ROOT`.
 
 **Automated brains:** Because each brain is a native OS user account, a brain can be run as a scheduled task or automated agent — Task Scheduler (Windows) or cron/systemd (Unix) — once it is trusted for its expert function. The brain account's filesystem scope is the sandbox. No additional isolation mechanism is needed; the OS enforces it. This is the same model as a service account running a daemon.
-
----
-
-## 9. keys — Credential Store (`$HORIZON_KEYS`)
-
-`$HORIZON_ROOT/keys/` is the canonical location for credential material brains may read.
-
-**Structure:** Organize by brain name (or by service, then brain). Each subdirectory holds the credentials for one brain.
-
-```
-keys/
-├── <brain-name>/          # one directory per brain that needs credentials
-│   ├── api_key            # plain text or env-file format
-│   └── service_account.json
-└── <another-brain>/
-    └── ...
-```
-
-**Filesystem permissions (set by the administrative context using OS tools):**
-- Administrative context: full access to `keys/` and all subdirectories
-- Each `keys/<brain-name>/`: that brain's OS account gets read-only; all other accounts denied
-
-**Git:** The `keys/` directory scaffold is tracked. All key content is gitignored. Never commit credentials. See `.gitignore` for the pattern.
-
-**Threat model:** See `security_invariants.md §0` (Credential and Data Containment). Keys provisioned here must be scoped to the brain's minimum functional requirements.
 
 ---
 
