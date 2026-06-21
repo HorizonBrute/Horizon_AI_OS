@@ -28,6 +28,8 @@ $HORIZON_DOCS     = Join-Path $HORIZON_SYSTEM "documentation"
 $HORIZON_USRBIN   = Join-Path $HORIZON_ROOT "usrbin"
 $HORIZON_PROJECTS = Join-Path $HORIZON_ROOT "Projects"
 $HORIZON_KEYS     = Join-Path $HORIZON_ROOT "keys"
+$HORIZON_LOGS     = Join-Path $HORIZON_ROOT "logs"
+$HORIZON_SOUNDS   = Join-Path $HORIZON_SYSTEM "sounds"
 
 $env:HORIZON_SYSTEM   = $HORIZON_SYSTEM
 $env:HORIZON_ROOT     = $HORIZON_ROOT
@@ -37,6 +39,8 @@ $env:HORIZON_DOCS     = $HORIZON_DOCS
 $env:HORIZON_USRBIN   = $HORIZON_USRBIN
 $env:HORIZON_PROJECTS = $HORIZON_PROJECTS
 $env:HORIZON_KEYS     = $HORIZON_KEYS
+$env:HORIZON_LOGS     = $HORIZON_LOGS
+$env:HORIZON_SOUNDS   = $HORIZON_SOUNDS
 
 # -----------------------------------------------------------------------------
 # Helpers
@@ -66,25 +70,33 @@ Banner "SECTION 1: Environment Variables"
 
 Write-Host ""
 Write-Host "Resolved paths:"
-Write-Host "  HORIZON_ROOT  = $HORIZON_ROOT"
-Write-Host "  HORIZON_BIN   = $HORIZON_BIN"
-Write-Host "  HORIZON_ETC   = $HORIZON_ETC"
-Write-Host "  HORIZON_DOCS  = $HORIZON_DOCS"
+Write-Host "  HORIZON_ROOT    = $HORIZON_ROOT"
+Write-Host "  HORIZON_BIN     = $HORIZON_BIN"
+Write-Host "  HORIZON_ETC     = $HORIZON_ETC"
+Write-Host "  HORIZON_DOCS    = $HORIZON_DOCS"
+Write-Host "  HORIZON_LOGS    = $HORIZON_LOGS"
+Write-Host "  HORIZON_SOUNDS  = $HORIZON_SOUNDS"
 
-Write-Host ""
-Write-Host "Add the following to your PowerShell profile (`$PROFILE):"
-Write-Host "  (Replace the HORIZON_ROOT value with your actual path if different)"
-Write-Host ""
-Write-Host "    `$env:HORIZON_ROOT     = `"$HORIZON_ROOT`""
-Write-Host "    `$env:HORIZON_SYSTEM   = `"`$env:HORIZON_ROOT\horizon_system`""
-Write-Host "    `$env:HORIZON_BIN      = `"`$env:HORIZON_SYSTEM\bin`""
-Write-Host "    `$env:HORIZON_ETC      = `"`$env:HORIZON_SYSTEM\ai_os_etc`""
-Write-Host "    `$env:HORIZON_DOCS     = `"`$env:HORIZON_SYSTEM\documentation`""
-Write-Host "    `$env:HORIZON_USRBIN   = `"`$env:HORIZON_ROOT\usrbin`""
-Write-Host "    `$env:HORIZON_PROJECTS = `"`$env:HORIZON_ROOT\Projects`""
-Write-Host "    `$env:HORIZON_KEYS     = `"`$env:HORIZON_ROOT\keys`""
-Write-Host ""
-Write-Host "  Then reload your profile: . `$PROFILE"
+if ($env:AIOSDeployMode -eq "docker") {
+    Info "Docker mode: HORIZON_* env vars are set in the Dockerfile — no profile changes needed."
+} else {
+    Write-Host ""
+    Write-Host "Add the following to your PowerShell profile (`$PROFILE):"
+    Write-Host "  (Replace the HORIZON_ROOT value with your actual path if different)"
+    Write-Host ""
+    Write-Host "    `$env:HORIZON_ROOT     = `"$HORIZON_ROOT`""
+    Write-Host "    `$env:HORIZON_SYSTEM   = `"`$env:HORIZON_ROOT\horizon_system`""
+    Write-Host "    `$env:HORIZON_BIN      = `"`$env:HORIZON_SYSTEM\bin`""
+    Write-Host "    `$env:HORIZON_ETC      = `"`$env:HORIZON_SYSTEM\ai_os_etc`""
+    Write-Host "    `$env:HORIZON_DOCS     = `"`$env:HORIZON_SYSTEM\documentation`""
+    Write-Host "    `$env:HORIZON_USRBIN   = `"`$env:HORIZON_ROOT\usrbin`""
+    Write-Host "    `$env:HORIZON_PROJECTS = `"`$env:HORIZON_ROOT\Projects`""
+    Write-Host "    `$env:HORIZON_KEYS     = `"`$env:HORIZON_ROOT\keys`""
+    Write-Host "    `$env:HORIZON_LOGS     = `"`$env:HORIZON_ROOT\logs`""
+    Write-Host "    `$env:HORIZON_SOUNDS   = `"`$env:HORIZON_SYSTEM\sounds`""
+    Write-Host ""
+    Write-Host "  Then reload your profile: . `$PROFILE"
+}
 
 # -----------------------------------------------------------------------------
 # SECTION 2: ~/.claude/CLAUDE.md stub
@@ -319,10 +331,14 @@ if (-not (Test-Path $logsDir)) {
     Write-Host "Created logs/ directory." -ForegroundColor Green
 }
 
-$setupSched = if ($YesAll) { $true } else { (Read-Host "Set up daily auto-sync from upstream? [y/N]") -match '^[Yy]' }
-if ($setupSched) {
-    $schedScript = Join-Path $HORIZON_SYSTEM "sbin\setup_sync_schedule.py"
-    python $schedScript $(if ($YesAll) { "--yes" })
+if ($env:AIOSDeployMode -eq "docker") {
+    Info "Docker mode: skipping sync schedule setup (refresh via image rebuild or pull)."
 } else {
-    Write-Host "Skipped. Run later: python $HORIZON_SYSTEM\sbin\setup_sync_schedule.py"
+    $setupSched = if ($YesAll) { $true } else { (Read-Host "Set up daily auto-sync from upstream? [y/N]") -match '^[Yy]' }
+    if ($setupSched) {
+        $schedScript = Join-Path $HORIZON_SYSTEM "sbin\setup_sync_schedule.py"
+        python $schedScript $(if ($YesAll) { "--yes" })
+    } else {
+        Write-Host "Skipped. Run later: python $HORIZON_SYSTEM\sbin\setup_sync_schedule.py"
+    }
 }
