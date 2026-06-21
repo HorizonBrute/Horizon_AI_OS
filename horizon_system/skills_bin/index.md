@@ -7,3 +7,4 @@ Group-readable skills available to all brains. Check this file first when lookin
 | Skill | Trigger | Purpose |
 |---|---|---|
 | handoff | `/handoff` | Write a structured session handoff document |
+| skill-creation | `/skill-creation` | Create a new AIOS skill with correct structure and index registration |

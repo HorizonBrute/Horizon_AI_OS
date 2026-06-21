@@ -120,9 +120,9 @@ When any of the following are changed, cross-check against `security_invariants.
 before committing. Flag discrepancies; do not suppress them:
 
 - `.gitignore` or `.gitignore.user.template`
-- `horizon_bin/harness_configs/git/` (hooks, gitconfig)
-- `horizon_bin/sbin/` (any script)
-- `horizon_bin/bootstrap.ps1` / `bootstrap.sh`
+- `horizon_system/harness_configs/git/` (hooks, gitconfig)
+- `horizon_system/sbin/` (any script)
+- `horizon_system/sbin/bootstrap.ps1` / `bootstrap.sh`
 - `brains/.aioscommon/` templates
 - `~/.claude/settings.json` (hooks, permissions)
 - Any file that references a path, credential, or user account

@@ -222,12 +222,12 @@ The bootstrap script automates Steps 6–8 below. Run it once after cloning. It 
 
 **Git Bash / macOS / Linux:**
 ```bash
-bash "$HORIZON_BIN/bootstrap.sh"
+bash "$HORIZON_SYSTEM/sbin/bootstrap.sh"
 ```
 
 **PowerShell (Windows):**
 ```powershell
-& "$env:HORIZON_BIN\bootstrap.ps1"
+& "$env:HORIZON_SYSTEM\sbin\bootstrap.ps1"
 ```
 
 The script will:

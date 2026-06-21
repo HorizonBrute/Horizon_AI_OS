@@ -35,7 +35,7 @@ sbin must have an explicit Deny ACL entry for all brain user accounts covering R
 To deny access for a brain user on Windows (run as primary user or Administrator):
 
 ```powershell
-$acl = Get-Acl "C:\devroot\horizon_bin\sbin"
+$acl = Get-Acl "C:\devroot\horizon_system\sbin"
 $rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
     "<brain_username>",
     "FullControl",
@@ -44,7 +44,7 @@ $rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
     "Deny"
 )
 $acl.AddAccessRule($rule)
-Set-Acl "C:\devroot\horizon_bin\sbin" $acl
+Set-Acl "C:\devroot\horizon_system\sbin" $acl
 ```
 
 Repeat for each brain user account.

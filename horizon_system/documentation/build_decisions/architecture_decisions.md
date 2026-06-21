@@ -185,14 +185,14 @@ These pairs are the most likely to drift and require attention after any update.
 
 ### 4.1 Skills: `$HORIZON_BIN/skills/*` → `~/.claude/skills/*`
 
-After adding or updating any skill in `$HORIZON_BIN/skills/`, the deployed copy must be refreshed:
+After adding or updating any skill in `$HORIZON_SYSTEM/skills_bin/`, the deployed copy must be refreshed:
 
 ```bash
 # Re-run bootstrap (handles all sync steps)
-bash "$HORIZON_BIN/bootstrap.sh"
+bash "$HORIZON_SYSTEM/sbin/bootstrap.sh"
 
 # Or manually copy updated skills only
-cp "$HORIZON_BIN/skills/"*.md ~/.claude/skills/
+cp -r "$HORIZON_SYSTEM/skills_bin/"* ~/.claude/skills/
 ```
 
 Signs of drift: a skill change in the repo has no effect in Claude Code sessions. Check whether `~/.claude/skills/` has the updated version.

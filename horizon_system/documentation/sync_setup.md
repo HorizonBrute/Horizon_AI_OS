@@ -26,7 +26,7 @@ is git-ignored; never commit it.
 
 ## Installing the scheduled task / cron job
 
-Run from `horizon_bin/`:
+Run from `$HORIZON_SYSTEM/sbin/`:
 
 ```
 python setup_sync_schedule.py

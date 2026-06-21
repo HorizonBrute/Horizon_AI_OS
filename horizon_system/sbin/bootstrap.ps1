@@ -320,7 +320,7 @@ if (-not (Test-Path $localConf)) {
 }
 
 # Ensure logs directory exists
-$logsDir = Join-Path $HORIZON_ROOT "logs"
+$logsDir = Join-Path $HORIZON_SYSTEM "logs"
 if (-not (Test-Path $logsDir)) {
     New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
     Write-Host "Created logs/ directory." -ForegroundColor Green
@@ -328,8 +328,8 @@ if (-not (Test-Path $logsDir)) {
 
 $setupSched = if ($YesAll) { $true } else { (Read-Host "Set up daily auto-sync from upstream? [y/N]") -match '^[Yy]' }
 if ($setupSched) {
-    $schedScript = Join-Path $HORIZON_BIN "setup_sync_schedule.py"
+    $schedScript = Join-Path $HORIZON_SYSTEM "sbin\setup_sync_schedule.py"
     python $schedScript $(if ($YesAll) { "--yes" })
 } else {
-    Write-Host "Skipped. Run later: python $HORIZON_BIN\setup_sync_schedule.py"
+    Write-Host "Skipped. Run later: python $HORIZON_SYSTEM\sbin\setup_sync_schedule.py"
 }

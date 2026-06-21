@@ -25,8 +25,8 @@ AI instructions — reproducible on any supported machine with a single bootstra
 
 1. Fork or clone this repo to your preferred root path (e.g. `C:\devroot` on Windows, `~/devroot` on Unix).
 2. Run the bootstrap script:
-   - **Windows:** `.\bootstrap.ps1`
-   - **Linux/macOS:** `./bootstrap.sh`
+   - **Windows:** `.\sbin\bootstrap.ps1`
+   - **Linux/macOS:** `./sbin/bootstrap.sh`
 3. Read the full setup guide before your first commit.
 
 ## Full Setup Guide

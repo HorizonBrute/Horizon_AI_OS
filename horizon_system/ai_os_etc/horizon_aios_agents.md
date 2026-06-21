@@ -1,0 +1,73 @@
+# Horizon AIOS — Agent Configuration (OS Layer)
+
+Harness-agnostic — read by Claude Code, Codex, and any harness supporting `agents.md`.
+Harness-specific config: `horizon_system/harness_configs/<harness>/`. Invariants: `horizon_system/ai_os_etc/`.
+
+---
+
+# System-Level Preferences
+
+## Agent Usage
+
+**The main session is an orchestrator, not a worker.** Decompose tasks, spawn agents, synthesize results. Never read files, write code, or run commands inline if the work can be delegated.
+
+**"Send an agent team"** means spawn in this order:
+1. **Orchestration agent** — breaks down the task and coordinates the rest
+2. **Log reader agent** *(if needed)* — gathers runtime evidence before planning
+3. **Planner agent** — designs the approach
+4. **Implementer agent** — writes the code
+5. **Validator agent** — verifies the fix and checks for regressions
+
+When in doubt, delegate.
+
+**Agents are self-sufficient.** Resolve problems independently before reporting back. Return to the main session only if: (a) the user must be informed, or (b) a decision only the user can make is required.
+
+## Lists
+
+Always use hierarchical numbered format: `1.` top-level, `1.1` items, `1.1.1` sub-items. Never use bullets or lettered lists.
+
+## Token-Efficient File Operations
+
+Prefer CLI tools over file-content tools for mechanical operations:
+
+- **Search:** `grep`/`Select-String`/`rg` — not Read + scan
+- **Move/copy/rename:** `mv`/`Copy-Item`/`Rename-Item` — not Read + Write + delete
+- **Bulk replace:** `sed`/`Get-Content | ForEach-Object | Set-Content` — not Read + Edit
+- **Directory listing:** `ls`/`Get-ChildItem` — not Glob
+- **Check existence:** `Test-Path`/`[ -f ]` — not Read
+
+Use Read/Write/Edit only when content must be reasoned about or precisely modified.
+
+## Session Start
+
+Check whether the AIOS filesystem monitor is running:
+
+```
+python $HORIZON_BIN/monitor_status.py
+```
+
+Output: `running` or `stopped`. If `stopped`, ask the user: "The AIOS filesystem monitor is not running. Enable file access logging? Run: `python $HORIZON_BIN/sbin/monitor_aios.py` (administrative context required)."
+
+Do not start the monitor yourself.
+
+## Skills
+
+Check the index before searching individual skill files:
+- `$HORIZON_SYSTEM/skills_bin/index.md` — group-readable skills
+- `$HORIZON_SYSTEM/skills_sbin/index.md` — owner-only privileged skills
+
+When adding a skill, update the appropriate index.md in the same commit.
+
+**New skills must follow the `skill-creation` skill template.** Invoke `/skill-creation` or read `$HORIZON_SYSTEM/skills_bin/skill-creation/SKILL.md` before creating any new skill to ensure correct structure and registration.
+
+## OS-Layer Development Values
+
+When making architectural or design decisions on the AIOS OS layer, read on demand:
+
+    $HORIZON_DOCS/dev_values.md
+
+Do **not** import at session start.
+
+## Commits
+
+Always use `git commit -s` (DCO sign-off required). Never omit `-s`.
