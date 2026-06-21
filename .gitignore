@@ -621,3 +621,11 @@ brains/*
 # HORIZON AIOS — explicit un-ignores (must come last)
 # =============================================================================
 !.gitattributes
+
+# Un-ignore horizon_system subdirs that match generic VS/build patterns
+!horizon_system/bin/
+!horizon_system/bin/**
+!horizon_system/logs/
+!horizon_system/logs/*.gitkeep
+!horizon_system/logs/**/.gitkeep
+!horizon_system/logs/**/README.md

@@ -8,11 +8,11 @@ import subprocess
 import textwrap
 from pathlib import Path
 
-SCRIPT_DIR = Path(__file__).resolve().parent         # horizon_bin/
-HORIZON_BIN = SCRIPT_DIR                             # horizon_bin/
+SCRIPT_DIR = Path(__file__).resolve().parent         # horizon_system/
+HORIZON_SYSTEM = SCRIPT_DIR                          # horizon_system/
 HORIZON_ROOT = SCRIPT_DIR.parent                     # devroot/
-HORIZON_ETC = SCRIPT_DIR / "ai_os_etc"
-SBIN = SCRIPT_DIR / "sbin"
+HORIZON_ETC = HORIZON_SYSTEM / "ai_os_etc"
+SBIN = HORIZON_SYSTEM / "sbin"
 CONFIG_FILE = HORIZON_ETC / "aios_local.conf"
 
 DEFAULTS = {
@@ -129,7 +129,7 @@ def install_windows(config):
         sys.exit(1)
     print(f"[OK] Scheduled task '{maint_task_name}' registered — runs weekly on Sunday at 04:00")
 
-    log_dir = Path(config["AIOS_LOG_DIR"]) if config["AIOS_LOG_DIR"] else HORIZON_BIN / "logs"
+    log_dir = Path(config["AIOS_LOG_DIR"]) if config["AIOS_LOG_DIR"] else HORIZON_SYSTEM / "logs"
     print_next_steps(config, log_dir / "aios_sync.log")
 
 
@@ -187,7 +187,7 @@ def install_unix(config, log_file):
 def print_next_steps(config, log_file=None):
     remote = config["AIOS_REPO_REMOTE"]
     if log_file is None:
-        log_dir = Path(config["AIOS_LOG_DIR"]) if config["AIOS_LOG_DIR"] else HORIZON_BIN / "logs"
+        log_dir = Path(config["AIOS_LOG_DIR"]) if config["AIOS_LOG_DIR"] else HORIZON_SYSTEM / "logs"
         log_file = log_dir / "aios_sync.log"
     print(textwrap.dedent(f"""
     [NEXT STEPS] For unattended sync to work:
@@ -198,7 +198,7 @@ def print_next_steps(config, log_file=None):
        - On Windows: the OpenSSH Authentication Agent service must be running and the key
          loaded at login. Task runs only when you are logged in (default).
 
-         For always-on (logged-out) sync: see horizon_bin/documentation/sync_setup.md
+         For always-on (logged-out) sync: see horizon_system/documentation/sync_setup.md
          for the advanced stored-credential + deploy key setup.
 
     2. Test manually before relying on automation:
@@ -212,7 +212,7 @@ def print_next_steps(config, log_file=None):
 def main():
     config = read_config()
 
-    log_dir = Path(config["AIOS_LOG_DIR"]) if config["AIOS_LOG_DIR"] else HORIZON_BIN / "logs"
+    log_dir = Path(config["AIOS_LOG_DIR"]) if config["AIOS_LOG_DIR"] else HORIZON_SYSTEM / "logs"
     log_file = log_dir / "aios_sync.log"
 
     if config["SYNC_AIOS_FROM_REMOTE"].lower() == "no":

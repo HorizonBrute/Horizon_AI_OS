@@ -18,15 +18,18 @@ $YesAll = $args -contains "--yes" -or $args -contains "-y"
 
 # -----------------------------------------------------------------------------
 # Resolve HORIZON_ROOT from script location
+# Script lives at horizon_system/sbin/ — go up two levels to reach repo root.
 # -----------------------------------------------------------------------------
-$HORIZON_BIN      = $PSScriptRoot
-$HORIZON_ROOT     = Split-Path $HORIZON_BIN -Parent
-$HORIZON_ETC      = Join-Path $HORIZON_BIN "ai_os_etc"
-$HORIZON_DOCS     = Join-Path $HORIZON_BIN "documentation"
+$HORIZON_SYSTEM   = Split-Path $PSScriptRoot -Parent
+$HORIZON_ROOT     = Split-Path $HORIZON_SYSTEM -Parent
+$HORIZON_BIN      = Join-Path $HORIZON_SYSTEM "bin"
+$HORIZON_ETC      = Join-Path $HORIZON_SYSTEM "ai_os_etc"
+$HORIZON_DOCS     = Join-Path $HORIZON_SYSTEM "documentation"
 $HORIZON_USRBIN   = Join-Path $HORIZON_ROOT "usrbin"
 $HORIZON_PROJECTS = Join-Path $HORIZON_ROOT "Projects"
 $HORIZON_KEYS     = Join-Path $HORIZON_ROOT "keys"
 
+$env:HORIZON_SYSTEM   = $HORIZON_SYSTEM
 $env:HORIZON_ROOT     = $HORIZON_ROOT
 $env:HORIZON_BIN      = $HORIZON_BIN
 $env:HORIZON_ETC      = $HORIZON_ETC
@@ -73,9 +76,10 @@ Write-Host "Add the following to your PowerShell profile (`$PROFILE):"
 Write-Host "  (Replace the HORIZON_ROOT value with your actual path if different)"
 Write-Host ""
 Write-Host "    `$env:HORIZON_ROOT     = `"$HORIZON_ROOT`""
-Write-Host "    `$env:HORIZON_BIN      = `"`$env:HORIZON_ROOT\horizon_bin`""
-Write-Host "    `$env:HORIZON_ETC      = `"`$env:HORIZON_BIN\ai_os_etc`""
-Write-Host "    `$env:HORIZON_DOCS     = `"`$env:HORIZON_BIN\documentation`""
+Write-Host "    `$env:HORIZON_SYSTEM   = `"`$env:HORIZON_ROOT\horizon_system`""
+Write-Host "    `$env:HORIZON_BIN      = `"`$env:HORIZON_SYSTEM\bin`""
+Write-Host "    `$env:HORIZON_ETC      = `"`$env:HORIZON_SYSTEM\ai_os_etc`""
+Write-Host "    `$env:HORIZON_DOCS     = `"`$env:HORIZON_SYSTEM\documentation`""
 Write-Host "    `$env:HORIZON_USRBIN   = `"`$env:HORIZON_ROOT\usrbin`""
 Write-Host "    `$env:HORIZON_PROJECTS = `"`$env:HORIZON_ROOT\Projects`""
 Write-Host "    `$env:HORIZON_KEYS     = `"`$env:HORIZON_ROOT\keys`""
@@ -122,9 +126,9 @@ if (Test-Path $ClaudeMd) {
 # -----------------------------------------------------------------------------
 Banner "SECTION 3: Deploy skills"
 
-# Skills live in horizon_bin/skills_bin/<name>/SKILL.md (directory per skill).
+# Skills live in horizon_system/skills_bin/<name>/SKILL.md (directory per skill).
 # Deploy by copying each skill directory into ~/.claude/skills/.
-$SkillsSrc = Join-Path $HORIZON_BIN "skills_bin"
+$SkillsSrc = Join-Path $HORIZON_SYSTEM "skills_bin"
 $SkillsDst = Join-Path $HOME ".claude\skills"
 
 if (-not (Test-Path $SkillsSrc)) {
@@ -192,7 +196,7 @@ if (Test-Path $HandoffsDir) {
 Banner "SECTION 5: ~/.claude/settings.json"
 
 $SettingsDst      = Join-Path $HOME ".claude\settings.json"
-$SettingsTemplate = Join-Path $HORIZON_BIN "templates\claude_code\settings.json"
+$SettingsTemplate = Join-Path $HORIZON_SYSTEM "templates\claude_code\settings.json"
 
 if (Test-Path $SettingsDst) {
     Info "~/.claude/settings.json already exists."
@@ -206,7 +210,7 @@ if (Test-Path $SettingsDst) {
         $answer = if ($YesAll) { "y" } else { Read-Host "  Copy template to ~/.claude/settings.json? [y/N]" }
         if ($answer -eq "y" -or $answer -eq "Y") {
             $templateContent = Get-Content $SettingsTemplate -Raw
-            $substituted = $templateContent -replace [regex]::Escape("HORIZON_BIN_PATH"), $HORIZON_BIN
+            $substituted = $templateContent -replace [regex]::Escape("HORIZON_BIN_PATH"), $HORIZON_BIN -replace [regex]::Escape("HORIZON_SYSTEM_PATH"), $HORIZON_SYSTEM
             Set-Content -Path $SettingsDst -Value $substituted -Encoding UTF8
             Ok "Copied template to ~/.claude/settings.json (HORIZON_BIN_PATH substituted)."
             Warn "Review ~/.claude/settings.json — some paths may still need manual adjustment."
@@ -226,14 +230,14 @@ if (Test-Path $SettingsDst) {
 Banner "SECTION 6: Git hooks"
 
 $GitDir    = Join-Path $HORIZON_ROOT ".git"
-$HooksPath = "./horizon_bin/harness_configs/git/hooks"
+$HooksPath = "./horizon_system/harness_configs/git/hooks"
 
 if (Test-Path $GitDir) {
     git -C $HORIZON_ROOT config core.hooksPath $HooksPath
     Ok "Set git core.hooksPath to: $HooksPath"
 
     # Install commit-msg hook (DCO sign-off enforcement)
-    Copy-Item "$HORIZON_BIN\harness_configs\git\hooks\commit-msg" "$HORIZON_ROOT\.git\hooks\commit-msg" -Force
+    Copy-Item "$HORIZON_SYSTEM\harness_configs\git\hooks\commit-msg" "$HORIZON_ROOT\.git\hooks\commit-msg" -Force
     Ok "Installed commit-msg hook (DCO sign-off enforcement)."
 } else {
     Info "$HORIZON_ROOT is not a git repository — skipping git hooks config."
@@ -300,7 +304,7 @@ Write-Host ""
 Write-Host "=== Section 8: Local Config and Sync Schedule ===" -ForegroundColor Cyan
 
 $localConf = Join-Path $HORIZON_ETC "aios_local.conf"
-$confTemplate = Join-Path $HORIZON_BIN "templates\aios_local.conf.template"
+$confTemplate = Join-Path $HORIZON_SYSTEM "templates\aios_local.conf.template"
 
 if (-not (Test-Path $localConf)) {
     Write-Host "aios_local.conf not found."

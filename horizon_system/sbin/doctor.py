@@ -36,7 +36,7 @@ def fail(name, reason):
 # 1. Environment variables
 # ---------------------------------------------------------------------------
 def check_env_vars():
-    vars_ = ["HORIZON_ROOT", "HORIZON_BIN", "HORIZON_ETC", "HORIZON_DOCS"]
+    vars_ = ["HORIZON_ROOT", "HORIZON_SYSTEM", "HORIZON_BIN", "HORIZON_ETC", "HORIZON_DOCS"]
     results = {}
     for v in vars_:
         val = os.environ.get(v)
@@ -55,8 +55,8 @@ def check_env_vars():
 # ---------------------------------------------------------------------------
 # 2. Skills deployed
 # ---------------------------------------------------------------------------
-def check_skills(horizon_bin):
-    skills_src = horizon_bin / "skills"
+def check_skills(horizon_system):
+    skills_src = horizon_system / "skills_bin"
     skills_dst = Path.home() / ".claude" / "skills"
     if not skills_src.is_dir():
         warn("Skills: source dir", f"{skills_src} does not exist (no skills to deploy)")
@@ -95,11 +95,11 @@ def check_hook(name, hook_filename, harness_configs_git_hooks, horizon_root):
 # ---------------------------------------------------------------------------
 # 5. aios_local.conf
 # ---------------------------------------------------------------------------
-def check_local_conf(horizon_bin):
-    conf = horizon_bin / "ai_os_etc" / "aios_local.conf"
-    template = horizon_bin / "templates" / "aios_local.conf.template"
+def check_local_conf(horizon_system):
+    conf = horizon_system / "ai_os_etc" / "aios_local.conf"
+    template = horizon_system / "templates" / "aios_local.conf.template"
     if not conf.exists():
-        hint = f"copy {template} → {conf} and fill in your values" if template.exists() else "copy the template from $HORIZON_BIN/templates/aios_local.conf.template"
+        hint = f"copy {template} → {conf} and fill in your values" if template.exists() else "copy the template from $HORIZON_SYSTEM/templates/aios_local.conf.template"
         fail("aios_local.conf", f"not found — {hint}")
     else:
         ok("aios_local.conf")
@@ -121,8 +121,8 @@ def check_gitignore_user(horizon_root):
 # ---------------------------------------------------------------------------
 # 7. sbin ACL (Windows only)
 # ---------------------------------------------------------------------------
-def check_sbin_acl(horizon_bin):
-    sbin = horizon_bin / "sbin"
+def check_sbin_acl(horizon_system):
+    sbin = horizon_system / "sbin"
     if not sbin.exists():
         warn("sbin ACL", f"{sbin} does not exist")
         return
@@ -174,20 +174,20 @@ def main():
     env = check_env_vars()
     print()
 
-    horizon_root = env.get("HORIZON_ROOT")
-    horizon_bin  = env.get("HORIZON_BIN")
+    horizon_root   = env.get("HORIZON_ROOT")
+    horizon_system = env.get("HORIZON_SYSTEM")
 
-    if horizon_bin:
-        check_skills(horizon_bin)
-        hooks_src = horizon_bin / "harness_configs" / "git" / "hooks"
+    if horizon_system:
+        check_skills(horizon_system)
+        hooks_src = horizon_system / "harness_configs" / "git" / "hooks"
         if horizon_root:
             check_hook("DCO commit-msg", "commit-msg", hooks_src, horizon_root)
             check_hook("pre-commit", "pre-commit", hooks_src, horizon_root)
-        check_local_conf(horizon_bin)
+        check_local_conf(horizon_system)
         if sys.platform == "win32":
-            check_sbin_acl(horizon_bin)
+            check_sbin_acl(horizon_system)
     else:
-        fail("Skills / hooks / aios_local.conf", "skipped — $HORIZON_BIN not available")
+        fail("Skills / hooks / aios_local.conf", "skipped — $HORIZON_SYSTEM not available")
 
     if horizon_root:
         check_gitignore_user(horizon_root)

@@ -9,9 +9,9 @@ from pathlib import Path
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent        # sbin/
-HORIZON_BIN = SCRIPT_DIR.parent                     # horizon_bin/
-HORIZON_ROOT = HORIZON_BIN.parent                   # devroot/
-HORIZON_ETC = HORIZON_BIN / "ai_os_etc"
+HORIZON_SYSTEM = SCRIPT_DIR.parent                  # horizon_system/
+HORIZON_ROOT = HORIZON_SYSTEM.parent                # devroot/
+HORIZON_ETC = HORIZON_SYSTEM / "ai_os_etc"
 CONFIG_FILE = HORIZON_ETC / "aios_local.conf"
 
 _log_file = None
@@ -69,7 +69,7 @@ def main():
     config = read_config()
 
     global _log_file
-    log_dir = Path(config["AIOS_LOG_DIR"]) if config["AIOS_LOG_DIR"] else HORIZON_BIN / "logs"
+    log_dir = Path(config["AIOS_LOG_DIR"]) if config["AIOS_LOG_DIR"] else HORIZON_SYSTEM / "logs"
     _log_file = log_dir / "aios_sync.log"
 
     if config["SYNC_AIOS_FROM_REMOTE"].lower() == "no":

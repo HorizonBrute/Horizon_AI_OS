@@ -5,7 +5,7 @@
 # Safe to run multiple times (idempotent). Non-destructive by default.
 #
 # Usage:
-#   bash /path/to/horizon_bin/bootstrap.sh
+#   bash /path/to/horizon_system/bootstrap.sh
 #
 # Works on: Windows (Git Bash), macOS, Linux
 # =============================================================================
@@ -26,12 +26,13 @@ done
 # Resolve HORIZON_ROOT from script location (works regardless of CWD)
 # -----------------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+HORIZON_SYSTEM="$SCRIPT_DIR"
 HORIZON_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-HORIZON_BIN="$HORIZON_ROOT/horizon_bin"
-HORIZON_ETC="$HORIZON_BIN/ai_os_etc"
-HORIZON_DOCS="$HORIZON_BIN/documentation"
+HORIZON_BIN="$HORIZON_SYSTEM/bin"
+HORIZON_ETC="$HORIZON_SYSTEM/ai_os_etc"
+HORIZON_DOCS="$HORIZON_SYSTEM/documentation"
 
-export HORIZON_ROOT HORIZON_BIN HORIZON_ETC HORIZON_DOCS
+export HORIZON_SYSTEM HORIZON_ROOT HORIZON_BIN HORIZON_ETC HORIZON_DOCS
 
 # -----------------------------------------------------------------------------
 # Helpers
@@ -61,19 +62,21 @@ banner "SECTION 1: Environment Variables"
 
 echo ""
 echo "Resolved paths:"
-echo "  HORIZON_ROOT  = $HORIZON_ROOT"
-echo "  HORIZON_BIN   = $HORIZON_BIN"
-echo "  HORIZON_ETC   = $HORIZON_ETC"
-echo "  HORIZON_DOCS  = $HORIZON_DOCS"
+echo "  HORIZON_ROOT   = $HORIZON_ROOT"
+echo "  HORIZON_SYSTEM = $HORIZON_SYSTEM"
+echo "  HORIZON_BIN    = $HORIZON_BIN"
+echo "  HORIZON_ETC    = $HORIZON_ETC"
+echo "  HORIZON_DOCS   = $HORIZON_DOCS"
 
 echo ""
 echo "Add the following to your shell profile (~/.bashrc, ~/.zshrc, or ~/.bash_profile):"
 echo "  (Replace the HORIZON_ROOT value with your actual path if different)"
 echo ""
 echo "    export HORIZON_ROOT=\"$HORIZON_ROOT\""
-echo "    export HORIZON_BIN=\"\$HORIZON_ROOT/horizon_bin\""
-echo "    export HORIZON_ETC=\"\$HORIZON_BIN/ai_os_etc\""
-echo "    export HORIZON_DOCS=\"\$HORIZON_BIN/documentation\""
+echo "    export HORIZON_SYSTEM=\"\$HORIZON_ROOT/horizon_system\""
+echo "    export HORIZON_BIN=\"\$HORIZON_SYSTEM/bin\""
+echo "    export HORIZON_ETC=\"\$HORIZON_SYSTEM/ai_os_etc\""
+echo "    export HORIZON_DOCS=\"\$HORIZON_SYSTEM/documentation\""
 echo ""
 echo "  Then run: source ~/.bashrc  (or open a new terminal)"
 
@@ -114,7 +117,7 @@ fi
 # -----------------------------------------------------------------------------
 banner "SECTION 3: Deploy skills"
 
-SKILLS_SRC="$HORIZON_BIN/skills"
+SKILLS_SRC="$HORIZON_SYSTEM/skills_bin"
 SKILLS_DST="$HOME/.claude/skills"
 
 if [ ! -d "$SKILLS_SRC" ]; then
@@ -125,43 +128,42 @@ else
   skill_count=0
   skipped_count=0
 
-  for src_file in "$SKILLS_SRC"/*.md; do
-    [ -f "$src_file" ] || continue
-    filename="$(basename "$src_file")"
-    dst_file="$SKILLS_DST/$filename"
+  for src_dir in "$SKILLS_SRC"/*/; do
+    [ -d "$src_dir" ] || continue
+    skill_name="$(basename "$src_dir")"
+    dst_dir="$SKILLS_DST/$skill_name"
 
-    if [ -f "$dst_file" ]; then
-      # Compare content
-      if diff -q "$src_file" "$dst_file" > /dev/null 2>&1; then
-        ok "  $filename — already up to date, skipping."
+    if [ -d "$dst_dir" ]; then
+      src_md="$src_dir/SKILL.md"
+      dst_md="$dst_dir/SKILL.md"
+      if diff -q "$src_md" "$dst_md" > /dev/null 2>&1; then
+        ok "  $skill_name — already up to date, skipping."
         skipped_count=$((skipped_count + 1))
       else
-        warn "  $filename — destination differs from source."
-        echo "    Diff summary (source vs deployed):"
-        diff --unified=2 "$dst_file" "$src_file" | head -20 | sed 's/^/      /'
+        warn "  $skill_name — destination differs from source."
         if [ "$YES_ALL" = "true" ]; then
           answer=y
         else
-          echo -n "    Overwrite $dst_file? [y/N] "
+          echo -n "    Overwrite $dst_dir? [y/N] "
           read -r answer </dev/tty
         fi
         if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
-          cp "$src_file" "$dst_file"
-          ok "  $filename — overwritten."
+          cp -r "$src_dir" "$dst_dir"
+          ok "  $skill_name — overwritten."
           skill_count=$((skill_count + 1))
         else
-          warn "  $filename — skipped (keeping existing)."
+          warn "  $skill_name — skipped (keeping existing)."
           skipped_count=$((skipped_count + 1))
         fi
       fi
     else
-      cp "$src_file" "$dst_file"
-      ok "  $filename — copied."
+      cp -r "$src_dir" "$dst_dir"
+      ok "  $skill_name — deployed."
       skill_count=$((skill_count + 1))
     fi
   done
 
-  info "Skills deploy complete: $skill_count copied, $skipped_count skipped."
+  info "Skills deploy complete: $skill_count deployed, $skipped_count skipped."
 fi
 
 # -----------------------------------------------------------------------------
@@ -184,7 +186,7 @@ fi
 banner "SECTION 5: ~/.claude/settings.json"
 
 SETTINGS_DST="$HOME/.claude/settings.json"
-SETTINGS_TEMPLATE="$HORIZON_BIN/templates/claude_code/settings.json"
+SETTINGS_TEMPLATE="$HORIZON_SYSTEM/templates/claude_code/settings.json"
 
 if [ -f "$SETTINGS_DST" ]; then
   info "~/.claude/settings.json already exists."
@@ -202,8 +204,8 @@ else
       read -r answer </dev/tty
     fi
     if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
-      # Substitute HORIZON_BIN_PATH placeholder with actual path
-      sed "s|HORIZON_BIN_PATH|$HORIZON_BIN|g" "$SETTINGS_TEMPLATE" > "$SETTINGS_DST"
+      # Substitute path placeholders
+      sed "s|HORIZON_BIN_PATH|$HORIZON_BIN|g; s|HORIZON_SYSTEM_PATH|$HORIZON_SYSTEM|g" "$SETTINGS_TEMPLATE" > "$SETTINGS_DST"
       ok "Copied template to ~/.claude/settings.json (HORIZON_BIN_PATH substituted)."
       warn "Review ~/.claude/settings.json — some paths may still need manual adjustment."
       warn "See $HORIZON_DOCS/getting_started/ReadMeToSetupYourSystem.md Step 8 for path substitution details."
@@ -222,14 +224,14 @@ fi
 banner "SECTION 6: Git hooks"
 
 GIT_DIR="$HORIZON_ROOT/.git"
-HOOKS_PATH="./horizon_bin/harness_configs/git/hooks"
+HOOKS_PATH="./horizon_system/harness_configs/git/hooks"
 
 if [ -d "$GIT_DIR" ]; then
   git -C "$HORIZON_ROOT" config core.hooksPath "$HOOKS_PATH"
   ok "Set git core.hooksPath to: $HOOKS_PATH"
 
   # Install commit-msg hook (DCO sign-off enforcement)
-  cp "$HORIZON_BIN/harness_configs/git/hooks/commit-msg" "$HORIZON_ROOT/.git/hooks/commit-msg"
+  cp "$HORIZON_SYSTEM/harness_configs/git/hooks/commit-msg" "$HORIZON_ROOT/.git/hooks/commit-msg"
   chmod +x "$HORIZON_ROOT/.git/hooks/commit-msg"
   ok "Installed commit-msg hook (DCO sign-off enforcement)."
 else
@@ -250,11 +252,11 @@ else
   fail_check "~/.claude/CLAUDE.md is missing or does not contain @ redirect"
 fi
 
-# Check 2: handoff.md deployed
-if [ -f "$HOME/.claude/skills/handoff.md" ]; then
-  pass_check "~/.claude/skills/handoff.md exists"
+# Check 2: handoff skill deployed (directory with SKILL.md)
+if [ -f "$HOME/.claude/skills/handoff/SKILL.md" ]; then
+  pass_check "~/.claude/skills/handoff/SKILL.md exists"
 else
-  fail_check "~/.claude/skills/handoff.md not found"
+  fail_check "~/.claude/skills/handoff/SKILL.md not found"
 fi
 
 # Check 3: handoffs directory exists
@@ -289,7 +291,7 @@ echo ""
 echo "=== Section 8: Local Config and Sync Schedule ==="
 
 LOCAL_CONF="$HORIZON_ETC/aios_local.conf"
-CONF_TEMPLATE="$HORIZON_BIN/templates/aios_local.conf.template"
+CONF_TEMPLATE="$HORIZON_SYSTEM/templates/aios_local.conf.template"
 
 if [ ! -f "$LOCAL_CONF" ]; then
     echo "aios_local.conf not found."
@@ -318,7 +320,7 @@ else
     read -r setup_sched
 fi
 if echo "$setup_sched" | grep -qi "^y"; then
-    python3 "$HORIZON_BIN/setup_sync_schedule.py" $([ "$YES_ALL" = "true" ] && echo "--yes")
+    python3 "$HORIZON_SYSTEM/setup_sync_schedule.py" $([ "$YES_ALL" = "true" ] && echo "--yes")
 else
-    echo "Skipped. Run later: python3 $HORIZON_BIN/setup_sync_schedule.py"
+    echo "Skipped. Run later: python3 $HORIZON_SYSTEM/setup_sync_schedule.py"
 fi

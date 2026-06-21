@@ -105,9 +105,10 @@ The following environment variables derive from `$HORIZON_ROOT` and must be set 
 | Variable | Points To | Purpose |
 |---|---|---|
 | `$HORIZON_ROOT` | The repo root (e.g., `C:\devroot`) | Anchor for all other paths |
-| `$HORIZON_BIN` | `$HORIZON_ROOT/horizon_bin` | Tooling, scripts, sounds, templates, assets |
-| `$HORIZON_ETC` | `$HORIZON_ROOT/horizon_bin/ai_os_etc` | OS configuration documents and invariants |
-| `$HORIZON_DOCS` | `$HORIZON_ROOT/horizon_bin/documentation` | User-facing documentation |
+| `$HORIZON_SYSTEM` | `$HORIZON_ROOT/horizon_system` | Full AIOS system directory (mirrors Unix `/usr`) |
+| `$HORIZON_BIN` | `$HORIZON_SYSTEM/bin` | User-callable executables |
+| `$HORIZON_ETC` | `$HORIZON_SYSTEM/ai_os_etc` | OS configuration documents and invariants |
+| `$HORIZON_DOCS` | `$HORIZON_SYSTEM/documentation` | User-facing documentation |
 
 ---
 
@@ -169,15 +170,16 @@ $HORIZON_ROOT/.gitignore.user
 
 ## 4. Set Environment Variables
 
-AIOS scripts and documentation reference `$HORIZON_ROOT`, `$HORIZON_BIN`, `$HORIZON_ETC`, and `$HORIZON_DOCS`. These must be set in your shell profile so they are available in every terminal session.
+AIOS scripts and documentation reference `$HORIZON_ROOT`, `$HORIZON_SYSTEM`, `$HORIZON_BIN`, `$HORIZON_ETC`, and `$HORIZON_DOCS`. These must be set in your shell profile so they are available in every terminal session.
 
 4.1 Add the following to your shell profile (`~/.bashrc`, `~/.zshrc`, or equivalent). Replace the example path with your actual `$HORIZON_ROOT` path.
 
 ```bash
 export HORIZON_ROOT="/path/to/your/devroot"
-export HORIZON_BIN="$HORIZON_ROOT/horizon_bin"
-export HORIZON_ETC="$HORIZON_ROOT/horizon_bin/ai_os_etc"
-export HORIZON_DOCS="$HORIZON_ROOT/horizon_bin/documentation"
+export HORIZON_SYSTEM="$HORIZON_ROOT/horizon_system"
+export HORIZON_BIN="$HORIZON_SYSTEM/bin"
+export HORIZON_ETC="$HORIZON_SYSTEM/ai_os_etc"
+export HORIZON_DOCS="$HORIZON_SYSTEM/documentation"
 ```
 
 On Windows with Git Bash, add these lines to `~/.bash_profile` or `~/.bashrc` inside Git Bash. In PowerShell sessions, set them via System Environment Variables or your PowerShell profile (`$PROFILE`).
@@ -193,19 +195,21 @@ The bootstrap script (Step 5) sets environment variables ephemerally for the cur
 **Windows (PowerShell profile):** Add the following to your PowerShell profile (open it with `notepad $PROFILE`):
 
 ```powershell
-$env:HORIZON_ROOT = "C:\devroot"   # your actual path
-$env:HORIZON_BIN  = "$env:HORIZON_ROOT\horizon_bin"
-$env:HORIZON_ETC  = "$env:HORIZON_BIN\ai_os_etc"
-$env:HORIZON_DOCS = "$env:HORIZON_BIN\documentation"
+$env:HORIZON_ROOT   = "C:\devroot"   # your actual path
+$env:HORIZON_SYSTEM = "$env:HORIZON_ROOT\horizon_system"
+$env:HORIZON_BIN    = "$env:HORIZON_SYSTEM\bin"
+$env:HORIZON_ETC    = "$env:HORIZON_SYSTEM\ai_os_etc"
+$env:HORIZON_DOCS   = "$env:HORIZON_SYSTEM\documentation"
 ```
 
 **Linux/macOS (bash/zsh profile):** Add the following to `~/.bashrc` or `~/.zshrc`:
 
 ```bash
 export HORIZON_ROOT="$HOME/devroot"   # your actual path
-export HORIZON_BIN="$HORIZON_ROOT/horizon_bin"
-export HORIZON_ETC="$HORIZON_BIN/ai_os_etc"
-export HORIZON_DOCS="$HORIZON_BIN/documentation"
+export HORIZON_SYSTEM="$HORIZON_ROOT/horizon_system"
+export HORIZON_BIN="$HORIZON_SYSTEM/bin"
+export HORIZON_ETC="$HORIZON_SYSTEM/ai_os_etc"
+export HORIZON_DOCS="$HORIZON_SYSTEM/documentation"
 ```
 
 After editing, reload your profile (`source ~/.bashrc` or open a new terminal) and verify with `echo $HORIZON_ROOT`.
@@ -423,13 +427,13 @@ git init
 10.2 Wire the version-controlled hooks directory. This tells Git to use the hooks stored in the repository rather than `.git/hooks/`, so hook changes are committed and portable:
 
 ```bash
-git config --local core.hooksPath ./horizon_bin/harness_configs/git/hooks
+git config --local core.hooksPath ./horizon_system/harness_configs/git/hooks
 ```
 
 10.3 Stage the OS layer files:
 
 ```bash
-git add .claude/CLAUDE.md .claude/settings.json horizon_bin/ handoffs/ .gitignore .gitignore.user
+git add .claude/CLAUDE.md .claude/settings.json horizon_system/ handoffs/ .gitignore .gitignore.user
 ```
 
 Do not stage `settings.local.json` — it is machine-local and excluded by `.gitignore`.
@@ -547,7 +551,7 @@ Confirm a `gpg: Good signature` line appears.
 git config --local core.hooksPath
 ```
 
-Should return `./horizon_bin/harness_configs/git/hooks`.
+Should return `./horizon_system/harness_configs/git/hooks`.
 
 Setup is complete when all verification points pass.
 
@@ -616,7 +620,7 @@ Running `create_brain.py` for a brain named `<brain-name>` produces:
 3. **Group `<brain-name>`** (brain-specific) — the brain user and the invoking primary user are both members. This group receives full control on the brain's folder. This is the "owns this brain's data" gate.
 4. **Brain folder** `$HORIZON_ROOT/brains/<brain-name>/` — created with parents. Permissions: owner+group full control, no access for others (mode 770 on Unix; `icacls` with `/inheritance:r` on Windows).
 5. **Permissions on `$HORIZON_BIN`** — `brains` group is granted RX (additive; existing ACEs are not disturbed).
-6. **Permissions on `$HORIZON_BIN/sbin`** — explicitly set to owner-only (`chmod 700` on Unix; `icacls /inheritance:r /grant <primary-user>:(OI)(CI)F` on Windows) *after* the `horizon_bin` group grant, so that no inherited ACE can accidentally reach `sbin`. This step always runs last in Phase 3.
+6. **Permissions on `$HORIZON_SYSTEM/sbin`** — explicitly set to owner-only (`chmod 700` on Unix; `icacls /inheritance:r /grant <primary-user>:(OI)(CI)F` on Windows) *after* the `$HORIZON_BIN` group grant, so that no inherited ACE can accidentally reach `sbin`. This step always runs last in Phase 3.
 
 ### Invocation
 

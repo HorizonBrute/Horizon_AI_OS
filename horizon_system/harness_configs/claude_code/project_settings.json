@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"C:/devroot/horizon_bin/sounds/play_sound.sh\" \"C:/devroot/horizon_bin/sounds/WorkComplete_ork.wav\""
+            "command": "bash \"C:/devroot/horizon_system/sounds/play_sound.sh\" \"C:/devroot/horizon_system/sounds/WorkComplete_ork.wav\""
           }
         ]
       }
@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"C:/devroot/horizon_bin/sounds/play_sound.sh\" \"C:/devroot/horizon_bin/sounds/claude_event_sounds/InputNeeded.wav\"",
+            "command": "bash \"C:/devroot/horizon_system/sounds/play_sound.sh\" \"C:/devroot/horizon_system/sounds/claude_event_sounds/InputNeeded.wav\"",
             "async": true
           }
         ]
@@ -26,7 +26,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"C:/devroot/horizon_bin/sounds/play_sound.sh\" \"C:/devroot/horizon_bin/sounds/APIFail.wav\"",
+            "command": "bash \"C:/devroot/horizon_system/sounds/play_sound.sh\" \"C:/devroot/horizon_system/sounds/APIFail.wav\"",
             "async": true
           }
         ]
