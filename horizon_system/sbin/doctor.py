@@ -53,28 +53,44 @@ def check_env_vars():
 
 
 # ---------------------------------------------------------------------------
-# 2. Skills deployed
+# 2. Skills (junction architecture)
+# Primary user skills live in skills_sbin/. ~/.claude/skills/ must be a
+# junction/symlink pointing there — not a real directory copy.
 # ---------------------------------------------------------------------------
 def check_skills(horizon_system):
-    skills_src = horizon_system / "skills_bin"
+    skills_sbin = horizon_system / "skills_sbin"
     skills_dst = Path.home() / ".claude" / "skills"
-    if not skills_src.is_dir():
-        warn("Skills: source dir", f"{skills_src} does not exist (no skills to deploy)")
-        return
-    # Each skill is a directory containing SKILL.md, not a flat .md file
-    skill_dirs = [d for d in skills_src.iterdir() if d.is_dir() and (d / "SKILL.md").exists()]
-    if not skill_dirs:
-        warn("Skills: source dir", "no skill directories found in $HORIZON_BIN/skills/ (each must contain SKILL.md)")
-        return
-    if not skills_dst.is_dir():
-        fail("Skills: deployed", "~/.claude/skills/ does not exist; run deploy step from ReadMeToSetupYourSystem.md §7")
-        return
-    missing = [d for d in skill_dirs if not (skills_dst / d.name / "SKILL.md").exists()]
-    if missing:
-        names = ", ".join(d.name for d in missing)
-        fail("Skills: deployed", f"not deployed: {names} — use 'cp -r $HORIZON_BIN/skills/* ~/.claude/skills/'")
+
+    # Sub-check 1: skills_sbin/ exists and has at least one skill directory
+    if not skills_sbin.is_dir():
+        fail("Skills: skills_sbin/", f"{skills_sbin} does not exist")
     else:
-        ok(f"Skills: {len(skill_dirs)} deployed")
+        skill_dirs = [d for d in skills_sbin.iterdir() if d.is_dir() and (d / "SKILL.md").exists()]
+        if skill_dirs:
+            ok(f"Skills: skills_sbin/ contains {len(skill_dirs)} skill(s)")
+        else:
+            warn("Skills: skills_sbin/", "no skill directories found (each must contain SKILL.md)")
+
+    # Sub-check 2: ~/.claude/skills/ is a symlink or junction, not a real dir
+    dst_str = str(skills_dst)
+    if not skills_dst.exists() and not os.path.islink(dst_str):
+        fail("Skills: ~/.claude/skills/", "does not exist — run bootstrap to create the junction")
+        return
+    if not os.path.islink(dst_str):
+        fail("Skills: ~/.claude/skills/", "is a real directory, not a junction/symlink — run bootstrap to redirect it")
+        return
+    ok("Skills: ~/.claude/skills/ is a junction/symlink")
+
+    # Sub-check 3: junction target resolves to skills_sbin/
+    try:
+        actual_target = Path(os.readlink(dst_str)).resolve()
+        expected_target = skills_sbin.resolve()
+        if actual_target == expected_target:
+            ok("Skills: junction target matches skills_sbin/")
+        else:
+            fail("Skills: junction target", f"expected {expected_target}, got {actual_target}")
+    except OSError as e:
+        warn("Skills: junction target", f"could not read link target: {e}")
 
 
 # ---------------------------------------------------------------------------
