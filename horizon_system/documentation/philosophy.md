@@ -15,7 +15,7 @@ That framing maps more cleanly to "App" than "OS."
 | Term | Definition |
 |---|---|
 | **Brain** | One atomic unit of an expert system. An agentic workflow given precise training and calibration to be an expert at one specific thing. A brain is an App — it runs inside the AIOS. Every brain includes a memory system; that is what makes it an expert rather than a stateless query processor. |
-| **Memory System** | The memory subsystem owned and contained within a brain. Calibration documents, few-shot examples, retrieval stores, conversation history, domain knowledge — all live inside the brain's directory. The memory system is what makes a brain portable: when it travels, the brain's expertise travels with it regardless of harness or model. |
+| **Memory System** | The memory subsystem owned and contained within a brain — entirely the brain author's choice. The AIOS does not implement or prescribe a memory technology; it provides only the secure, isolated directory where the brain's memory lives. A brain's self-contained memory is what makes it portable: when the directory moves, the expertise moves with it, regardless of harness or model. |
 | **AI Operating System (AIOS)** | The collection of configuration, harnesses, security boundaries, logging, and coordination scaffolding that brains run on top of. The OS layer is not itself an expert system. It is the infrastructure that makes expert systems safe, auditable, and controllable. |
 | **Second Brain** | The goal-state user experience: an ecosystem of brains that collectively runs life and business tasks — things that require some level of cognition but not the user's full attention. Tedious, repetitive, or high-volume cognitive work delegated to purpose-built expert systems. |
 
@@ -66,9 +66,15 @@ Horizon AIOS must be deployable as infrastructure, not just installed by hand.
 
 **Deployment models, all first-class:**
 
-1. **Bare metal / native OS** — bootstrap scripts provision env vars, directories, permissions, brain accounts. Current primary model.
-2. **Docker container (AIOS as container)** — the entire AIOS layer runs in a container. Brains run as sub-containers or OS users within. Enables consistent deployment across machines.
-3. **Docker container (per-brain)** — each brain runs in its own container managed by the AIOS. AIOS is the orchestrator; Docker adds network and process isolation on top of OS-level account isolation.
+1. **Desktop (native OS)** — the primary and most personal deployment. The user installs AIOS on their own machine via bootstrap scripts. Brains run as OS user accounts on the same machine. The AI harness (e.g., Claude Code desktop app) is launched by the user directly. This is the "run my life / run my business" model — always on, always local, tightly integrated with the user's workflow.
+
+2. **Backend / server (native OS)** — same bootstrap as desktop, deployed on a remote or always-on server. Brains run as OS user accounts. Access is via SSH or remote session. Suitable for brains that run unattended (scheduled tasks, cron jobs, daemons) or for separating AI workloads from the user's desktop environment.
+
+3. **Docker container (AIOS as container)** — the entire AIOS layer runs in a container. Brains run as sub-containers or OS users within. Enables consistent deployment across machines, cloud environments, and CI/CD pipelines.
+
+4. **Docker container (per-brain)** — each brain runs in its own container managed by the AIOS. AIOS is the orchestrator; Docker adds network and process isolation on top of the OS-level account isolation model.
+
+The desktop model is the design reference: if a feature works correctly on a user's desktop machine, it will work in server and container deployments. If a feature only works in server or container mode, it is not a core AIOS feature — it is a deployment-specific extension.
 
 **IaC compatibility requirements:**
 - No hardcoded paths in any committed file — all paths are env vars (`$HORIZON_ROOT`, `$HORIZON_SYSTEM`, etc.).
@@ -80,33 +86,34 @@ Docker does not replace OS-level user isolation — it extends it. A Dockerized 
 
 ---
 
-## 6. Memory Systems Are Part of the Brain
+## 6. Memory Systems Are Part of the Brain — and Entirely the User's Choice
 
 An expert system cannot function without memory. Memory is not an optional add-on — it is what makes a brain an expert rather than a stateless query processor.
 
-**Memory belongs inside the brain, not in the AIOS layer.**
+**The AIOS does not implement a memory system. That is entirely the brain author's decision.**
 
-The AIOS provides no shared memory system. Each brain owns its own memory subsystem, scoped entirely within its directory boundary. This is intentional:
+The AIOS provides one thing relevant to memory: a secure, isolated directory for each brain where anything the brain author wants to store can live — calibration documents, few-shot examples, vector indices, conversation history, retrieval scripts, domain knowledge files, or any other memory technology the author chooses. The directory has filesystem permissions that enforce isolation. What goes inside it is not the AIOS's concern.
 
-- A brain's memory is part of its expert function — it is as specialized as its toolset.
-- Placing memory in the brain (not in the OS layer) enforces the isolation model: a brain's accumulated knowledge cannot leak to other brains any more than its files can.
-- The AIOS provides the *structure* (the brain's home directory) and the *security model* (filesystem permissions) but not the memory implementation. The brain chooses what memory system to use.
+This is a deliberate non-decision:
+- Memory implementations vary enormously in kind (file-based, vector DB, graph DB, retrieval pipelines, structured knowledge bases) and the right choice depends entirely on the brain's expert domain.
+- Any memory system the AIOS prescribed would either be too constrained for some brains or too complex for simpler ones.
+- The "bring your own memory" model is the same as the broader BYOH principle — the AIOS provides the container and the security; the author provides the specialization.
 
-**Memory as the portability layer:**
+**Memory is what makes BYOH possible at the brain level.**
 
-A brain's memory system is what enables the BYOH principle at the brain level. When memory (training data, calibration documents, context stores, vector indices, conversation history) is consolidated within the brain rather than tied to a specific harness or API:
+When a brain's expertise is consolidated in self-contained memory artifacts (files, databases, indices) within its directory — rather than embedded in a specific harness's configuration or tied to a specific model's fine-tuning — the brain becomes portable:
 
-- The brain's knowledge and expert context travel with it when the underlying harness changes.
-- Swapping the frontier model, the API provider, or the toolchain does not require rebuilding the brain's expertise from scratch.
-- The brain is model-agnostic and harness-agnostic because its memory is portable.
+- Swap the harness → the memory stays.
+- Swap the frontier model → the memory stays.
+- Swap the API provider → the memory stays.
+- Move to a different machine or container → the memory moves with the directory.
 
-Without a self-contained memory system, a brain is tightly coupled to whatever harness or model it happened to train on. With one, it is a portable expert that can be brought to any harness, any frontier model, any API endpoint, any network topology — independently.
+Without a self-contained memory system, a brain is coupled to its current toolchain. With one, it is a portable expert that can be brought to any harness, any frontier model, any API endpoint, any network topology — independently.
 
-**What this means in practice:**
-
-- Brain directories hold memory artifacts: calibration documents, few-shot examples, retrieved context stores, conversation logs, domain-specific knowledge files.
-- Memory tooling (vector databases, embedding pipelines, retrieval scripts) is provisioned inside the brain's directory, not shared across brains via the AIOS.
-- The AIOS provides the secure container; the brain provides the contents. The container is standardized; the contents are specialized.
+**The AIOS's role is only:**
+- Providing the brain's home directory (the container for whatever memory the author implements).
+- Enforcing filesystem isolation so memory cannot leak across brain boundaries.
+- Nothing else. Memory architecture is entirely outside the AIOS layer.
 
 ---
 

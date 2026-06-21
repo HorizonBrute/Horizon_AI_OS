@@ -53,7 +53,7 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   ├── file_structure_invariants.md
 │   │   └── ai_os_personalizations.md
 │   ├── documentation/                  # $HORIZON_DOCS — user-facing docs
-│   │   ├── deployment/                 # Deployment guides by mode (docker.md, etc.)
+│   │   ├── deployment/                 # Deployment guides by mode (desktop.md, docker.md, etc.)
 │   │   ├── tested_configurations.md    # Verified harness/OS/deployment compatibility matrix
 │   ├── sounds/                         # Audio assets for event hooks
 │   │   ├── sounds.map                  # AIOS default event→sound mapping (see Section 10)
