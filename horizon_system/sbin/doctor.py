@@ -71,26 +71,25 @@ def check_skills(horizon_system):
         else:
             warn("Skills: skills_sbin/", "no skill directories found (each must contain SKILL.md)")
 
-    # Sub-check 2: ~/.claude/skills/ is a symlink or junction, not a real dir
-    dst_str = str(skills_dst)
-    if not skills_dst.exists() and not os.path.islink(dst_str):
+    # Sub-check 2 + 3: ~/.claude/skills/ redirects to skills_sbin/
+    # Use resolve() as the authoritative check — works for symlinks, NTFS junctions,
+    # and any other redirect mechanism. os.path.islink() does not reliably detect
+    # NTFS directory junctions on all Python/Windows configurations.
+    if not skills_dst.exists():
         fail("Skills: ~/.claude/skills/", "does not exist — run bootstrap to create the junction")
         return
-    if not os.path.islink(dst_str):
-        fail("Skills: ~/.claude/skills/", "is a real directory, not a junction/symlink — run bootstrap to redirect it")
-        return
-    ok("Skills: ~/.claude/skills/ is a junction/symlink")
 
-    # Sub-check 3: junction target resolves to skills_sbin/
     try:
-        actual_target = Path(os.readlink(dst_str)).resolve()
+        actual_target = skills_dst.resolve()
         expected_target = skills_sbin.resolve()
         if actual_target == expected_target:
-            ok("Skills: junction target matches skills_sbin/")
+            ok("Skills: ~/.claude/skills/ junction/symlink points to skills_sbin/")
+        elif actual_target == skills_dst.absolute():
+            fail("Skills: ~/.claude/skills/", "is a real directory, not a junction/symlink — run bootstrap to redirect it")
         else:
             fail("Skills: junction target", f"expected {expected_target}, got {actual_target}")
     except OSError as e:
-        warn("Skills: junction target", f"could not read link target: {e}")
+        warn("Skills: junction target", f"could not resolve target: {e}")
 
 
 # ---------------------------------------------------------------------------

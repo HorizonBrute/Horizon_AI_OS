@@ -233,6 +233,9 @@ if [ -d "$GIT_DIR" ]; then
   cp "$HORIZON_SYSTEM/harness_configs/git/hooks/commit-msg" "$HORIZON_ROOT/.git/hooks/commit-msg"
   chmod +x "$HORIZON_ROOT/.git/hooks/commit-msg"
   ok "Installed commit-msg hook (DCO sign-off enforcement)."
+  cp "$HORIZON_SYSTEM/harness_configs/git/hooks/pre-commit" "$HORIZON_ROOT/.git/hooks/pre-commit"
+  chmod +x "$HORIZON_ROOT/.git/hooks/pre-commit"
+  ok "Installed pre-commit hook."
 else
   info "$HORIZON_ROOT is not a git repository — skipping git hooks config."
 fi

@@ -244,6 +244,8 @@ if (Test-Path $GitDir) {
     # Install commit-msg hook (DCO sign-off enforcement)
     Copy-Item "$HORIZON_SYSTEM\harness_configs\git\hooks\commit-msg" "$HORIZON_ROOT\.git\hooks\commit-msg" -Force
     Ok "Installed commit-msg hook (DCO sign-off enforcement)."
+    Copy-Item "$HORIZON_SYSTEMharness_configsgithookspre-commit" "$HORIZON_ROOT.githookspre-commit" -Force
+    Ok "Installed pre-commit hook."
 } else {
     Info "$HORIZON_ROOT is not a git repository - skipping git hooks config."
 }
