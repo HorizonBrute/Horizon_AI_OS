@@ -11,9 +11,9 @@ To customize instructions for a specific project under $HORIZON_ROOT, place an
 ## Configuration
 
 Place any Codex-specific configuration (API settings, model selection, tool permissions)
-in this directory. Use `HORIZON_BIN_PATH` as a placeholder for the absolute path to
-`horizon_bin/` — bootstrap substitutes the real path.
+in this directory. Use `HORIZON_SYSTEM_PATH` as a placeholder for the absolute path to
+`horizon_system/` — bootstrap substitutes the real path.
 
 ## Status
 
-Community contribution welcome. See `horizon_bin/license/CONTRIBUTING.md`.
+Community contribution welcome. See `$HORIZON_DOCS/CONTRIBUTING.md`.

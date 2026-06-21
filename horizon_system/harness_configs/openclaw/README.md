@@ -12,7 +12,7 @@ To inject AIOS context into OpenClaw agents, embed the relevant system prompt co
 
 OpenClaw reads `~/.openclaw/openclaw.json` (JSON5 — supports comments and trailing commas). All fields are optional; safe defaults apply when omitted.
 
-Place your OpenClaw-specific configuration in this directory as `openclaw.json` (or `openclaw.json5`). A template is provided at `HORIZON_BIN_PATH/harness_configs/openclaw/openclaw.json.template`.
+Place your OpenClaw-specific configuration in this directory as `openclaw.json` (or `openclaw.json5`). A template is provided at `HORIZON_SYSTEM_PATH/harness_configs/openclaw/openclaw.json.template`.
 
 Key top-level sections:
 
@@ -28,4 +28,4 @@ Key top-level sections:
 
 ## Status
 
-Community contribution welcome. See `horizon_bin/license/CONTRIBUTING.md`.
+Community contribution welcome. See `$HORIZON_DOCS/CONTRIBUTING.md`.

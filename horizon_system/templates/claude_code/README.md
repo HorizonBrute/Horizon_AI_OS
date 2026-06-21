@@ -21,22 +21,23 @@ All hooks use `shell: powershell` and `Media.SoundPlayer` — no external audio 
 
 This template must not be used directly. Copy it to `~/.claude/settings.json` and replace the placeholder string before use.
 
-### Placeholder: `HORIZON_BIN_PATH`
+### Placeholders: `HORIZON_SYSTEM_PATH` and `HORIZON_BIN_PATH`
 
-Every occurrence of `HORIZON_BIN_PATH` must be replaced with the actual absolute path to your `$HORIZON_BIN` directory (i.e., the `horizon_bin` folder inside your $HORIZON_ROOT).
+The template uses two placeholders:
+- `HORIZON_SYSTEM_PATH` — replace with the absolute path to `$HORIZON_SYSTEM` (i.e., `horizon_system/` inside your `$HORIZON_ROOT`)
+- `HORIZON_BIN_PATH` — replace with the absolute path to `$HORIZON_BIN` (i.e., `horizon_system/bin/` inside your `$HORIZON_ROOT`)
 
-Example: if $HORIZON_ROOT is `C:\devroot`, then $HORIZON_BIN is `C:\devroot\horizon_bin`, and you replace every `HORIZON_BIN_PATH` with `C:\devroot\horizon_bin`.
+Example: if `$HORIZON_ROOT` is `C:\devroot`, then `$HORIZON_SYSTEM` is `C:\devroot\horizon_system` and `$HORIZON_BIN` is `C:\devroot\horizon_system\bin`.
 
-Note: in the hook commands (which run as PowerShell strings), use backslashes. In the statusLine command, use forward slashes (PowerShell's `-File` flag accepts both, but forward slashes are more portable in JSON).
+The bootstrap script (`bootstrap.ps1` / `bootstrap.sh`) performs these substitutions automatically when you choose to copy the template to `~/.claude/settings.json`.
 
-### Quick substitution (PowerShell)
+### Quick substitution (PowerShell — manual)
 
 ```powershell
-$horizonBin = "C:\devroot\horizon_bin"   # set to your actual $HORIZON_BIN
-$template = Get-Content "$horizonBin\templates\claude_code\settings.json" -Raw
-$result = $template -replace 'HORIZON_BIN_PATH', $horizonBin.Replace('\', '\\')
-# For statusLine forward-slash path, do a second pass:
-$result = $result -replace 'HORIZON_BIN_PATH\\\\', ($horizonBin.Replace('\', '/') + '/')
+$horizonSystem = "C:\devroot\horizon_system"   # set to your actual $HORIZON_SYSTEM
+$horizonBin    = "$horizonSystem\bin"
+$template = Get-Content "$horizonSystem\templates\claude_code\settings.json" -Raw
+$result = $template -replace 'HORIZON_SYSTEM_PATH', $horizonSystem -replace 'HORIZON_BIN_PATH', $horizonBin
 $result | Set-Content "$env:USERPROFILE\.claude\settings.json" -Encoding utf8
 ```
 

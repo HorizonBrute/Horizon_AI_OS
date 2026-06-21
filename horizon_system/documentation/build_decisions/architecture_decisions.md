@@ -107,7 +107,7 @@ In the Docker deployment model, brain isolation is container-level rather than O
 
 **Rationale:** Separates two distinct privileges into two distinct groups. The `brains` group answers "can this account use shared AIOS tooling?" The `<brain-name>` group answers "who owns this brain's data?" Adding the primary user to the brain-specific group enables oversight (read/write to the brain folder) without placing the primary user in a catch-all group that spans all brains. This keeps group membership semantics clean and least-privilege.
 
-**Implications:** The `brains` group ACL on `$HORIZON_BIN` must never cascade to `$HORIZON_BIN/sbin`. The `sbin` ACL must be explicitly set and verified *after* any `horizon_bin` group change — this is enforced structurally in `create_brain.py` (Phase 3 always re-locks `sbin` last). On Windows, `sbin` requires an explicit `/inheritance:r` ACE reset, not just absence of a grant, because inherited permissions take precedence over "no entry."
+**Implications:** The `brains` group ACL on `$HORIZON_BIN` must never cascade to `$HORIZON_BIN/sbin`. The `sbin` ACL must be explicitly set and verified *after* any `$HORIZON_BIN` group change — this is enforced structurally in `create_brain.py` (Phase 3 always re-locks `sbin` last). On Windows, `sbin` requires an explicit `/inheritance:r` ACE reset, not just absence of a grant, because inherited permissions take precedence over "no entry."
 
 ---
 

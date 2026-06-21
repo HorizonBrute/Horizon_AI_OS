@@ -2,24 +2,24 @@
 #
 # Copy to .dropboxignore at the root of your Dropbox folder.
 # Syntax is the same as .gitignore.
-# See horizon_bin/documentation/cloud_sync_exclusions.md for full guidance.
+# See $HORIZON_DOCS/cloud_sync_exclusions.md for full guidance.
 
 # =============================================================================
 # HORIZON AIOS — machine-local and sensitive files
 # =============================================================================
 # Credentials and machine-local config
-**/horizon_bin/ai_os_etc/aios_local.conf
+**/horizon_system/ai_os_etc/aios_local.conf
 **/.gitignore.user
 
 # Brain data (session-local, never sync)
 **/brains/
 
 # Operational logs (content only; scaffold dirs OK to sync)
-**/horizon_bin/logs/bootstrap/*
-**/horizon_bin/logs/brain_provisioning/*
-**/horizon_bin/logs/agents_output/*
-**/horizon_bin/logs/hooks/*
-**/horizon_bin/logs/brains/*
+**/logs/bootstrap/*
+**/logs/brain_provisioning/*
+**/logs/agents_output/*
+**/logs/hooks/*
+**/logs/brains/*
 !**/.gitkeep
 
 # Session handoffs (machine-local continuity)

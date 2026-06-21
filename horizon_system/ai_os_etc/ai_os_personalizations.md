@@ -48,9 +48,9 @@ Project-specific context: tech stack, conventions, anything the agent needs for 
 
 ## 3. How to Add a New AI Harness
 
-1. Create a template directory at `$HORIZON_BIN/templates/<harness_name>/`.
-2. Add a `settings.json` (or equivalent config file) template using `HORIZON_BIN_PATH` and other placeholders instead of real paths. Document all placeholders in a `README.md` in the same directory.
-3. If the harness supports event hooks (audio, alerts), wire them to sounds in `$HORIZON_BIN/sounds/`. Use root-level generic sounds unless you have vendor-voiced audio, in which case create `$HORIZON_BIN/sounds/<vendor>_event_sounds/`.
+1. Create a template directory at `$HORIZON_SYSTEM/templates/<harness_name>/`.
+2. Add a `settings.json` (or equivalent config file) template using `HORIZON_SYSTEM_PATH` and other placeholders instead of real paths. Document all placeholders in a `README.md` in the same directory.
+3. If the harness supports event hooks (audio, alerts), wire them to sounds in `$HORIZON_SOUNDS/`. Use root-level generic sounds unless you have vendor-voiced audio, in which case create `$HORIZON_SOUNDS/<vendor>_event_sounds/`.
 4. If the harness supports a status line or equivalent, add a status script to `$HORIZON_BIN/statusline/`.
 5. Document the harness in `$HORIZON_DOCS/`.
 6. Add harness-specific permissions or config conventions to this document under a new subsection.
@@ -61,7 +61,7 @@ The harness must not require any changes to `$HORIZON_ETC` invariant documents u
 
 ## 4. How to Create a Brain
 
-Use `$HORIZON_BIN/scripts/create_brain.py` to automate brain setup. Manual steps:
+Use `$HORIZON_SYSTEM/scripts/create_brain.py` to automate brain setup. Manual steps:
 
 1. Create a new OS user account (`brain_researcher`, `brain_coder`, etc.). Windows: Settings > Accounts > Other users. Unix: `useradd`.
 2. Create the brain's home directory under the brains path.
@@ -94,8 +94,8 @@ Multiple isolated AI personas running concurrently on the same machine.
 
 Contributors may add:
 
-- New harness templates in `$HORIZON_BIN/templates/`.
-- New sounds in `$HORIZON_BIN/sounds/` (root for generic, vendor subdirectory for voiced audio).
+- New harness templates in `$HORIZON_SYSTEM/templates/`.
+- New sounds in `$HORIZON_SOUNDS/` (root for generic, vendor subdirectory for voiced audio).
 - New status line scripts in `$HORIZON_BIN/statusline/`.
 - Documentation in `$HORIZON_DOCS/`.
 - Improvements to `$HORIZON_ETC` invariant documents (with community review).
@@ -104,10 +104,10 @@ Contributions must not:
 - Hardcode real paths, usernames, or machine-specific values anywhere.
 - Introduce dependencies on the primary user's personal setup.
 - Break the existing three-layer settings hierarchy.
-- Add files to `$HORIZON_BIN/sbin/` — sbin is owner-managed and not community-contributed.
+- Add files to `$HORIZON_SYSTEM/sbin/` — sbin is owner-managed and not community-contributed.
 - Modify `$HORIZON_ROOT/.claude/CLAUDE.md` in ways that make it non-portable (no personal preferences, no project-specific instructions).
 
-All contributed templates must use the `HORIZON_BIN_PATH` placeholder pattern and document substitution steps in their `README.md`.
+All contributed templates must use the `HORIZON_SYSTEM_PATH` placeholder pattern and document substitution steps in their `README.md`.
 
 ---
 

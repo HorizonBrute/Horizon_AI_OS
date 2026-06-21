@@ -82,7 +82,7 @@ On the desktop, you can switch to a brain session by logging in as that OS user 
 |---|---|
 | **Sounds** | Event hooks play audio through the local sound device — works immediately. |
 | **Statusline** | Statusline scripts render in the harness UI (Claude Code statusBar). |
-| **Audit log** | Written to `$HORIZON_ROOT/horizon_system/logs/` — readable in any editor. |
+| **Audit log** | Written to `$HORIZON_ROOT/logs/` — readable in any editor. |
 | **Monitor** | `monitor_aios.py` runs in a background terminal; alerts visible on-screen. |
 | **Handoffs** | Written to `$HORIZON_ROOT/handoffs/` — local file, immediately accessible. |
 | **Brains** | OS user accounts — visible in user management tools; no extra tooling needed. |

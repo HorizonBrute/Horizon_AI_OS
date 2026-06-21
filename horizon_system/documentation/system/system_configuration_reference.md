@@ -24,15 +24,15 @@ P.5 **SSH client** — all remote Git operations use SSH. No HTTPS remote URLs e
 
 P.6 **SSH key pair** — a key pair must exist (default path: `~/.ssh/id_ed25519`) and the public key must be registered with the remote host (GitHub under the `HorizonBrute` account, or another host on a new machine).
 
-P.7 **GPG key in keyring** — a GPG key must be generated and importable by the local GPG agent. The full fingerprint must be entered in `horizon_bin/harness_configs/git/gitconfig` under `[user] signingkey` as part of setup.
+P.7 **GPG key in keyring** — a GPG key must be generated and importable by the local GPG agent. The full fingerprint must be entered in `horizon_system/harness_configs/git/gitconfig` under `[user] signingkey` as part of setup.
 
 **Platform**
 
 P.8 Horizon AIOS supports **Windows, Linux, and macOS**. Platform detection is handled at runtime by two dispatcher scripts; no per-machine configuration branching is required.
 
-P.8.1 **Sound playback** — `horizon_bin/sounds/play_sound.sh` detects `uname -s` and calls: `Media.SoundPlayer` via `powershell.exe` (Windows/Git Bash), `afplay` (macOS), or the first available player from `paplay` → `aplay` → `ffplay` → `mpg123` (Linux). All hooks in `settings.json` call this script via `bash`.
+P.8.1 **Sound playback** — `horizon_system/sounds/play_sound.sh` detects `uname -s` and calls: `Media.SoundPlayer` via `powershell.exe` (Windows/Git Bash), `afplay` (macOS), or the first available player from `paplay` → `aplay` → `ffplay` → `mpg123` (Linux). All hooks in `settings.json` call this script via `bash`.
 
-P.8.2 **Statusline** — `horizon_bin/statusline/statusline.sh` detects `uname -s` and pipes stdin to: `statusline-context-alerts.ps1` via `powershell.exe` (Windows), or `statusline-command.sh` via `bash` (Linux/macOS). Both scripts include context threshold audio alerts.
+P.8.2 **Statusline** — `horizon_system/bin/statusline/statusline.sh` detects `uname -s` and pipes stdin to: `statusline-context-alerts.ps1` via `powershell.exe` (Windows), or `statusline-command.sh` via `bash` (Linux/macOS). Both scripts include context threshold audio alerts.
 
 P.8.3 **Linux audio dependency** — at least one of `paplay` (PulseAudio), `aplay` (ALSA), `ffplay` (ffmpeg), or `mpg123` must be installed for sounds to play on Linux. If none are found, `play_sound.sh` exits silently with no effect on Claude Code.
 
@@ -60,7 +60,7 @@ Horizon AIOS is a portable, Git-versioned Claude Code operating system layer. Th
 
 1.1 **Two-layer model**
 
-1.1.1 The **OS repo** (`$HORIZON_ROOT`) is a Git repository that tracks the AIOS config and asset layer. It is not a project repo — it does not track source code, build artifacts, or project-specific files. It tracks: `.claude/CLAUDE.md`, `.claude/settings.json`, `horizon_bin/`, `handoffs/`, `.gitignore`, `.gitignore.user`.
+1.1.1 The **OS repo** (`$HORIZON_ROOT`) is a Git repository that tracks the AIOS config and asset layer. It is not a project repo — it does not track source code, build artifacts, or project-specific files. It tracks: `.claude/CLAUDE.md`, `.claude/settings.json`, `horizon_system/`, `handoffs/`, `.gitignore`, `.gitignore.user`.
 
 1.1.2 **Project repos** are independent Git repositories placed inside `$HORIZON_ROOT`. Each project manages its own history, branches, and remotes. The OS repo does not track them and has no knowledge of their contents.
 
@@ -84,7 +84,7 @@ Claude Code hardcodes two global config lookup paths that cannot be changed. The
 
 1.5.1 `$HORIZON_ROOT\.claude\CLAUDE.md` — global AI instructions
 1.5.2 `$HORIZON_ROOT\.claude\settings.json` — Claude Code harness config (hooks, statusline, permissions, theme)
-1.5.3 `$HORIZON_ROOT\horizon_bin\` — sounds, statusline scripts, harness configs, git hooks, documentation
+1.5.3 `$HORIZON_ROOT\horizon_system\` — sounds, statusline scripts, harness configs, git hooks, documentation
 1.5.4 `$HORIZON_ROOT\handoffs\` — session handoff documents
 1.5.5 `$HORIZON_ROOT\.gitignore` — system ignore patterns
 1.5.6 `$HORIZON_ROOT\.gitignore.user` — user personal ignore patterns
@@ -99,7 +99,7 @@ Claude Code hardcodes two global config lookup paths that cannot be changed. The
 
 1.7 **Pre-commit hook responsibilities**
 
-The hook at `horizon_bin/harness_configs/git/hooks/pre-commit` runs before every OS repo commit and performs two operations:
+The hook at `horizon_system/harness_configs/git/hooks/pre-commit` runs before every OS repo commit and performs two operations:
 
 1.7.1 Scans for subdirectories that have acquired a `.git` folder since they were last tracked. Any such directory is removed from the OS index with `git rm -r --cached` before the commit proceeds. This ensures that `git init`'ing a project folder always results in clean exclusion even if the folder was previously tracked.
 
@@ -128,7 +128,7 @@ The OS repo is initialized at `$HORIZON_ROOT` with `git init`. It uses GPG commi
 !.claude/settings.json
 ```
 
-2.2.2 `horizon_bin/` — the full runtime asset and config directory tree.
+2.2.2 `horizon_system/` — the full runtime asset and config directory tree.
 
 2.2.3 `handoffs/` — session handoff markdown files.
 
@@ -156,15 +156,15 @@ Four ignore layers apply to the OS repo, in order from lowest to highest precede
 
 2.5 **`core.hooksPath`**
 
-Git's `core.hooksPath` is set to `./horizon_bin/harness_configs/git/hooks` in the repo-local config (`.git/config`). This tells Git to use the hooks stored in the repository rather than `.git/hooks/`, making hook changes version-controlled and portable. This setting is machine-local (not committed) and must be set once per machine:
+Git's `core.hooksPath` is set to `./horizon_system/harness_configs/git/hooks` in the repo-local config (`.git/config`). This tells Git to use the hooks stored in the repository rather than `.git/hooks/`, making hook changes version-controlled and portable. This setting is machine-local (not committed) and must be set once per machine:
 
 ```bash
-git config --local core.hooksPath ./horizon_bin/harness_configs/git/hooks
+git config --local core.hooksPath ./horizon_system/harness_configs/git/hooks
 ```
 
 2.6 **Pre-commit hook detail**
 
-The hook at `horizon_bin/harness_configs/git/hooks/pre-commit` is a bash script that:
+The hook at `horizon_system/harness_configs/git/hooks/pre-commit` is a bash script that:
 
 2.6.1 Resolves the repo root with `git rev-parse --show-toplevel`.
 
@@ -184,23 +184,23 @@ Every file in the repository that contains a hardcoded path referencing `$HORIZO
 
 3.1 **`$HORIZON_ROOT\.claude\settings.json`**
 
-3.1.1 `statusLine.command` — path to `horizon_bin/statusline/statusline.sh` (the cross-platform dispatcher). Controls which script renders the Claude Code statusline.
+3.1.1 `statusLine.command` — path to `horizon_system/bin/statusline/statusline.sh` (the cross-platform dispatcher). Controls which script renders the Claude Code statusline.
 
-3.1.2 `hooks.Stop[0].hooks[0].command` — calls `play_sound.sh` with path to `horizon_bin/sounds/work_complete.wav`. Sound played when Claude finishes a task successfully.
+3.1.2 `hooks.Stop[0].hooks[0].command` — calls `play_sound.sh` with path to `horizon_system/sounds/work_complete.wav`. Sound played when Claude finishes a task successfully.
 
-3.1.3 `hooks.PermissionRequest[0].hooks[0].command` — calls `play_sound.sh` with path to `horizon_bin/sounds/claude_event_sounds/InputNeeded.wav`. Sound played when Claude requests a tool permission.
+3.1.3 `hooks.PermissionRequest[0].hooks[0].command` — calls `play_sound.sh` with path to `horizon_system/sounds/claude_event_sounds/InputNeeded.wav`. Sound played when Claude requests a tool permission.
 
-3.1.4 `hooks.StopFailure[0].hooks[0].command` — calls `play_sound.sh` with path to `horizon_bin/sounds/api_fail.wav`. Sound played when Claude stops due to error or failure.
+3.1.4 `hooks.StopFailure[0].hooks[0].command` — calls `play_sound.sh` with path to `horizon_system/sounds/api_fail.wav`. Sound played when Claude stops due to error or failure.
 
-3.2 **`$HORIZON_ROOT\horizon_bin\statusline\statusline-context-alerts.ps1`** (Windows path)
+3.2 **`$HORIZON_ROOT\horizon_system\bin\statusline\statusline-context-alerts.ps1`** (Windows path)
 
-3.2.1 Line containing `claude_at_${new_threshold}_statusline.wav` — path to `horizon_bin\sounds\claude_event_sounds\`. Controls the audio threshold alert sound files on Windows.
+3.2.1 Line containing `claude_at_${new_threshold}_statusline.wav` — path to `horizon_system\sounds\claude_event_sounds\`. Controls the audio threshold alert sound files on Windows.
 
-3.3 **`$HORIZON_ROOT/horizon_bin/statusline/statusline-command.sh`** (Linux/macOS path)
+3.3 **`$HORIZON_ROOT/horizon_system/bin/statusline/statusline-command.sh`** (Linux/macOS path)
 
-3.3.1 Threshold audio section references `play_sound.sh` and `horizon_bin/sounds/claude_event_sounds/` via relative path from `$SCRIPT_DIR`. No absolute path — resolves correctly on any machine without substitution.
+3.3.1 Threshold audio section references `play_sound.sh` and `horizon_system/sounds/claude_event_sounds/` via relative path from `$SCRIPT_DIR`. No absolute path — resolves correctly on any machine without substitution.
 
-3.3 **`$HORIZON_ROOT\horizon_bin\harness_configs\git\gitconfig`**
+3.3 **`$HORIZON_ROOT\horizon_system\harness_configs\git\gitconfig`**
 
 3.3.1 `[core] excludesfile` — path to `.gitignore_global` at the repository root. Controls machine-global git ignore patterns.
 
@@ -263,7 +263,7 @@ Must be updated on each new machine to use the local `$HORIZON_ROOT` path.
 
 ## 6. Statusline Configuration
 
-`$HORIZON_ROOT\horizon_bin\statusline\statusline-context-alerts.ps1` is the active statusline script. Claude Code invokes it on every statusline refresh, piping session data to stdin.
+`$HORIZON_ROOT\horizon_system\bin\statusline\statusline-context-alerts.ps1` is the active statusline script. Claude Code invokes it on every statusline refresh, piping session data to stdin.
 
 6.1 **Input** — Claude Code writes a JSON object to the script's stdin:
 
@@ -281,19 +281,19 @@ Must be updated on each new machine to use the local `$HORIZON_ROOT` path.
 
 6.2.3 `[context bar]` — 20-character bar overlaid with the usage percentage. `#` = used context, `-` = available.
 
-6.3 **Threshold audio system** — when context usage crosses 30, 40, 50, 60, 70, 80, or 90 percent, the script plays the corresponding `.wav` file from `horizon_bin\sounds\claude_event_sounds\`. Each threshold fires at most once per session.
+6.3 **Threshold audio system** — when context usage crosses 30, 40, 50, 60, 70, 80, or 90 percent, the script plays the corresponding `.wav` file from `horizon_system\sounds\claude_event_sounds\`. Each threshold fires at most once per session.
 
 6.3.1 State is tracked in `$env:TEMP\claude_ctx_{session_id}.txt` containing the highest threshold fired so far.
 
 6.3.2 The script checks `Test-Path` before playing. If the wav file is missing, it skips audio silently and continues rendering the statusline.
 
-6.4 **Bash variant** — `horizon_bin\statusline\statusline-command.sh` is an alternative statusline script that adds cost estimation and ANSI color output. It is not currently wired into `settings.json` but can replace the PowerShell script by updating `statusLine.command`.
+6.4 **Bash variant** — `horizon_system\bin\statusline\statusline-command.sh` is an alternative statusline script that adds cost estimation and ANSI color output. It is not currently wired into `settings.json` but can replace the PowerShell script by updating `statusLine.command`.
 
 ---
 
 ## 7. Adding a New Machine
 
-To bring a new machine into Horizon AIOS, follow the full setup in `horizon_bin\documentation\getting_started\ReadMeToSetupYourSystem.md`. The essential sequence is summarized here.
+To bring a new machine into Horizon AIOS, follow the full setup in `horizon_system\documentation\getting_started\ReadMeToSetupYourSystem.md`. The essential sequence is summarized here.
 
 7.1 Clone the repository to the desired `$HORIZON_ROOT` path.
 
@@ -306,12 +306,12 @@ New-Item -ItemType HardLink -Path "$HOME\.claude\settings.json" -Target "$HORIZO
 
 7.3 Run path substitution on all files listed in section 3 of this document. Replace the committed root path with the new machine's `$HORIZON_ROOT`. PowerShell one-liners for each file are provided in the getting started guide.
 
-7.4 Update `horizon_bin\harness_configs\git\gitconfig` with the new machine's user identity (name, email, GPG key fingerprint) and the correct `excludesfile` path.
+7.4 Update `horizon_system\harness_configs\git\gitconfig` with the new machine's user identity (name, email, GPG key fingerprint) and the correct `excludesfile` path.
 
 7.5 Apply the portable git config:
 
 ```bash
-git config --global include.path "$HORIZON_ROOT/horizon_bin/harness_configs/git/gitconfig"
+git config --global include.path "$HORIZON_ROOT/horizon_system/harness_configs/git/gitconfig"
 ```
 
 7.6 Initialize the OS repo and wire the hooks:
@@ -319,8 +319,8 @@ git config --global include.path "$HORIZON_ROOT/horizon_bin/harness_configs/git/
 ```bash
 cd "$HORIZON_ROOT"
 git init
-git config --local core.hooksPath ./horizon_bin/harness_configs/git/hooks
-git add .claude/CLAUDE.md .claude/settings.json horizon_bin/ handoffs/ .gitignore .gitignore.user
+git config --local core.hooksPath ./horizon_system/harness_configs/git/hooks
+git add .claude/CLAUDE.md .claude/settings.json horizon_system/ handoffs/ .gitignore .gitignore.user
 git commit -m "Initial Horizon AIOS OS layer commit"
 ```
 

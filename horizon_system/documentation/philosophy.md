@@ -154,11 +154,12 @@ Any workflow or knowledge base set up in AIOS-standard format is portable across
 
 ### Gaps
 
-| Value | Gap | Priority |
+| Value | Gap | Status |
 |---|---|---|
-| IaC / Containerization | No Dockerfile or Docker Compose template exists. The AIOS is described as container-compatible but no deployment artifact exists. | Medium |
-| Blue Team Answerability | The "what is the agent doing / how / why" framing is implicit in the security model but never stated as explicit design goals in a user-facing document. An auditor reading the repo would need to piece this together. | Medium |
-| Brain vs. AIOS conceptual vocabulary | `security_invariants.md` uses "brain" without defining it. The distinction between Brain (expert app) and AIOS (OS layer) is not explained anywhere in the existing docs. A contributor or auditor must infer this from context. | High — this document addresses it |
-| Second Brain as goal state | Not articulated in any existing document. The user experience objective is missing. | Low (strategy doc; doesn't block implementation) |
-| Per-brain provisioning record | `create_brain.py` provisions brains correctly but there is no generated audit artifact (e.g., a machine-readable manifest of what each brain was provisioned with). An auditor cannot inspect "what does brain X have access to?" without running filesystem queries. | Medium |
-| Docker-aware bootstrap | `bootstrap.ps1` / `bootstrap.sh` are native-OS only. No container-aware bootstrap variant exists. | Low (future work) |
+| IaC / Containerization | ~~No Dockerfile or Docker Compose template exists.~~ | **Addressed** — `horizon_system/templates/docker/` contains Dockerfile, docker-compose.yml, and .dockerignore. `bootstrap_docker.sh` is the container-aware bootstrap. Brain-level Docker provisioning (sub-containers) remains manual. |
+| Blue Team Answerability | Hook log records lifecycle events (Stop/PermissionRequest/StopFailure) but not tool invocations or file paths accessed. A security team can confirm when sessions ran and stopped; they cannot reconstruct what the agent did during the session from AIOS logs alone. Full tool invocation logging requires OS-level audit (`auditd` / Windows Security Audit) — outside AIOS scope. | **Partially addressed** — this document and `security_invariants.md` now state these goals explicitly. Audit coverage is honestly bounded. |
+| Brain vs. AIOS conceptual vocabulary | The distinction between Brain (expert app) and AIOS (OS layer) was implicit. | **Addressed** — this document defines the vocabulary. |
+| Second Brain as goal state | Not articulated in any existing document. | **Addressed** — §2 of this document. |
+| Per-brain provisioning record | No generated audit artifact per brain. | **Addressed** — `create_brain.py` Phase 5 writes `.aios_provision.json` to each brain's directory at provisioning time. Post-creation grants are not auto-recorded. |
+| Docker-aware bootstrap | No container-aware bootstrap variant. | **Addressed** — `bootstrap_docker.sh` wraps `bootstrap.sh` with `AIOS_DEPLOY_MODE=docker`. |
+| Brain verification on Windows | `create_brain.py` Phase 4 verifies brain folder existence on Windows but does not verify ACL correctness — it trusts that the `icacls` commands in Phase 3 succeeded. A failed `icacls` call raises an exception and aborts provisioning, so catastrophic failures are detected; partial ACL success is not re-checked. | **Open** — full ACL re-verification on Windows would require parsing `icacls` output, which adds significant complexity. Current posture: fail-loudly on error, trust-on-success. |

@@ -1,5 +1,5 @@
 # Horizon AIOS — Ollama Modelfile Template
-# Replace HORIZON_BIN_PATH with the absolute path to horizon_bin/
+# Replace HORIZON_SYSTEM_PATH with the absolute path to horizon_system/
 # Replace BASE_MODEL with your chosen model (e.g., llama3, mistral, codellama)
 
 FROM BASE_MODEL

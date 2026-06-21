@@ -10,8 +10,8 @@ diverged, it fails loudly and leaves you to resolve it manually.
 
 ## Config keys (`aios_local.conf`)
 
-Copy `horizon_bin/templates/aios_local.conf.template` to
-`horizon_bin/ai_os_etc/aios_local.conf` and set the following keys. The file
+Copy `horizon_system/templates/aios_local.conf.template` to
+`horizon_system/ai_os_etc/aios_local.conf` and set the following keys. The file
 is git-ignored; never commit it.
 
 | Key | Values | Default | Description |
@@ -155,7 +155,7 @@ entries. Start here when a sync fails silently.
 
 **Run sync manually to see live output:**
 ```
-python horizon_bin/sbin/sync_aios.py
+python horizon_system/sbin/sync_aios.py
 ```
 This runs the same logic the scheduler calls and prints directly to stdout in
 addition to writing the log.
@@ -175,7 +175,7 @@ addition to writing the log.
 - `aios_local.conf not found` — sync runs with defaults (remote=`origin`,
   branch=`main`). Copy the template to create the file:
   ```
-  cp horizon_bin/templates/aios_local.conf.template horizon_bin/ai_os_etc/aios_local.conf
+  cp horizon_system/templates/aios_local.conf.template horizon_system/ai_os_etc/aios_local.conf
   ```
 
 - Task runs but nothing happens on Windows — confirm the task is not in a

@@ -106,14 +106,14 @@ sudo systemctl enable --now aios-monitor
 Pass the paths in as environment variables and mount the log directory:
 
 ```dockerfile
-ENV AIOS_MONITOR_PATHS=/horizon_bin
+ENV AIOS_MONITOR_PATHS=/horizon_system
 ENV AIOS_MONITOR_LOG_DIR=/logs/aios_monitor
 ```
 
 ```yaml
 # docker-compose.yml excerpt
 volumes:
-  - ./horizon_bin:/horizon_bin:ro
+  - ./horizon_system:/horizon_system:ro
   - ./logs/aios_monitor:/logs/aios_monitor
 ```
 

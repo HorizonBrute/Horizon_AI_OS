@@ -12,4 +12,4 @@ A template Modelfile is provided in this directory.
 
 ## Status
 
-Community contribution welcome. See `horizon_bin/license/CONTRIBUTING.md`.
+Community contribution welcome. See `$HORIZON_DOCS/CONTRIBUTING.md`.

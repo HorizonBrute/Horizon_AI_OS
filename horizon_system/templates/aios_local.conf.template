@@ -1,5 +1,5 @@
 # Horizon AIOS — Machine-Local Configuration
-# Copy to horizon_bin/ai_os_etc/aios_local.conf and edit. Never commit. No credentials here.
+# Copy to horizon_system/ai_os_etc/aios_local.conf and edit. Never commit. No credentials here.
 
 # ---------------------------------------------------------------------------
 # Sync
@@ -25,13 +25,13 @@ AIOS_REPO_BRANCH=main
 # ---------------------------------------------------------------------------
 # Default: runs only when logged in (uses your existing SSH agent).
 # Unattended (server/always-on): use a passphrase-free SSH deploy key with
-# read-only access. See horizon_bin/documentation/sync_setup.md.
+# read-only access. See $HORIZON_DOCS/sync_setup.md.
 
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
 
-# Override log root. Default: $HORIZON_BIN/logs (derived at runtime).
+# Override log root. Default: $HORIZON_ROOT/logs (derived at runtime).
 # AIOS_LOG_DIR=/var/log/horizon-aios
 
 # Days before logs are pruned. 0 = disabled.

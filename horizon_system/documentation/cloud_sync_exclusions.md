@@ -19,11 +19,11 @@ If you must sync AIOS, configure the exclusions below.
 Dropbox supports a `.dropboxignore` file (similar syntax to `.gitignore`).
 Place it at the root of your Dropbox-synced directory.
 
-A pre-populated template is at `$HORIZON_BIN/templates/dropboxignore.template`.
+A pre-populated template is at `$HORIZON_SYSTEM/templates/dropboxignore.template`.
 Copy it to `.dropboxignore` at your Dropbox root and adjust as needed:
 
 ```
-cp $HORIZON_BIN/templates/dropboxignore.template ~/.dropbox/.dropboxignore
+cp $HORIZON_SYSTEM/templates/dropboxignore.template ~/.dropbox/.dropboxignore
 # or wherever your Dropbox root is
 ```
 
@@ -73,9 +73,9 @@ Options:
 Regardless of which sync service you use, the following categories must not
 be synced (they contain secrets or are too large):
 
-- `horizon_bin/ai_os_etc/aios_local.conf` — machine-local credentials and paths
+- `horizon_system/ai_os_etc/aios_local.conf` — machine-local credentials and paths
 - `brains/` — all brain session data and any secrets they hold
-- `horizon_bin/logs/` — log content (scaffold is fine, content is not)
+- `logs/` — log content (scaffold is fine, content is not)
 - `handoffs/` — session-local conversation continuity data
 - `.gitignore.user` — machine-local folder patterns
 - Any file matching patterns in `.gitignore` (secrets, credentials, ML weights)
