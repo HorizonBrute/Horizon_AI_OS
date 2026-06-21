@@ -14,10 +14,10 @@ Create a new AIOS skill with the required directory structure, frontmatter, and 
 
 Skills live in one of two locations depending on access tier:
 
-| Directory | Env var | Access | Deploy target |
-|---|---|---|---|
-| `$HORIZON_SYSTEM/skills_bin/<name>/` | `$HORIZON_SYSTEM/skills_bin` | All brains (group-readable) | `~/.claude/skills/<name>/` |
-| `$HORIZON_SYSTEM/skills_sbin/<name>/` | `$HORIZON_SYSTEM/skills_sbin` | Owner only (privileged) | Deploy manually; not auto-deployed by bootstrap |
+| Directory | Access | How it reaches Claude Code |
+|---|---|---|
+| `$HORIZON_SYSTEM/skills_sbin/<name>/` | Owner only (privileged) | `~/.claude/skills/` is a junction/symlink → `skills_sbin/` — live immediately |
+| `$HORIZON_SYSTEM/skills_bin/<name>/` | All brains (group-readable) | Brain users' `~/.claude/skills/` is a junction/symlink → `skills_bin/` — live immediately |
 
 Each skill is a **directory** containing exactly one required file: `SKILL.md`.
 
@@ -86,23 +86,15 @@ $HORIZON_SYSTEM/skills_sbin/<skill-name>/
 
 3.3 The index update and the SKILL.md creation must be in the **same commit**.
 
-### Step 4 — Deploy (skills_bin only)
+### Step 4 — Deploy (automatic via junction)
 
-4.1 Copy the skill directory to `~/.claude/skills/`:
-```bash
-cp -r "$HORIZON_SYSTEM/skills_bin/<skill-name>" ~/.claude/skills/
-```
-Or re-run bootstrap to deploy all skills:
-```bash
-bash "$HORIZON_SYSTEM/sbin/bootstrap.sh"     # Linux/macOS
-& "$env:HORIZON_SYSTEM\sbin\bootstrap.ps1"   # Windows
-```
+No manual copy needed. `~/.claude/skills/` is a junction/symlink to `skills_sbin/` (primary user) or `skills_bin/` (brain users). Skills are live immediately on disk.
 
-4.2 Restart Claude Code after deploying a new skill (skills are loaded at session start).
+4.1 Restart Claude Code after creating a new skill — skills are loaded at session start.
 
 ### Step 5 — Verify
 
-5.1 Check that `~/.claude/skills/<skill-name>/SKILL.md` exists.
+5.1 Check that `$HORIZON_SYSTEM/skills_sbin/<skill-name>/SKILL.md` (or `skills_bin/`) exists.
 5.2 Start a new Claude Code session and verify the skill appears (type `/<skill-name>`).
 
 ---
@@ -114,8 +106,7 @@ bash "$HORIZON_SYSTEM/sbin/bootstrap.sh"     # Linux/macOS
 - [ ] `name` in frontmatter matches directory name
 - [ ] `description` is specific enough for agent routing (not just "does X")
 - [ ] `index.md` updated in the same commit
-- [ ] Skill deployed to `~/.claude/skills/` (skills_bin only)
-- [ ] Claude Code restarted to load the new skill
+- [ ] Claude Code restarted to load the new skill (junction is live; restart is sufficient)
 
 ---
 

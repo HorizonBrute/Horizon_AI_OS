@@ -630,6 +630,19 @@ def _phase3_windows(brain_name, invoking_user,
                  '/deny',  f'{BRAINS_GROUP}:(OI)(CI)RX'],
                 dry_run=dry_run)
 
+    # -- Brain ~/.claude/skills/ → skills_bin/ (junction; no admin needed) --
+    system_drive = os.environ.get('SystemDrive', 'C:')
+    brain_home = os.path.join(system_drive + '\\', 'Users', brain_name)
+    brain_claude_dir = os.path.join(brain_home, '.claude')
+    brain_skills_dir = os.path.join(brain_claude_dir, 'skills')
+    info(f'Redirecting brain ~/.claude/skills/ → skills_bin/')
+    if not dry_run:
+        os.makedirs(brain_claude_dir, exist_ok=True)
+    if os.path.exists(brain_skills_dir):
+        run(['cmd', '/c', 'rmdir', brain_skills_dir], dry_run=dry_run)
+    run(['cmd', '/c', 'mklink', '/J', brain_skills_dir, horizon_skills_bin],
+        dry_run=dry_run)
+
 
 # ---- Unix permission implementation ----
 
@@ -669,6 +682,20 @@ def _phase3_unix(brain_name, invoking_user, os_name,
     info(f'Setting skills_bin group to "{BRAINS_GROUP}" and granting rx')
     run(['chown', f':{BRAINS_GROUP}', horizon_skills_bin], dry_run=dry_run)
     run(['chmod', 'g+rx', horizon_skills_bin], dry_run=dry_run)
+
+    # -- Brain ~/.claude/skills/ → skills_bin/ (symlink) --
+    try:
+        import pwd as _pwd
+        brain_home = _pwd.getpwnam(brain_name).pw_dir
+    except KeyError:
+        brain_home = f'/home/{brain_name}'
+    brain_claude_dir = os.path.join(brain_home, '.claude')
+    brain_skills_dir = os.path.join(brain_claude_dir, 'skills')
+    info(f'Redirecting brain ~/.claude/skills/ → skills_bin/')
+    run(['mkdir', '-p', brain_claude_dir], dry_run=dry_run)
+    run(['chown', f'{brain_name}:{brain_name}', brain_claude_dir], dry_run=dry_run)
+    run(['ln', '-sfn', horizon_skills_bin, brain_skills_dir], dry_run=dry_run)
+    run(['chown', '-h', f'{brain_name}:{brain_name}', brain_skills_dir], dry_run=dry_run)
 
     # -- Privileged dirs: owner-only — MUST be after all grants above --
     for label, path in [('sbin', horizon_sbin),

@@ -52,13 +52,17 @@ Do not start the monitor yourself.
 
 ## Skills
 
+`~/.claude/skills/` is a junction/symlink — not a copy. Primary user → `skills_sbin/`. Brain users → `skills_bin/`. Skills are live on disk immediately; only a session restart is needed.
+
 Check the index before searching individual skill files:
-- `$HORIZON_SYSTEM/skills_bin/index.md` — group-readable skills
-- `$HORIZON_SYSTEM/skills_sbin/index.md` — owner-only privileged skills
+- `$HORIZON_SYSTEM/skills_sbin/index.md` — owner-only privileged skills (primary user)
+- `$HORIZON_SYSTEM/skills_bin/index.md` — group-readable skills (all brains)
 
-When adding a skill, update the appropriate index.md in the same commit.
+To make a skill available to brains: add it to `skills_bin/` and update `skills_bin/index.md` in the same commit.
 
-**New skills must follow the `skill-creation` skill template.** Invoke `/skill-creation` or read `$HORIZON_SYSTEM/skills_bin/skill-creation/SKILL.md` before creating any new skill to ensure correct structure and registration.
+When adding any skill, update the appropriate index.md in the same commit.
+
+**New skills must follow the `skill-creation` skill template.** Invoke `/skill-creation` or read `$HORIZON_SYSTEM/skills_sbin/skill-creation/SKILL.md` before creating any new skill to ensure correct structure and registration.
 
 ## OS-Layer Development Values
 

@@ -113,57 +113,46 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# SECTION 3: Deploy skills
+# SECTION 3: Redirect ~/.claude/skills/ to skills_sbin/
+# Primary user is AIOS root — all skills live in skills_sbin/.
+# We redirect the directory itself (symlink) so changes are live immediately.
 # -----------------------------------------------------------------------------
-banner "SECTION 3: Deploy skills"
+banner "SECTION 3: Skills redirect"
 
-SKILLS_SRC="$HORIZON_SYSTEM/skills_bin"
+SKILLS_SRC="$HORIZON_SYSTEM/skills_sbin"
 SKILLS_DST="$HOME/.claude/skills"
 
 if [ ! -d "$SKILLS_SRC" ]; then
-  warn "Skills source directory not found: $SKILLS_SRC"
-  warn "Skipping skills deploy."
-else
-  mkdir -p "$SKILLS_DST"
-  skill_count=0
-  skipped_count=0
-
-  for src_dir in "$SKILLS_SRC"/*/; do
-    [ -d "$src_dir" ] || continue
-    skill_name="$(basename "$src_dir")"
-    dst_dir="$SKILLS_DST/$skill_name"
-
-    if [ -d "$dst_dir" ]; then
-      src_md="$src_dir/SKILL.md"
-      dst_md="$dst_dir/SKILL.md"
-      if diff -q "$src_md" "$dst_md" > /dev/null 2>&1; then
-        ok "  $skill_name — already up to date, skipping."
-        skipped_count=$((skipped_count + 1))
-      else
-        warn "  $skill_name — destination differs from source."
-        if [ "$YES_ALL" = "true" ]; then
-          answer=y
-        else
-          echo -n "    Overwrite $dst_dir? [y/N] "
-          read -r answer </dev/tty
-        fi
-        if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
-          cp -r "$src_dir" "$dst_dir"
-          ok "  $skill_name — overwritten."
-          skill_count=$((skill_count + 1))
-        else
-          warn "  $skill_name — skipped (keeping existing)."
-          skipped_count=$((skipped_count + 1))
-        fi
-      fi
-    else
-      cp -r "$src_dir" "$dst_dir"
-      ok "  $skill_name — deployed."
-      skill_count=$((skill_count + 1))
+  warn "skills_sbin not found: $SKILLS_SRC — skipping skills redirect."
+elif [ -L "$SKILLS_DST" ]; then
+  current_target="$(readlink "$SKILLS_DST")"
+  if [ "$current_target" = "$SKILLS_SRC" ]; then
+    ok "~/.claude/skills/ already redirected to skills_sbin/ — OK."
+  else
+    warn "~/.claude/skills/ is a symlink pointing elsewhere: $current_target"
+    if [ "$YES_ALL" = "true" ]; then answer=y; else
+      echo -n "  Replace symlink? [y/N] "; read -r answer </dev/tty
     fi
-  done
-
-  info "Skills deploy complete: $skill_count deployed, $skipped_count skipped."
+    if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
+      rm "$SKILLS_DST"
+      ln -s "$SKILLS_SRC" "$SKILLS_DST"
+      ok "Updated symlink: ~/.claude/skills/ → skills_sbin/"
+    else
+      warn "Skipping skills redirect."
+    fi
+  fi
+elif [ -d "$SKILLS_DST" ]; then
+  if [ -z "$(ls -A "$SKILLS_DST" 2>/dev/null)" ]; then
+    rmdir "$SKILLS_DST"
+    ln -s "$SKILLS_SRC" "$SKILLS_DST"
+    ok "Created symlink: ~/.claude/skills/ → skills_sbin/"
+  else
+    warn "~/.claude/skills/ is a real directory with content."
+    warn "Cannot auto-redirect. Manually empty or remove it, then re-run bootstrap."
+  fi
+else
+  ln -s "$SKILLS_SRC" "$SKILLS_DST"
+  ok "Created symlink: ~/.claude/skills/ → skills_sbin/"
 fi
 
 # -----------------------------------------------------------------------------
@@ -252,11 +241,11 @@ else
   fail_check "~/.claude/CLAUDE.md is missing or does not contain @ redirect"
 fi
 
-# Check 2: handoff skill deployed (directory with SKILL.md)
-if [ -f "$HOME/.claude/skills/handoff/SKILL.md" ]; then
-  pass_check "~/.claude/skills/handoff/SKILL.md exists"
+# Check 2: ~/.claude/skills/ is a symlink to skills_sbin/
+if [ -L "$HOME/.claude/skills" ]; then
+  pass_check "~/.claude/skills/ redirected to skills_sbin/ (symlink)"
 else
-  fail_check "~/.claude/skills/handoff/SKILL.md not found"
+  fail_check "~/.claude/skills/ is not a symlink — skills redirect not set up"
 fi
 
 # Check 3: handoffs directory exists

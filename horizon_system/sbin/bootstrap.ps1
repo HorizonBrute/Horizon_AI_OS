@@ -122,58 +122,51 @@ if (Test-Path $ClaudeMd) {
 }
 
 # -----------------------------------------------------------------------------
-# SECTION 3: Deploy skills
+# SECTION 3: Redirect ~/.claude/skills/ to skills_sbin/
+# Primary user is AIOS root — all skills live in skills_sbin/.
+# We redirect the directory itself (junction) so changes are live immediately.
+# Windows directory junctions do not require administrator rights.
 # -----------------------------------------------------------------------------
-Banner "SECTION 3: Deploy skills"
+Banner "SECTION 3: Skills redirect"
 
-# Skills live in horizon_system/skills_bin/<name>/SKILL.md (directory per skill).
-# Deploy by copying each skill directory into ~/.claude/skills/.
-$SkillsSrc = Join-Path $HORIZON_SYSTEM "skills_bin"
+$SkillsSrc = Join-Path $HORIZON_SYSTEM "skills_sbin"
 $SkillsDst = Join-Path $HOME ".claude\skills"
 
 if (-not (Test-Path $SkillsSrc)) {
-    Warn "Skills source directory not found: $SkillsSrc"
-    Warn "Skipping skills deploy."
+    Warn "skills_sbin not found: $SkillsSrc — skipping skills redirect."
 } else {
-    if (-not (Test-Path $SkillsDst)) {
-        New-Item -ItemType Directory -Path $SkillsDst -Force | Out-Null
-    }
-
-    $SkillCount   = 0
-    $SkippedCount = 0
-
-    Get-ChildItem -Path $SkillsSrc -Directory | ForEach-Object {
-        $skillName = $_.Name
-        $srcDir    = $_.FullName
-        $dstDir    = Join-Path $SkillsDst $skillName
-
-        if (Test-Path $dstDir) {
-            # Compare SKILL.md content
-            $srcMd = Get-Content (Join-Path $srcDir "SKILL.md") -Raw -ErrorAction SilentlyContinue
-            $dstMd = Get-Content (Join-Path $dstDir "SKILL.md") -Raw -ErrorAction SilentlyContinue
-            if ($srcMd -eq $dstMd) {
-                Ok "  $skillName — already up to date, skipping."
-                $SkippedCount++
+    if (Test-Path $SkillsDst) {
+        $item = Get-Item $SkillsDst -ErrorAction SilentlyContinue
+        if ($item.LinkType -eq "Junction" -or $item.LinkType -eq "SymbolicLink") {
+            $target = $item.Target
+            if ($target -eq $SkillsSrc) {
+                Ok "~/.claude/skills/ already redirected to skills_sbin/ — OK."
             } else {
-                Warn "  $skillName — destination differs from source."
-                $answer = if ($YesAll) { "y" } else { Read-Host "    Overwrite $dstDir? [y/N]" }
+                Warn "~/.claude/skills/ is a junction but points elsewhere: $target"
+                $answer = if ($YesAll) { "y" } else { Read-Host "  Replace junction? [y/N]" }
                 if ($answer -eq "y" -or $answer -eq "Y") {
-                    Copy-Item $srcDir $dstDir -Recurse -Force
-                    Ok "  $skillName — overwritten."
-                    $SkillCount++
+                    [System.IO.Directory]::Delete($SkillsDst, $false)
+                    New-Item -ItemType Junction -Path $SkillsDst -Target $SkillsSrc | Out-Null
+                    Ok "Updated junction: ~/.claude/skills/ → skills_sbin/"
                 } else {
-                    Warn "  $skillName — skipped (keeping existing)."
-                    $SkippedCount++
+                    Warn "Skipping skills redirect."
                 }
             }
         } else {
-            Copy-Item $srcDir $dstDir -Recurse
-            Ok "  $skillName — deployed."
-            $SkillCount++
+            $contents = @(Get-ChildItem $SkillsDst -ErrorAction SilentlyContinue)
+            if ($contents.Count -eq 0) {
+                Remove-Item $SkillsDst
+                New-Item -ItemType Junction -Path $SkillsDst -Target $SkillsSrc | Out-Null
+                Ok "Created junction: ~/.claude/skills/ → skills_sbin/"
+            } else {
+                Warn "~/.claude/skills/ is a real directory with $($contents.Count) item(s)."
+                Warn "Cannot auto-redirect. Manually empty or remove it, then re-run bootstrap."
+            }
         }
+    } else {
+        New-Item -ItemType Junction -Path $SkillsDst -Target $SkillsSrc | Out-Null
+        Ok "Created junction: ~/.claude/skills/ → skills_sbin/"
     }
-
-    Info "Skills deploy complete: $SkillCount deployed, $SkippedCount skipped."
 }
 
 # -----------------------------------------------------------------------------
@@ -263,12 +256,12 @@ if ((Test-Path $claudeMdPath)) {
     FailCheck "~/.claude/CLAUDE.md not found"
 }
 
-# Check 2: handoff skill deployed (directory with SKILL.md)
-$handoffSkill = Join-Path $HOME ".claude\skills\handoff\SKILL.md"
-if (Test-Path $handoffSkill) {
-    PassCheck "~/.claude/skills/handoff/SKILL.md exists"
+# Check 2: ~/.claude/skills/ is a junction/symlink to skills_sbin/
+$skillsItem = Get-Item (Join-Path $HOME ".claude\skills") -ErrorAction SilentlyContinue
+if ($skillsItem -and ($skillsItem.LinkType -eq "Junction" -or $skillsItem.LinkType -eq "SymbolicLink")) {
+    PassCheck "~/.claude/skills/ redirected to skills_sbin/ (junction)"
 } else {
-    FailCheck "~/.claude/skills/handoff/SKILL.md not found"
+    FailCheck "~/.claude/skills/ is not a junction — skills redirect not set up"
 }
 
 # Check 3: handoffs directory exists
