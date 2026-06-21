@@ -56,8 +56,8 @@ Object Access). Enabling OS audit is optional and outside the AIOS scope.
 2. Register the service:
 
 ```powershell
-nssm install AIOSMonitor powershell -File "$HORIZON_BIN\sbin\monitor_aios_runner.ps1"
-nssm set AIOSMonitor AppDirectory $HORIZON_BIN\sbin
+nssm install AIOSMonitor powershell -File "$HORIZON_SYSTEM\sbin\monitor_aios_runner.ps1"
+nssm set AIOSMonitor AppDirectory $HORIZON_SYSTEM\sbin
 nssm set AIOSMonitor ObjectName ".\<admin-account>" "<password>"
 nssm start AIOSMonitor
 ```
@@ -73,7 +73,7 @@ icacls "$HORIZON_ROOT\logs\aios_monitor" /grant "<admin-account>:(OI)(CI)F" /inh
 
 ```powershell
 $action = New-ScheduledTaskAction -Execute "powershell" `
-    -Argument "-File `"$HORIZON_BIN\sbin\monitor_aios_runner.ps1`""
+    -Argument "-File `"$HORIZON_SYSTEM\sbin\monitor_aios_runner.ps1`""
 $trigger = New-ScheduledTaskTrigger -AtStartup
 $principal = New-ScheduledTaskPrincipal -UserId "<admin-account>" -RunLevel Highest
 Register-ScheduledTask -TaskName "AIOSMonitor" -Action $action -Trigger $trigger -Principal $principal
@@ -90,7 +90,7 @@ After=network.target
 [Service]
 Type=simple
 User=<admin-account>
-ExecStart=python $HORIZON_BIN/sbin/monitor_aios.py
+ExecStart=python $HORIZON_SYSTEM/sbin/monitor_aios.py
 Restart=on-failure
 
 [Install]
@@ -123,15 +123,15 @@ volumes:
 
 ## Log Analysis and Alerting
 
-`$HORIZON_BIN/sbin/analyze_aios_monitor.py` reads monitor logs, checks for
+`$HORIZON_SYSTEM/sbin/analyze_aios_monitor.py` reads monitor logs, checks for
 file change events and uptime gaps, and writes a human-readable summary to
 `$HORIZON_ROOT/logs/security.log`. Run it periodically from the administrative
 context.
 
 ```sh
-python $HORIZON_BIN/sbin/analyze_aios_monitor.py          # last 2 days
-python $HORIZON_BIN/sbin/analyze_aios_monitor.py --days 7 # last 7 days
-python $HORIZON_BIN/sbin/analyze_aios_monitor.py --syslog  # also emit to OS log
+python $HORIZON_SYSTEM/sbin/analyze_aios_monitor.py          # last 2 days
+python $HORIZON_SYSTEM/sbin/analyze_aios_monitor.py --days 7 # last 7 days
+python $HORIZON_SYSTEM/sbin/analyze_aios_monitor.py --syslog  # also emit to OS log
 ```
 
 The security log records:
@@ -144,7 +144,7 @@ The security log records:
 Windows Task Scheduler:
 ```powershell
 $action = New-ScheduledTaskAction -Execute "powershell" `
-    -Argument "-File `"$HORIZON_BIN\sbin\analyze_aios_monitor_runner.ps1`""
+    -Argument "-File `"$HORIZON_SYSTEM\sbin\analyze_aios_monitor_runner.ps1`""
 $trigger = New-ScheduledTaskTrigger -Daily -At "06:00"
 $principal = New-ScheduledTaskPrincipal -UserId "<admin-account>" -RunLevel Highest
 Register-ScheduledTask -TaskName "AIOSMonitorAnalyzer" -Action $action `
@@ -153,7 +153,7 @@ Register-ScheduledTask -TaskName "AIOSMonitorAnalyzer" -Action $action `
 
 Linux cron (daily at 6am):
 ```sh
-0 6 * * * /usr/bin/python3 $HORIZON_BIN/sbin/analyze_aios_monitor.py --syslog
+0 6 * * * /usr/bin/python3 $HORIZON_SYSTEM/sbin/analyze_aios_monitor.py --syslog
 ```
 
 **Note on read detection:** The monitor and analyzer detect file *changes*

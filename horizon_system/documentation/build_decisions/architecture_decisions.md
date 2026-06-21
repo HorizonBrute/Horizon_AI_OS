@@ -173,6 +173,8 @@ In the Docker deployment model, brain isolation is container-level rather than O
 
 ### 2026-06-20 — Skills have dual location: source and deployed copy
 
+> **SUPERSEDED by 2026-06-21 — Skills redirect via junction/symlink.** The copy-based model below is no longer in use. `~/.claude/skills/` is now a directory junction/symlink pointing directly at the source. No deploy step exists.
+
 **Decision:** AIOS skills (markdown files defining slash commands) are stored in two locations: `$HORIZON_BIN/skills/` (source of truth, committed to repo) and `~/.claude/skills/` (deployed copy, where Claude Code reads them).
 
 **Rationale:** Claude Code reads skills exclusively from `~/.claude/skills/` — it cannot read them from an arbitrary path. The repo must track the canonical versions for community sharing and version history. Therefore, a deploy step is required. The bootstrap script handles initial deployment; subsequent skill updates require a manual re-copy or re-run of bootstrap.

@@ -1,6 +1,6 @@
 # sbin — Privileged Scripts
 
-`$HORIZON_BIN/sbin/` is the privileged scripts directory for Horizon AIOS. It mirrors the role of `/sbin` on Unix systems: scripts here require primary-user authority to execute and must never be accessible to brain user accounts or any other secondary OS user.
+`$HORIZON_SYSTEM/sbin/` is the privileged scripts directory for Horizon AIOS. It mirrors the role of `/sbin` on Unix systems: scripts here require primary-user authority to execute and must never be accessible to brain user accounts or any other secondary OS user.
 
 ---
 
@@ -22,7 +22,7 @@ Examples of sbin candidates:
 
 ## What Does NOT Belong Here
 
-If a script only reads from $HORIZON_BIN (status line, sounds, templates), it belongs in $HORIZON_BIN root or an appropriate subdirectory — not sbin. Brain users need read-execute access to those scripts, and sbin must remain inaccessible to them.
+If a script only reads from $HORIZON_BIN (status line, sounds, templates), it belongs in $HORIZON_BIN or an appropriate subdirectory — not sbin. Brain users need read-execute access to those scripts, and sbin must remain inaccessible to them.
 
 ---
 
@@ -35,7 +35,7 @@ sbin must have an explicit Deny ACL entry for all brain user accounts covering R
 To deny access for a brain user on Windows (run as primary user or Administrator):
 
 ```powershell
-$acl = Get-Acl "C:\devroot\horizon_system\sbin"
+$acl = Get-Acl "$env:HORIZON_SYSTEM\sbin"
 $rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
     "<brain_username>",
     "FullControl",
@@ -44,7 +44,7 @@ $rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
     "Deny"
 )
 $acl.AddAccessRule($rule)
-Set-Acl "C:\devroot\horizon_system\sbin" $acl
+Set-Acl "$env:HORIZON_SYSTEM\sbin" $acl
 ```
 
 Repeat for each brain user account.
@@ -54,12 +54,12 @@ Repeat for each brain user account.
 sbin must be chmod 700 (rwx------), owned by the primary user, with no group or world bits set:
 
 ```bash
-chmod 700 $HORIZON_BIN/sbin
-chown $USER $HORIZON_BIN/sbin
+chmod 700 $HORIZON_SYSTEM/sbin
+chown $USER $HORIZON_SYSTEM/sbin
 ```
 
 ---
 
 ## Community Contributions
 
-sbin is not open to community contributions. Scripts here are owner-managed and machine-specific. If you are contributing to Horizon AIOS, your contribution goes into $HORIZON_BIN (not sbin) or into $HORIZON_BIN/templates/ for setup automation.
+sbin is not open to community contributions. Scripts here are owner-managed and machine-specific. If you are contributing to Horizon AIOS, your contribution goes into $HORIZON_BIN (not sbin) or into $HORIZON_SYSTEM/templates/ for setup automation.

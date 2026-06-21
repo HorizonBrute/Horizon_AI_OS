@@ -54,6 +54,8 @@ Install if missing: `winget install jqlang.jq` (Windows) or `brew install jq` (m
 
 P.5 **PowerShell** — required on Windows only. The Windows statusline script (`statusline-context-alerts.ps1`) and sound player both use PowerShell, which is built-in on Windows. On Linux and macOS, the bash statusline script and `play_sound.sh` are used instead — `pwsh` is not required on those platforms.
 
+P.5.1 **`watchdog` Python library** — required only if you intend to use the AIOS filesystem monitor (`sbin/monitor_aios.py`). The monitor is opt-in and not auto-started. Install when ready to use it: `pip install watchdog`.
+
 P.6 **GPG** — required for commit signing. `commit.gpgsign = true` is set globally, so all commits on the machine will be GPG-signed. A key must exist in the local keyring before the first commit.
 
 P.7 **SSH client** — required for all remote Git operations. No HTTPS and no `gh` CLI are used anywhere in this system.
@@ -375,13 +377,7 @@ sed -i "s|/old/path/to/devroot|$HORIZON_ROOT|g" "$HORIZON_ROOT/.claude/settings.
 
 Replace the old path with whatever root path is currently embedded in the file (check with `grep -n "devroot\|horizon" "$HORIZON_ROOT/.claude/settings.json" | head -20`).
 
-8.2 **`$HORIZON_BIN/statusline/statusline-context-alerts.ps1`** — line containing the statusline threshold wav path:
-
-```powershell
-(Get-Content "$HORIZON_BIN\statusline\statusline-context-alerts.ps1") -replace [regex]::Escape("C:\devroot"), "$HORIZON_ROOT" | Set-Content "$HORIZON_BIN\statusline\statusline-context-alerts.ps1"
-```
-
-8.3 **`$HORIZON_BIN/harness_configs/git/gitconfig`** — the `excludesfile` field and user identity:
+8.2 **`$HORIZON_BIN/harness_configs/git/gitconfig`** — the `excludesfile` field and user identity:
 
 Open the file and set:
 
@@ -395,7 +391,7 @@ Open the file and set:
     excludesfile = $HORIZON_ROOT/.gitignore_global
 ```
 
-8.4 See `$HORIZON_DOCS/system/system_configuration_reference.md` Section 3 for the full Path Dependencies Catalog — every file that contains hardcoded paths.
+8.3 See `$HORIZON_DOCS/system/system_configuration_reference.md` Section 3 for the full Path Dependencies Catalog — every file that contains hardcoded paths.
 
 ---
 

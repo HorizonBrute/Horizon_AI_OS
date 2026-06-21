@@ -34,7 +34,7 @@ The bootstrap script (`bootstrap.ps1` / `bootstrap.sh`) performs these substitut
 ### Quick substitution (PowerShell — manual)
 
 ```powershell
-$horizonSystem = "C:\devroot\horizon_system"   # set to your actual $HORIZON_SYSTEM
+$horizonSystem = "C:\path\to\your\devroot\horizon_system"   # set to your actual $HORIZON_SYSTEM
 $horizonBin    = "$horizonSystem\bin"
 $template = Get-Content "$horizonSystem\templates\claude_code\settings.json" -Raw
 $result = $template -replace 'HORIZON_SYSTEM_PATH', $horizonSystem -replace 'HORIZON_BIN_PATH', $horizonBin
