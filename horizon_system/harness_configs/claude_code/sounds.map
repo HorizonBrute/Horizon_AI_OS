@@ -1,0 +1,15 @@
+# Claude Code Sound Map
+# Extends $HORIZON_BIN/sounds/sounds.map with Claude-specific events.
+# Paths relative to $HORIZON_BIN/sounds/.
+# Resolution: aios_sounds.conf > this file > sounds/sounds.map
+
+input_needed         = claude_event_sounds/InputNeeded.wav
+claude.input_needed  = claude_event_sounds/InputNeeded.wav
+
+claude.context_30    = claude_event_sounds/claude_at_30_statusline.wav
+claude.context_40    = claude_event_sounds/claude_at_40_statusline.wav
+claude.context_50    = claude_event_sounds/claude_at_50_statusline.wav
+claude.context_60    = claude_event_sounds/claude_at_60_statusline.wav
+claude.context_70    = claude_event_sounds/claude_at_70_statusline.wav
+claude.context_80    = claude_event_sounds/claude_at_80_statusline.wav
+claude.context_90    = claude_event_sounds/claude_at_90_statusline.wav

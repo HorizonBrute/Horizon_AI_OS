@@ -1,9 +1,5 @@
 # Horizon AIOS — Development Values
 
-These values govern how development sessions on the AIOS operating-system layer
-should be conducted. They apply to both human contributors and AI agents working
-on this repository.
-
 ---
 
 ## 1. Agent-First Architecture
@@ -16,26 +12,19 @@ unless the work is trivial. Every file read, every tool call, every search that
 happens in the main session consumes context tokens that persist for the life of
 the conversation. Offload to agents aggressively.
 
-See `agents.md` for the canonical orchestration pattern and agent team structure.
-
 ---
 
 ## 2. Token Economy
 
 **Brevity is a first-class concern. Every byte in context costs money.**
 
-- Context-loaded files (CLAUDE.md, invariants, @ imports) must be short and
-  direct. Verbose context multiplies cost every session.
+- Context-loaded files (CLAUDE.md, invariants, @ imports) must be short and direct.
 - Prefer CLI tools (`grep`, `Select-String`, `mv`) over file-content tools
   (`Read`, `Write`) for mechanical operations.
 - Documentation files should communicate their point in the fewest words
   possible without sacrificing clarity.
 - Do not add comments that restate what the code already says.
-- Configuration files should be terse to the point of minimal. Comments in
-  config files explain the non-obvious (a security warning, a known gotcha);
-  they do not narrate the obvious. If a setting name already communicates its
-  purpose, no comment is needed. Aim for configuration files that are read
-  in seconds, not minutes.
+- Config file comments explain non-obvious constraints only. If the setting name communicates its purpose, no comment is needed.
 
 ---
 
@@ -60,8 +49,7 @@ See `agents.md` for the canonical orchestration pattern and agent team structure
 **Documentation is a deliverable, not an afterthought. Update it in the same
 commit as the feature it describes.**
 
-- When a new feature, script, or convention is added, its documentation is part
-  of the same unit of work.
+- **Terseness invariant:** All context-loaded documentation (invariants, agents.md, CLAUDE.md, @ imports) must be as short as the content allows. Every sentence that can be removed without losing a rule or invariant must be removed. Verbosity compounds cost every session.
 - Significant additions and architectural decisions are recorded in
   `architecture_decisions.md` with a unique sequential entry number. This is
   the "serial number" for decisions — it makes reasoning traceable across time.
@@ -107,16 +95,7 @@ remain stable for coordination to be possible.
 
 **Harness independence is a design constraint, not a feature.**
 
-No part of the AIOS core layer should be readable only by one AI harness or
-executable only on one model. Cross-harness conventions (`agents.md`, the
-hook taxonomy, the log schema, the sound naming tier) are designed so that:
-
-- A Codex agent and a Claude Code agent can read the same instruction file.
-- An Ollama-backed brain and a Claude-backed brain share the same bootstrap,
-  the same log structure, and the same sbin boundary.
-- The choice of model is a deployment decision, not an architectural one.
-
-Harness-specific configuration lives in `$HORIZON_BIN/harness_configs/<vendor>/`
+No part of the AIOS core layer may be readable only by one harness or executable only on one model. Cross-harness conventions (`agents.md`, hook taxonomy, log schema, sound naming) are harness-agnostic; the choice of model is a deployment decision. Harness-specific configuration lives in `$HORIZON_BIN/harness_configs/<vendor>/`
 and extends, but never replaces, the cross-harness core. Any feature that
 requires a specific harness to function belongs in that vendor's config
 directory, not in `agents.md` or the invariants.
@@ -155,6 +134,30 @@ before committing. Flag discrepancies; do not suppress them:
 **Hardcoded paths are forbidden in committed files.**
 
 Every script, template, hook, and document that references a Horizon path must
-use `$HORIZON_ROOT`, `$HORIZON_BIN`, `$HORIZON_ETC`, or `$HORIZON_DOCS`. No
-exceptions. Machine-specific values live in `aios_local.conf` (gitignored) or
-in environment variables set at shell startup.
+use one of the canonical environment variables. No exceptions. Machine-specific
+values live in `aios_local.conf` (gitignored) or in environment variables set
+at shell startup.
+
+Canonical variables: `$HORIZON_ROOT`, `$HORIZON_SYSTEM`, `$HORIZON_BIN`,
+`$HORIZON_ETC`, `$HORIZON_DOCS`, `$HORIZON_USRBIN`, `$HORIZON_PROJECTS`, `$HORIZON_KEYS`.
+
+---
+
+## 10. Brain Sandbox Integrity
+
+**Brains are expert systems. Scope their tools, credentials, and data access to their function.**
+
+AIOS security is built around two co-equal threat models:
+
+**Prompt injection** — malicious instructions in data cause a brain to take unintended actions. Mitigations: narrow tool provisioning (brain cannot act outside its capabilities), audit trail (anomalies surface).
+
+**Credential and data containment** — a hallucinating or compromised brain can only cause harm proportional to what credentials and data it holds. A brain with no key for a service cannot authenticate to it. Mitigations: per-brain credential provisioning via `$HORIZON_KEYS`, zero-default filesystem access, least-privilege key scoping.
+
+These are defense-in-depth: both must hold for the model to be secure. When relaxing one (e.g., granting broader tool access), the other must compensate (e.g., tighter credential scoping, more aggressive audit).
+
+Operational rules:
+- Default brain access posture: zero — own folder only.
+- Tools are brought to the brain. Credentials are provisioned to the brain. Neither is discovered by browsing shared directories.
+- Every tool and every credential provisioned to a brain must be explainable in one sentence tied to that brain's expert function.
+- Brains must not self-provision tools or escalate permissions. Any such action is a security event.
+- The audit log is stored where the brain cannot modify it.

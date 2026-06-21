@@ -5,13 +5,13 @@ create_brain.py — Horizon AIOS Brain Provisioning Script
 
 Creates and configures everything needed for a new AI brain:
   - OS user account  (<brain-name>)
-  - Group: brains    (common AIOS group, grants horizon_bin rx)
+  - Group: brains    (common AIOS group, grants horizon_system/bin rx)
   - Group: <brain-name> (brain-specific group, grants rwx on brain folder)
   - Brain folder:    $HORIZON_ROOT/brains/<brain-name>/
   - Permissions:     brain folder (770 / icacls full-control for user+group)
-                     horizon_bin  (group brains rx)
-                     horizon_bin/sbin explicitly locked to owner-only AFTER
-                     the horizon_bin group change (security invariant)
+                     horizon_system/bin + skills_bin (group brains rx)
+                     sbin/skills_sbin/logs locked to owner-only AFTER
+                     all grants (security invariant)
 
 Usage:
     python create_brain.py <brain-name> [--horizon-root /path] [--dry-run]
@@ -26,9 +26,9 @@ Platform support:
     - macOS    — dscl / dseditgroup (AddUser via dscl) / chown / chmod
 
 Security invariants honored (see $HORIZON_ETC/security_invariants.md):
-    - sbin ACL is always (re-)set AFTER any horizon_bin group change so that
-      inherited permissions can never accidentally grant brains access to sbin.
-    - Brain user gets rwx on its own folder, rx on horizon_bin, nothing on sbin.
+    - sbin/skills_sbin Deny ACEs are always set AFTER all brains-group grants
+      so inherited permissions can never accidentally reach privileged dirs.
+    - Brain user gets rwx on its own folder, rx on bin + skills_bin, nothing on sbin.
     - No credentials are stored in this script.
 """
 
@@ -165,7 +165,7 @@ def phase1_preflight(args):
         horizon_root = os.path.abspath(args.horizon_root)
     else:
         # Derive from ../../ relative to the script's own location.
-        # Script lives at $HORIZON_ROOT/horizon_bin/scripts/create_brain.py
+        # Script lives at $HORIZON_ROOT/horizon_system/scripts/create_brain.py
         # so ../../ is $HORIZON_ROOT.
         script_dir = os.path.dirname(os.path.abspath(__file__))
         horizon_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
@@ -177,22 +177,29 @@ def phase1_preflight(args):
         sys.exit(1)
 
     # --- Derive dependent paths ---
-    horizon_bin  = os.path.join(horizon_root, 'horizon_bin')
-    horizon_sbin = os.path.join(horizon_bin,  'sbin')
-    brains_dir   = os.path.join(horizon_root, 'brains')
-    brain_dir    = os.path.join(brains_dir,   brain_name)
+    horizon_system      = os.path.join(horizon_root, 'horizon_system')
+    horizon_bin         = os.path.join(horizon_system, 'bin')
+    horizon_sbin        = os.path.join(horizon_system, 'sbin')
+    horizon_skills_bin  = os.path.join(horizon_system, 'skills_bin')
+    horizon_skills_sbin = os.path.join(horizon_system, 'skills_sbin')
+    brains_dir          = os.path.join(horizon_root, 'brains')
+    brain_dir           = os.path.join(brains_dir,   brain_name)
+    keys_dir            = os.path.join(horizon_root, 'keys')
+    brain_keys_dir      = os.path.join(keys_dir,     brain_name)
+    logs_dir            = os.path.join(horizon_root, 'logs')
 
-    for label, path in [('HORIZON_BIN', horizon_bin),
-                        ('HORIZON_BIN/sbin', horizon_sbin)]:
+    for label, path in [('HORIZON_SYSTEM', horizon_system),
+                        ('HORIZON_BIN',    horizon_bin),
+                        ('HORIZON_SYSTEM/sbin', horizon_sbin)]:
         if not os.path.isdir(path):
-            # sbin and horizon_bin must pre-exist; we do not create them here.
             error(f'{label} does not exist: {path}')
             sys.exit(1)
         info(f'{label}: {path}')
 
     # brains/ directory will be created in Phase 3 if it doesn't exist yet.
-    info(f'brains dir  : {brains_dir}')
-    info(f'brain dir   : {brain_dir}')
+    info(f'brains dir       : {brains_dir}')
+    info(f'brain dir        : {brain_dir}')
+    info(f'brain keys dir   : {brain_keys_dir}')
 
     # --- Current (invoking) user ---
     try:
@@ -209,14 +216,20 @@ def phase1_preflight(args):
     info(f'User "{brain_name}" does not yet exist — will be created.')
 
     return {
-        'os_name':        os_name,
-        'brain_name':     brain_name,
-        'invoking_user':  invoking_user,
-        'horizon_root':   horizon_root,
-        'horizon_bin':    horizon_bin,
-        'horizon_sbin':   horizon_sbin,
-        'brains_dir':     brains_dir,
-        'brain_dir':      brain_dir,
+        'os_name':              os_name,
+        'brain_name':           brain_name,
+        'invoking_user':        invoking_user,
+        'horizon_root':         horizon_root,
+        'horizon_system':       horizon_system,
+        'horizon_bin':          horizon_bin,
+        'horizon_sbin':         horizon_sbin,
+        'horizon_skills_bin':   horizon_skills_bin,
+        'horizon_skills_sbin':  horizon_skills_sbin,
+        'brains_dir':           brains_dir,
+        'brain_dir':            brain_dir,
+        'keys_dir':             keys_dir,
+        'brain_keys_dir':       brain_keys_dir,
+        'logs_dir':             logs_dir,
     }
 
 
@@ -512,42 +525,53 @@ def _prompt_password(brain_name):
 
 def phase3_folders_and_permissions(ctx, dry_run=False):
     """
-    Create the brain folder and set all permissions:
-      1. mkdir $HORIZON_ROOT/brains/<brain-name>/ (with parents)
-      2. Brain folder: owner+group rwx, others nothing (770 / icacls)
-      3. horizon_bin: add brains group rx
-      4. horizon_bin/sbin: explicitly set to owner-only AFTER step 3
+    Create folders and set all permissions per security_invariants.md §2 table.
 
-    Step 4 MUST happen after step 3 to prevent the brains-group grant on
-    horizon_bin from cascading into sbin via inheritance.
+    Order matters on Windows — explicit Deny on sbin/skills_sbin/logs MUST
+    come AFTER the brains-group RX grants, so that Deny takes precedence
+    over any inherited permission.
     """
     banner('Phase 3: Folder Creation and Permissions')
 
-    os_name      = ctx['os_name']
-    brain_name   = ctx['brain_name']
-    invoking_user = ctx['invoking_user']
-    brains_dir   = ctx['brains_dir']
-    brain_dir    = ctx['brain_dir']
-    horizon_bin  = ctx['horizon_bin']
-    horizon_sbin = ctx['horizon_sbin']
+    os_name              = ctx['os_name']
+    brain_name           = ctx['brain_name']
+    invoking_user        = ctx['invoking_user']
+    brains_dir           = ctx['brains_dir']
+    brain_dir            = ctx['brain_dir']
+    horizon_bin          = ctx['horizon_bin']
+    horizon_sbin         = ctx['horizon_sbin']
+    horizon_skills_bin   = ctx['horizon_skills_bin']
+    horizon_skills_sbin  = ctx['horizon_skills_sbin']
+    keys_dir             = ctx['keys_dir']
+    brain_keys_dir       = ctx['brain_keys_dir']
+    logs_dir             = ctx['logs_dir']
 
-    # 3.1  Create brain folder (parents included)
+    # 3.1 Create brain folder
     info(f'Creating brain folder: {brain_dir}')
     if not dry_run:
         os.makedirs(brain_dir, exist_ok=True)
     else:
         print(f'  [DRY-RUN] os.makedirs({brain_dir!r}, exist_ok=True)')
 
+    # 3.2 Create keys/<brain-name>/ directory
+    info(f'Creating brain keys folder: {brain_keys_dir}')
+    if not dry_run:
+        os.makedirs(brain_keys_dir, exist_ok=True)
+    else:
+        print(f'  [DRY-RUN] os.makedirs({brain_keys_dir!r}, exist_ok=True)')
+
     if os_name == 'Windows':
         _phase3_windows(
             brain_name, invoking_user,
-            brain_dir, horizon_bin, horizon_sbin,
+            brain_dir, brain_keys_dir,
+            horizon_bin, horizon_sbin, horizon_skills_bin, horizon_skills_sbin, logs_dir,
             dry_run,
         )
     else:
         _phase3_unix(
             brain_name, invoking_user, os_name,
-            brain_dir, horizon_bin, horizon_sbin,
+            brain_dir, brain_keys_dir,
+            horizon_bin, horizon_sbin, horizon_skills_bin, horizon_skills_sbin, logs_dir,
             dry_run,
         )
 
@@ -555,84 +579,104 @@ def phase3_folders_and_permissions(ctx, dry_run=False):
 # ---- Windows permission implementation ----
 
 def _phase3_windows(brain_name, invoking_user,
-                    brain_dir, horizon_bin, horizon_sbin,
+                    brain_dir, brain_keys_dir,
+                    horizon_bin, horizon_sbin, horizon_skills_bin, horizon_skills_sbin, logs_dir,
                     dry_run):
     """
     Set ACLs on Windows using icacls.
 
-    Brain folder:
-        - Remove inheritance and clear existing ACEs
-        - Grant brain user:  full control (OI)(CI)F
-        - Grant brain-specific group: full control (OI)(CI)F
-
-    horizon_bin:
-        - Grant brains group: read+execute (OI)(CI)RX  (additive, no /inheritance change)
-
-    horizon_bin/sbin:
-        - Remove inheritance and clear existing ACEs
-        - Grant invoking user (primary user) full control only
-        (This step is ALWAYS run after the horizon_bin group grant so that
-        inherited permissions can never accidentally reach sbin.)
+    All Deny ACEs MUST be applied AFTER all brains-group RX grants — Deny
+    takes precedence over Allow, and applying after ensures inherited
+    permissions never accidentally reach privileged dirs.
     """
 
-    # -- Brain folder --
+    # -- Brain folder: remove inheritance, grant brain user + group full control --
     info(f'Setting ACLs on brain folder: {brain_dir}')
-    # /inheritance:r  = disable inheritance and remove inherited ACEs
-    # /grant X:(OI)(CI)F  = grant full control, object inherit, container inherit
     run(['icacls', brain_dir,
          '/inheritance:r',
          '/grant', f'{brain_name}:(OI)(CI)F',
-         '/grant', f'{brain_name}:(OI)(CI)F'],   # user + group share the same name
+         '/grant', f'{invoking_user}:(OI)(CI)F'],
         dry_run=dry_run)
 
-    # -- horizon_bin: add brains group rx (additive) --
-    info(f'Granting brains group RX on horizon_bin: {horizon_bin}')
+    # -- Brain keys dir: brain user read-only, invoking user full, others none --
+    info(f'Setting ACLs on brain keys folder: {brain_keys_dir}')
+    run(['icacls', brain_keys_dir,
+         '/inheritance:r',
+         '/grant', f'{brain_name}:(OI)(CI)R',
+         '/grant', f'{invoking_user}:(OI)(CI)F'],
+        dry_run=dry_run)
+
+    # -- horizon_system/bin: grant brains group RX --
+    info(f'Granting brains group RX on bin: {horizon_bin}')
     run(['icacls', horizon_bin,
          '/grant', f'{BRAINS_GROUP}:(OI)(CI)RX'],
         dry_run=dry_run)
 
-    # -- horizon_bin/sbin: owner-only — MUST happen AFTER horizon_bin grant --
-    info(f'Locking sbin to owner-only: {horizon_sbin}')
-    run(['icacls', horizon_sbin,
-         '/inheritance:r',
-         '/grant', f'{invoking_user}:(OI)(CI)F'],
+    # -- skills_bin: explicit grant (not under bin/, so not inherited) --
+    info(f'Granting brains group RX on skills_bin: {horizon_skills_bin}')
+    run(['icacls', horizon_skills_bin,
+         '/grant', f'{BRAINS_GROUP}:(OI)(CI)RX'],
         dry_run=dry_run)
+
+    # -- Deny on privileged dirs (MUST be after all grants above) --
+    for label, path in [('sbin', horizon_sbin),
+                        ('skills_sbin', horizon_skills_sbin),
+                        ('logs', logs_dir)]:
+        if os.path.isdir(path):
+            info(f'Denying brains group on {label}: {path}')
+            run(['icacls', path,
+                 '/inheritance:r',
+                 '/grant', f'{invoking_user}:(OI)(CI)F',
+                 '/deny',  f'{BRAINS_GROUP}:(OI)(CI)RX'],
+                dry_run=dry_run)
 
 
 # ---- Unix permission implementation ----
 
 def _phase3_unix(brain_name, invoking_user, os_name,
-                 brain_dir, horizon_bin, horizon_sbin,
+                 brain_dir, brain_keys_dir,
+                 horizon_bin, horizon_sbin, horizon_skills_bin, horizon_skills_sbin, logs_dir,
                  dry_run):
     """
     Set ownership and mode bits on Linux/macOS.
 
-    Brain folder  → chown brain_name:brain_name, chmod 770
-    horizon_bin   → chmod g+rx (adds brains group rx; setgid not set here
-                    because horizon_bin already has a group; we just ensure
-                    the brains group has rx)
-    horizon_bin/sbin → chmod 700  (AFTER horizon_bin change — security invariant)
+    sbin/skills_sbin/logs chmod 700 MUST happen AFTER all brains-group rx
+    grants so that those grants cannot cascade into privileged dirs.
     """
 
-    # -- Brain folder: set owner and group to brain_name --
+    # -- Brain folder: chown brain_name:brain_name, chmod 770 --
     info(f'Setting ownership of brain folder: {brain_dir}')
-    run(['chown', '-R', f'{brain_name}:{brain_name}', brain_dir],
-        dry_run=dry_run)
-
-    # -- Brain folder: rwxrwx--- (770) --
-    info(f'Setting permissions on brain folder (chmod 770): {brain_dir}')
+    run(['chown', '-R', f'{brain_name}:{brain_name}', brain_dir], dry_run=dry_run)
     run(['chmod', '770', brain_dir], dry_run=dry_run)
 
-    # -- horizon_bin: ensure brains group has rx --
-    # Change horizon_bin's group to 'brains' and set g+rx.
-    info(f'Setting horizon_bin group to "{BRAINS_GROUP}" and granting rx')
+    # -- Brain keys dir: chown invoking_user, setfacl read-only for brain --
+    info(f'Setting ownership of brain keys folder: {brain_keys_dir}')
+    run(['chown', f'{invoking_user}:{invoking_user}', brain_keys_dir], dry_run=dry_run)
+    run(['chmod', '750', brain_keys_dir], dry_run=dry_run)
+    result = subprocess.run(['which', 'setfacl'], capture_output=True)
+    if result.returncode == 0:
+        run(['setfacl', '-m', f'u:{brain_name}:r-x', brain_keys_dir], dry_run=dry_run)
+    else:
+        warn('setfacl not found — grant brain user access to keys dir manually.')
+        warn(f'  chown {brain_name}:{brain_name} {brain_keys_dir} && chmod 770 {brain_keys_dir}')
+
+    # -- bin: set brains group and grant rx --
+    info(f'Setting bin group to "{BRAINS_GROUP}" and granting rx')
     run(['chown', f':{BRAINS_GROUP}', horizon_bin], dry_run=dry_run)
     run(['chmod', 'g+rx', horizon_bin], dry_run=dry_run)
 
-    # -- horizon_bin/sbin: owner-only, 700 — MUST be after horizon_bin change --
-    # This prevents the brains group rx on horizon_bin from cascading into sbin.
-    info(f'Setting sbin to owner-only (chmod 700): {horizon_sbin}')
-    run(['chmod', '700', horizon_sbin], dry_run=dry_run)
+    # -- skills_bin: explicit grant (not under bin/, so not inherited) --
+    info(f'Setting skills_bin group to "{BRAINS_GROUP}" and granting rx')
+    run(['chown', f':{BRAINS_GROUP}', horizon_skills_bin], dry_run=dry_run)
+    run(['chmod', 'g+rx', horizon_skills_bin], dry_run=dry_run)
+
+    # -- Privileged dirs: owner-only — MUST be after all grants above --
+    for label, path in [('sbin', horizon_sbin),
+                        ('skills_sbin', horizon_skills_sbin),
+                        ('logs', logs_dir)]:
+        if os.path.isdir(path):
+            info(f'Setting {label} to owner-only (chmod 700): {path}')
+            run(['chmod', '700', path], dry_run=dry_run)
 
 
 # ---------------------------------------------------------------------------
@@ -646,10 +690,12 @@ def phase4_verify(ctx, dry_run=False):
     """
     banner('Phase 4: Verification')
 
-    os_name    = ctx['os_name']
-    brain_name = ctx['brain_name']
-    brain_dir  = ctx['brain_dir']
-    horizon_sbin = ctx['horizon_sbin']
+    os_name           = ctx['os_name']
+    brain_name        = ctx['brain_name']
+    brain_dir         = ctx['brain_dir']
+    brain_keys_dir    = ctx['brain_keys_dir']
+    horizon_sbin      = ctx['horizon_sbin']
+    horizon_skills_sbin = ctx['horizon_skills_sbin']
 
     results = {}
 
@@ -658,38 +704,35 @@ def phase4_verify(ctx, dry_run=False):
     _report_check('User exists', results['user_exists'])
 
     # -- Group memberships --
-    results['in_brains_group'] = _check_group_membership(
-        brain_name, BRAINS_GROUP, os_name
-    )
+    results['in_brains_group'] = _check_group_membership(brain_name, BRAINS_GROUP, os_name)
     _report_check(f'User in "{BRAINS_GROUP}" group', results['in_brains_group'])
 
-    results['in_brain_group'] = _check_group_membership(
-        brain_name, brain_name, os_name
-    )
+    results['in_brain_group'] = _check_group_membership(brain_name, brain_name, os_name)
     _report_check(f'User in "{brain_name}" group', results['in_brain_group'])
 
     # -- Brain folder exists --
     results['brain_dir_exists'] = os.path.isdir(brain_dir)
     _report_check(f'Brain folder exists: {brain_dir}', results['brain_dir_exists'])
 
-    # -- Brain folder permissions --
     if results['brain_dir_exists'] and not dry_run:
-        results['brain_dir_perms'] = _check_folder_permissions(
-            brain_dir, os_name
-        )
+        results['brain_dir_perms'] = _check_folder_permissions(brain_dir, os_name)
         _report_check('Brain folder permissions OK', results['brain_dir_perms'])
     else:
         results['brain_dir_perms'] = None
         info('Brain folder permission check skipped (dry-run or folder missing)')
 
-    # -- sbin permissions (Unix only) --
+    # -- Brain keys folder exists --
+    results['brain_keys_exists'] = os.path.isdir(brain_keys_dir)
+    _report_check(f'Brain keys folder exists: {brain_keys_dir}', results['brain_keys_exists'])
+
+    # -- sbin / skills_sbin permissions (Unix only) --
     if os_name != 'Windows' and not dry_run:
-        sbin_mode = oct(stat.S_IMODE(os.stat(horizon_sbin).st_mode))
-        results['sbin_locked'] = (sbin_mode == '0o700')
-        _report_check(
-            f'sbin is owner-only (700, got {sbin_mode})',
-            results['sbin_locked']
-        )
+        for label, path in [('sbin', horizon_sbin), ('skills_sbin', horizon_skills_sbin)]:
+            if os.path.isdir(path):
+                mode = oct(stat.S_IMODE(os.stat(path).st_mode))
+                results[f'{label}_locked'] = (mode == '0o700')
+                _report_check(f'{label} is owner-only (700, got {mode})',
+                               results[f'{label}_locked'])
 
     all_passed = all(
         v for v in results.values() if v is not None
@@ -704,13 +747,18 @@ def phase4_verify(ctx, dry_run=False):
         print('  Review the [FAIL] items above.\n')
 
     print('  Next steps:')
-    print(f'    1. Log in as "{brain_name}" and verify access to horizon_bin.')
+    print(f'    1. Log in as "{brain_name}" and verify read+execute on $HORIZON_BIN.')
     print(f'    2. Create $HORIZON_ROOT/brains/{brain_name}/.claude/settings.json')
     print(f'       (scope it to the brain\'s allowed tools and permissions).')
     print(f'    3. Create $HORIZON_ROOT/brains/{brain_name}/CLAUDE.md')
     print(f'       (define the brain\'s persona and operational scope).')
-    print(f'    4. Optionally import the system-level instructions via:')
-    print(f'       @$HORIZON_ROOT/.claude/CLAUDE.md at the top of CLAUDE.md.')
+    print(f'    4. Import system instructions at the top of CLAUDE.md:')
+    print(f'       @$HORIZON_ROOT/CLAUDE.md')
+    print(f'    5. Place any credentials this brain needs in:')
+    print(f'       $HORIZON_ROOT/keys/{brain_name}/')
+    print(f'    6. Provision tools from $HORIZON_USRBIN into the brain folder as needed.')
+    print(f'    7. To run this brain as a scheduled/automated agent, configure a')
+    print(f'       Task Scheduler task (Windows) or cron job (Unix) running as "{brain_name}".')
     print()
 
     if not all_passed:
@@ -807,7 +855,7 @@ def parse_args():
             'Absolute path to HORIZON_ROOT.  '
             'If omitted, derived from ../../ relative to this script\'s location '
             '(i.e., the script is expected to live at '
-            '$HORIZON_ROOT/horizon_bin/scripts/create_brain.py).'
+            '$HORIZON_ROOT/horizon_system/scripts/create_brain.py).'
         ),
     )
     parser.add_argument(

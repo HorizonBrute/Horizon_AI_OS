@@ -19,15 +19,21 @@ $YesAll = $args -contains "--yes" -or $args -contains "-y"
 # -----------------------------------------------------------------------------
 # Resolve HORIZON_ROOT from script location
 # -----------------------------------------------------------------------------
-$HORIZON_BIN    = $PSScriptRoot
-$HORIZON_ROOT   = Split-Path $HORIZON_BIN -Parent
-$HORIZON_ETC    = Join-Path $HORIZON_BIN "ai_os_etc"
-$HORIZON_DOCS   = Join-Path $HORIZON_BIN "documentation"
+$HORIZON_BIN      = $PSScriptRoot
+$HORIZON_ROOT     = Split-Path $HORIZON_BIN -Parent
+$HORIZON_ETC      = Join-Path $HORIZON_BIN "ai_os_etc"
+$HORIZON_DOCS     = Join-Path $HORIZON_BIN "documentation"
+$HORIZON_USRBIN   = Join-Path $HORIZON_ROOT "usrbin"
+$HORIZON_PROJECTS = Join-Path $HORIZON_ROOT "Projects"
+$HORIZON_KEYS     = Join-Path $HORIZON_ROOT "keys"
 
-$env:HORIZON_ROOT  = $HORIZON_ROOT
-$env:HORIZON_BIN   = $HORIZON_BIN
-$env:HORIZON_ETC   = $HORIZON_ETC
-$env:HORIZON_DOCS  = $HORIZON_DOCS
+$env:HORIZON_ROOT     = $HORIZON_ROOT
+$env:HORIZON_BIN      = $HORIZON_BIN
+$env:HORIZON_ETC      = $HORIZON_ETC
+$env:HORIZON_DOCS     = $HORIZON_DOCS
+$env:HORIZON_USRBIN   = $HORIZON_USRBIN
+$env:HORIZON_PROJECTS = $HORIZON_PROJECTS
+$env:HORIZON_KEYS     = $HORIZON_KEYS
 
 # -----------------------------------------------------------------------------
 # Helpers
@@ -66,10 +72,13 @@ Write-Host ""
 Write-Host "Add the following to your PowerShell profile (`$PROFILE):"
 Write-Host "  (Replace the HORIZON_ROOT value with your actual path if different)"
 Write-Host ""
-Write-Host "    `$env:HORIZON_ROOT = `"$HORIZON_ROOT`""
-Write-Host "    `$env:HORIZON_BIN  = `"`$env:HORIZON_ROOT\horizon_bin`""
-Write-Host "    `$env:HORIZON_ETC  = `"`$env:HORIZON_BIN\ai_os_etc`""
-Write-Host "    `$env:HORIZON_DOCS = `"`$env:HORIZON_BIN\documentation`""
+Write-Host "    `$env:HORIZON_ROOT     = `"$HORIZON_ROOT`""
+Write-Host "    `$env:HORIZON_BIN      = `"`$env:HORIZON_ROOT\horizon_bin`""
+Write-Host "    `$env:HORIZON_ETC      = `"`$env:HORIZON_BIN\ai_os_etc`""
+Write-Host "    `$env:HORIZON_DOCS     = `"`$env:HORIZON_BIN\documentation`""
+Write-Host "    `$env:HORIZON_USRBIN   = `"`$env:HORIZON_ROOT\usrbin`""
+Write-Host "    `$env:HORIZON_PROJECTS = `"`$env:HORIZON_ROOT\Projects`""
+Write-Host "    `$env:HORIZON_KEYS     = `"`$env:HORIZON_ROOT\keys`""
 Write-Host ""
 Write-Host "  Then reload your profile: . `$PROFILE"
 
@@ -113,7 +122,9 @@ if (Test-Path $ClaudeMd) {
 # -----------------------------------------------------------------------------
 Banner "SECTION 3: Deploy skills"
 
-$SkillsSrc = Join-Path $HORIZON_BIN "skills"
+# Skills live in horizon_bin/skills_bin/<name>/SKILL.md (directory per skill).
+# Deploy by copying each skill directory into ~/.claude/skills/.
+$SkillsSrc = Join-Path $HORIZON_BIN "skills_bin"
 $SkillsDst = Join-Path $HOME ".claude\skills"
 
 if (-not (Test-Path $SkillsSrc)) {
@@ -127,37 +138,38 @@ if (-not (Test-Path $SkillsSrc)) {
     $SkillCount   = 0
     $SkippedCount = 0
 
-    Get-ChildItem -Path $SkillsSrc -Filter "*.md" | ForEach-Object {
-        $srcFile = $_.FullName
-        $filename = $_.Name
-        $dstFile = Join-Path $SkillsDst $filename
+    Get-ChildItem -Path $SkillsSrc -Directory | ForEach-Object {
+        $skillName = $_.Name
+        $srcDir    = $_.FullName
+        $dstDir    = Join-Path $SkillsDst $skillName
 
-        if (Test-Path $dstFile) {
-            $srcContent = Get-Content $srcFile -Raw
-            $dstContent = Get-Content $dstFile -Raw
-            if ($srcContent -eq $dstContent) {
-                Ok "  $filename — already up to date, skipping."
+        if (Test-Path $dstDir) {
+            # Compare SKILL.md content
+            $srcMd = Get-Content (Join-Path $srcDir "SKILL.md") -Raw -ErrorAction SilentlyContinue
+            $dstMd = Get-Content (Join-Path $dstDir "SKILL.md") -Raw -ErrorAction SilentlyContinue
+            if ($srcMd -eq $dstMd) {
+                Ok "  $skillName — already up to date, skipping."
                 $SkippedCount++
             } else {
-                Warn "  $filename — destination differs from source."
-                $answer = if ($YesAll) { "y" } else { Read-Host "    Overwrite $dstFile? [y/N]" }
+                Warn "  $skillName — destination differs from source."
+                $answer = if ($YesAll) { "y" } else { Read-Host "    Overwrite $dstDir? [y/N]" }
                 if ($answer -eq "y" -or $answer -eq "Y") {
-                    Copy-Item $srcFile $dstFile -Force
-                    Ok "  $filename — overwritten."
+                    Copy-Item $srcDir $dstDir -Recurse -Force
+                    Ok "  $skillName — overwritten."
                     $SkillCount++
                 } else {
-                    Warn "  $filename — skipped (keeping existing)."
+                    Warn "  $skillName — skipped (keeping existing)."
                     $SkippedCount++
                 }
             }
         } else {
-            Copy-Item $srcFile $dstFile
-            Ok "  $filename — copied."
+            Copy-Item $srcDir $dstDir -Recurse
+            Ok "  $skillName — deployed."
             $SkillCount++
         }
     }
 
-    Info "Skills deploy complete: $SkillCount copied, $SkippedCount skipped."
+    Info "Skills deploy complete: $SkillCount deployed, $SkippedCount skipped."
 }
 
 # -----------------------------------------------------------------------------
@@ -247,12 +259,12 @@ if ((Test-Path $claudeMdPath)) {
     FailCheck "~/.claude/CLAUDE.md not found"
 }
 
-# Check 2: handoff.md deployed
-$handoffMd = Join-Path $HOME ".claude\skills\handoff.md"
-if (Test-Path $handoffMd) {
-    PassCheck "~/.claude/skills/handoff.md exists"
+# Check 2: handoff skill deployed (directory with SKILL.md)
+$handoffSkill = Join-Path $HOME ".claude\skills\handoff\SKILL.md"
+if (Test-Path $handoffSkill) {
+    PassCheck "~/.claude/skills/handoff/SKILL.md exists"
 } else {
-    FailCheck "~/.claude/skills/handoff.md not found"
+    FailCheck "~/.claude/skills/handoff/SKILL.md not found"
 }
 
 # Check 3: handoffs directory exists

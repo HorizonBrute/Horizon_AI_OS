@@ -1,0 +1,36 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"C:/devroot/horizon_bin/sounds/play_sound.sh\" \"C:/devroot/horizon_bin/sounds/WorkComplete_ork.wav\""
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"C:/devroot/horizon_bin/sounds/play_sound.sh\" \"C:/devroot/horizon_bin/sounds/claude_event_sounds/InputNeeded.wav\"",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"C:/devroot/horizon_bin/sounds/play_sound.sh\" \"C:/devroot/horizon_bin/sounds/APIFail.wav\"",
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}

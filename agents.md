@@ -1,11 +1,7 @@
 # AIOS Agent Instructions
 
-This file is the canonical instruction set for AI agents operating in a Horizon AIOS session.
-It is harness-agnostic — read by Claude Code (via CLAUDE.md import), Codex, and any other
-AI tool that supports agents.md or equivalent instruction files.
-
-Harness-specific configuration lives in `horizon_bin/harness_configs/<harness>/`.
-Security, file structure, and personalization invariants: `horizon_bin/ai_os_etc/`.
+Harness-agnostic — read by Claude Code, Codex, and any harness supporting `agents.md`.
+Harness-specific config: `horizon_bin/harness_configs/<harness>/`. Invariants: `horizon_bin/ai_os_etc/`.
 
 ---
 
@@ -13,49 +9,63 @@ Security, file structure, and personalization invariants: `horizon_bin/ai_os_etc
 
 ## Agent Usage
 
-I prefer to use agents and keep the main session's context as light as possible. Delegate to agents aggressively rather than doing work inline.
+**The main session is an orchestrator, not a worker.** Decompose tasks, spawn agents, synthesize results. Never read files, write code, or run commands inline if the work can be delegated.
 
-**The main session is an orchestrator, not a worker.** It should decompose tasks, spawn agents, and synthesize results — not read files, write code, or run commands itself. If a task involves reading code, editing files, running tools, or researching anything, that work belongs in an agent.
-
-**"Send an agent team"** means spawn agents in this order:
-1. **Orchestration agent** — reads the task, breaks it down, and coordinates the rest
-2. **Log reader agent** *(if needed)* — reads runtime logs to gather evidence before planning
-3. **Planner agent** — designs the implementation approach
+**"Send an agent team"** means spawn in this order:
+1. **Orchestration agent** — breaks down the task and coordinates the rest
+2. **Log reader agent** *(if needed)* — gathers runtime evidence before planning
+3. **Planner agent** — designs the approach
 4. **Implementer agent** — writes the code
-5. **Validator agent** — verifies the fix works and nothing regressed
+5. **Validator agent** — verifies the fix and checks for regressions
 
-When in doubt whether to do something inline or delegate, delegate.
+When in doubt, delegate.
+
+**Agents are self-sufficient.** Resolve problems independently before reporting back. Return to the main session only if: (a) the user must be informed, or (b) a decision only the user can make is required.
 
 ## Lists
 
-Whenever presenting a list of any kind, always use hierarchical numbered format: `1.` for top-level headers, `1.1` for items, `1.1.1` for sub-items. Never use bullet points or lettered lists.
-
-**Agents should be self-sufficient.** When an agent encounters a problem, it should attempt to resolve it independently before reporting back. An agent should only return to the main session if: (a) the user needs to be made aware of something, or (b) a decision or input is required that only the user can provide.
+Always use hierarchical numbered format: `1.` top-level, `1.1` items, `1.1.1` sub-items. Never use bullets or lettered lists.
 
 ## Token-Efficient File Operations
 
-Prefer CLI tools over read/write tools whenever possible. Shell commands consume far fewer tokens than reading file content into context.
+Prefer CLI tools over file-content tools for mechanical operations:
 
-- **Search:** use `grep`/`Select-String`/`rg` — not Read + manual scan
-- **Move/copy/rename:** use `mv`/`Copy-Item`/`Rename-Item` — not Read + Write + delete
-- **Bulk replace:** use `sed`/`(Get-Content | ForEach-Object { ... } | Set-Content)` — not Read + Edit for large files
-- **Directory listing:** use `ls`/`Get-ChildItem` — not Glob when a shell call suffices
-- **Check existence:** use `Test-Path`/`[ -f ]` — not Read
+- **Search:** `grep`/`Select-String`/`rg` — not Read + scan
+- **Move/copy/rename:** `mv`/`Copy-Item`/`Rename-Item` — not Read + Write + delete
+- **Bulk replace:** `sed`/`Get-Content | ForEach-Object | Set-Content` — not Read + Edit
+- **Directory listing:** `ls`/`Get-ChildItem` — not Glob
+- **Check existence:** `Test-Path`/`[ -f ]` — not Read
 
-Use Read/Write/Edit only when content must be reasoned about or precisely modified. Agents should apply this same principle — prefer `Bash`/`PowerShell` tool calls over file-content tools for mechanical operations.
+Use Read/Write/Edit only when content must be reasoned about or precisely modified.
+
+## Session Start
+
+Check whether the AIOS filesystem monitor is running:
+
+```
+python $HORIZON_BIN/monitor_status.py
+```
+
+Output: `running` or `stopped`. If `stopped`, ask the user: "The AIOS filesystem monitor is not running. Enable file access logging? Run: `python $HORIZON_BIN/sbin/monitor_aios.py` (administrative context required)."
+
+Do not start the monitor yourself.
+
+## Skills
+
+Check the index before searching individual skill files:
+- `$HORIZON_SYSTEM/skills_bin/index.md` — group-readable skills
+- `$HORIZON_SYSTEM/skills_sbin/index.md` — owner-only privileged skills
+
+When adding a skill, update the appropriate index.md in the same commit.
 
 ## OS-Layer Development Values
 
-When making architectural, design, or configuration decisions on the AIOS OS
-layer itself, load and consult the values document:
+When making architectural or design decisions on the AIOS OS layer, read on demand:
 
     $HORIZON_DOCS/dev_values.md
 
-Do **not** import this file at session start — read it on demand when a
-decision benefits from it. This keeps session context lean. The values document
-is the reference for resolving tradeoffs between security, token economy,
-extensibility, documentation parity, and standardization.
+Do **not** import at session start.
 
 ## Commits
 
-Always use `git commit -s` when creating commits in this repository. The DCO (Developer Certificate of Origin) requires a `Signed-off-by:` line in every commit message. Never create a commit without the `-s` flag.
+Always use `git commit -s` (DCO sign-off required). Never omit `-s`.

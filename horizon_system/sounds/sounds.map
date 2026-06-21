@@ -1,0 +1,14 @@
+# AIOS Default Sound Map
+# Format: event_name = sound_path
+# Paths are relative to $HORIZON_BIN/sounds/ unless absolute.
+# Harness-specific events use dot-prefix: <harness>.<event>
+# Override per-project: copy $HORIZON_BIN/templates/aios_sounds.conf to your project root.
+
+task_complete   = WorkComplete_ork.wav
+api_error       = APIFail.wav
+
+# Unmapped by default — add sounds here or override in aios_sounds.conf:
+# input_needed  =
+# session_start =
+# session_stop  =
+# notification  =
