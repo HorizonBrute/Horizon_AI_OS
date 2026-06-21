@@ -4,8 +4,8 @@
 # Harness-specific events use dot-prefix: <harness>.<event>
 # Override per-project: copy $HORIZON_BIN/templates/aios_sounds.conf to your project root.
 
-task_complete   = WorkComplete_ork.wav
-api_error       = APIFail.wav
+task_complete   = work_complete.wav
+api_error       = api_fail.wav
 
 # Unmapped by default — add sounds here or override in aios_sounds.conf:
 # input_needed  =

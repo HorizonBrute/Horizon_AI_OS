@@ -8,11 +8,11 @@ import subprocess
 import textwrap
 from pathlib import Path
 
-SCRIPT_DIR = Path(__file__).resolve().parent         # horizon_system/
-HORIZON_SYSTEM = SCRIPT_DIR                          # horizon_system/
-HORIZON_ROOT = SCRIPT_DIR.parent                     # devroot/
+SCRIPT_DIR = Path(__file__).resolve().parent         # horizon_system/sbin/
+HORIZON_SYSTEM = SCRIPT_DIR.parent                   # horizon_system/
+HORIZON_ROOT = HORIZON_SYSTEM.parent                 # devroot/
 HORIZON_ETC = HORIZON_SYSTEM / "ai_os_etc"
-SBIN = HORIZON_SYSTEM / "sbin"
+SBIN = SCRIPT_DIR
 CONFIG_FILE = HORIZON_ETC / "aios_local.conf"
 
 DEFAULTS = {

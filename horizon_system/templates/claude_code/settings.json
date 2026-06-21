@@ -13,7 +13,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "& 'HORIZON_SYSTEM_PATH/harness_configs/claude_code/hooks/log_hook_event.ps1' -Event Stop; (New-Object Media.SoundPlayer 'HORIZON_SYSTEM_PATH\\sounds\\WorkComplete_ork.wav').PlaySync()",
+            "command": "& 'HORIZON_SYSTEM_PATH/harness_configs/claude_code/hooks/log_hook_event.ps1' -Event Stop; (New-Object Media.SoundPlayer 'HORIZON_SYSTEM_PATH\\sounds\\work_complete.wav').PlaySync()",
             "shell": "powershell"
           }
         ]
@@ -36,7 +36,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "& 'HORIZON_SYSTEM_PATH/harness_configs/claude_code/hooks/log_hook_event.ps1' -Event StopFailure; (New-Object Media.SoundPlayer 'HORIZON_SYSTEM_PATH\\sounds\\APIFail.wav').PlaySync()",
+            "command": "& 'HORIZON_SYSTEM_PATH/harness_configs/claude_code/hooks/log_hook_event.ps1' -Event StopFailure; (New-Object Media.SoundPlayer 'HORIZON_SYSTEM_PATH\\sounds\\api_fail.wav').PlaySync()",
             "shell": "powershell",
             "async": true
           }

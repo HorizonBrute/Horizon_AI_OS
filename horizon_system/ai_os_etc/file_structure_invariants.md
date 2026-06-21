@@ -84,7 +84,7 @@ Adding new content categories requires updating this document and the directory 
 **Tier 1 — Root (`$HORIZON_BIN/sounds/*.wav`):**
 - Generic sounds with no vendor-specific voice or branding.
 - Any AI harness integration may use these sounds.
-- Examples: `WorkComplete_ork.wav` (generic completion sound), `APIFail.wav` (generic failure sound).
+- Examples: `work_complete.wav` (generic completion sound), `api_fail.wav` (generic failure sound).
 - New sounds added here must be usable without referencing a specific AI product by voice or name.
 
 **Tier 2 — Vendor subdirectories (`$HORIZON_BIN/sounds/<vendor>_event_sounds/`):**
@@ -283,8 +283,8 @@ Generic events (all harnesses):
 
 | Event | Default sound |
 |---|---|
-| `task_complete` | `WorkComplete_ork.wav` |
-| `api_error` | `APIFail.wav` |
+| `task_complete` | `work_complete.wav` |
+| `api_error` | `api_fail.wav` |
 | `input_needed` | _(unmapped — set per harness or project)_ |
 | `session_start` | _(unmapped)_ |
 | `session_stop` | _(unmapped)_ |

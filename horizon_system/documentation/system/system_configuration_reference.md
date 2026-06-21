@@ -186,11 +186,11 @@ Every file in the repository that contains a hardcoded path referencing `$HORIZO
 
 3.1.1 `statusLine.command` — path to `horizon_bin/statusline/statusline.sh` (the cross-platform dispatcher). Controls which script renders the Claude Code statusline.
 
-3.1.2 `hooks.Stop[0].hooks[0].command` — calls `play_sound.sh` with path to `horizon_bin/sounds/WorkComplete_ork.wav`. Sound played when Claude finishes a task successfully.
+3.1.2 `hooks.Stop[0].hooks[0].command` — calls `play_sound.sh` with path to `horizon_bin/sounds/work_complete.wav`. Sound played when Claude finishes a task successfully.
 
 3.1.3 `hooks.PermissionRequest[0].hooks[0].command` — calls `play_sound.sh` with path to `horizon_bin/sounds/claude_event_sounds/InputNeeded.wav`. Sound played when Claude requests a tool permission.
 
-3.1.4 `hooks.StopFailure[0].hooks[0].command` — calls `play_sound.sh` with path to `horizon_bin/sounds/APIFail.wav`. Sound played when Claude stops due to error or failure.
+3.1.4 `hooks.StopFailure[0].hooks[0].command` — calls `play_sound.sh` with path to `horizon_bin/sounds/api_fail.wav`. Sound played when Claude stops due to error or failure.
 
 3.2 **`$HORIZON_ROOT\horizon_bin\statusline\statusline-context-alerts.ps1`** (Windows path)
 
@@ -231,11 +231,11 @@ Must be updated on each new machine to use the local `$HORIZON_ROOT` path.
 
 4.3 **`hooks`** — shell commands executed by the Claude Code harness at lifecycle events. Hooks run outside Claude's context and fire regardless of session state.
 
-4.3.1 `hooks.Stop` — fires when Claude finishes a turn successfully. Plays `WorkComplete_ork.wav` via PowerShell `Media.SoundPlayer` (synchronous).
+4.3.1 `hooks.Stop` — fires when Claude finishes a turn successfully. Plays `work_complete.wav` via PowerShell `Media.SoundPlayer` (synchronous).
 
 4.3.2 `hooks.PermissionRequest` — fires when Claude Code needs to prompt for a tool permission. Marked `async: true` so it does not block the prompt UI. Plays `InputNeeded.wav`.
 
-4.3.3 `hooks.StopFailure` — fires when Claude stops due to an API error or unrecoverable failure. Plays `APIFail.wav`.
+4.3.3 `hooks.StopFailure` — fires when Claude stops due to an API error or unrecoverable failure. Plays `api_fail.wav`.
 
 4.4 **`effortLevel`** — set to `"medium"`. Controls Claude's default reasoning depth. Valid values: `"low"`, `"medium"`, `"high"`.
 

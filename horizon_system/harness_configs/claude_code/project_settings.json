@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"C:/devroot/horizon_system/sounds/play_sound.sh\" \"C:/devroot/horizon_system/sounds/WorkComplete_ork.wav\""
+            "command": "bash \"C:/devroot/horizon_system/sounds/play_sound.sh\" \"C:/devroot/horizon_system/sounds/work_complete.wav\""
           }
         ]
       }
@@ -26,7 +26,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"C:/devroot/horizon_system/sounds/play_sound.sh\" \"C:/devroot/horizon_system/sounds/APIFail.wav\"",
+            "command": "bash \"C:/devroot/horizon_system/sounds/play_sound.sh\" \"C:/devroot/horizon_system/sounds/api_fail.wav\"",
             "async": true
           }
         ]

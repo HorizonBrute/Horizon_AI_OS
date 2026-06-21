@@ -351,11 +351,11 @@ Several files inside the repository contain hardcoded paths that must reference 
 
 8.1.1 `statusLine.command` — path to `statusline-context-alerts.ps1`
 
-8.1.2 `hooks.Stop[0].hooks[0].command` — path to `WorkComplete_ork.wav`
+8.1.2 `hooks.Stop[0].hooks[0].command` — path to `work_complete.wav`
 
 8.1.3 `hooks.PermissionRequest[0].hooks[0].command` — path to `InputNeeded.wav`
 
-8.1.4 `hooks.StopFailure[0].hooks[0].command` — path to `APIFail.wav`
+8.1.4 `hooks.StopFailure[0].hooks[0].command` — path to `api_fail.wav`
 
 Open `settings.json` in an editor and replace every occurrence of the previous machine's root path with `$HORIZON_ROOT`. PowerShell one-liner:
 

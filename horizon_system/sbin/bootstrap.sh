@@ -5,7 +5,7 @@
 # Safe to run multiple times (idempotent). Non-destructive by default.
 #
 # Usage:
-#   bash /path/to/horizon_system/bootstrap.sh
+#   bash /path/to/horizon_system/sbin/bootstrap.sh
 #
 # Works on: Windows (Git Bash), macOS, Linux
 # =============================================================================
@@ -26,8 +26,8 @@ done
 # Resolve HORIZON_ROOT from script location (works regardless of CWD)
 # -----------------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-HORIZON_SYSTEM="$SCRIPT_DIR"
-HORIZON_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+HORIZON_SYSTEM="$(cd "$SCRIPT_DIR/.." && pwd)"
+HORIZON_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 HORIZON_BIN="$HORIZON_SYSTEM/bin"
 HORIZON_ETC="$HORIZON_SYSTEM/ai_os_etc"
 HORIZON_DOCS="$HORIZON_SYSTEM/documentation"
@@ -311,7 +311,7 @@ else
     echo "aios_local.conf already exists — skipping template copy."
 fi
 
-mkdir -p "$HORIZON_ROOT/logs"
+mkdir -p "$HORIZON_SYSTEM/logs"
 
 if [ "$YES_ALL" = "true" ]; then
     setup_sched=y
@@ -320,7 +320,7 @@ else
     read -r setup_sched
 fi
 if echo "$setup_sched" | grep -qi "^y"; then
-    python3 "$HORIZON_SYSTEM/setup_sync_schedule.py" $([ "$YES_ALL" = "true" ] && echo "--yes")
+    python3 "$HORIZON_SYSTEM/sbin/setup_sync_schedule.py" $([ "$YES_ALL" = "true" ] && echo "--yes")
 else
-    echo "Skipped. Run later: python3 $HORIZON_SYSTEM/setup_sync_schedule.py"
+    echo "Skipped. Run later: python3 $HORIZON_SYSTEM/sbin/setup_sync_schedule.py"
 fi
