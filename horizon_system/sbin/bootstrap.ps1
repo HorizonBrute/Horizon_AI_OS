@@ -1,5 +1,5 @@
 # =============================================================================
-# Horizon AIOS — Bootstrap Script (PowerShell)
+# Horizon AIOS - Bootstrap Script (PowerShell)
 # Sets up a new machine with all required Horizon AIOS configuration.
 # Safe to run multiple times (idempotent). Non-destructive by default.
 #
@@ -18,7 +18,7 @@ $YesAll = $args -contains "--yes" -or $args -contains "-y"
 
 # -----------------------------------------------------------------------------
 # Resolve HORIZON_ROOT from script location
-# Script lives at horizon_system/sbin/ — go up two levels to reach repo root.
+# Script lives at horizon_system/sbin/ - go up two levels to reach repo root.
 # -----------------------------------------------------------------------------
 $HORIZON_SYSTEM   = Split-Path $PSScriptRoot -Parent
 $HORIZON_ROOT     = Split-Path $HORIZON_SYSTEM -Parent
@@ -103,7 +103,7 @@ if (-not (Test-Path $ClaudeHomeDir)) {
 if (Test-Path $ClaudeMd) {
     $content = Get-Content $ClaudeMd -Raw
     if ($content -match "@" -and $content -match "CLAUDE\.md") {
-        Ok "~/.claude/CLAUDE.md already contains an @ redirect — skipping."
+        Ok "~/.claude/CLAUDE.md already contains an @ redirect - skipping."
         if ($content.Trim() -ne $ExpectedRedirect) {
             Warn "Existing redirect may point somewhere else:"
             Warn "  Current:  $($content.Trim())"
@@ -114,7 +114,7 @@ if (Test-Path $ClaudeMd) {
         Warn "~/.claude/CLAUDE.md exists but does not contain an @ redirect."
         Warn "  Current content: $($content.Trim())"
         Warn "  Expected:        $ExpectedRedirect"
-        Warn "Not overwriting — update manually if needed."
+        Warn "Not overwriting - update manually if needed."
     }
 } else {
     Set-Content -Path $ClaudeMd -Value $ExpectedRedirect -Encoding UTF8
@@ -123,7 +123,7 @@ if (Test-Path $ClaudeMd) {
 
 # -----------------------------------------------------------------------------
 # SECTION 3: Redirect ~/.claude/skills/ to skills_sbin/
-# Primary user is AIOS root — all skills live in skills_sbin/.
+# Primary user is AIOS root - all skills live in skills_sbin/.
 # We redirect the directory itself (junction) so changes are live immediately.
 # Windows directory junctions do not require administrator rights.
 # -----------------------------------------------------------------------------
@@ -133,14 +133,14 @@ $SkillsSrc = Join-Path $HORIZON_SYSTEM "skills_sbin"
 $SkillsDst = Join-Path $HOME ".claude\skills"
 
 if (-not (Test-Path $SkillsSrc)) {
-    Warn "skills_sbin not found: $SkillsSrc — skipping skills redirect."
+    Warn "skills_sbin not found: $SkillsSrc - skipping skills redirect."
 } else {
     if (Test-Path $SkillsDst) {
         $item = Get-Item $SkillsDst -ErrorAction SilentlyContinue
         if ($item.LinkType -eq "Junction" -or $item.LinkType -eq "SymbolicLink") {
             $target = $item.Target
             if ($target -eq $SkillsSrc) {
-                Ok "~/.claude/skills/ already redirected to skills_sbin/ — OK."
+                Ok "~/.claude/skills/ already redirected to skills_sbin/ - OK."
             } else {
                 Warn "~/.claude/skills/ is a junction but points elsewhere: $target"
                 $answer = if ($YesAll) { "y" } else { Read-Host "  Replace junction? [y/N]" }
@@ -206,10 +206,10 @@ if (Test-Path $SettingsDst) {
             $substituted = $templateContent -replace [regex]::Escape("HORIZON_BIN_PATH"), $HORIZON_BIN -replace [regex]::Escape("HORIZON_SYSTEM_PATH"), $HORIZON_SYSTEM
             Set-Content -Path $SettingsDst -Value $substituted -Encoding UTF8
             Ok "Copied template to ~/.claude/settings.json (HORIZON_BIN_PATH substituted)."
-            Warn "Review ~/.claude/settings.json — some paths may still need manual adjustment."
+            Warn "Review ~/.claude/settings.json - some paths may still need manual adjustment."
             Warn "See $HORIZON_DOCS\getting_started\ReadMeToSetupYourSystem.md Step 8 for path substitution details."
         } else {
-            Info "Skipping settings.json — create it manually from the template."
+            Info "Skipping settings.json - create it manually from the template."
         }
     } else {
         Warn "Template not found: $SettingsTemplate"
@@ -233,7 +233,7 @@ if (Test-Path $GitDir) {
     Copy-Item "$HORIZON_SYSTEM\harness_configs\git\hooks\commit-msg" "$HORIZON_ROOT\.git\hooks\commit-msg" -Force
     Ok "Installed commit-msg hook (DCO sign-off enforcement)."
 } else {
-    Info "$HORIZON_ROOT is not a git repository — skipping git hooks config."
+    Info "$HORIZON_ROOT is not a git repository - skipping git hooks config."
 }
 
 # -----------------------------------------------------------------------------
@@ -261,7 +261,7 @@ $skillsItem = Get-Item (Join-Path $HOME ".claude\skills") -ErrorAction SilentlyC
 if ($skillsItem -and ($skillsItem.LinkType -eq "Junction" -or $skillsItem.LinkType -eq "SymbolicLink")) {
     PassCheck "~/.claude/skills/ redirected to skills_sbin/ (junction)"
 } else {
-    FailCheck "~/.claude/skills/ is not a junction — skills redirect not set up"
+    FailCheck "~/.claude/skills/ is not a junction - skills redirect not set up"
 }
 
 # Check 3: handoffs directory exists
@@ -309,7 +309,7 @@ if (-not (Test-Path $localConf)) {
         Write-Host "Skipped. Run manually: Copy-Item $confTemplate $localConf"
     }
 } else {
-    Write-Host "aios_local.conf already exists — skipping template copy." -ForegroundColor Green
+    Write-Host "aios_local.conf already exists - skipping template copy." -ForegroundColor Green
 }
 
 # Ensure logs directory exists
