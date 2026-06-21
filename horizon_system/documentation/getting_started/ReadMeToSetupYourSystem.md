@@ -153,10 +153,8 @@ mkdir -p "$HORIZON_ROOT"
 3.3 Clone the Horizon AIOS repository into `$HORIZON_ROOT`:
 
 ```bash
-git clone git@github.com:HorizonBrute/HorizonAIOS.git "$HORIZON_ROOT"
+git clone git@github.com:HorizonBrute/Horizon_AI_OS.git "$HORIZON_ROOT"
 ```
-
-Note: replace the URL with the actual repo URL once published. The placeholder above is the expected canonical location.
 
 3.4 Confirm the clone succeeded by verifying these paths exist:
 
@@ -215,6 +213,8 @@ export HORIZON_DOCS="$HORIZON_SYSTEM/documentation"
 ```
 
 After editing, reload your profile (`source ~/.bashrc` or open a new terminal) and verify with `echo $HORIZON_ROOT`.
+
+**Optional — default terminal working directory:** Add `Set-Location $env:HORIZON_ROOT` (PowerShell) or `cd "$HORIZON_ROOT"` (bash/zsh) at the end of your profile so every new terminal opens at the AIOS root. This is personal preference and does not affect AIOS operation.
 
 ---
 
@@ -654,10 +654,22 @@ Brain names must match `^[a-z][a-z0-9_]{1,31}$`: start with a lowercase letter, 
 
 ### After provisioning
 
-Once the script finishes, complete the brain's configuration manually:
+The script handles the following automatically:
+- Generates a cryptographically random 64-character account password and stores it at `$HORIZON_ROOT/keys/<brain-name>/account_password.txt` (admin read-only; brain user is explicitly denied access). The password is never printed to the terminal.
+- Deploys `.claude/CLAUDE.md` and `.claude/settings.json` from `.aioscommon` templates into the brain's folder.
+- Writes a shell profile for the brain user that sets all `HORIZON_*` environment variables and changes the working directory to the brain's folder on interactive login.
 
-1. Create `$HORIZON_ROOT/brains/<brain-name>/.claude/settings.json` scoped to the brain's allowed tools and permissions.
-2. Create `$HORIZON_ROOT/brains/<brain-name>/CLAUDE.md` defining the brain's persona and operational scope. You may start with `@$HORIZON_ROOT/.claude/CLAUDE.md` to inherit system-level instructions.
+Complete the brain's configuration manually after provisioning:
+
+1. Customize `$HORIZON_ROOT/brains/<brain-name>/.claude/CLAUDE.md` to define the brain's persona and operational scope.
+2. Customize `$HORIZON_ROOT/brains/<brain-name>/.claude/settings.json` to scope allowed tools.
+3. Place any credentials this brain needs in `$HORIZON_ROOT/keys/<brain-name>/`.
+
+**Account password:** Required for Windows `runas` invocations and Task Scheduler. Read it from `$HORIZON_ROOT/keys/<brain-name>/account_password.txt` (the primary user can read this file; the brain user cannot). To reset the password: `Set-LocalUser -Name <brain-name> -Password (Read-Host -AsSecureString)` (Windows) or `sudo passwd <brain-name>` (Linux/macOS).
+
+**Scheduled tasks and cron jobs:**
+- Windows: Task Scheduler → "Run as user" → enter `<brain-name>` and retrieve password from keys file.
+- Linux/macOS: `sudo crontab -u <brain-name> -e` — no password needed when using sudo.
 
 The script prints a summary and next-steps reminder at the end of every run.
 

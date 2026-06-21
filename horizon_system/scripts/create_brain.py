@@ -12,6 +12,10 @@ Creates and configures everything needed for a new AI brain:
                      horizon_system/bin + skills_bin (group brains rx)
                      sbin/skills_sbin/logs locked to owner-only AFTER
                      all grants (security invariant)
+  - Password file:   $HORIZON_ROOT/keys/<brain-name>/account_password.txt
+                     (admin read-only; brain user is denied access)
+  - Shell profile:   sets HORIZON_* env vars and cds to brain folder on
+                     interactive login as the brain user
 
 Usage:
     python create_brain.py <brain-name> [--horizon-root /path] [--dry-run]
@@ -30,15 +34,17 @@ Security invariants honored (see $HORIZON_ETC/security_invariants.md):
       so inherited permissions can never accidentally reach privileged dirs.
     - Brain user gets rwx on its own folder, rx on bin + skills_bin, nothing on sbin.
     - No credentials are stored in this script.
+    - Account password is auto-generated (random 64-char) and stored in
+      keys/<brain-name>/account_password.txt (admin read-only, brain denied).
 """
 
 import argparse
 import datetime
-import getpass
 import json
 import os
 import platform
 import re
+import secrets
 import stat
 import subprocess
 import sys
@@ -128,6 +134,16 @@ def run_ps(ps_expr, dry_run=False, check=True, capture=False):
     return run(cmd, dry_run=dry_run, check=check, capture=capture)
 
 
+def _generate_password():
+    """
+    Generate a cryptographically random 64-character account password.
+
+    Uses token_urlsafe (URL-safe base64) which avoids special characters
+    that can break shell quoting on any platform.  48 bytes → 64 chars.
+    """
+    return secrets.token_urlsafe(48)
+
+
 # ---------------------------------------------------------------------------
 # Phase 1: Preflight
 # ---------------------------------------------------------------------------
@@ -205,9 +221,9 @@ def phase1_preflight(args):
 
     # --- Current (invoking) user ---
     try:
+        import getpass
         invoking_user = getpass.getuser()
     except Exception:
-        # Fallback to os.getlogin() if getpass.getuser() fails.
         invoking_user = os.getlogin()
     info(f'Invoking user (will be added to <brain-name> group): {invoking_user}')
 
@@ -238,8 +254,6 @@ def phase1_preflight(args):
 def _check_privileges(os_name):
     """Exit with a clear message if the script is not running elevated."""
     if os_name == 'Windows':
-        # On Windows, check via ctypes; running as admin means
-        # IsUserAnAdmin() returns 1.
         try:
             import ctypes
             is_admin = ctypes.windll.shell32.IsUserAnAdmin()
@@ -254,7 +268,6 @@ def _check_privileges(os_name):
             sys.exit(1)
         info('Running as Administrator: OK')
     else:
-        # Unix: effective UID 0 == root
         if os.geteuid() != 0:
             error(
                 'This script must be run as root.\n'
@@ -274,7 +287,6 @@ def _user_exists(name, os_name):
         )
         return bool(result.stdout.strip())
     else:
-        # Use 'id' on Unix; exit 0 if user exists, non-zero otherwise.
         result = subprocess.run(['id', name], capture_output=True)
         return result.returncode == 0
 
@@ -285,36 +297,38 @@ def _user_exists(name, os_name):
 
 def phase2_create_user_and_groups(ctx, dry_run=False):
     """
-    Create the brains group, brain-specific group, and brain user account.
-    Add the brain user and invoking user to the appropriate groups.
+    Generate account password, create the brains group, brain-specific group,
+    and brain user account.  Add users to appropriate groups.
+
+    The generated password is stored in ctx['password'] so Phase 3 can write
+    it to keys/<brain-name>/account_password.txt (admin-only, never printed).
     """
     banner('Phase 2: User and Group Creation')
 
-    os_name      = ctx['os_name']
-    brain_name   = ctx['brain_name']
+    os_name       = ctx['os_name']
+    brain_name    = ctx['brain_name']
     invoking_user = ctx['invoking_user']
 
+    # Generate a random 64-char password; Phase 3 persists it to keys/
+    password = _generate_password()
+    ctx['password'] = password
+    info('Generated random account password — will be written to keys/<brain-name>/account_password.txt')
+    info('  Password will NOT be printed here. Retrieve it from the keys file when needed.')
+
     if os_name == 'Windows':
-        _phase2_windows(brain_name, invoking_user, dry_run)
+        _phase2_windows(brain_name, invoking_user, password, dry_run)
     else:
-        _phase2_unix(brain_name, invoking_user, os_name, dry_run)
+        _phase2_unix(brain_name, invoking_user, os_name, password, dry_run)
 
 
 # ---- Windows implementation ----
 
-def _phase2_windows(brain_name, invoking_user, dry_run):
+def _phase2_windows(brain_name, invoking_user, password, dry_run):
     """Windows: use PowerShell Local* cmdlets."""
 
-    # Create 'brains' group if it doesn't exist
     _win_create_group_if_absent(BRAINS_GROUP, dry_run)
-
-    # Create '<brain-name>' group if it doesn't exist
     _win_create_group_if_absent(brain_name, dry_run)
 
-    # Prompt for password (no echo)
-    password = _prompt_password(brain_name)
-
-    # Create the brain user
     info(f'Creating local user: {brain_name}')
     run_ps(
         f'$pw = ConvertTo-SecureString "{password}" -AsPlainText -Force; '
@@ -325,21 +339,18 @@ def _phase2_windows(brain_name, invoking_user, dry_run):
         dry_run=dry_run,
     )
 
-    # Add brain user to 'brains' group
     info(f'Adding {brain_name} to group: {BRAINS_GROUP}')
     run_ps(
         f'Add-LocalGroupMember -Group "{BRAINS_GROUP}" -Member "{brain_name}"',
         dry_run=dry_run,
     )
 
-    # Add brain user to its own brain-specific group
     info(f'Adding {brain_name} to group: {brain_name}')
     run_ps(
         f'Add-LocalGroupMember -Group "{brain_name}" -Member "{brain_name}"',
         dry_run=dry_run,
     )
 
-    # Add invoking user to the brain-specific group (for oversight)
     info(f'Adding invoking user ({invoking_user}) to group: {brain_name}')
     run_ps(
         f'Add-LocalGroupMember -Group "{brain_name}" -Member "{invoking_user}"',
@@ -367,19 +378,12 @@ def _win_create_group_if_absent(group_name, dry_run):
 
 # ---- Unix implementation ----
 
-def _phase2_unix(brain_name, invoking_user, os_name, dry_run):
+def _phase2_unix(brain_name, invoking_user, os_name, password, dry_run):
     """Linux/macOS: use groupadd / useradd / usermod."""
 
-    # Create 'brains' group if it doesn't exist
     _unix_create_group_if_absent(BRAINS_GROUP, dry_run)
-
-    # Create '<brain-name>' group if it doesn't exist
     _unix_create_group_if_absent(brain_name, dry_run)
 
-    # Prompt for password (no echo)
-    password = _prompt_password(brain_name)
-
-    # Create the brain user
     info(f'Creating OS user: {brain_name}')
     if os_name == 'Linux':
         run(
@@ -392,18 +396,14 @@ def _phase2_unix(brain_name, invoking_user, os_name, dry_run):
             dry_run=dry_run,
         )
     else:
-        # macOS: use dscl
         _macos_create_user(brain_name, password, dry_run)
 
-    # Add brain user to 'brains' group
     info(f'Adding {brain_name} to group: {BRAINS_GROUP}')
     _unix_add_user_to_group(brain_name, BRAINS_GROUP, os_name, dry_run)
 
-    # Add brain user to brain-specific group
     info(f'Adding {brain_name} to group: {brain_name}')
     _unix_add_user_to_group(brain_name, brain_name, os_name, dry_run)
 
-    # Add invoking user to brain-specific group (for oversight)
     info(f'Adding invoking user ({invoking_user}) to group: {brain_name}')
     _unix_add_user_to_group(invoking_user, brain_name, os_name, dry_run)
 
@@ -423,7 +423,6 @@ def _unix_add_user_to_group(user, group, os_name, dry_run):
     if os_name == 'Linux':
         run(['usermod', '-aG', group, user], dry_run=dry_run)
     else:
-        # macOS
         run(['dseditgroup', '-o', 'edit', '-a', user, '-t', 'user', group],
             dry_run=dry_run)
 
@@ -432,9 +431,8 @@ def _linux_hash_password(password):
     """
     Hash a plaintext password for use with useradd --password.
 
-    Uses the 'openssl passwd -6' (SHA-512) approach available on most Linux
-    systems.  Falls back to a placeholder if openssl is not available — the
-    caller should then set the password manually with 'passwd <user>'.
+    Uses 'openssl passwd -6' (SHA-512).  Falls back to a locked-account
+    marker if openssl is unavailable.
     """
     try:
         result = subprocess.run(
@@ -447,18 +445,13 @@ def _linux_hash_password(password):
             'openssl not found — password hash could not be generated.\n'
             '  Set the password manually after provisioning: passwd ' + 'brain_name'
         )
-        # Return a locked-account marker so useradd does not fail.
         return '!'
 
 
 def _macos_create_user(brain_name, password, dry_run):
     """
     Create a macOS local user account via dscl.
-
-    macOS does not have useradd; dscl is the low-level directory tool.
-    We find the next available UID >= 1000 for the new user.
     """
-    # Find next available UID (>= 1000, not already in use)
     next_uid = _macos_next_uid()
     info(f'Assigning UID: {next_uid}')
 
@@ -475,7 +468,6 @@ def _macos_create_user(brain_name, password, dry_run):
     for cmd in cmds:
         run(cmd, dry_run=dry_run)
 
-    # Create home directory
     home = f'/Users/{brain_name}'
     run(['createhomedir', '-c', '-u', brain_name], dry_run=dry_run, check=False)
     if not dry_run and not os.path.isdir(home):
@@ -500,25 +492,6 @@ def _macos_next_uid():
     while uid in used_uids:
         uid += 1
     return uid
-
-
-def _prompt_password(brain_name):
-    """
-    Prompt for a password twice and return it.
-
-    Uses getpass so the password is not echoed.  Loops until both entries
-    match or the user aborts with Ctrl-C.
-    """
-    print(f'\n  Set password for new brain user "{brain_name}":')
-    while True:
-        pw1 = getpass.getpass('  Password: ')
-        pw2 = getpass.getpass('  Confirm password: ')
-        if pw1 == pw2:
-            if len(pw1) < 8:
-                warn('Password must be at least 8 characters.  Please try again.')
-                continue
-            return pw1
-        warn('Passwords do not match.  Please try again.')
 
 
 # ---------------------------------------------------------------------------
@@ -562,6 +535,9 @@ def phase3_folders_and_permissions(ctx, dry_run=False):
     else:
         print(f'  [DRY-RUN] os.makedirs({brain_keys_dir!r}, exist_ok=True)')
 
+    # 3.3 Write the generated account password to the keys folder
+    _write_password_file(ctx, dry_run)
+
     if os_name == 'Windows':
         _phase3_windows(
             brain_name, invoking_user,
@@ -576,6 +552,55 @@ def phase3_folders_and_permissions(ctx, dry_run=False):
             horizon_bin, horizon_sbin, horizon_skills_bin, horizon_skills_sbin, logs_dir,
             dry_run,
         )
+
+
+def _write_password_file(ctx, dry_run):
+    """
+    Write the brain account password to keys/<brain-name>/account_password.txt.
+
+    This file is admin-only: the brain user is explicitly denied access.
+    It is never printed to the terminal.  The admin retrieves it from the
+    file when needed (e.g. for Windows Task Scheduler or runas invocations).
+    """
+    brain_keys_dir = ctx['brain_keys_dir']
+    brain_name     = ctx['brain_name']
+    invoking_user  = ctx['invoking_user']
+    os_name        = ctx['os_name']
+    password       = ctx.get('password', '')
+    password_file  = os.path.join(brain_keys_dir, 'account_password.txt')
+
+    info(f'Writing account password to: {password_file}')
+    if dry_run:
+        print(f'  [DRY-RUN] Would write password to {password_file} (admin-only ACL)')
+        return
+
+    try:
+        with open(password_file, 'w', encoding='utf-8') as fh:
+            fh.write(password + '\n')
+        info(f'  Password file written.')
+    except OSError as exc:
+        warn(f'Could not write password file: {exc}')
+        warn(f'  Set the password manually: passwd {brain_name} (Unix) or Set-LocalUser (Windows)')
+        return
+
+    # Set ACL: admin read-only, brain user denied
+    if os_name == 'Windows':
+        run(['icacls', password_file,
+             '/inheritance:r',
+             '/grant', f'{invoking_user}:(F)',
+             '/deny',  f'{brain_name}:(F)'],
+            dry_run=dry_run)
+    else:
+        # 600 owned by invoking_user — brain user cannot read (different UID, no group access)
+        os.chmod(password_file, 0o600)
+        try:
+            import pwd as _pwd
+            uid = _pwd.getpwnam(invoking_user).pw_uid
+            os.chown(password_file, uid, -1)
+        except (KeyError, PermissionError):
+            pass  # chown failed — leave as root-owned (still unreadable by brain user)
+
+    info(f'  ACL set: admin read-only, brain user denied.')
 
 
 # ---- Windows permission implementation ----
@@ -600,12 +625,12 @@ def _phase3_windows(brain_name, invoking_user,
          '/grant', f'{invoking_user}:(OI)(CI)F'],
         dry_run=dry_run)
 
-    # -- Brain keys dir: brain user read-only, invoking user full, others none --
+    # -- Brain keys dir: brain user denied, invoking user full --
     info(f'Setting ACLs on brain keys folder: {brain_keys_dir}')
     run(['icacls', brain_keys_dir,
          '/inheritance:r',
-         '/grant', f'{brain_name}:(OI)(CI)R',
-         '/grant', f'{invoking_user}:(OI)(CI)F'],
+         '/grant', f'{invoking_user}:(OI)(CI)F',
+         '/deny',  f'{brain_name}:(OI)(CI)F'],
         dry_run=dry_run)
 
     # -- horizon_system/bin: grant brains group RX --
@@ -664,16 +689,10 @@ def _phase3_unix(brain_name, invoking_user, os_name,
     run(['chown', '-R', f'{brain_name}:{brain_name}', brain_dir], dry_run=dry_run)
     run(['chmod', '770', brain_dir], dry_run=dry_run)
 
-    # -- Brain keys dir: chown invoking_user, setfacl read-only for brain --
+    # -- Brain keys dir: owned by invoking user, brain user has no access --
     info(f'Setting ownership of brain keys folder: {brain_keys_dir}')
     run(['chown', f'{invoking_user}:{invoking_user}', brain_keys_dir], dry_run=dry_run)
-    run(['chmod', '750', brain_keys_dir], dry_run=dry_run)
-    result = subprocess.run(['which', 'setfacl'], capture_output=True)
-    if result.returncode == 0:
-        run(['setfacl', '-m', f'u:{brain_name}:r-x', brain_keys_dir], dry_run=dry_run)
-    else:
-        warn('setfacl not found — grant brain user access to keys dir manually.')
-        warn(f'  chown {brain_name}:{brain_name} {brain_keys_dir} && chmod 770 {brain_keys_dir}')
+    run(['chmod', '700', brain_keys_dir], dry_run=dry_run)
 
     # -- bin: set brains group and grant rx --
     info(f'Setting bin group to "{BRAINS_GROUP}" and granting rx')
@@ -719,12 +738,13 @@ def phase4_verify(ctx, dry_run=False):
     """
     banner('Phase 4: Verification')
 
-    os_name           = ctx['os_name']
-    brain_name        = ctx['brain_name']
-    brain_dir         = ctx['brain_dir']
-    brain_keys_dir    = ctx['brain_keys_dir']
-    horizon_sbin      = ctx['horizon_sbin']
+    os_name             = ctx['os_name']
+    brain_name          = ctx['brain_name']
+    brain_dir           = ctx['brain_dir']
+    brain_keys_dir      = ctx['brain_keys_dir']
+    horizon_sbin        = ctx['horizon_sbin']
     horizon_skills_sbin = ctx['horizon_skills_sbin']
+    password_file       = os.path.join(brain_keys_dir, 'account_password.txt')
 
     results = {}
 
@@ -754,6 +774,10 @@ def phase4_verify(ctx, dry_run=False):
     results['brain_keys_exists'] = os.path.isdir(brain_keys_dir)
     _report_check(f'Brain keys folder exists: {brain_keys_dir}', results['brain_keys_exists'])
 
+    # -- Password file exists --
+    results['password_file_exists'] = os.path.isfile(password_file) or dry_run
+    _report_check(f'Account password file: {password_file}', results['password_file_exists'])
+
     # -- sbin / skills_sbin permissions (Unix only) --
     if os_name != 'Windows' and not dry_run:
         for label, path in [('sbin', horizon_sbin), ('skills_sbin', horizon_skills_sbin)]:
@@ -782,9 +806,16 @@ def phase4_verify(ctx, dry_run=False):
     print(f'       $HORIZON_ROOT/brains/{brain_name}/.claude/settings.json')
     print(f'    3. Place any credentials this brain needs in:')
     print(f'       $HORIZON_ROOT/keys/{brain_name}/')
-    print(f'    4. Provision tools from $HORIZON_USRBIN into the brain folder as needed.')
-    print(f'    5. To run this brain as a scheduled/automated agent, configure a')
-    print(f'       Task Scheduler task (Windows) or cron job (Unix) running as "{brain_name}".')
+    print(f'    4. Account password (for runas / Task Scheduler / scheduled jobs):')
+    print(f'       $HORIZON_ROOT/keys/{brain_name}/account_password.txt')
+    print(f'       (Admin read-only. Brain user is denied access to this file.)')
+    print(f'    5. Provision tools from $HORIZON_USRBIN into the brain folder as needed.')
+    print(f'    6. Shell profile written at brain home — sets HORIZON_* env vars and')
+    print(f'       changes to brain folder on interactive login as "{brain_name}".')
+    print(f'    7. To run as a scheduled/automated agent:')
+    print(f'         Windows: Task Scheduler → run as "{brain_name}" (use password from keys/)')
+    print(f'         Linux:   sudo crontab -u {brain_name} -e')
+    print(f'         macOS:   sudo crontab -u {brain_name} -e')
     print()
 
     if not all_passed:
@@ -827,8 +858,6 @@ def _check_folder_permissions(path, os_name):
              brittle; manual verification is recommended).
     """
     if os_name == 'Windows':
-        # On Windows, we trust that the icacls commands succeeded.
-        # A full ACL parse is possible but adds significant complexity.
         return os.path.isdir(path)
     else:
         mode = stat.S_IMODE(os.stat(path).st_mode)
@@ -860,24 +889,28 @@ def _print_cleanup_instructions(brain_name, brain_dir, os_name):
 
 
 # ---------------------------------------------------------------------------
-# Phase 5: Deploy brain workspace templates and write provisioning manifest
+# Phase 5: Deploy brain workspace templates, shell profile, and manifest
 # ---------------------------------------------------------------------------
 
 def phase5_deploy_templates(ctx, dry_run=False):
     """
-    Deploy .aioscommon templates into the brain's .claude/ workspace directory
-    and write a machine-readable provisioning manifest.
+    Deploy .aioscommon templates into the brain's .claude/ workspace directory,
+    write the brain user's shell profile (sets HORIZON_* env vars and default
+    working directory), and write a machine-readable provisioning manifest.
 
     Creates:
         brains/<brain_name>/.claude/CLAUDE.md       (from brain_CLAUDE.md.template)
         brains/<brain_name>/.claude/settings.json   (from brain_settings.json.template)
         brains/<brain_name>/.aios_provision.json    (provisioning record for auditors)
+        <brain_home>/.bashrc (Linux) / .zshrc+.bash_profile (macOS) /
+            Documents/WindowsPowerShell/Microsoft.PowerShell_profile.ps1 (Windows)
+            — sets HORIZON_* env vars and cd's to brain folder on interactive login
 
     Non-fatal: if templates are missing or file writes fail, a warning is
     printed and provisioning continues.  OS-level setup from Phases 1-3 is
     complete regardless of whether this phase succeeds.
     """
-    banner('Phase 5: Deploy Brain Workspace Templates')
+    banner('Phase 5: Deploy Brain Workspace Templates and Shell Profile')
 
     brain_name   = ctx['brain_name']
     brain_dir    = ctx['brain_dir']
@@ -891,6 +924,7 @@ def phase5_deploy_templates(ctx, dry_run=False):
         print(f'  [DRY-RUN] Would deploy CLAUDE.md from {aioscommon_dir}/brain_CLAUDE.md.template')
         print(f'  [DRY-RUN] Would deploy settings.json from {aioscommon_dir}/brain_settings.json.template')
         print(f'  [DRY-RUN] Would write .aios_provision.json to {brain_dir}')
+        print(f'  [DRY-RUN] Would write shell profile for {brain_name}')
         return
 
     # 5.1 Create .claude/ directory
@@ -915,17 +949,132 @@ def phase5_deploy_templates(ctx, dry_run=False):
         },
     )
 
-    # 5.3 Deploy settings.json (remove the _comment key warning — it's a template artifact)
+    # 5.3 Deploy settings.json
     _deploy_template(
         src=os.path.join(aioscommon_dir, 'brain_settings.json.template'),
         dest=os.path.join(brain_claude_dir, 'settings.json'),
         substitutions={'[BRAIN_NAME]': brain_name},
     )
 
-    # 5.4 Write provisioning manifest
+    # 5.4 Write shell profile (sets HORIZON_* env vars + default working dir)
+    _write_brain_shell_profile(ctx)
+
+    # 5.5 Write provisioning manifest
     _write_provision_manifest(ctx)
 
-    info(f'Phase 5: Deployed .claude/CLAUDE.md and .claude/settings.json for brain {brain_name}.')
+    info(f'Phase 5 complete for brain: {brain_name}')
+
+
+def _write_brain_shell_profile(ctx):
+    """
+    Write a shell profile for the brain user that:
+    - Exports all HORIZON_* environment variables
+    - Sets HORIZON_BRAIN_NAME to the brain name
+    - Changes the default working directory to the brain's folder
+
+    Windows: writes PowerShell profile (both legacy and Core locations)
+    Linux:   writes ~/.bashrc
+    macOS:   writes ~/.zshrc and ~/.bash_profile
+    """
+    brain_name   = ctx['brain_name']
+    horizon_root = ctx['horizon_root']
+    brain_dir    = ctx['brain_dir']
+    os_name      = ctx['os_name']
+
+    if os_name == 'Windows':
+        _write_brain_profile_windows(brain_name, horizon_root, brain_dir)
+    elif os_name == 'Linux':
+        _write_brain_profile_linux(brain_name, horizon_root, brain_dir)
+    else:
+        _write_brain_profile_macos(brain_name, horizon_root, brain_dir)
+
+
+def _brain_profile_content_posix(brain_name, horizon_root, brain_dir):
+    """Return the POSIX shell profile content for a brain user."""
+    horizon_system = os.path.join(horizon_root, 'horizon_system')
+    horizon_bin    = os.path.join(horizon_system, 'bin')
+    horizon_etc    = os.path.join(horizon_system, 'ai_os_etc')
+    horizon_docs   = os.path.join(horizon_system, 'documentation')
+    return (
+        f'# Horizon AIOS — brain environment for {brain_name}\n'
+        f'export HORIZON_ROOT="{horizon_root}"\n'
+        f'export HORIZON_SYSTEM="{horizon_system}"\n'
+        f'export HORIZON_BIN="{horizon_bin}"\n'
+        f'export HORIZON_ETC="{horizon_etc}"\n'
+        f'export HORIZON_DOCS="{horizon_docs}"\n'
+        f'export HORIZON_BRAIN_NAME="{brain_name}"\n'
+        f'cd "{brain_dir}"\n'
+    )
+
+
+def _write_brain_profile_linux(brain_name, horizon_root, brain_dir):
+    """Write ~/.bashrc for the brain user on Linux."""
+    try:
+        import pwd as _pwd
+        brain_home = _pwd.getpwnam(brain_name).pw_dir
+    except KeyError:
+        brain_home = f'/home/{brain_name}'
+
+    profile_path = os.path.join(brain_home, '.bashrc')
+    content = _brain_profile_content_posix(brain_name, horizon_root, brain_dir)
+    _safe_write_profile(profile_path, content, brain_name)
+
+
+def _write_brain_profile_macos(brain_name, horizon_root, brain_dir):
+    """Write ~/.zshrc and ~/.bash_profile for the brain user on macOS."""
+    brain_home = f'/Users/{brain_name}'
+    content = _brain_profile_content_posix(brain_name, horizon_root, brain_dir)
+
+    for filename in ('.zshrc', '.bash_profile'):
+        profile_path = os.path.join(brain_home, filename)
+        _safe_write_profile(profile_path, content, brain_name)
+
+
+def _write_brain_profile_windows(brain_name, horizon_root, brain_dir):
+    """Write PowerShell profile for the brain user on Windows."""
+    system_drive = os.environ.get('SystemDrive', 'C:')
+    brain_home   = os.path.join(system_drive + '\\', 'Users', brain_name)
+
+    horizon_system = os.path.join(horizon_root, 'horizon_system')
+    horizon_bin    = os.path.join(horizon_system, 'bin')
+    horizon_etc    = os.path.join(horizon_system, 'ai_os_etc')
+    horizon_docs   = os.path.join(horizon_system, 'documentation')
+
+    content = (
+        f'# Horizon AIOS — brain environment for {brain_name}\n'
+        f'$env:HORIZON_ROOT        = "{horizon_root}"\n'
+        f'$env:HORIZON_SYSTEM      = "{horizon_system}"\n'
+        f'$env:HORIZON_BIN         = "{horizon_bin}"\n'
+        f'$env:HORIZON_ETC         = "{horizon_etc}"\n'
+        f'$env:HORIZON_DOCS        = "{horizon_docs}"\n'
+        f'$env:HORIZON_BRAIN_NAME  = "{brain_name}"\n'
+        f'Set-Location "{brain_dir}"\n'
+    )
+
+    # Windows PowerShell (5.x) profile location
+    ps5_dir  = os.path.join(brain_home, 'Documents', 'WindowsPowerShell')
+    # PowerShell Core (7.x) profile location
+    ps7_dir  = os.path.join(brain_home, 'Documents', 'PowerShell')
+
+    for profile_dir in (ps5_dir, ps7_dir):
+        profile_path = os.path.join(profile_dir, 'Microsoft.PowerShell_profile.ps1')
+        try:
+            os.makedirs(profile_dir, exist_ok=True)
+        except OSError as exc:
+            warn(f'Could not create profile dir {profile_dir}: {exc}')
+            continue
+        _safe_write_profile(profile_path, content, brain_name)
+
+
+def _safe_write_profile(path, content, brain_name):
+    """Write profile content to path; warn on failure."""
+    try:
+        with open(path, 'w', encoding='utf-8') as fh:
+            fh.write(content)
+        info(f'Wrote shell profile: {path}')
+    except OSError as exc:
+        warn(f'Could not write shell profile {path}: {exc}')
+        warn(f'  Add HORIZON_* exports and cd "{brain_name}_dir" manually.')
 
 
 def _deploy_template(src, dest, substitutions):
@@ -963,6 +1112,7 @@ def _write_provision_manifest(ctx):
         'skills_bin_access': 'read+execute',
         'sbin_access':       'deny',
         'keys_dir':          brain_keys_dir if os.path.isdir(brain_keys_dir) else None,
+        'password_file':     os.path.join(brain_keys_dir, 'account_password.txt'),
     }
     dest = os.path.join(brain_dir, '.aios_provision.json')
     try:
@@ -1014,7 +1164,6 @@ def main():
     if args.dry_run:
         print('\n  *** DRY-RUN MODE — no changes will be made ***\n')
 
-    # Phase 1: gather all context; exits on unrecoverable errors
     try:
         ctx = phase1_preflight(args)
     except SystemExit:
@@ -1023,7 +1172,6 @@ def main():
         error(f'Unexpected error in Phase 1: {exc}')
         sys.exit(1)
 
-    # Phase 2: user and group creation
     try:
         phase2_create_user_and_groups(ctx, dry_run=args.dry_run)
     except subprocess.CalledProcessError as exc:
@@ -1038,7 +1186,6 @@ def main():
         error(f'Unexpected error in Phase 2: {exc}')
         sys.exit(2)
 
-    # Phase 3: folders and permissions
     try:
         phase3_folders_and_permissions(ctx, dry_run=args.dry_run)
     except subprocess.CalledProcessError as exc:
@@ -1047,22 +1194,18 @@ def main():
             'User and groups were created but folder/permission setup failed.\n'
             '  Phase 4 verification will still run to show partial state.'
         )
-        # Fall through to Phase 4 so the user can see what succeeded.
     except Exception as exc:
         error(f'Unexpected error in Phase 3: {exc}')
 
-    # Phase 4: verify and summarize
     try:
         success = phase4_verify(ctx, dry_run=args.dry_run)
     except Exception as exc:
         error(f'Unexpected error in Phase 4: {exc}')
         sys.exit(3)
 
-    # Phase 5: deploy workspace templates and write provisioning manifest
     try:
         phase5_deploy_templates(ctx, dry_run=args.dry_run)
     except Exception as exc:
-        # Non-fatal: OS-level provisioning succeeded; log and continue.
         warn(f'Phase 5 encountered an unexpected error: {exc}')
         warn('Brain is provisioned at the OS level. Deploy templates manually.')
 
