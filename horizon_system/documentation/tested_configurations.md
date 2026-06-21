@@ -1,6 +1,6 @@
 # Horizon AIOS — Tested Configurations
 
-This document tracks harness, model, OS, and deployment combinations that have been verified to work with Horizon AIOS. "Tested" means: bootstrap completed, skills loaded, audit hooks fired, brain isolation verified end-to-end.
+This document tracks harness, OS, and deployment combinations that have been verified to work with Horizon AIOS. "Tested" means: bootstrap completed, skills loaded, audit hooks fired, brain isolation verified end-to-end. Model selection is the brain author's choice and is not tracked here — AIOS is model-agnostic.
 
 Configurations not listed here may work but have not been validated. Contributions welcome — if you test a new combination, add a row and link the relevant how-to or deployment notes.
 
@@ -8,13 +8,13 @@ Configurations not listed here may work but have not been validated. Contributio
 
 ## Compatibility Matrix
 
-| Harness | Harness Version | Model(s) Tested | OS / Platform | Deployment Mode | Status | Notes / Known Gaps | How-To |
-|---|---|---|---|---|---|---|---|
-| Claude Code (desktop app) | ≥1.0 | Claude Sonnet 4.6, Opus 4 | Windows 11 | Desktop | **Verified** | Skills via directory junction (`mklink /J`); DCO commit-msg hook; statusline; sounds; brain isolation via NTFS ACLs; memory layout user-defined. Full bootstrap tested. Primary reference implementation. | [deployment/desktop.md](deployment/desktop.md) · [ReadMeToSetupYourSystem.md](getting_started/ReadMeToSetupYourSystem.md) |
-| Claude Code (CLI) | ≥1.0 | — | Linux (native) | Desktop / Server | Partial | bootstrap.sh runs; symlink skills redirect implemented. Brain OS user isolation and sbin Deny ACLs not yet end-to-end tested on Linux. | [deployment/desktop.md](deployment/desktop.md) |
-| Claude Code (CLI) | ≥1.0 | — | Linux (container) | Docker | Template only | Dockerfile and bootstrap_docker.sh written; not yet run against a full brain provisioning cycle. See gap notes below. | [deployment/docker.md](deployment/docker.md) |
-| Claude Code (desktop app) | ≥1.0 | — | macOS (native) | Desktop | Untested | bootstrap.sh is macOS-compatible (POSIX). ACL steps require macOS equivalents (chmod/chown, dscl for user accounts). No one has validated end-to-end. | — |
-| Ollama | any | any local model | Linux / macOS / Windows | Desktop / Server | Minimal stub | No hook system, no sounds integration, no skills equivalent. Only integration: paste `agents.md` content into brain's Modelfile `SYSTEM` block. Brain OS isolation still applies. See Known Gaps by Harness below. | `$HORIZON_SYSTEM/harness_configs/ollama/Modelfile.template` |
+| Harness | Harness Version | OS / Platform | Deployment Mode | Status | Notes / Known Gaps | How-To |
+|---|---|---|---|---|---|---|
+| Claude Code (desktop app) | ≥1.0 | Windows 11 | Desktop | **Verified** | Skills via directory junction (`mklink /J`); DCO commit-msg hook; statusline; sounds; brain isolation via NTFS ACLs; memory layout user-defined. Full bootstrap tested. Primary reference implementation. | [deployment/desktop.md](deployment/desktop.md) · [ReadMeToSetupYourSystem.md](getting_started/ReadMeToSetupYourSystem.md) |
+| Claude Code (CLI) | ≥1.0 | Linux (native) | Desktop / Server | Partial | bootstrap.sh runs; symlink skills redirect implemented. Brain OS user isolation and sbin Deny ACLs not yet end-to-end tested on Linux. | [deployment/desktop.md](deployment/desktop.md) |
+| Claude Code (CLI) | ≥1.0 | Linux (container) | Docker | Template only | Dockerfile and bootstrap_docker.sh written; not yet run against a full brain provisioning cycle. See gap notes below. | [deployment/docker.md](deployment/docker.md) |
+| Claude Code (desktop app) | ≥1.0 | macOS (native) | Desktop | Untested | bootstrap.sh is macOS-compatible (POSIX). ACL steps require macOS equivalents (chmod/chown, dscl for user accounts). No one has validated end-to-end. | — |
+| Ollama | any | Linux / macOS / Windows | Desktop / Server | Minimal stub | No hook system, no sounds integration, no skills equivalent. Only integration: paste `agents.md` content into brain's Modelfile `SYSTEM` block. Brain OS isolation still applies. See Known Gaps by Harness below. | `$HORIZON_SYSTEM/harness_configs/ollama/Modelfile.template` |
 
 ---
 
