@@ -14,7 +14,8 @@ That framing maps more cleanly to "App" than "OS."
 
 | Term | Definition |
 |---|---|
-| **Brain** | One atomic unit of an expert system. An agentic workflow given precise training and calibration to be an expert at one specific thing. A brain is an App — it runs inside the AIOS. |
+| **Brain** | One atomic unit of an expert system. An agentic workflow given precise training and calibration to be an expert at one specific thing. A brain is an App — it runs inside the AIOS. Every brain includes a memory system; that is what makes it an expert rather than a stateless query processor. |
+| **Memory System** | The memory subsystem owned and contained within a brain. Calibration documents, few-shot examples, retrieval stores, conversation history, domain knowledge — all live inside the brain's directory. The memory system is what makes a brain portable: when it travels, the brain's expertise travels with it regardless of harness or model. |
 | **AI Operating System (AIOS)** | The collection of configuration, harnesses, security boundaries, logging, and coordination scaffolding that brains run on top of. The OS layer is not itself an expert system. It is the infrastructure that makes expert systems safe, auditable, and controllable. |
 | **Second Brain** | The goal-state user experience: an ecosystem of brains that collectively runs life and business tasks — things that require some level of cognition but not the user's full attention. Tedious, repetitive, or high-volume cognitive work delegated to purpose-built expert systems. |
 
@@ -79,7 +80,37 @@ Docker does not replace OS-level user isolation — it extends it. A Dockerized 
 
 ---
 
-## 6. Bring Your Own Harness, Model, and Tooling (BYOH)
+## 6. Memory Systems Are Part of the Brain
+
+An expert system cannot function without memory. Memory is not an optional add-on — it is what makes a brain an expert rather than a stateless query processor.
+
+**Memory belongs inside the brain, not in the AIOS layer.**
+
+The AIOS provides no shared memory system. Each brain owns its own memory subsystem, scoped entirely within its directory boundary. This is intentional:
+
+- A brain's memory is part of its expert function — it is as specialized as its toolset.
+- Placing memory in the brain (not in the OS layer) enforces the isolation model: a brain's accumulated knowledge cannot leak to other brains any more than its files can.
+- The AIOS provides the *structure* (the brain's home directory) and the *security model* (filesystem permissions) but not the memory implementation. The brain chooses what memory system to use.
+
+**Memory as the portability layer:**
+
+A brain's memory system is what enables the BYOH principle at the brain level. When memory (training data, calibration documents, context stores, vector indices, conversation history) is consolidated within the brain rather than tied to a specific harness or API:
+
+- The brain's knowledge and expert context travel with it when the underlying harness changes.
+- Swapping the frontier model, the API provider, or the toolchain does not require rebuilding the brain's expertise from scratch.
+- The brain is model-agnostic and harness-agnostic because its memory is portable.
+
+Without a self-contained memory system, a brain is tightly coupled to whatever harness or model it happened to train on. With one, it is a portable expert that can be brought to any harness, any frontier model, any API endpoint, any network topology — independently.
+
+**What this means in practice:**
+
+- Brain directories hold memory artifacts: calibration documents, few-shot examples, retrieved context stores, conversation logs, domain-specific knowledge files.
+- Memory tooling (vector databases, embedding pipelines, retrieval scripts) is provisioned inside the brain's directory, not shared across brains via the AIOS.
+- The AIOS provides the secure container; the brain provides the contents. The container is standardized; the contents are specialized.
+
+---
+
+## 7. Bring Your Own Harness, Model, and Tooling (BYOH)
 
 Horizon AIOS is a harness-agnostic configuration layer. It standardizes how AI workloads are structured and controlled — not which AI is doing the work.
 
