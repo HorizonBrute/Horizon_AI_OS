@@ -2,6 +2,8 @@
 
 Deploys the AIOS OS layer as a Docker container. Brains run as sub-containers (one container per brain) or as OS users within the AIOS container. See `philosophy.md §5` for the conceptual model.
 
+AIOS Docker images are **Linux-container based** (Ubuntu) and run on Windows, macOS, and Linux hosts via the container runtime (Docker Desktop / WSL2 on Windows and macOS, Docker Engine on Linux). Native Windows containers are out of scope. On a Windows host, drive the build/run path with `bootstrap_docker.ps1` (PowerShell wrapper); on Linux/macOS use `bootstrap_docker.sh`. Both run inside Linux containers.
+
 **Status:** Template only — not yet end-to-end verified. See `tested_configurations.md`.
 
 ---
@@ -114,6 +116,6 @@ The AIOS OS layer (env vars, bootstrap, skills, audit hooks, brain isolation) is
 ## Known Gaps
 
 - `create_brain.py` is not yet adapted for Docker — it provisions OS user accounts, not Docker containers. Brain container provisioning is currently manual (duplicate the compose service template).
-- `bootstrap_docker.sh` runs the standard bootstrap; the skills symlink (`~/.claude/skills/ → skills_sbin/`) is created but not verified in a full session.
+- `bootstrap_docker.sh` (and the `bootstrap_docker.ps1` Windows-host wrapper) runs the standard bootstrap; the skills symlink (`~/.claude/skills/ → skills_sbin/`) is created but not verified in a full session.
 - Sync schedule (`setup_sync_schedule.py`) is skipped in Docker mode. AIOS updates are delivered by rebuilding the image.
-- macOS Docker host has not been tested; Linux Docker host is the target environment.
+- The images are Linux containers and run on Windows/macOS/Linux hosts via the container runtime; Linux host is the only host end-to-end verified so far. Windows and macOS hosts (Docker Desktop / WSL2) run the same Linux images but have not been verified.

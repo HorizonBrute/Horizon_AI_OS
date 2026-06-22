@@ -347,14 +347,10 @@ def _phase2_windows(brain_name, invoking_user, password, dry_run):
     _win_create_group_if_absent(brain_name, dry_run)
 
     info(f'Creating local user: {brain_name}')
-    run_ps(
-        f'$pw = ConvertTo-SecureString "{password}" -AsPlainText -Force; '
-        f'New-LocalUser -Name "{brain_name}" -Password $pw '
-        f'-FullName "{brain_name} (Horizon Brain)" '
-        f'-Description "Horizon AIOS brain account" '
-        f'-PasswordNeverExpires',
-        dry_run=dry_run,
-    )
+    # Pass the password via an environment variable rather than interpolating it
+    # into the command string. This avoids any quoting/injection fragility and
+    # keeps the secret out of process command lines and the run_ps echo/log.
+    _win_create_user_with_password(brain_name, password, dry_run)
 
     info(f'Adding {brain_name} to group: {BRAINS_GROUP}')
     run_ps(
@@ -373,6 +369,31 @@ def _phase2_windows(brain_name, invoking_user, password, dry_run):
         f'Add-LocalGroupMember -Group "{brain_name}" -Member "{invoking_user}"',
         dry_run=dry_run,
     )
+
+
+def _win_create_user_with_password(brain_name, password, dry_run):
+    """Create a Windows local user, passing the password via an env var.
+
+    The password is supplied to the child process through the environment
+    (AIOS_BRAIN_PW) and read inside PowerShell as $env:AIOS_BRAIN_PW. It is
+    never interpolated into the command string, so it cannot break PowerShell
+    quoting and is never written to the run_ps "Running:" echo or any log.
+    """
+    ps_expr = (
+        '$pw = ConvertTo-SecureString $env:AIOS_BRAIN_PW -AsPlainText -Force; '
+        f'New-LocalUser -Name "{brain_name}" -Password $pw '
+        f'-FullName "{brain_name} (Horizon Brain)" '
+        '-Description "Horizon AIOS brain account" '
+        '-PasswordNeverExpires'
+    )
+    cmd = ['powershell', '-NonInteractive', '-Command', ps_expr]
+    if dry_run:
+        # Do not echo the password; it is supplied via env at run time.
+        print(f'  [DRY-RUN] {" ".join(cmd)}  (password via $env:AIOS_BRAIN_PW)')
+        return
+    info(f'Running: {" ".join(cmd)}  (password via $env:AIOS_BRAIN_PW)')
+    child_env = dict(os.environ, AIOS_BRAIN_PW=password)
+    subprocess.run(cmd, check=True, env=child_env)
 
 
 def _win_create_group_if_absent(group_name, dry_run):

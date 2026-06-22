@@ -84,6 +84,8 @@ The desktop model is the design reference: if a feature works correctly on a use
 - Brain provisioning is a single script invocation (`create_brain.py`) — not a sequence of manual steps.
 - Configuration is file-driven — the entire AIOS state can be recreated from the repo + a local config file.
 
+AIOS Docker images are Linux-container based and run on Windows, macOS, and Linux hosts via the container runtime (Docker Desktop / WSL2 on Windows and macOS, Docker Engine on Linux). Native Windows containers are out of scope.
+
 Docker does not replace OS-level user isolation — it extends it. A Dockerized brain still runs as a non-root user inside the container. The container boundary adds network isolation and process isolation; the OS user boundary limits filesystem access.
 
 ---
@@ -163,5 +165,5 @@ Any workflow or knowledge base set up in AIOS-standard format is portable across
 | Brain vs. AIOS conceptual vocabulary | The distinction between Brain (expert app) and AIOS (OS layer) was implicit. | **Addressed** — this document defines the vocabulary. |
 | Second Brain as goal state | Not articulated in any existing document. | **Addressed** — §2 of this document. |
 | Per-brain provisioning record | No generated audit artifact per brain. | **Addressed** — `create_brain.py` Phase 5 writes `.aios_provision.json` to each brain's directory at provisioning time. Post-creation grants are not auto-recorded. |
-| Docker-aware bootstrap | No container-aware bootstrap variant. | **Addressed** — `bootstrap_docker.sh` wraps `bootstrap.sh` with `AIOS_DEPLOY_MODE=docker`. |
+| Docker-aware bootstrap | No container-aware bootstrap variant. | **Addressed** — `bootstrap_docker.sh` wraps `bootstrap.sh` with `AIOS_DEPLOY_MODE=docker`; `bootstrap_docker.ps1` is the equivalent wrapper for driving the build from a Windows host. Images are Linux containers (run on Windows/macOS/Linux via the container runtime). |
 | Brain verification on Windows | `create_brain.py` Phase 4 verifies brain folder existence on Windows but does not verify ACL correctness — it trusts that the `icacls` commands in Phase 3 succeeded. A failed `icacls` call raises an exception and aborts provisioning, so catastrophic failures are detected; partial ACL success is not re-checked. | **Open** — full ACL re-verification on Windows would require parsing `icacls` output, which adds significant complexity. Current posture: fail-loudly on error, trust-on-success. |

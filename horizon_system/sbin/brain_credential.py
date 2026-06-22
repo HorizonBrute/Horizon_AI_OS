@@ -112,13 +112,19 @@ def _update_os_account_password(brain_name: str, password: str) -> bool:
     os_name = platform.system()
     try:
         if os_name == 'Windows':
+            # Pass the password via an environment variable (AIOS_BRAIN_PW) read
+            # inside PowerShell as $env:AIOS_BRAIN_PW, rather than interpolating
+            # it into the command string. Avoids quoting/injection fragility and
+            # keeps the secret off the process command line.
             subprocess.run(
                 [
                     'powershell', '-NonInteractive', '-Command',
                     f'Set-LocalUser -Name "{brain_name}" '
-                    f'-Password (ConvertTo-SecureString "{password}" -AsPlainText -Force)',
+                    f'-Password (ConvertTo-SecureString $env:AIOS_BRAIN_PW '
+                    f'-AsPlainText -Force)',
                 ],
                 check=True,
+                env=dict(os.environ, AIOS_BRAIN_PW=password),
             )
         elif os_name == 'Linux':
             proc = subprocess.run(
