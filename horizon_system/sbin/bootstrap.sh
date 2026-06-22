@@ -165,6 +165,21 @@ else
   ok "Created symlink: ~/.claude/skills/ → skills_sbin/"
 fi
 
+# Register machine-local user skills (usrbin/usr_skills -> skills_sbin symlinks).
+# Best-effort: never abort bootstrap if python is missing or no user skills exist.
+REG_SCRIPT="$HORIZON_SYSTEM/sbin/register_user_skills.py"
+if [ -f "$REG_SCRIPT" ]; then
+  if command -v python3 >/dev/null 2>&1; then
+    if python3 "$REG_SCRIPT"; then
+      ok "Registered machine-local user skills."
+    else
+      warn "register_user_skills.py exited non-zero."
+    fi
+  else
+    warn "python3 not found — skipping user-skill registration. Run later: python3 $REG_SCRIPT"
+  fi
+fi
+
 # -----------------------------------------------------------------------------
 # SECTION 4: Create handoffs directory
 # -----------------------------------------------------------------------------

@@ -115,6 +115,18 @@ def main():
         sys.exit(1)
 
     log("OK", f"Synced to {remote}/{branch}: {merge.stdout.strip()}")
+
+    # A sync may have refreshed skills_sbin and dropped the untracked junctions
+    # that register machine-local user skills. Rebuild them from usr_skills (the
+    # source of truth). Best-effort: a failure here must not fail the sync.
+    reg_script = SCRIPT_DIR / "register_user_skills.py"
+    if reg_script.exists():
+        reg = subprocess.run([sys.executable, str(reg_script)], capture_output=True, text=True)
+        if reg.returncode == 0:
+            log("OK", "Re-registered machine-local user skills")
+        else:
+            log("WARN", f"register_user_skills.py failed: {reg.stderr.strip()}")
+
     sys.exit(0)
 
 

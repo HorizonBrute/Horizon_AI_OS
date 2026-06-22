@@ -178,6 +178,19 @@ if (-not (Test-Path $SkillsSrc)) {
     }
 }
 
+# Register machine-local user skills (usrbin/usr_skills -> skills_sbin junctions).
+# Best-effort: never abort bootstrap if python is missing or no user skills exist.
+$RegScript = Join-Path $HORIZON_SYSTEM "sbin\register_user_skills.py"
+if (Test-Path $RegScript) {
+    if (Get-Command python -ErrorAction SilentlyContinue) {
+        python $RegScript
+        if ($LASTEXITCODE -eq 0) { Ok "Registered machine-local user skills." }
+        else { Warn "register_user_skills.py exited with code $LASTEXITCODE." }
+    } else {
+        Warn "python not found - skipping user-skill registration. Run later: python $RegScript"
+    }
+}
+
 # -----------------------------------------------------------------------------
 # SECTION 4: Create handoffs directory
 # -----------------------------------------------------------------------------
