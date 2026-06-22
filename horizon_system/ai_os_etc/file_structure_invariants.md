@@ -11,6 +11,7 @@ Hardcoded paths are forbidden in committed files. Use these variables exclusivel
 | `$HORIZON_ROOT` | The repo root (e.g., `C:\devroot`) | Anchor for all other paths |
 | `$HORIZON_SYSTEM` | `$HORIZON_ROOT\horizon_system` | OS system directory — all AIOS assets and tooling |
 | `$HORIZON_BIN` | `$HORIZON_ROOT\horizon_system\bin` | User-callable executables; brains have R+X here |
+| `$HORIZON_SBIN` | `$HORIZON_ROOT\horizon_system\sbin` | Owner-only privileged scripts; brains: DENY (never on a brain PATH) |
 | `$HORIZON_ETC` | `$HORIZON_ROOT\horizon_system\ai_os_etc` | OS configuration documents and invariants |
 | `$HORIZON_DOCS` | `$HORIZON_ROOT\horizon_system\documentation` | User-facing documentation |
 | `$HORIZON_SOUNDS` | `$HORIZON_SYSTEM\sounds` | Sound files, maps, and vendor audio |

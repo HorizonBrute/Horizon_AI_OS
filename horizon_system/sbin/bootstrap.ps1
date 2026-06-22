@@ -38,6 +38,7 @@ if (-not $isAdmin) {
 $HORIZON_SYSTEM   = Split-Path $PSScriptRoot -Parent
 $HORIZON_ROOT     = Split-Path $HORIZON_SYSTEM -Parent
 $HORIZON_BIN      = Join-Path $HORIZON_SYSTEM "bin"
+$HORIZON_SBIN     = Join-Path $HORIZON_SYSTEM "sbin"
 $HORIZON_ETC      = Join-Path $HORIZON_SYSTEM "ai_os_etc"
 $HORIZON_DOCS     = Join-Path $HORIZON_SYSTEM "documentation"
 $HORIZON_USRBIN   = Join-Path $HORIZON_ROOT "usrbin"
@@ -48,6 +49,7 @@ $HORIZON_SOUNDS   = Join-Path $HORIZON_SYSTEM "sounds"
 $env:HORIZON_SYSTEM   = $HORIZON_SYSTEM
 $env:HORIZON_ROOT     = $HORIZON_ROOT
 $env:HORIZON_BIN      = $HORIZON_BIN
+$env:HORIZON_SBIN     = $HORIZON_SBIN
 $env:HORIZON_ETC      = $HORIZON_ETC
 $env:HORIZON_DOCS     = $HORIZON_DOCS
 $env:HORIZON_USRBIN   = $HORIZON_USRBIN
