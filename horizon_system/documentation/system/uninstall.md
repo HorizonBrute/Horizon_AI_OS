@@ -160,3 +160,4 @@ finds.
 - `system/memory.md` — what the memory redirect is and why backing it up matters.
 - `utilities.md` — `uninstall.ps1` / `uninstall.sh` and `aios_switch.py` reference.
 - `getting_started/ReadMeToSetupYourSystem.md` — the install side of the cycle.
+- `getting_started/lifecycle_test.md` — the broader operator lifecycle runbook (adds the AIOS-switch test + optional provisioning around this uninstall).
