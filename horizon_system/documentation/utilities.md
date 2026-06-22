@@ -212,6 +212,40 @@ for the full switching guide.
 
 ---
 
+## uninstall_aios.py
+
+**Path:** `$HORIZON_SYSTEM/sbin/uninstall_aios.py`
+
+Reverses the machine-level configuration written by bootstrap, returning the
+machine to a clean pre-AIOS state. Removes the skills junction/symlink
+(`~/.claude/skills/`), the CLAUDE.md redirect (`~/.claude/CLAUDE.md`), the
+active-env snippets (`~/.horizon/active_env.{ps1,sh}`), the aios-exec wrappers
+(`~/.horizon/bin/aios-exec.{ps1,sh}`), and the AIOS registry
+(`~/.horizon/aios_registry.json`). Attempts to clean up the system PATH entry
+(Windows Machine-scope PATH, or `/etc/profile.d/horizon_aios.sh` on Linux, plus
+`/etc/paths.d/horizon-aios` on macOS); degrades gracefully with an advisory if
+not elevated. Offers optional deletion of `~/.claude/settings.json` (advisory by
+default — user may have local changes).
+
+Does **not** touch brain accounts, brain home directories, the AIOS repo itself,
+or user data (`handoffs/`, `objectives/`, `logs/`). Git config and shell profile
+changes require manual removal; the script prints exact instructions for both.
+
+**When to use it:** When decommissioning AIOS from a machine — removes all
+bootstrap-written configuration without deleting the repo or any user data.
+
+**Key flags:**
+
+- `--yes` / `-y` — skip interactive confirmations (still shows what it's doing)
+- `--dry-run` — print every action without making any changes
+- `--remove-path` — explicitly attempt system PATH removal (requires admin/root;
+  advisory if it fails; attempted by default in interactive mode)
+
+**Referenced by a skill?** No. See `$HORIZON_DOCS/system/aios_switching.md`
+for the uninstalling section.
+
+---
+
 ## register_user_skills.py
 
 **Path:** `$HORIZON_SYSTEM/sbin/register_user_skills.py`

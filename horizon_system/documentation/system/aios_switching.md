@@ -120,6 +120,30 @@ After a switch:
 `doctor.py` reports registry validity, that the active root is a real AIOS, and
 that `active_env.*` + the wrappers are present.
 
+## Uninstalling
+
+To remove all machine-local AIOS configuration (reverse everything bootstrap
+wrote) without deleting the repo or any user data:
+
+```
+python horizon_system/sbin/uninstall_aios.py
+```
+
+Common flags:
+
+```
+python uninstall_aios.py --dry-run    # preview every action, change nothing
+python uninstall_aios.py --yes        # non-interactive (still shows actions)
+python uninstall_aios.py --remove-path  # force system PATH cleanup (needs admin/root)
+```
+
+The script removes the skills junction, `~/.claude/CLAUDE.md`, active-env
+files, aios-exec wrappers, and the registry; attempts system PATH cleanup; and
+prints exact instructions for the two steps it cannot automate (shell profile
+line and `core.hooksPath` / `include.path` git config). Brain accounts, the
+AIOS repo, and user data are not touched. See `$HORIZON_DOCS/utilities.md` for
+the full flag reference.
+
 ## Notes & limits
 
 - This switches the **operator's** config only. Brain users have their own
