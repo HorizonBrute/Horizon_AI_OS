@@ -13,6 +13,7 @@ rename, or remove a doc, update this index in the **same change** — run
 | `documentation/philosophy.md` | Horizon AIOS — Philosophy and Conceptual Framework | The "why" behind the architecture and the Brain vs. AI-OS vocabulary; highest authority tier. |
 | `documentation/sync_setup.md` | Horizon AIOS — Sync Setup Reference | How auto-sync keeps a local install current via fast-forward-only git fetch/merge, and the `aios_local.conf` keys that configure it. |
 | `documentation/tested_configurations.md` | Horizon AIOS — Tested Configurations | The verified harness/OS/deployment compatibility matrix and what "tested" means. |
+| `documentation/context_loading.md` | Context Loading — Horizon AIOS | End-to-end reference for how the Claude Code harness assembles its system prompt: loading layers, @-import mechanics, what loads in a standard AIOS session with real token numbers, per-layer configuration guidance, and token economy rules. |
 | `documentation/utilities.md` | Horizon AIOS — Utilities Reference | Quick-lookup index of all `sbin/` utility scripts: purpose, flags, and skill cross-references. |
 
 ## authoring
