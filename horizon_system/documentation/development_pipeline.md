@@ -46,14 +46,12 @@ Items are grouped by status, not priority — priority is implicit from the grou
 
 ## Known Gaps — Code
 
-- **Skills for core sbin utilities** — the following utilities have no skill wrapper yet;
-  consider one for each that has a useful interactive UX:
-  - `doctor.py` — `/doctor` health check: run all checks and surface results in session
-  - `monitor_aios.py` — `/monitor` start / stop / status
-  - `harden_aios.py` — `/harden` re-apply ACLs after structural changes
-  - `create_brain.py` — `/create-brain` guided provisioning with interactive prompts
-  - `remove_brain.py` — `/remove-brain` guided deprovisioning
-  - `uninstall.ps1` / `uninstall.sh` — `/uninstall-aios` (guided; confirmation-heavy)
+- **Skills for core sbin utilities** — landed. Wrappers now exist:
+  `/doctor` and `/monitor` as user-callable (`skills_bin/`); `/harden`,
+  `/create-brain`, `/remove-brain` as admin-only (`skills_sbin/`). Uninstall is
+  **intentionally not** exposed as a skill — it is an owner/system-level
+  operation, invoked directly (`aios uninstall` / `uninstall.ps1`), not something
+  an AI or an uninformed user should run via a slash command.
 
 - **`remove_brain.py` uninstall integration** — verify that `remove_brain.py` correctly
   deletes `<brain-name>_group` (not `<brain-name>`) on Windows following the group naming

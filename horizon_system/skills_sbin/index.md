@@ -9,8 +9,11 @@ Owner-only privileged skills. Brain users must not have access to this directory
 
 | Skill | Trigger | Purpose |
 |---|---|---|
+| create-brain | `/create-brain` | Provision a new brain — OS user, groups, workspace, shell profile, keystore credential (Admin/root) |
 | handoff | `/handoff` | Write a structured session handoff document |
+| harden | `/harden` | Apply the authoritative brains-group ACL model to the AIOS layer (Admin/root) |
 | objective | `/objective` | Create/list/show/update durable multi-session objectives that handoffs chain back to |
+| remove-brain | `/remove-brain` | Deprovision a brain — remove its OS user, per-brain group, workspace, profile, and credential (Admin/root) |
 | resync-user-skills | `/resync-user-skills` | Rebuild junctions registering machine-local user skills (usrbin/usr_skills) into skills_sbin |
 | skill-creation | `/skill-creation` | Create a new AIOS skill with correct structure and index registration |
 | horizon_aios_dev_consistency_check | `/horizon_aios_dev_consistency_check` | Run an iterative docs/implementation consistency validation pass against the consistency-check standard |

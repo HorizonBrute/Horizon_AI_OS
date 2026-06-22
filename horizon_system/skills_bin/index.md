@@ -7,3 +7,5 @@ Group-readable skills available to all brains. Check this file first when lookin
 | Skill | Trigger | Purpose |
 |---|---|---|
 | context-cost | `/context-cost` | Report KB, word count, and estimated tokens for all CLAUDE.md / agents.md / @-import files the harness auto-loads above a given path |
+| doctor | `/doctor` | Run the read-only AIOS health check (env vars, skills junction, hooks, registry, privileged-dir Deny ACLs) and report passed/warnings/failures |
+| monitor | `/monitor` | Start the AIOS filesystem integrity monitor (watches the system dirs, logs create/modify/delete/move events as JSON lines); requires elevation |
