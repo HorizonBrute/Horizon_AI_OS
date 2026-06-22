@@ -61,14 +61,18 @@ The `/objective` skill stores durable, multi-session goals in `$HORIZON_ROOT/obj
 
 ## Brain Isolation in Docker
 
-In a native AIOS deployment, each brain is an OS user account. In Docker, each brain is a separate container.
+**Current state (supported):** The AIOS Dockerfile and compose template run one `aios` service with all brains operating as OS user accounts inside that container — the same model as a native OS deployment. Brain isolation is enforced by OS user boundaries and POSIX permissions within the container. This is the supported and tested Docker deployment model.
 
-**Brain container model:**
-1. Uncomment and duplicate the `brain-template` service block in `docker-compose.yml`.
-2. Give the brain its own named volume for `/aios/brains/BRAINNAME`.
-3. Inject credentials for the brain via environment variables (set in the compose service definition); retrieve from the OS credential store or a secrets manager on the host.
-4. Mount `skills_bin` read-only into `/aios/horizon_system/skills_bin`.
-5. The brain container has no access to `sbin/` or `skills_sbin/` — enforce with Docker security options or read-only mounts.
+**Per-brain container isolation (user-owned):** If your threat model requires each brain to be isolated at the container boundary — not just the OS user boundary — this is a valid architectural choice, but it is user-owned. AIOS does not provision or manage per-brain containers. The pattern is:
+
+1. Create one `docker-compose` service per brain, mounting only that brain's directory (`$HORIZON_ROOT/brains/<name>/`) as a writable volume.
+2. Mount `$HORIZON_SYSTEM/skills_bin` read-only into each brain container for shared skill access.
+3. Mount `$HORIZON_SYSTEM` read-only (or a subset) for shared AIOS config; do not mount `sbin/` or `skills_sbin/`.
+4. Each brain container gets its own Claude Code install and `~/.claude/` config derived from the brain's AIOS settings template (`brains/.aioscommon/brain_settings.json.template`).
+5. Inject brain credentials via environment variables or a secrets manager; do not share the host OS credential store across containers.
+6. The AIOS audit log volume (`aios-logs`) must not be mounted into any brain container.
+
+See `philosophy.md §5` for the deployment model overview.
 
 **Audit trail in Docker:** The AIOS container's audit log volume (`aios-logs`) must not be accessible to brain containers. Do not mount it into brain service definitions.
 

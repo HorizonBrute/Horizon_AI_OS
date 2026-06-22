@@ -144,6 +144,35 @@ python $HORIZON_SYSTEM/sbin/monitor_aios.py &
 
 ---
 
+## Multi-Operator Server Pattern
+
+The AIOS model assumes one human operator per AIOS owner account. The owner's `~/.claude/settings.json` (global settings, hooks, statusLine) is per OS home directory. If two humans — for example, a primary admin and a co-worker — need to use the same AIOS installation on a shared server, follow this pattern:
+
+**Do not share an OS account.** Each human operator needs their own OS user account on the server.
+
+**Each person runs bootstrap under their own account:**
+
+```bash
+# As operator-1 (with sudo)
+sudo bash /opt/aios/horizon_system/sbin/bootstrap.sh
+
+# As operator-2 (with sudo, in a separate SSH session)
+sudo bash /opt/aios/horizon_system/sbin/bootstrap.sh
+```
+
+Bootstrap installs each person's personal `~/.claude/settings.json` from the shared AIOS template. The devroot `.claude/settings.json` (permissions only, committed to the repo) is shared across all operators — that is intentional. Per-operator state (hooks, statusLine, global settings) lives in each account's own `~/.claude/`.
+
+**Brains are not the right mechanism for human co-workers.** Brains are isolated AI agent accounts. Human operators need their own OS accounts with their own Claude Code sessions, their own SSH keys, and their own shell environments.
+
+**`$HORIZON_ROOT` repository — two valid models:**
+
+- **Shared storage:** `$HORIZON_ROOT` is mounted at the same path for all operators. Each operator's `~/.claude/` is their own (different home directory), so settings stay separate. All operators read from the same committed `.claude/settings.json` for devroot-scoped permissions.
+- **Separate clones:** Each operator clones the AIOS repo to their own home directory or a path they control. The devroot `.claude/settings.json` is replicated from the repo in each clone. Updates require each operator to pull independently (or the sync schedule handles it).
+
+Either model works. Shared storage is simpler for keeping all operators on the same AIOS version; separate clones give each operator independent upgrade control.
+
+---
+
 ## Server vs. Desktop
 
 | Concern | Server | Desktop |
