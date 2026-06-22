@@ -21,6 +21,7 @@ change** — run `/horizon_aios_documentation_index_update`. (Enforced by CC-G4 
 | ID (path) | Title | Purpose |
 |---|---|---|
 | `horizon_system/documentation/getting_started/ReadMeToSetupYourSystem.md` | Horizon AIOS — System Setup Guide | Human SOP and agent-executable protocol for bootstrapping AIOS on a new machine. |
+| `horizon_system/documentation/getting_started/dependencies_and_footprint.md` | Horizon AIOS — Dependencies and System Footprint Reference | Declarative, scannable reference: all AIOS dependencies with per-platform install commands, and a complete system footprint for both AIOS install and brain addition across Windows, macOS, and Linux. |
 
 ## system
 | ID (path) | Title | Purpose |
