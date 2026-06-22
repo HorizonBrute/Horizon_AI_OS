@@ -1,14 +1,14 @@
 ---
 name: resync-user-skills
-description: Rebuild the junctions that register machine-local user skills (in $HORIZON_USRBIN/usr_skills) into skills_sbin so they load alongside OS skills. Use when the user types /resync-user-skills, adds or removes a user skill, or after an upstream sync may have wiped the links.
+description: Rebuild the owner's aggregated skill view — per-skill junctions linking skills_bin (brain tier) and usr_skills (machine-local) into skills_sbin so they load alongside the owner's OS skills. Use when the user types /resync-user-skills, adds or removes a skill, or after an upstream sync may have wiped the links.
 tools: Bash
 ---
 
 # Skill: /resync-user-skills
 
-User skills are machine-local and gitignored, living in `$HORIZON_USRBIN/usr_skills/<name>/SKILL.md`. They are surfaced to Claude Code by a per-skill junction at `$HORIZON_SYSTEM/skills_sbin/<name>` → the user skill, which appears flat through the existing `~/.claude/skills` junction.
+The owner's `~/.claude/skills` points at `skills_sbin`, so brain-tier skills (`$HORIZON_SYSTEM/skills_bin/`) and machine-local skills (`$HORIZON_USRBIN/usr_skills/`) are surfaced to the owner by a per-skill junction `skills_sbin/<name>` → source, which appears flat through the existing `~/.claude/skills` junction. Brains are unaffected (their view points at `skills_bin` only).
 
-Those junctions are not tracked by git, so an upstream sync that refreshes `skills_sbin` can drop them. This skill rebuilds them from whatever currently exists in `usr_skills` — the source of truth. It is idempotent and never touches real OS skills.
+Those junctions are not tracked by git, so an upstream sync that refreshes `skills_sbin` can drop them. This skill rebuilds them from whatever currently exists in the sources — the source of truth. It is idempotent and never shadows a real OS skill.
 
 ---
 
@@ -35,5 +35,5 @@ Those junctions are not tracked by git, so an upstream sync that refreshes `skil
 ## Notes for the executing agent
 
 - The script is the single source of truth for the linking logic (Windows junction / Unix symlink, idempotency, stale-pruning, collision guard). Do not reimplement linking by hand — just run it.
-- A user skill whose name collides with a real OS skill is skipped, not linked, to avoid shadowing. Surface that message so the user can rename.
-- This does not create or edit user skills — only registers existing ones. To author a user skill, use `/skill-creation` (user tier).
+- A source skill whose name collides with a real OS skill is skipped, not linked, to avoid shadowing. Surface that message so the user can rename.
+- This does not create or edit skills — only links existing ones into the owner view. To author a skill, use `/skill-creation`.
