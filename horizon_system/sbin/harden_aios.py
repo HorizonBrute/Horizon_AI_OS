@@ -344,7 +344,7 @@ def harden_unix(paths, os_name, owner, have_group, dry_run):
         if not os.path.isdir(path):
             warn(f'{label} missing, skipping deny: {path}')
             continue
-        run(['chmod', '700', path], dry_run=dry_run, check=False)
+        run(['chmod', '-R', '700', path], dry_run=dry_run, check=False)
         # Optional explicit group deny via ACL (Linux setfacl) to mirror the
         # Windows explicit-Deny posture, on top of the 700 mode bits.
         if have_group and have_setfacl and os_name == 'Linux':

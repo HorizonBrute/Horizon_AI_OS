@@ -402,7 +402,8 @@ if ($env:AIOS_DEPLOY_MODE -eq "docker") {
 # SECTION 9: Harden AIOS layer ACLs (brains group)
 # Enforces security_invariants.md §2/§3/§5 — brains denied on sbin/skills_sbin/
 # logs, granted RX on bin/skills_bin, no write elsewhere in $HORIZON_SYSTEM.
-# Best-effort: warn, never abort bootstrap; skip if python is missing.
+# FATAL: harden_aios.py failure exits bootstrap non-zero — ACL hardening is a
+# security requirement, not a best-effort step.
 # -----------------------------------------------------------------------------
 Banner "SECTION 9: Harden AIOS layer ACLs"
 
@@ -411,10 +412,17 @@ if (Test-Path $HardenScript) {
     if (Get-Command python -ErrorAction SilentlyContinue) {
         python $HardenScript
         if ($LASTEXITCODE -eq 0) { Ok "AIOS layer hardened (brains-group ACLs applied)." }
-        else { Warn "harden_aios.py exited with code $LASTEXITCODE — review ACLs manually (run elevated)." }
+        else {
+            Err "harden_aios.py exited with code $LASTEXITCODE — ACL hardening FAILED. The system is NOT secured."
+            Err "Re-run bootstrap elevated and review harden_aios.py output before using this installation."
+            exit 1
+        }
     } else {
-        Warn "python not found - skipping AIOS hardening. Run later (elevated): python $HardenScript"
+        Err "python not found — cannot run harden_aios.py. ACL hardening FAILED. The system is NOT secured."
+        Err "Install Python 3.6+ and re-run bootstrap elevated: python $HardenScript"
+        exit 1
     }
 } else {
-    Warn "harden_aios.py not found at $HardenScript - skipping AIOS hardening."
+    Err "harden_aios.py not found at $HardenScript — ACL hardening FAILED. The system is NOT secured."
+    exit 1
 }

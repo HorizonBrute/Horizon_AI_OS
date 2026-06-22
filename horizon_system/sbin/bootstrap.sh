@@ -394,7 +394,8 @@ fi
 # SECTION 9: Harden AIOS layer ACLs (brains group)
 # Enforces security_invariants.md §2/§3/§5 — brains denied on sbin/skills_sbin/
 # logs, granted rx on bin/skills_bin, no write elsewhere in $HORIZON_SYSTEM.
-# Best-effort: warn, never abort bootstrap; skip if python is missing.
+# FATAL: harden_aios.py failure exits bootstrap non-zero — ACL hardening is a
+# security requirement, not a best-effort step.
 # -----------------------------------------------------------------------------
 banner "SECTION 9: Harden AIOS layer ACLs"
 
@@ -406,11 +407,16 @@ elif [ -f "$HARDEN_SCRIPT" ]; then
     if python3 "$HARDEN_SCRIPT"; then
       ok "AIOS layer hardened (brains-group ACLs applied)."
     else
-      warn "harden_aios.py exited non-zero — review ACLs manually (run with sudo)."
+      err "harden_aios.py exited non-zero — ACL hardening FAILED. The system is NOT secured."
+      err "Review harden_aios.py output above and re-run bootstrap with sudo before using this installation."
+      exit 1
     fi
   else
-    warn "python3 not found — skipping AIOS hardening. Run later (sudo): python3 $HARDEN_SCRIPT"
+    err "python3 not found — cannot run harden_aios.py. ACL hardening FAILED. The system is NOT secured."
+    err "Install Python 3.6+ and re-run: sudo python3 $HARDEN_SCRIPT"
+    exit 1
   fi
 else
-  warn "harden_aios.py not found at $HARDEN_SCRIPT — skipping AIOS hardening."
+  err "harden_aios.py not found at $HARDEN_SCRIPT — ACL hardening FAILED. The system is NOT secured."
+  exit 1
 fi
