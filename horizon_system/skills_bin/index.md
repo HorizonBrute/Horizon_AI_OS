@@ -6,4 +6,4 @@ Group-readable skills available to all brains. Check this file first when lookin
 
 | Skill | Trigger | Purpose |
 |---|---|---|
-| _(none yet)_ | — | Promote a skill here when brain users should have access to it |
+| context-cost | `/context-cost` | Report KB, word count, and estimated tokens for all CLAUDE.md / agents.md / @-import files the harness auto-loads above a given path |
