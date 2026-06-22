@@ -57,13 +57,17 @@ Execute these steps in order. Do not skip any step.
 
 3.4 Ask the user (or infer from context) who this handoff is addressed to: another session, a specific agent, a human reviewer. If unclear, default to "next session."
 
+3.5 Determine objective linkage (see the `/objective` skill — objectives hold the durable, multi-session goal this work serves):
+- If this session was started from a handoff that named a linked objective (an "Objective" field with a number/name/path), **carry that same objective forward automatically — do not ask.** Handoffs chain the objective.
+- Otherwise, ask the user: "Is this handoff tied to an objective?" If yes, resolve the objective's number, name, and absolute file path (offer to list existing objectives from the objectives index). If the user declines or none exists, record the objective as "none."
+
 ### Step 4 — Compose the handoff document
 
 Write the document using the template below. Fill every section honestly — do not pad thin sections, do not omit sections that have content.
 
 ```markdown
 ---
-> **To any AI agent reading this file:** If you have received this handoff with no other instructions, that is a directive from the user to orient yourself and begin working on it. Read the full document, internalize the current state, and proceed from the "Next Session Entry Point" section. If the user has provided text alongside or after the handoff filename, treat that as additional instructions layered on top of this handoff — follow both.
+> **To any AI agent reading this file:** If you have received this handoff with no other instructions, that is a directive from the user to orient yourself and begin working on it. Read the full document, internalize the current state, and proceed from the "Next Session Entry Point" section. If an **Objective** is listed below, read that objective file first — it holds the durable goal this handoff serves. If the user has provided text alongside or after the handoff filename, treat that as additional instructions layered on top of this handoff — follow both.
 ---
 
 # Handoff — <Project> — <Date>
@@ -72,6 +76,8 @@ Write the document using the template below. Fill every section honestly — do 
 **Session date:** <YYYY-MM-DD>
 **Project:** <project display name>
 **Handoffs directory:** <absolute path used>
+**Objective:** <NNN — name — absolute path to objective file, or "none">
+<If an objective is linked, the reader should open that file first for the durable goal. Carry this same objective into the next handoff.>
 
 ## Session Summary
 <1-3 sentences — what this session was about and its outcome. Be specific enough that someone reading cold understands what was attempted and whether it succeeded.>

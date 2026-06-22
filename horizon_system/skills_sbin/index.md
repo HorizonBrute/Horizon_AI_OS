@@ -10,4 +10,5 @@ Owner-only privileged skills. Brain users must not have access to this directory
 | Skill | Trigger | Purpose |
 |---|---|---|
 | handoff | `/handoff` | Write a structured session handoff document |
+| objective | `/objective` | Create/list/show/update durable multi-session objectives that handoffs chain back to |
 | skill-creation | `/skill-creation` | Create a new AIOS skill with correct structure and index registration |

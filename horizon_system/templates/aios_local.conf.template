@@ -49,3 +49,12 @@ AIOS_LOG_MAX_ROTATIONS=5
 
 # Max total MB for handoffs/ directory. Oldest deleted first. 0 = disabled.
 AIOS_HANDOFFS_MAX_SIZE_MB=500
+
+# ---------------------------------------------------------------------------
+# Objectives
+# ---------------------------------------------------------------------------
+
+# Days since last update before an objective is pruned. Updating an objective
+# refreshes its clock; abandoned objectives age out. index.md is never pruned.
+# 0 = disabled.
+AIOS_OBJECTIVES_MAX_DAYS=90

@@ -17,6 +17,12 @@
 #   Spaces allowed; converted to hyphens in filenames.
 # project_display_name:
 
+# objectives_dir
+#   Where /objective stores durable, multi-session objectives for this project.
+#   Default: $HORIZON_ROOT/objectives/
+#   Value: absolute path; created if missing.
+# objectives_dir:
+
 # --- Future keys (reserved, not yet active) ---
 # default_handoff_recipient:
 # skills_disabled:

@@ -578,6 +578,9 @@ temp/
 # Handoff session artifacts (machine-local continuity; not version history)
 handoffs/
 
+# Objective artifacts (machine-local durable goals; not version history)
+objectives/
+
 # Machine-local config overrides (configured from templates; never committed)
 *.local.json
 

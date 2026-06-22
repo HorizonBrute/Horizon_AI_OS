@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Horizon AIOS log maintenance — prune old logs and rotate oversized files."""
 
-import sys
 import datetime
 from pathlib import Path
 
@@ -17,6 +16,7 @@ DEFAULTS = {
     "AIOS_LOG_MAX_SIZE_MB": "10",
     "AIOS_LOG_MAX_ROTATIONS": "5",
     "AIOS_HANDOFFS_MAX_SIZE_MB": "500",
+    "AIOS_OBJECTIVES_MAX_DAYS": "90",
 }
 
 
@@ -86,27 +86,44 @@ def prune_handoffs(handoffs_dir: Path, max_size_bytes: int):
         print(f"[PRUNE] handoffs/{f.name} (size budget exceeded)")
 
 
+def prune_objectives(objectives_dir: Path, max_days: int):
+    if not objectives_dir.exists():
+        return
+    protected = {".gitkeep", "README.md", "index.md"}
+    cutoff = datetime.datetime.now() - datetime.timedelta(days=max_days)
+    for f in objectives_dir.rglob("*"):
+        if f.is_file() and f.name not in protected:
+            mtime = datetime.datetime.fromtimestamp(f.stat().st_mtime)
+            if mtime < cutoff:
+                f.unlink()
+                print(f"[PRUNE] objectives/{f.name} (age > {max_days}d)")
+
+
 def main():
     config = read_config()
     log_dir = Path(config["AIOS_LOG_DIR"]) if config["AIOS_LOG_DIR"] else HORIZON_ROOT / "logs"
 
-    if not log_dir.exists():
-        print(f"[INFO] Log directory {log_dir} does not exist — nothing to maintain.")
-        sys.exit(0)
+    if log_dir.exists():
+        max_days = int(config["AIOS_LOG_MAX_DAYS"]) if config["AIOS_LOG_MAX_DAYS"] != "0" else 0
+        max_size_mb = int(config["AIOS_LOG_MAX_SIZE_MB"]) if config["AIOS_LOG_MAX_SIZE_MB"] != "0" else 0
+        max_rotations = int(config["AIOS_LOG_MAX_ROTATIONS"])
 
-    max_days = int(config["AIOS_LOG_MAX_DAYS"]) if config["AIOS_LOG_MAX_DAYS"] != "0" else 0
-    max_size_mb = int(config["AIOS_LOG_MAX_SIZE_MB"]) if config["AIOS_LOG_MAX_SIZE_MB"] != "0" else 0
-    max_rotations = int(config["AIOS_LOG_MAX_ROTATIONS"])
-
-    if max_size_mb:
-        rotate_large(log_dir, max_size_mb * 1024 * 1024, max_rotations)
-    if max_days:
-        prune_old(log_dir, max_days)
+        if max_size_mb:
+            rotate_large(log_dir, max_size_mb * 1024 * 1024, max_rotations)
+        if max_days:
+            prune_old(log_dir, max_days)
+    else:
+        print(f"[INFO] Log directory {log_dir} does not exist — skipping log maintenance.")
 
     max_handoffs_mb = int(config["AIOS_HANDOFFS_MAX_SIZE_MB"]) if config["AIOS_HANDOFFS_MAX_SIZE_MB"] != "0" else 0
     if max_handoffs_mb:
         handoffs_dir = HORIZON_ROOT / "handoffs"
         prune_handoffs(handoffs_dir, max_handoffs_mb * 1024 * 1024)
+
+    max_objectives_days = int(config["AIOS_OBJECTIVES_MAX_DAYS"]) if config["AIOS_OBJECTIVES_MAX_DAYS"] != "0" else 0
+    if max_objectives_days:
+        objectives_dir = HORIZON_ROOT / "objectives"
+        prune_objectives(objectives_dir, max_objectives_days)
 
     print("[OK] Log maintenance complete.")
 

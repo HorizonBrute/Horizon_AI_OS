@@ -35,6 +35,7 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   ├── CLAUDE.md                       # Thin Claude Code entry point; imports $HORIZON_ROOT/CLAUDE.md
 │   └── settings.json                   # Devroot-scoped permissions (no hooks, no statusLine)
 ├── handoffs/                           # Default output directory for /handoff skill (see Section 7)
+├── objectives/                         # Default store for /objective skill — durable multi-session goals (see Section 7)
 ├── horizon_system/                     # $HORIZON_SYSTEM — OS system directory
 │   ├── VERSION                         # Canonical version file (SemVer)
 │   ├── bin/                            # $HORIZON_BIN — user-callable executables; brains: R+X
@@ -55,6 +56,8 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   ├── skills_sbin/                    # Owner-only privileged skills; brains: DENY (see Section 7)
 │   │   ├── index.md
 │   │   ├── handoff/                    # /handoff skill (owner-only)
+│   │   │   └── SKILL.md
+│   │   ├── objective/                  # /objective skill (owner-only)
 │   │   │   └── SKILL.md
 │   │   └── skill-creation/             # /skill-creation skill (owner-only)
 │   │       └── SKILL.md
@@ -189,7 +192,13 @@ Invariant: never edit skills directly in `~/.claude/skills/`. Always edit at the
 
 The `/handoff` skill searches upward from the current working directory for a project-level `aios_overrides.md` file to determine where to write handoff documents. If no override is found, it defaults to `$HORIZON_ROOT/handoffs/`.
 
-### 7.3 `aios_overrides.md` — Project-Level Config Overrides
+### 7.3 Objectives Directory
+
+`$HORIZON_ROOT/objectives/` is the default store for the `/objective` skill — durable, multi-session goals holding long-term context. Gitignored, machine-local, not tracked by the OS repo. Resolution mirrors handoffs: walk upward for `aios_overrides.md` → `objectives_dir` key, else default.
+
+Durable but ephemeral by design. Pruned by age (last modification) via `maintain_logs.py` using `AIOS_OBJECTIVES_MAX_DAYS` (default 90); `index.md` is never pruned. No completion or status concept — an objective is retired by ceasing to reference it. Handoffs chain an objective forward by recording its number, name, and path; the objective carries the durable goal a single handoff is too short-lived to hold.
+
+### 7.4 `aios_overrides.md` — Project-Level Config Overrides
 
 Optional per-project file that overrides AIOS defaults. Project-owned (committed to the project repo, not the OS repo).
 
@@ -201,6 +210,7 @@ Key properties:
 
 Currently supported keys:
 - `handoffs_dir` — override the handoffs output directory for this project
+- `objectives_dir` — override the objectives store directory for this project
 - `project_display_name` — friendly name for handoff doc headers (defaults to directory basename)
 
 The template file is fully annotated.
