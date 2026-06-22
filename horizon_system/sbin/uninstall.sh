@@ -5,9 +5,11 @@
 # Safe to run multiple times (idempotent). Non-destructive on user content.
 #
 # Usage:
+#   bash horizon_system/sbin/uninstall.sh --dry-run     # preview, no changes (no root)
 #   sudo bash horizon_system/sbin/uninstall.sh          # interactive
 #   sudo bash horizon_system/sbin/uninstall.sh --yes    # non-interactive
 #   sudo bash horizon_system/sbin/uninstall.sh -y       # same as --yes
+# Unknown arguments are rejected (exit 2) rather than silently ignored.
 #
 # Works on: macOS, Linux (and Git Bash on Windows as a fallback — prefer uninstall.ps1)
 # Must be run as root (sudo) — same requirement as bootstrap.
@@ -34,23 +36,39 @@
 
 set -euo pipefail
 
-# --- Root check ---
-if [ "$(id -u)" -ne 0 ]; then
+# --- Parse flags (reject unknown args instead of silently dropping them) ---
+usage() {
+  echo ""
+  echo "  Horizon AIOS uninstall — reverses the bootstrap footprint."
+  echo ""
+  echo "  Usage: sudo bash $0 [--dry-run] [--yes]"
+  echo "    --dry-run     Preview every action; make no changes (no root needed)."
+  echo "    --yes, -y     Non-interactive; accept all removals without prompting."
+  echo "    --help, -h    Show this help and exit."
+  echo ""
+}
+
+YES_ALL=false
+DRY_RUN=false
+for arg in "$@"; do
+  case "$arg" in
+    --yes|-y)  YES_ALL=true ;;
+    --dry-run) DRY_RUN=true ;;
+    --help|-h) usage; exit 0 ;;
+    *) echo ""; echo "  [ERR] Unknown argument: $arg"; usage; exit 2 ;;
+  esac
+done
+
+# --- Root check (a dry-run only previews, so it needs no root) ---
+if [ "$(id -u)" -ne 0 ] && [ "$DRY_RUN" != "true" ]; then
   echo ""
   echo "  [ERR] Uninstall must be run as root (ACL/permission removal requires root)."
   echo "  Re-run as:"
   echo "    sudo bash $0 $*"
+  echo "  Or preview without root:  bash $0 --dry-run"
   echo ""
   exit 1
 fi
-
-# --- Parse flags ---
-YES_ALL=false
-for arg in "$@"; do
-  case "$arg" in
-    --yes|-y) YES_ALL=true ;;
-  esac
-done
 
 # --- Resolve paths (same logic as bootstrap.sh) ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -61,8 +79,10 @@ HORIZON_SBIN="$HORIZON_SYSTEM/sbin"
 HORIZON_ETC="$HORIZON_SYSTEM/ai_os_etc"
 HORIZON_LOGS="$HORIZON_SYSTEM/logs"
 
-# The owner is whichever user invoked sudo
-OWNER="${SUDO_USER:-$USER}"
+# The owner is whichever user invoked sudo. Fall back through $USER to `id -un`
+# so this stays defined under `set -u` even when neither var is exported
+# (e.g. Git Bash, or a minimal non-login shell).
+OWNER="${SUDO_USER:-${USER:-$(id -un)}}"
 OWNER_HOME="$(eval echo ~"$OWNER")"
 
 # --- Helpers ---
@@ -78,6 +98,7 @@ warn()     { echo "  [WARN]    $1"; }
 info()     { echo "  [INFO]    $1"; }
 advisory() { echo "  [MANUAL]  $1"; }
 skip()     { echo "  [SKIP]    $1"; }
+dry()      { echo "  [DRY]     would $1"; }
 
 confirm() {
   local prompt="$1"
@@ -86,6 +107,14 @@ confirm() {
   read -r answer </dev/tty
   [ "$answer" = "y" ] || [ "$answer" = "Y" ]
 }
+
+if [ "$DRY_RUN" = "true" ]; then
+  echo ""
+  echo "  [DRY-RUN] Previewing actions only — no changes will be made."
+  if [ "$(id -u)" -ne 0 ]; then
+    echo "  [DRY-RUN] Not root; a real uninstall must be run with sudo."
+  fi
+fi
 
 # =============================================================================
 # SECTION 2: ~/.claude/CLAUDE.md — remove lines written by bootstrap
@@ -110,13 +139,17 @@ if [ -f "$CLAUDE_MD" ]; then
   rm -f "$TMPFILE"
 
   if [ -z "$CONTENT" ]; then
-    if confirm "~/.claude/CLAUDE.md will be empty after removing bootstrap lines — delete it?"; then
+    if [ "$DRY_RUN" = "true" ]; then
+      dry "delete ~/.claude/CLAUDE.md (would be empty after removing bootstrap lines)."
+    elif confirm "~/.claude/CLAUDE.md will be empty after removing bootstrap lines — delete it?"; then
       rm -f "$CLAUDE_MD"
       ok "Deleted ~/.claude/CLAUDE.md (was only bootstrap content)."
     else
       : > "$CLAUDE_MD"
       ok "Cleared bootstrap lines from ~/.claude/CLAUDE.md (file kept, now empty)."
     fi
+  elif [ "$DRY_RUN" = "true" ]; then
+    dry "strip bootstrap redirect lines from ~/.claude/CLAUDE.md (user content preserved)."
   else
     echo "$CONTENT" > "$CLAUDE_MD"
     ok "Removed bootstrap redirect lines from ~/.claude/CLAUDE.md (user content preserved)."
@@ -140,16 +173,24 @@ if [ -d "$SKILLS_SBIN" ]; then
   while IFS= read -r -d '' link; do
     target="$(readlink "$link" 2>/dev/null || true)"
     if echo "$target" | grep -q "usr_skills\|usrbin"; then
-      rm -f "$link"
-      ok "Removed user-skill symlink: $(basename "$link")"
+      if [ "$DRY_RUN" = "true" ]; then
+        dry "remove user-skill symlink: $(basename "$link")"
+      else
+        rm -f "$link"
+        ok "Removed user-skill symlink: $(basename "$link")"
+      fi
     fi
   done < <(find "$SKILLS_SBIN" -maxdepth 1 -type l -print0 2>/dev/null)
 fi
 
 # Remove the ~/.claude/skills/ symlink itself
 if [ -L "$SKILLS_DST" ]; then
-  rm -f "$SKILLS_DST"
-  ok "Removed ~/.claude/skills/ symlink."
+  if [ "$DRY_RUN" = "true" ]; then
+    dry "remove ~/.claude/skills/ symlink."
+  else
+    rm -f "$SKILLS_DST"
+    ok "Removed ~/.claude/skills/ symlink."
+  fi
 elif [ -d "$SKILLS_DST" ]; then
   warn "~/.claude/skills/ is a real directory (not a symlink) — skipping removal."
   warn "  If it was not created by bootstrap, manage it manually."
@@ -166,8 +207,12 @@ for dirName in handoffs objectives; do
   dirPath="$HORIZON_ROOT/$dirName"
   if [ -d "$dirPath" ]; then
     if [ -z "$(ls -A "$dirPath" 2>/dev/null)" ]; then
-      rmdir "$dirPath"
-      ok "Removed empty directory: $dirPath"
+      if [ "$DRY_RUN" = "true" ]; then
+        dry "remove empty directory: $dirPath"
+      else
+        rmdir "$dirPath"
+        ok "Removed empty directory: $dirPath"
+      fi
     else
       warn "$dirPath is not empty — not removed."
       advisory "Review and remove $dirPath manually if no longer needed."
@@ -191,7 +236,9 @@ banner "SECTION 5: ~/.horizon/ tree and ~/.claude/settings.json"
 HORIZON_DIR="$OWNER_HOME/.horizon"
 
 if [ -d "$HORIZON_DIR" ]; then
-  if confirm "Remove entire ~/.horizon/ directory (registry, active_env, wrappers)?"; then
+  if [ "$DRY_RUN" = "true" ]; then
+    dry "remove entire ~/.horizon/ directory (registry, active_env, wrappers)."
+  elif confirm "Remove entire ~/.horizon/ directory (registry, active_env, wrappers)?"; then
     rm -rf "$HORIZON_DIR"
     ok "Removed ~/.horizon/."
   else
@@ -204,7 +251,9 @@ fi
 SETTINGS_JSON="$OWNER_HOME/.claude/settings.json"
 if [ -f "$SETTINGS_JSON" ]; then
   warn "~/.claude/settings.json exists — bootstrap may have created this from the template."
-  if confirm "Remove ~/.claude/settings.json?"; then
+  if [ "$DRY_RUN" = "true" ]; then
+    dry "remove ~/.claude/settings.json."
+  elif confirm "Remove ~/.claude/settings.json?"; then
     rm -f "$SETTINGS_JSON"
     ok "Removed ~/.claude/settings.json."
   else
@@ -227,8 +276,12 @@ if [ -d "$GIT_DIR" ]; then
   for hook in commit-msg pre-commit; do
     hook_path="$HORIZON_ROOT/.git/hooks/$hook"
     if [ -f "$hook_path" ]; then
-      rm -f "$hook_path"
-      ok "Removed .git/hooks/$hook."
+      if [ "$DRY_RUN" = "true" ]; then
+        dry "remove .git/hooks/$hook."
+      else
+        rm -f "$hook_path"
+        ok "Removed .git/hooks/$hook."
+      fi
     else
       skip ".git/hooks/$hook not found."
     fi
@@ -236,8 +289,12 @@ if [ -d "$GIT_DIR" ]; then
 
   current_hooks_path="$(git -C "$HORIZON_ROOT" config --local core.hooksPath 2>/dev/null || true)"
   if [ -n "$current_hooks_path" ]; then
-    git -C "$HORIZON_ROOT" config --local --unset core.hooksPath
-    ok "Unset git config core.hooksPath (was: $current_hooks_path)."
+    if [ "$DRY_RUN" = "true" ]; then
+      dry "unset git config core.hooksPath (currently: $current_hooks_path)."
+    else
+      git -C "$HORIZON_ROOT" config --local --unset core.hooksPath
+      ok "Unset git config core.hooksPath (was: $current_hooks_path)."
+    fi
   else
     skip "git core.hooksPath not set in local config — nothing to unset."
   fi
@@ -257,7 +314,13 @@ banner "SECTION 7: System PATH files"
 PROFILE_D_FILE="/etc/profile.d/horizon_aios.sh"
 
 if [ -f "$PROFILE_D_FILE" ]; then
-  if grep -q "Horizon AIOS" "$PROFILE_D_FILE" 2>/dev/null; then
+  if [ "$DRY_RUN" = "true" ]; then
+    if grep -q "Horizon AIOS" "$PROFILE_D_FILE" 2>/dev/null; then
+      dry "remove $PROFILE_D_FILE."
+    else
+      dry "strip Horizon AIOS lines from $PROFILE_D_FILE (other content preserved)."
+    fi
+  elif grep -q "Horizon AIOS" "$PROFILE_D_FILE" 2>/dev/null; then
     rm -f "$PROFILE_D_FILE"
     ok "Removed $PROFILE_D_FILE."
   else
@@ -283,8 +346,12 @@ case "$(uname -s)" in
   Darwin)
     PATHS_D_FILE="/etc/paths.d/horizon-aios"
     if [ -f "$PATHS_D_FILE" ]; then
-      rm -f "$PATHS_D_FILE"
-      ok "Removed $PATHS_D_FILE (macOS path_helper entry)."
+      if [ "$DRY_RUN" = "true" ]; then
+        dry "remove $PATHS_D_FILE (macOS path_helper entry)."
+      else
+        rm -f "$PATHS_D_FILE"
+        ok "Removed $PATHS_D_FILE (macOS path_helper entry)."
+      fi
     else
       skip "$PATHS_D_FILE not found."
     fi
@@ -298,7 +365,9 @@ banner "SECTION 9: aios_local.conf and logs/ directory"
 
 LOCAL_CONF="$HORIZON_ETC/aios_local.conf"
 if [ -f "$LOCAL_CONF" ]; then
-  if confirm "Remove $LOCAL_CONF (machine-local config)?"; then
+  if [ "$DRY_RUN" = "true" ]; then
+    dry "remove $LOCAL_CONF (machine-local config)."
+  elif confirm "Remove $LOCAL_CONF (machine-local config)?"; then
     rm -f "$LOCAL_CONF"
     ok "Removed aios_local.conf."
   else
@@ -310,8 +379,12 @@ fi
 
 if [ -d "$HORIZON_LOGS" ]; then
   if [ -z "$(ls -A "$HORIZON_LOGS" 2>/dev/null)" ]; then
-    rmdir "$HORIZON_LOGS"
-    ok "Removed empty logs/ directory."
+    if [ "$DRY_RUN" = "true" ]; then
+      dry "remove empty logs/ directory ($HORIZON_LOGS)."
+    else
+      rmdir "$HORIZON_LOGS"
+      ok "Removed empty logs/ directory."
+    fi
   else
     warn "logs/ is not empty — not removed."
     advisory "Review and remove $HORIZON_LOGS manually if logs are no longer needed."
@@ -353,6 +426,9 @@ group_exists() {
 if group_exists "$BRAINS_GROUP"; then
   for dir in "${DIRS_TO_CLEAN[@]}"; do
     if [ -d "$dir" ]; then
+      if [ "$DRY_RUN" = "true" ]; then
+        dry "remove brains-group ACL entries from: $dir"
+      else
       case "$OS" in
         Linux)
           if command -v setfacl >/dev/null 2>&1; then
@@ -376,6 +452,7 @@ if group_exists "$BRAINS_GROUP"; then
           advisory "Run: icacls '$dir' /remove:g brains /T /C /Q"
           ;;
       esac
+      fi
     else
       skip "$dir not found — skipping ACE removal."
     fi
@@ -393,6 +470,14 @@ fi
 # =============================================================================
 # SUMMARY
 # =============================================================================
+if [ "$DRY_RUN" = "true" ]; then
+  banner "Dry run complete — no changes were made"
+  echo ""
+  echo "  Re-run without --dry-run (as root) to apply these actions."
+  echo ""
+  exit 0
+fi
+
 banner "Uninstall complete"
 echo ""
 echo "  Horizon AIOS bootstrap footprint removed from this machine."

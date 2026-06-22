@@ -1,12 +1,14 @@
-# =============================================================================
+﻿# =============================================================================
 # Horizon AIOS - Uninstall Script (PowerShell)
 # Undoes everything bootstrap.ps1 does on this machine.
 # Safe to run multiple times (idempotent). Non-destructive on user content.
 #
 # Usage:
+#   .\uninstall.ps1 --dry-run # preview every action; change nothing (no elevation)
 #   .\uninstall.ps1          # interactive — confirms each destructive step
 #   .\uninstall.ps1 --yes   # non-interactive, accept all removals
 #   .\uninstall.ps1 -y      # same as --yes
+# Unknown arguments are rejected (exit 2) rather than silently ignored.
 #
 # Works on: Windows PowerShell 5.1+, PowerShell 7+
 # Must be run as Administrator (same requirement as bootstrap).
@@ -33,17 +35,53 @@
 
 $ErrorActionPreference = "Stop"
 
-$YesAll = $args -contains "--yes" -or $args -contains "-y"
+# --- Parse arguments (reject unknown flags instead of silently dropping them) ---
+function Show-Usage {
+    Write-Host ""
+    Write-Host "  Horizon AIOS uninstall — reverses the bootstrap footprint."
+    Write-Host ""
+    Write-Host "  Usage: .\uninstall.ps1 [--dry-run] [--yes]"
+    Write-Host "    --dry-run        Preview every action; make no changes (no elevation needed)."
+    Write-Host "    --yes, -y        Non-interactive; accept all removals without prompting."
+    Write-Host "    --help, -h       Show this help and exit."
+    Write-Host ""
+}
 
-# --- Privilege check ---
+$YesAll = $false
+$DryRun = $false
+foreach ($arg in $args) {
+    switch ($arg) {
+        "--yes"     { $YesAll = $true; break }
+        "-y"        { $YesAll = $true; break }
+        "--dry-run" { $DryRun = $true; break }
+        "--help"    { Show-Usage; exit 0 }
+        "-h"        { Show-Usage; exit 0 }
+        default {
+            Write-Host ""
+            Write-Host "  [ERR] Unknown argument: $arg" -ForegroundColor Red
+            Show-Usage
+            exit 2
+        }
+    }
+}
+
+# --- Privilege check (a dry-run only previews, so it needs no elevation) ---
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-if (-not $isAdmin) {
+if (-not $isAdmin -and -not $DryRun) {
     Write-Host ""
     Write-Host "  [ERR] Uninstall must be run as Administrator (ACL removal requires elevation)." -ForegroundColor Red
     Write-Host "  Right-click PowerShell and choose 'Run as administrator', then re-run:"
     Write-Host "    .\uninstall.ps1" -ForegroundColor Cyan
+    Write-Host "  Or preview without elevation:  .\uninstall.ps1 --dry-run" -ForegroundColor Cyan
     Write-Host ""
     exit 1
+}
+if ($DryRun) {
+    Write-Host ""
+    Write-Host "  [DRY-RUN] Previewing actions only — no changes will be made." -ForegroundColor Magenta
+    if (-not $isAdmin) {
+        Write-Host "  [DRY-RUN] Not elevated; a real uninstall must be run as Administrator." -ForegroundColor Magenta
+    }
 }
 
 # --- Resolve paths (same logic as bootstrap.ps1) ---
@@ -67,6 +105,7 @@ function Info($msg)    { Write-Host "  [INFO]    $msg" }
 function Advisory($msg){ Write-Host "  [MANUAL]  $msg" -ForegroundColor Cyan }
 function Err($msg)     { Write-Host "  [ERR]     $msg" -ForegroundColor Red }
 function Skip($msg)    { Write-Host "  [SKIP]    $msg" }
+function Dry($msg)     { Write-Host "  [DRY]     would $msg" -ForegroundColor Magenta }
 
 function Confirm($prompt) {
     if ($YesAll) { return $true }
@@ -93,7 +132,13 @@ if (Test-Path $ClaudeMd) {
     }
     # Also strip blank lines left at the top after removal
     $trimmed = ($filtered | Where-Object { $_.Trim() -ne "" })
-    if ($trimmed.Count -eq 0) {
+    if ($DryRun) {
+        if ($trimmed.Count -eq 0) {
+            Dry "delete ~/.claude/CLAUDE.md (would be empty after removing bootstrap lines)."
+        } else {
+            Dry "strip bootstrap redirect lines from ~/.claude/CLAUDE.md (user content preserved)."
+        }
+    } elseif ($trimmed.Count -eq 0) {
         if (Confirm "~/.claude/CLAUDE.md will be empty after removing bootstrap lines — delete it?") {
             Remove-Item $ClaudeMd -Force
             Ok "Deleted ~/.claude/CLAUDE.md (was only bootstrap content)."
@@ -129,8 +174,12 @@ if (Test-Path $SkillsSbin) {
         ($_.Target -like "*usr_skills*" -or $_.Target -like "*usrbin*")
     }
     foreach ($link in $staleLinks) {
-        [System.IO.Directory]::Delete($link.FullName, $false)
-        Ok "Removed user-skill symlink: $($link.Name)"
+        if ($DryRun) {
+            Dry "remove user-skill symlink: $($link.Name)"
+        } else {
+            [System.IO.Directory]::Delete($link.FullName, $false)
+            Ok "Removed user-skill symlink: $($link.Name)"
+        }
     }
     if ($staleLinks.Count -eq 0) {
         Skip "No user-skill symlinks found in skills_sbin/."
@@ -141,8 +190,12 @@ if (Test-Path $SkillsSbin) {
 if (Test-Path $SkillsDst) {
     $item = Get-Item $SkillsDst -ErrorAction SilentlyContinue
     if ($item.LinkType -eq "Junction" -or $item.LinkType -eq "SymbolicLink") {
-        [System.IO.Directory]::Delete($SkillsDst, $false)
-        Ok "Removed ~/.claude/skills/ junction."
+        if ($DryRun) {
+            Dry "remove ~/.claude/skills/ junction."
+        } else {
+            [System.IO.Directory]::Delete($SkillsDst, $false)
+            Ok "Removed ~/.claude/skills/ junction."
+        }
     } else {
         Warn "~/.claude/skills/ is a real directory (not a junction) — skipping removal."
         Warn "  If it was not created by bootstrap, manage it manually."
@@ -162,8 +215,12 @@ foreach ($dirName in @("handoffs", "objectives")) {
     if (Test-Path $dirPath) {
         $contents = @(Get-ChildItem $dirPath -Recurse -ErrorAction SilentlyContinue)
         if ($contents.Count -eq 0) {
-            Remove-Item $dirPath -Force
-            Ok "Removed empty directory: $dirPath"
+            if ($DryRun) {
+                Dry "remove empty directory: $dirPath"
+            } else {
+                Remove-Item $dirPath -Force
+                Ok "Removed empty directory: $dirPath"
+            }
         } else {
             Warn "$dirPath contains $($contents.Count) item(s) — not removed."
             Advisory "Review and remove $dirPath manually if no longer needed."
@@ -188,7 +245,9 @@ Banner "SECTION 5: ~/.horizon/ tree and ~/.claude/settings.json"
 $HorizonDir = Join-Path $HOME ".horizon"
 
 if (Test-Path $HorizonDir) {
-    if (Confirm "Remove entire ~/.horizon/ directory (registry, active_env, wrappers)?") {
+    if ($DryRun) {
+        Dry "remove entire ~/.horizon/ directory (registry, active_env, wrappers)."
+    } elseif (Confirm "Remove entire ~/.horizon/ directory (registry, active_env, wrappers)?") {
         Remove-Item $HorizonDir -Recurse -Force
         Ok "Removed ~/.horizon/."
     } else {
@@ -202,7 +261,9 @@ $SettingsJson = Join-Path $HOME ".claude\settings.json"
 if (Test-Path $SettingsJson) {
     Warn "~/.claude/settings.json exists."
     Warn "  Bootstrap may have created this from the template."
-    if (Confirm "Remove ~/.claude/settings.json?") {
+    if ($DryRun) {
+        Dry "remove ~/.claude/settings.json."
+    } elseif (Confirm "Remove ~/.claude/settings.json?") {
         Remove-Item $SettingsJson -Force
         Ok "Removed ~/.claude/settings.json."
     } else {
@@ -225,8 +286,12 @@ if (Test-Path $GitDir) {
     foreach ($hook in @("commit-msg", "pre-commit")) {
         $hookPath = Join-Path $HORIZON_ROOT ".git\hooks\$hook"
         if (Test-Path $hookPath) {
-            Remove-Item $hookPath -Force
-            Ok "Removed .git/hooks/$hook."
+            if ($DryRun) {
+                Dry "remove .git/hooks/$hook."
+            } else {
+                Remove-Item $hookPath -Force
+                Ok "Removed .git/hooks/$hook."
+            }
         } else {
             Skip ".git/hooks/$hook not found."
         }
@@ -235,8 +300,12 @@ if (Test-Path $GitDir) {
     # Unset core.hooksPath from local git config
     $currentHooksPath = git -C $HORIZON_ROOT config --local core.hooksPath 2>$null
     if ($currentHooksPath) {
-        git -C $HORIZON_ROOT config --local --unset core.hooksPath
-        Ok "Unset git config core.hooksPath (was: $currentHooksPath)."
+        if ($DryRun) {
+            Dry "unset git config core.hooksPath (currently: $currentHooksPath)."
+        } else {
+            git -C $HORIZON_ROOT config --local --unset core.hooksPath
+            Ok "Unset git config core.hooksPath (was: $currentHooksPath)."
+        }
     } else {
         Skip "git core.hooksPath not set in local config — nothing to unset."
     }
@@ -262,13 +331,18 @@ $Cleaned = $PathEntries | Where-Object {
 }
 
 if ($Cleaned.Count -lt $PathEntries.Count) {
-    $NewPath = ($Cleaned | Where-Object { $_ -ne "" }) -join ";"
-    [System.Environment]::SetEnvironmentVariable("Path", $NewPath, "Machine")
-    Ok "Removed horizon_system\bin entries from Machine-scope PATH."
-    # Refresh current session
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
-                [System.Environment]::GetEnvironmentVariable("Path", "User")
-    Ok "Refreshed session PATH."
+    if ($DryRun) {
+        $removed = $PathEntries | Where-Object { $_ -match '(?i)horizon_system[/\\]bin$' }
+        Dry "remove horizon_system\bin entries from Machine-scope PATH: $($removed -join ', ')"
+    } else {
+        $NewPath = ($Cleaned | Where-Object { $_ -ne "" }) -join ";"
+        [System.Environment]::SetEnvironmentVariable("Path", $NewPath, "Machine")
+        Ok "Removed horizon_system\bin entries from Machine-scope PATH."
+        # Refresh current session
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
+                    [System.Environment]::GetEnvironmentVariable("Path", "User")
+        Ok "Refreshed session PATH."
+    }
 } else {
     Skip "No horizon_system\bin entry found in Machine-scope PATH."
 }
@@ -282,7 +356,9 @@ Banner "SECTION 9: aios_local.conf and logs/ directory"
 
 $LocalConf = Join-Path $HORIZON_ETC "aios_local.conf"
 if (Test-Path $LocalConf) {
-    if (Confirm "Remove $LocalConf (machine-local config)?") {
+    if ($DryRun) {
+        Dry "remove $LocalConf (machine-local config)."
+    } elseif (Confirm "Remove $LocalConf (machine-local config)?") {
         Remove-Item $LocalConf -Force
         Ok "Removed aios_local.conf."
     } else {
@@ -295,8 +371,12 @@ if (Test-Path $LocalConf) {
 if (Test-Path $HORIZON_LOGS) {
     $logContents = @(Get-ChildItem $HORIZON_LOGS -Recurse -ErrorAction SilentlyContinue)
     if ($logContents.Count -eq 0) {
-        Remove-Item $HORIZON_LOGS -Force
-        Ok "Removed empty logs/ directory."
+        if ($DryRun) {
+            Dry "remove empty logs/ directory ($HORIZON_LOGS)."
+        } else {
+            Remove-Item $HORIZON_LOGS -Force
+            Ok "Removed empty logs/ directory."
+        }
     } else {
         Warn "logs/ contains $($logContents.Count) item(s) — not removed."
         Advisory "Review and remove $HORIZON_LOGS manually if logs are no longer needed."
@@ -335,13 +415,17 @@ try {
 if ($groupExists) {
     foreach ($dir in $DirsToClean) {
         if (Test-Path $dir) {
-            # /remove:g removes all ACEs (grant and deny) for the group
-            $result = icacls $dir /remove:g $BrainsGroup /T /C /Q 2>&1
-            if ($LASTEXITCODE -eq 0) {
-                Ok "Removed brains-group ACEs from: $dir"
+            if ($DryRun) {
+                Dry "remove brains-group ACEs from: $dir  (icacls /remove:g $BrainsGroup /T)"
             } else {
-                Warn "icacls returned non-zero for $dir — some ACEs may remain."
-                Warn "  $result"
+                # /remove:g removes all ACEs (grant and deny) for the group
+                $result = icacls $dir /remove:g $BrainsGroup /T /C /Q 2>&1
+                if ($LASTEXITCODE -eq 0) {
+                    Ok "Removed brains-group ACEs from: $dir"
+                } else {
+                    Warn "icacls returned non-zero for $dir — some ACEs may remain."
+                    Warn "  $result"
+                }
             }
         } else {
             Skip "$dir not found — skipping ACE removal."
@@ -357,6 +441,14 @@ if ($groupExists) {
 # =============================================================================
 # SUMMARY
 # =============================================================================
+if ($DryRun) {
+    Banner "Dry run complete — no changes were made"
+    Write-Host ""
+    Write-Host "  Re-run without --dry-run (as Administrator) to apply these actions."
+    Write-Host ""
+    exit 0
+}
+
 Banner "Uninstall complete"
 Write-Host ""
 Write-Host "  Horizon AIOS bootstrap footprint removed from this machine."

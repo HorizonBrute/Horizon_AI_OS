@@ -16,8 +16,9 @@ Items are grouped by status, not priority — priority is implicit from the grou
   `documentation/system/aios_switching.md`.
 - **AIOS uninstall** — `sbin/uninstall.ps1` / `sbin/uninstall.sh` landed. Section-by-section
   mirror of bootstrap; requires elevation; covers ACLs, git hooks, PATH, registry.
-  Invokable via the `aios uninstall [--yes]` subcommand, which delegates to the
-  platform script.
+  Invokable via the `aios uninstall [--dry-run] [--yes]` subcommand, which
+  delegates to the platform script. Both scripts support a no-elevation
+  `--dry-run` preview and reject unknown arguments.
 - **Future harness scope note** — philosophy.md addition in progress. Acknowledges
   Claude-only current scope; names Ollama, Codex, LM Studio as future exploration targets.
 

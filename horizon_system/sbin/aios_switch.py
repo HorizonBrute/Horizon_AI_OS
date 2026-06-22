@@ -33,7 +33,7 @@ Usage:
     aios_switch.py register <name> <path> [--yes]
     aios_switch.py unregister <name> [--yes]
     aios_switch.py switch <name> [--dry-run] [--yes]
-    aios_switch.py uninstall [--yes]
+    aios_switch.py uninstall [--dry-run] [--yes]
 
 Env:
     AIOS_SWITCH_HOME   Override the home base (for testing). Defaults to ~.
@@ -527,8 +527,9 @@ def cmd_uninstall(_reg, args):
     (uninstall.ps1 on Windows, uninstall.sh elsewhere), which undoes the
     bootstrap footprint section by section. Those scripts require elevation and
     run interactively (confirming each destructive step) unless --yes is given;
-    we run them in the foreground so their prompts reach the terminal and return
-    their exit code unchanged."""
+    --dry-run previews every action without changing anything (and needs no
+    elevation). We run them in the foreground so their prompts reach the terminal
+    and return their exit code unchanged."""
     if os.name == "nt":
         script = os.path.join(SCRIPT_DIR, "uninstall.ps1")
         cmd = ["powershell", "-ExecutionPolicy", "Bypass", "-File", script]
@@ -539,6 +540,8 @@ def cmd_uninstall(_reg, args):
     if not os.path.isfile(script):
         err(f"Uninstall script not found: {script}")
         return 1
+    if args.dry_run:
+        cmd.append("--dry-run")
     if args.yes:
         cmd.append("--yes")
 
@@ -625,6 +628,8 @@ def main():
 
     p_un = sub.add_parser("uninstall",
                           help="Remove the Horizon AIOS bootstrap footprint from this machine.")
+    p_un.add_argument("--dry-run", action="store_true",
+                      help="Preview every action; change nothing (no elevation needed).")
     p_un.add_argument("--yes", "-y", action="store_true",
                       help="Skip confirmations (non-interactive). Requires elevation.")
 
