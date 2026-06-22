@@ -155,25 +155,34 @@ BRAINS_GROUP = "brains"
 def _has_brains_deny(path):
     """
     Return (status, detail) where status is 'deny', 'nodeny', or 'error'.
-    Parses `icacls <path>` output for an explicit Deny ACE on the brains group.
-    icacls renders deny ACEs as "<principal>:(DENY)(...)" / "(N)" lines.
+
+    Verifies an EXPLICIT (non-inherited) Deny ACE for the brains group exists on
+    `path`, via Get-Acl rather than parsing icacls text. icacls renders a
+    full-control Deny as "(N)" and a partial Deny as "(DENY)(bits)" — too
+    fragile to string-match. Get-Acl exposes the authoritative AccessControlType.
+
+    Requiring an explicit (IsInherited=False) Deny matches security_invariants
+    §3 ("an explicit Deny is required") and holds in both harden_aios modes:
+    additive sets the explicit Deny alongside inherited ACEs; --strict sets it
+    after stripping inheritance. An inherited-only Deny would NOT satisfy this.
     """
+    ps = (
+        "$a=(Get-Acl -LiteralPath '{p}').Access | Where-Object {{ "
+        "$_.IdentityReference -like '*{g}*' -and "
+        "$_.AccessControlType -eq 'Deny' -and -not $_.IsInherited }}; "
+        "if ($a) {{ $a | ForEach-Object {{ $_.FileSystemRights }} }}"
+    ).format(p=str(path), g=BRAINS_GROUP)
     try:
         result = subprocess.run(
-            ["icacls", str(path)], capture_output=True, text=True, timeout=10
+            ["powershell", "-NonInteractive", "-NoProfile", "-Command", ps],
+            capture_output=True, text=True, timeout=20,
         )
-    except Exception as e:  # noqa: BLE001 — surface any icacls failure
+    except Exception as e:  # noqa: BLE001 — surface any failure
         return ("error", str(e))
 
-    for raw in result.stdout.splitlines():
-        line = raw.strip()
-        if BRAINS_GROUP.lower() not in line.lower():
-            continue
-        # Deny ACEs are rendered by icacls with an explicit "(DENY)" marker.
-        # (Do not also match "(N)" — it is icacls's no-inheritance/compact token
-        # and can appear on grant lines, causing a false positive.)
-        if "(DENY)" in line.upper():
-            return ("deny", line)
+    detail = result.stdout.strip()
+    if detail:
+        return ("deny", f"explicit brains Deny ({detail})")
     return ("nodeny", "")
 
 
