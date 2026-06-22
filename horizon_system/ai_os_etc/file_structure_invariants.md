@@ -17,6 +17,7 @@ Hardcoded paths are forbidden in committed files. Use these variables exclusivel
 | `$HORIZON_LOGS` | `$HORIZON_ROOT\horizon_system\logs` | Centralized audit and operational logs; brains: DENY |
 | `$HORIZON_USRBIN` | `$HORIZON_ROOT\usrbin` | Common application installs shared across brains and projects |
 | `$HORIZON_PROJECTS` | `$HORIZON_ROOT\Projects` | Primary user's personal project workspace |
+| `$HORIZON_BRAIN_HOME` | Brain user's OS home directory | Brain user's home directory (set only within a brain session; not available in the owner session) |
 
 Rules:
 - Scripts resolve these variables at startup; never hardcode paths.

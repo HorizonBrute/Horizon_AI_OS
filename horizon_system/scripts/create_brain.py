@@ -911,7 +911,10 @@ def phase5_deploy_templates(ctx, dry_run=False):
     _deploy_template(
         src=os.path.join(aioscommon_dir, 'brain_settings.json.template'),
         dest=os.path.join(brain_claude_dir, 'settings.json'),
-        substitutions={'[BRAIN_NAME]': brain_name},
+        substitutions={
+            '[BRAIN_NAME]':        brain_name,
+            '[HORIZON_ROOT_PATH]': horizon_root_fwd,
+        },
     )
 
     # 5.4 Write shell profile (sets HORIZON_* env vars + default working dir)
@@ -947,7 +950,7 @@ def _write_brain_shell_profile(ctx):
         _write_brain_profile_macos(brain_name, horizon_root, brain_dir)
 
 
-def _brain_profile_content_posix(brain_name, horizon_root, brain_dir):
+def _brain_profile_content_posix(brain_name, horizon_root, brain_dir, brain_home):
     """Return the POSIX shell profile content for a brain user."""
     horizon_system = os.path.join(horizon_root, 'horizon_system')
     horizon_bin    = os.path.join(horizon_system, 'bin')
@@ -967,6 +970,7 @@ def _brain_profile_content_posix(brain_name, horizon_root, brain_dir):
         f'export HORIZON_LOGS="{horizon_logs}"\n'
         f'export HORIZON_USRBIN="{horizon_usrbin}"\n'
         f'export HORIZON_BRAIN_NAME="{brain_name}"\n'
+        f'export HORIZON_BRAIN_HOME="{brain_home}"\n'
         f'cd "{brain_dir}"\n'
     )
 
@@ -980,14 +984,14 @@ def _write_brain_profile_linux(brain_name, horizon_root, brain_dir):
         brain_home = f'/home/{brain_name}'
 
     profile_path = os.path.join(brain_home, '.bashrc')
-    content = _brain_profile_content_posix(brain_name, horizon_root, brain_dir)
+    content = _brain_profile_content_posix(brain_name, horizon_root, brain_dir, brain_home)
     _safe_write_profile(profile_path, content, brain_name)
 
 
 def _write_brain_profile_macos(brain_name, horizon_root, brain_dir):
     """Write ~/.zshrc and ~/.bash_profile for the brain user on macOS."""
     brain_home = f'/Users/{brain_name}'
-    content = _brain_profile_content_posix(brain_name, horizon_root, brain_dir)
+    content = _brain_profile_content_posix(brain_name, horizon_root, brain_dir, brain_home)
 
     for filename in ('.zshrc', '.bash_profile'):
         profile_path = os.path.join(brain_home, filename)
@@ -1018,6 +1022,7 @@ def _write_brain_profile_windows(brain_name, horizon_root, brain_dir):
         f'$env:HORIZON_LOGS        = "{horizon_logs}"\n'
         f'$env:HORIZON_USRBIN      = "{horizon_usrbin}"\n'
         f'$env:HORIZON_BRAIN_NAME  = "{brain_name}"\n'
+        f'$env:HORIZON_BRAIN_HOME  = "{brain_home}"\n'
         f'Set-Location "{brain_dir}"\n'
     )
 
