@@ -88,7 +88,7 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   └── aios_monitor.conf.template  # Template for filesystem-monitor config (see security/audit_logging.md)
 │   ├── harness_configs/                # Harness-specific config (sounds maps, etc.)
 │   ├── logs/                           # $HORIZON_LOGS — canonical audit/operational logs; brains: DENY; scaffold tracked, content gitignored
-│   └── scripts/                        # Admin setup scripts (create_brain.py, etc.)
+│   └── scripts/                        # Admin scripts: create_brain.py / remove_brain.py / brain_credential.py
 ├── usrbin/                             # $HORIZON_USRBIN — tool repository; admin draws from here to provision brains (see Section 8)
 │   ├── usr_skills/                     # Machine-local user skills; gitignored; linked into skills_sbin (see Section 7)
 │   │   └── <skill-name>/SKILL.md

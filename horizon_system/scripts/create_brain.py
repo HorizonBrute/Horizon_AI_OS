@@ -833,6 +833,8 @@ def _print_cleanup_instructions(brain_name, brain_dir, os_name):
     """Print manual cleanup instructions in case of partial failure."""
     print()
     print('  ---- Cleanup instructions ----')
+    print(f'    Easiest: python remove_brain.py {brain_name} --yes')
+    print('    Or manually:')
     if os_name == 'Windows':
         print(f'    Remove-LocalUser   -Name "{brain_name}"')
         print(f'    Remove-LocalGroup  -Name "{brain_name}"')

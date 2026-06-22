@@ -88,6 +88,18 @@ So there is no separate "point the brain at AIOS" step: provisioning *is* that s
 
 On the desktop, you can switch to a brain session by logging in as that OS user (fast user switching) or by running the harness as that user (`runas /user:brain-name claude` on Windows).
 
+### Removing a brain
+
+Deprovision a brain with the counterpart script (run elevated):
+
+```bash
+python $HORIZON_SYSTEM/scripts/remove_brain.py brain-name        # prompts to confirm
+python $HORIZON_SYSTEM/scripts/remove_brain.py brain-name --yes  # non-interactive
+python $HORIZON_SYSTEM/scripts/remove_brain.py brain-name --dry-run
+```
+
+It reverses `create_brain.py`: removes the OS user account, the per-brain group (the shared `brains` group is kept), the workspace folder `$HORIZON_ROOT/brains/brain-name/`, the user-profile config, and the stored credential. The `~/.claude/skills` junction is removed as a reparse point first, so `skills_bin` is never followed or deleted.
+
 ---
 
 ## Desktop-Specific Features
