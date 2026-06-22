@@ -68,10 +68,23 @@ python $HORIZON_SYSTEM/scripts/create_brain.py brain-name
 ```
 
 Run as administrator (Windows) or with `sudo` (Linux/macOS). The script:
-1. Creates an OS user account (`brain-name`).
+1. Creates an OS user account (`brain-name`) in the `brains` group, with a generated credential.
 2. Creates `$HORIZON_ROOT/brains/brain-name/` with full access for that user.
-3. Sets `$HORIZON_BIN` group permissions (read + execute; Deny on `sbin`).
+3. Sets ACLs: `brains` group read + execute on `$HORIZON_BIN`/`skills_bin`, explicit Deny on `sbin`/`skills_sbin`/`logs` (see `security_invariants.md §2`).
 4. Provisions any keys and tools specified.
+5. **Configures the brain's harness to point at AIOS** (Phase 5 — see below).
+6. Writes a `.aios_provision.json` manifest into the brain folder for auditors.
+
+### How a brain's harness is wired to AIOS
+
+**Brain users do not run `bootstrap.ps1`/`bootstrap.sh`.** Bootstrap is the *owner/admin* machine-setup step, run once. `create_brain.py` is the per-brain onboarding script — it configures each brain user's harness so that, the moment the brain logs in and launches the harness, it is already pointed at the AIOS layer. Specifically it writes, into the brain user's environment:
+
+- `~/.claude/CLAUDE.md` — from `brains/.aioscommon/brain_CLAUDE.md.template`. It `@`-imports `$HORIZON_ROOT/.claude/CLAUDE.md`, so the brain inherits the full AIOS config chain (agents.md, invariants, personalizations) plus its own identity/scope block.
+- `~/.claude/settings.json` — from `brain_settings.json.template`: harness-layer permission scoping (allow the brain folder; deny `sbin`/writes to `horizon_system`). Defense-in-depth only — real isolation is the OS ACLs from step 3.
+- `~/.claude/skills/` — a junction (Windows) / symlink (Unix) to `$HORIZON_SYSTEM/skills_bin/`, so the brain sees the group-readable skill tier (never `skills_sbin`).
+- The brain user's **shell/PowerShell profile** — exports the `HORIZON_*` environment variables and `cd`s to the brain folder on interactive login.
+
+So there is no separate "point the brain at AIOS" step: provisioning *is* that step. To customize a brain after provisioning, edit its `~/.claude/CLAUDE.md` Role section (the template leaves a placeholder), not the AIOS layer.
 
 On the desktop, you can switch to a brain session by logging in as that OS user (fast user switching) or by running the harness as that user (`runas /user:brain-name claude` on Windows).
 
