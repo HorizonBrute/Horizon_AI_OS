@@ -43,6 +43,7 @@ services:
       # Persist mutable AIOS state outside the image
       - aios-logs:/aios/horizon_system/logs
       - aios-handoffs:/aios/handoffs
+      - aios-objectives:/aios/objectives
 
       # Brain directories — mount from host for persistence across image rebuilds.
       # Replace HOST_BRAINS_PATH with an absolute path on your host machine.
@@ -79,6 +80,8 @@ volumes:
   aios-logs:
     driver: local
   aios-handoffs:
+    driver: local
+  aios-objectives:
     driver: local
   # aios-skills-bin:
   #   driver: local

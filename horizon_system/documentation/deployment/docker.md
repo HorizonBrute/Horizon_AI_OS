@@ -46,30 +46,16 @@ The Docker image bakes in the AIOS layer (repo contents + bootstrap). Mutable st
 |---|---|---|
 | `/aios/horizon_system/logs` | `aios-logs` | Audit and operational logs |
 | `/aios/handoffs` | `aios-handoffs` | Session handoff documents |
+| `/aios/objectives` | `aios-objectives` | Durable multi-session objectives |
 | `/aios/brains` | Host path (commented out) | Brain directories — set `HOST_BRAINS_PATH` in compose file |
 
 Edit `horizon_system/templates/docker/docker-compose.yml` to mount host paths before starting.
 
-### Objectives are not yet persisted
+### Objectives persistence
 
-The `/objective` skill stores durable, multi-session goals in `$HORIZON_ROOT/objectives/` (i.e. `/aios/objectives/` in the container). The compose template and Dockerfile define **no volume for this directory**, so objectives are written into the container's writable layer and are **lost on rebuild** (and on any `docker compose down` that removes the container).
+The `/objective` skill stores durable, multi-session goals in `$HORIZON_ROOT/objectives/` (i.e. `/aios/objectives/` in the container). The compose template mounts this directory as the `aios-objectives` named volume, so objectives persist across container restarts and rebuilds.
 
-`/handoff` is unaffected — `$HORIZON_ROOT/handoffs/` is already backed by the `aios-handoffs` named volume.
-
-To persist objectives, add a volume following the existing pattern. In the `aios` service `volumes:` block:
-
-```yaml
-      - aios-objectives:/aios/objectives
-```
-
-and declare it under the top-level `volumes:` key:
-
-```yaml
-  aios-objectives:
-    driver: local
-```
-
-This change is not yet made in the templates; apply it manually if you rely on `/objective` across rebuilds.
+`/handoff` is similarly backed by the `aios-handoffs` named volume.
 
 ---
 
@@ -97,7 +83,7 @@ docker compose -f horizon_system/templates/docker/docker-compose.yml build
 docker compose -f horizon_system/templates/docker/docker-compose.yml up -d
 ```
 
-Named volumes (`aios-logs`, `aios-handoffs`) persist across rebuilds. Host-mounted brain and key directories are unaffected. **Note:** `/objective` state under `/aios/objectives/` is *not* volume-backed by default and is lost on rebuild — see "Objectives are not yet persisted" above.
+Named volumes (`aios-logs`, `aios-handoffs`, `aios-objectives`) persist across rebuilds. Host-mounted brain and key directories are unaffected.
 
 ---
 
