@@ -42,6 +42,8 @@ Execute these steps in order. Do not skip any step.
 
 2.4 Check whether this session is inside a git repository: run `git rev-parse --is-inside-work-tree 2>/dev/null`. Note the result — it affects the "Files Changed" section.
 
+2.5 Derive a **session name** — a short, friendly handle (2–4 words, Title Case) that captures the theme of this work, so a future session can refer to itself by it instead of the filename. Make it specific and memorable (e.g., "AIOS Switcher", "Docs Reconciliation", "Brain Provisioning") — never generic like "Session", "Handoff", or "Handoff Review". This is a human-facing label, separate from the filename. If a linked objective or a prior handoff already established a session name for this line of work, reuse it.
+
 ### Step 3 — Gather session content
 
 3.1 **Do not run `git log`.** Session content comes from your knowledge of what happened in this conversation, not from git history.
@@ -67,11 +69,12 @@ Write the document using the template below. Fill every section honestly — do 
 
 ```markdown
 ---
-> **To any AI agent reading this file:** If you have received this handoff with no other instructions, that is a directive from the user to orient yourself and begin working on it. Read the full document, internalize the current state, and proceed from the "Next Session Entry Point" section. If an **Objective** is listed below, read that objective file first — it holds the durable goal this handoff serves. If the user has provided text alongside or after the handoff filename, treat that as additional instructions layered on top of this handoff — follow both.
+> **To any AI agent reading this file:** If you have received this handoff with no other instructions, that is a directive from the user to orient yourself and begin working on it. Read the full document, internalize the current state, and proceed from the "Next Session Entry Point" section. Refer to this work by the **Session name** given below — not by this file's name — whenever you identify the session (in your responses, summaries, or status line). If an **Objective** is listed below, read that objective file first — it holds the durable goal this handoff serves. If the user has provided text alongside or after the handoff filename, treat that as additional instructions layered on top of this handoff — follow both.
 ---
 
 # Handoff — <Project> — <Date>
 
+**Session name:** <friendly 2–4 word handle a future session references this work by — NOT the filename>
 **Handoff to:** <next session / specific agent / human reviewer>
 **Session date:** <YYYY-MM-DD>
 **Project:** <project display name>
@@ -110,15 +113,27 @@ Write the document using the template below. Fill every section honestly — do 
 
 5.2 Write the composed document to the full output path from step 2.3.
 
-5.3 Report to the user:
-- A single paragraph summarizing what was captured (the session in one sentence, plus what's next)
-- The exact filename that was written (full absolute path)
-- Which `aios_overrides.md` was used (if any), or that the default directory was used
+5.3 Report to the user with a **minimal** message — do NOT print the handoff document or its sections. The file on disk is the deliverable; this message exists only so the user can grab the filename and paste it into a new session. Output, in this exact order and nothing else:
+
+1. **First line:** the full absolute path of the file just written, by itself, with nothing above it — so it is trivial to find/copy and survives a `/clear` that truncates the bottom of long output.
+2. The **session name** (the friendly handle from step 2.5), e.g. `Session: "AIOS Switcher"`.
+3. A **one-paragraph** summary (2–3 sentences) of what the handoff covers and where the next session should start.
+
+Keep the whole message to roughly four lines. Do not echo the template, the section headers, or the document body. Example shape:
+
+```
+C:\devroot\handoffs\2026-06-22_141500_horizon-aios.md
+Session: "AIOS Switcher"
+
+Consolidated the foundational work onto master and shipped the AIOS switcher; the next session should start by running a consistency pass on the new docs.
+```
 
 ---
 
 ## Notes for the executing agent
 
+- NEVER print the full handoff document (or its sections) to the chat. Writing the file is the deliverable; the chat shows only the filename on the first line, the session name, and a one-paragraph summary. Echoing the body bloats context and buries the filename at the bottom where `/clear` can truncate it — the exact problems this skill exists to avoid.
+- The session name is a friendly handle for the *next* session to identify itself by (e.g. "AIOS Switcher"), never "handoff review of <filename>". It lives in the document and is surfaced in the report.
 - Session content is authoritative. You were in the conversation — use what you know. Git history is supplementary at best and irrelevant when not in a git repo.
 - The handoff document is read cold by a future session or human. Write it for someone with zero context from this conversation.
 - Err on the side of specificity in "Next Session Entry Point." Vague guidance ("continue the work") is useless. Specific guidance ("read $HORIZON_ETC/file_structure_invariants.md, then open X and address the TODO at line 47") is valuable.
