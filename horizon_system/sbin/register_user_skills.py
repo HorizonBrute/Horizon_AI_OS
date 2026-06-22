@@ -39,6 +39,7 @@ USR_SKILLS = os.path.join(HORIZON_ROOT, "usrbin", "usr_skills")
 SOURCES = [("skills_bin", SKILLS_BIN), ("usr_skills", USR_SKILLS)]
 
 DRY_RUN = "--dry-run" in sys.argv
+CHECK = "--check" in sys.argv  # report drift, change nothing, exit 1 if out of sync
 
 
 def norm(p):
@@ -100,40 +101,83 @@ def collect_desired():
     return desired
 
 
-def main():
-    # usr_skills is owner-local and may not exist yet; create it so the path is
-    # stable. skills_bin is part of the OS tree and is expected to exist.
-    if not os.path.isdir(USR_SKILLS):
-        os.makedirs(USR_SKILLS, exist_ok=True)
-        print(f"[INFO] Created {USR_SKILLS} (empty).")
-    os.makedirs(SKILLS_SBIN, exist_ok=True)
-
-    desired = collect_desired()
-
-    # Prune stale managed links (point into a source but no longer desired).
+def compute_plan(desired):
+    """Classify the current state vs desired. Returns (to_link, stale, shadowed,
+    in_sync_count) without changing anything.
+      to_link  : [(name, src)]   source skills missing a correct link
+      stale    : [name]          managed links no longer backed by a source
+      shadowed : [(name, src)]   source skills blocked by a real OS skill
+    """
+    to_link, stale, shadowed, in_sync = [], [], [], []
     for name in sorted(os.listdir(SKILLS_SBIN)):
         dst = os.path.join(SKILLS_SBIN, name)
         if is_managed(dst) and name not in desired:
-            remove_link(dst)
-
-    # Create/repair links for desired skills.
-    linked = 0
+            stale.append(name)
     for name, src in desired.items():
         dst = os.path.join(SKILLS_SBIN, name)
         if os.path.exists(dst) or os.path.islink(dst):
             if not is_managed(dst):
-                print(f"[SKIP] {name}: a real OS skill of this name exists in "
-                      f"skills_sbin - refusing to shadow it.")
-                continue
-            if norm(dst) == norm(src):
-                linked += 1
-                continue  # already correct
-            remove_link(dst)
-        make_link(dst, src)
-        linked += 1
+                shadowed.append((name, src))
+            elif norm(dst) == norm(src):
+                in_sync.append(name)
+            else:
+                to_link.append((name, src))  # managed but points elsewhere
+        else:
+            to_link.append((name, src))
+    return to_link, stale, shadowed, in_sync
 
-    print(f"[OK] {linked} skill(s) aggregated into the owner view "
-          f"(skills_bin + usr_skills).")
+
+def report_check(desired, plan):
+    to_link, stale, shadowed, in_sync = plan
+    print(f"[CHECK] owner view: {SKILLS_SBIN}")
+    print(f"[CHECK] sources: {len(desired)} skill(s) across skills_bin + usr_skills")
+    for name in sorted(in_sync):
+        print(f"  [OK]     {name} — linked")
+    for name, _ in to_link:
+        print(f"  [DRIFT]  {name} — missing/incorrect link")
+    for name in stale:
+        print(f"  [DRIFT]  {name} — stale link (source gone)")
+    for name, _ in shadowed:
+        print(f"  [SHADOW] {name} — blocked by a real OS skill of the same name")
+    drift = len(to_link) + len(stale)
+    if drift == 0:
+        print("[OK] In sync — owner view matches the filesystem sources.")
+        return 0
+    print(f"[DRIFT] {drift} item(s) out of sync — run without --check to heal.")
+    return 1
+
+
+def main():
+    # usr_skills is owner-local and may not exist yet; create it so the path is
+    # stable. skills_bin is part of the OS tree and is expected to exist.
+    # In --check mode, make no changes at all (read-only).
+    if not os.path.isdir(USR_SKILLS) and not CHECK:
+        os.makedirs(USR_SKILLS, exist_ok=True)
+        print(f"[INFO] Created {USR_SKILLS} (empty).")
+    if not CHECK:
+        os.makedirs(SKILLS_SBIN, exist_ok=True)
+
+    desired = collect_desired()
+    plan = compute_plan(desired)
+
+    if CHECK:
+        sys.exit(report_check(desired, plan))
+
+    to_link, stale, shadowed, _ = plan
+    for name in stale:
+        remove_link(os.path.join(SKILLS_SBIN, name))
+    for name, _ in shadowed:
+        print(f"[SKIP] {name}: a real OS skill of this name exists in "
+              f"skills_sbin - refusing to shadow it.")
+    for name, src in to_link:
+        dst = os.path.join(SKILLS_SBIN, name)
+        if (os.path.exists(dst) or os.path.islink(dst)) and is_managed(dst):
+            remove_link(dst)  # repoint a managed link
+        make_link(dst, src)
+
+    print(f"[OK] owner view aggregated (skills_bin + usr_skills): "
+          f"{len(desired) - len(shadowed)} skill(s) linked, "
+          f"{len(stale)} stale removed.")
 
 
 if __name__ == "__main__":

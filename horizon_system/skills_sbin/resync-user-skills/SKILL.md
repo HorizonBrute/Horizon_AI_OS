@@ -1,6 +1,6 @@
 ---
 name: resync-user-skills
-description: Rebuild the owner's aggregated skill view — per-skill junctions linking skills_bin (brain tier) and usr_skills (machine-local) into skills_sbin so they load alongside the owner's OS skills. Use when the user types /resync-user-skills, adds or removes a skill, or after an upstream sync may have wiped the links.
+description: Report the skill inventory and whether the owner's aggregated view (skills_bin + usr_skills linked into skills_sbin) is in sync with the filesystem and this session, then heal any drift by rebuilding the links. Use when the user types /resync-user-skills, asks what skills they have or whether skills are in sync, adds/removes a skill, or after an upstream sync may have wiped the links.
 tools: Bash
 ---
 
@@ -14,21 +14,32 @@ Those junctions are not tracked by git, so an upstream sync that refreshes `skil
 
 ## When to invoke
 
-`/resync-user-skills`, or after adding/removing a user skill, or after a sync.
+`/resync-user-skills`, or when the user asks what skills they have / whether skills are in sync, or after adding/removing a skill, or after a sync.
 
 ---
 
 ## Step-by-step execution
 
-1. Run the registration script:
+This skill answers three things: what skills exist on disk, whether the owner view matches them, and whether *this session* has them loaded — then heals any drift.
+
+1. **Check filesystem sync (read-only):**
+   ```
+   python "$HORIZON_SYSTEM/sbin/register_user_skills.py" --check
+   ```
+   This reports each source skill (`skills_bin` + `usr_skills`) as `[OK]` (linked), `[DRIFT]` (missing/incorrect/stale link), or `[SHADOW]` (blocked by a real OS skill). Exit 0 = in sync; exit 1 = drift.
+
+2. **Heal if drift:** if step 1 reported drift (exit 1), run the script without `--check` to rebuild the links, then report what changed (`[LINK]`/`[STALE]`):
    ```
    python "$HORIZON_SYSTEM/sbin/register_user_skills.py"
    ```
-   (Add `--dry-run` first if the user wants a preview without making changes.)
+   If in sync, skip this — no changes needed.
 
-2. Report its output to the user — which skills were linked (`[LINK]`), pruned (`[STALE]`), or skipped (`[SKIP]`), and the final count.
+3. **Compare disk vs this session.** The `--check` output is the on-disk truth; compare it to the skills actually available in your current session:
+   - On disk but **not** available this session → newly added; tell the user to restart Claude Code to load it (the watcher picks up edits to existing skills live, but a brand-new top-level skill dir needs a restart).
+   - Available this session but **not** on disk → stale session (skill was removed); a restart clears it.
+   - Otherwise report that the session matches disk.
 
-3. If any skill was newly linked, tell the user it should appear within the session; if it does not show under `/<name>`, a Claude Code restart picks up brand-new top-level entries.
+4. Summarize: the skill inventory by tier, the sync result (in sync / healed N), and any restart needed.
 
 ---
 
