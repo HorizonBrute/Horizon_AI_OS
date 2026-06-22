@@ -7,4 +7,4 @@ Invariant documents — authoritative:
 
 Never hardcode paths — use $HORIZON_ROOT, $HORIZON_SYSTEM, $HORIZON_BIN, $HORIZON_ETC, $HORIZON_DOCS.
 
-@C:\devroot\agents.md
+@agents.md
