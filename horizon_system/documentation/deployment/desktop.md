@@ -52,6 +52,7 @@ Bootstrap sets up:
 - Shell / PowerShell env vars (`HORIZON_ROOT`, `HORIZON_SYSTEM`, etc.)
 - `~/.claude/CLAUDE.md` stub redirect
 - `~/.claude/skills/` junction/symlink → `skills_sbin/`
+- Machine-local user skills (`usrbin/usr_skills/` → `skills_sbin/`) registered via `register_user_skills.py`
 - `~/.claude/settings.json` from template
 - Git hooks (DCO sign-off enforcement)
 - Handoffs directory

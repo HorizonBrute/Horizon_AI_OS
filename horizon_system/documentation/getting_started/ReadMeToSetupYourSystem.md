@@ -235,6 +235,7 @@ bash "$HORIZON_SYSTEM/sbin/bootstrap.sh"
 The script will:
 - Create `~/.claude/CLAUDE.md` with the `@` redirect (Step 6)
 - Create `~/.claude/skills/` as a junction/symlink pointing to `$HORIZON_SYSTEM/skills_sbin/` (Step 7)
+- Register machine-local user skills (`usrbin/usr_skills/` → `skills_sbin/` junctions) via `register_user_skills.py` (best-effort; see Step 7)
 - Offer to copy `settings.json` from the template (Step 8)
 - Create `$HORIZON_ROOT/handoffs/` and `$HORIZON_ROOT/logs/`
 - Wire git `core.hooksPath` and install DCO hooks
@@ -278,14 +279,14 @@ Copy the global settings template and substitute the `HORIZON_BIN_PATH` placehol
 Windows (PowerShell):
 
 ```powershell
-Copy-Item "$HORIZON_BIN\templates\claude_code\settings.json" "$HOME\.claude\settings.json"
+Copy-Item "$HORIZON_SYSTEM\templates\claude_code\settings.json" "$HOME\.claude\settings.json"
 (Get-Content "$HOME\.claude\settings.json") -replace "HORIZON_BIN_PATH", "$HORIZON_BIN" | Set-Content "$HOME\.claude\settings.json"
 ```
 
 Linux / macOS (bash):
 
 ```bash
-cp "$HORIZON_BIN/templates/claude_code/settings.json" "$HOME/.claude/settings.json"
+cp "$HORIZON_SYSTEM/templates/claude_code/settings.json" "$HOME/.claude/settings.json"
 sed -i "s|HORIZON_BIN_PATH|$HORIZON_BIN|g" "$HOME/.claude/settings.json"
 ```
 
@@ -341,7 +342,15 @@ On Windows: `Get-Item "$HOME\.claude\skills" | Select-Object LinkType, Target`
 
 7.4 **Skills load at session start, not hot-reloaded.** Start a new session after changes.
 
-7.5 Troubleshooting — if a skill is not recognized:
+7.5 **Machine-local user skills.** Personal skills you want kept out of the OS repo (and safe from upstream syncs) live in `$HORIZON_USRBIN/usr_skills/<name>/SKILL.md`. `register_user_skills.py` junctions each into `skills_sbin/`, so they surface flat through the same `~/.claude/skills/` junction alongside OS skills. Bootstrap runs it automatically (and it re-runs after each successful sync, since a sync can refresh `skills_sbin`). Run it manually any other time you add or remove a user skill:
+
+```bash
+python "$HORIZON_SYSTEM/sbin/register_user_skills.py"   # or invoke /resync-user-skills
+```
+
+It is idempotent, prunes stale links, and refuses to shadow an OS skill of the same name. User skills are gitignored and never indexed. To author one, use `/skill-creation` (user tier).
+
+7.6 Troubleshooting — if a skill is not recognized:
 
 1. Confirm the junction/symlink exists: `Get-Item "$HOME\.claude\skills"` (Windows) or `ls -la ~/.claude/skills` (Unix)
 2. Start a **fresh** Claude Code session. Long-running sessions can miss newly available skills.
@@ -531,7 +540,7 @@ claude
 
 14.2 Confirm the statusline appears at the bottom of the terminal showing the current directory name, git branch (if in a repo), and a context usage bar. If the statusline is absent, check that `settings.json` `statusLine.command` points to the correct path.
 
-14.3 Run the `/handoff` skill to confirm skills are loaded. Type `/handoff` in the Claude Code session. Claude should execute the handoff skill and write a file to `$HORIZON_ROOT/handoffs/`. If the skill is not recognized, see Section 7.5 troubleshooting — the most common cause is testing in the same long-running session used during setup rather than starting a fresh session.
+14.3 Run the `/handoff` skill to confirm skills are loaded. Type `/handoff` in the Claude Code session. Claude should execute the handoff skill and write a file to `$HORIZON_ROOT/handoffs/`. If the skill is not recognized, see Section 7.6 troubleshooting — the most common cause is testing in the same long-running session used during setup rather than starting a fresh session.
 
 14.4 Exit Claude Code cleanly. Confirm the WorkComplete sound plays. If no sound plays, verify the path in `hooks.Stop[0].hooks[0].command` in `settings.json`.
 
@@ -576,9 +585,9 @@ Projects are folders inside `$HORIZON_ROOT`. They automatically inherit the full
 
 3. Optionally copy the `aios_overrides.md` template to the project root for project-specific AIOS configuration:
    ```bash
-   cp "$HORIZON_BIN/templates/aios_overrides.md" "$HORIZON_ROOT/MyProject/aios_overrides.md"
+   cp "$HORIZON_SYSTEM/templates/aios_overrides.md" "$HORIZON_ROOT/MyProject/aios_overrides.md"
    ```
-   Edit the file to set `handoffs_dir`, `project_display_name`, or other overrides. See the template for documentation of all supported keys.
+   Edit the file to set `handoffs_dir`, `objectives_dir`, `project_display_name`, or other overrides. See the template for documentation of all supported keys.
 
 4. Optionally create a `.claude/CLAUDE.md` inside the project for project-specific AI instructions:
    ```bash
@@ -693,8 +702,10 @@ See `$HORIZON_ETC/security_invariants.md` for the full ownership and ACL model, 
 | Global settings (canonical) | `$HORIZON_ROOT/.claude/settings.json` |
 | Skills (primary user source) | `$HORIZON_SYSTEM/skills_sbin/` |
 | Skills (brain user source) | `$HORIZON_SYSTEM/skills_bin/` |
+| Skills (machine-local user tier) | `$HORIZON_USRBIN/usr_skills/` |
 | Skills (Claude Code reads here — junction) | `~/.claude/skills/` → `skills_sbin/` |
 | Handoffs (default output) | `$HORIZON_ROOT/handoffs/` |
+| Objectives (default store) | `$HORIZON_ROOT/objectives/` |
 | Operational logs | `$HORIZON_ROOT/logs/` |
 | Sounds (generic) | `$HORIZON_SYSTEM/sounds/*.wav` |
 | Sounds (vendor-voiced) | `$HORIZON_SYSTEM/sounds/<vendor>_event_sounds/` |

@@ -60,7 +60,7 @@ Horizon AIOS is a portable, Git-versioned Claude Code operating system layer. Th
 
 1.1 **Two-layer model**
 
-1.1.1 The **OS repo** (`$HORIZON_ROOT`) is a Git repository that tracks the AIOS config and asset layer. It is not a project repo — it does not track source code, build artifacts, or project-specific files. It tracks: `.claude/CLAUDE.md`, `.claude/settings.json`, `horizon_system/`, `handoffs/`, `.gitignore`, `.gitignore.user`.
+1.1.1 The **OS repo** (`$HORIZON_ROOT`) is a Git repository that tracks the AIOS config and asset layer. It is not a project repo — it does not track source code, build artifacts, or project-specific files. It tracks: `.claude/CLAUDE.md`, `.claude/settings.json`, `horizon_system/`, `.gitignore`, `.gitignore.user`. Machine-local runtime artifacts (`handoffs/`, `objectives/`, `usrbin/usr_skills/`) are gitignored.
 
 1.1.2 **Project repos** are independent Git repositories placed inside `$HORIZON_ROOT`. Each project manages its own history, branches, and remotes. The OS repo does not track them and has no knowledge of their contents.
 
@@ -85,9 +85,8 @@ Claude Code hardcodes two global config lookup paths that cannot be changed. The
 1.5.1 `$HORIZON_ROOT\.claude\CLAUDE.md` — global AI instructions
 1.5.2 `$HORIZON_ROOT\.claude\settings.json` — Claude Code harness config (hooks, statusline, permissions, theme)
 1.5.3 `$HORIZON_ROOT\horizon_system\` — sounds, statusline scripts, harness configs, git hooks, documentation
-1.5.4 `$HORIZON_ROOT\handoffs\` — session handoff documents
-1.5.5 `$HORIZON_ROOT\.gitignore` — system ignore patterns
-1.5.6 `$HORIZON_ROOT\.gitignore.user` — user personal ignore patterns
+1.5.4 `$HORIZON_ROOT\.gitignore` — system ignore patterns
+1.5.5 `$HORIZON_ROOT\.gitignore.user` — user personal ignore patterns
 
 1.6 **What is never version-controlled**
 
@@ -96,6 +95,9 @@ Claude Code hardcodes two global config lookup paths that cannot be changed. The
 1.6.3 All Claude Code runtime directories: `~/.claude/cache/`, `sessions/`, `history.jsonl`, `daemon/`, `telemetry/`, `paste-cache/`, `shell-snapshots/`, `file-history/`, `session-env/`, `tasks/`, `jobs/`
 1.6.4 SSH private keys (`~/.ssh/id_ed25519`) and GPG private keys
 1.6.5 Any folder that has been `git init`'d (nested repos are invisible to the OS repo)
+1.6.6 `$HORIZON_ROOT\handoffs\` — machine-local session handoff documents (gitignored)
+1.6.7 `$HORIZON_ROOT\objectives\` — machine-local durable `/objective` goals (gitignored)
+1.6.8 `$HORIZON_ROOT\usrbin\usr_skills\` — machine-local user skills, junctioned into `skills_sbin/` at runtime (gitignored)
 
 1.7 **Pre-commit hook responsibilities**
 
