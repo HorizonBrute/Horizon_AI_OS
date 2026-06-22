@@ -202,6 +202,11 @@ generate the env snippets and wrapper scripts for the first time.
 - `unregister <name>` — remove a registration (files untouched)
 - `switch <name> [--dry-run]` — repoint all pointers to the named AIOS
 
+Short-form commands are available once `$HORIZON_BIN` is on PATH (bootstrap
+adds it): `aios switch home`, `aios list`, etc. The wrappers `aios` (bash)
+and `aios.ps1` (PowerShell) in `$HORIZON_BIN` delegate to this script and
+derive their path from their own location, so they work from any AIOS root.
+
 **Referenced by a skill?** No. See `$HORIZON_DOCS/system/aios_switching.md`
 for the full switching guide.
 

@@ -288,6 +288,89 @@ def _is_reparse(path):
         return False
 
 
+def update_system_path(root, dry):
+    """Update the system-level PATH to point at <root>/horizon_system/bin.
+
+    Mirrors the logic in bootstrap.ps1 / bootstrap.sh Section 7.  Requires
+    admin/root; gracefully degrades with an advisory warn if not elevated.
+    """
+    new_bin = os.path.join(root, "horizon_system", "bin")
+
+    if dry:
+        info(f"would update system PATH -> {new_bin}")
+        return
+
+    _ADVISORY = (
+        "[WARN] Could not update system PATH (insufficient privileges). "
+        "Session PATH is correct. To fix system PATH, re-run: "
+        "python aios_switch.py switch <name>  (as Administrator / sudo)."
+    )
+
+    if os.name == "nt":
+        # Delegate to PowerShell so we can call [System.Environment].
+        ps_script = (
+            "$mp = [System.Environment]::GetEnvironmentVariable('Path','Machine');"
+            "$entries = $mp -split ';' | ForEach-Object { $_.TrimEnd('\\').TrimEnd('/') };"
+            "$cleaned = $entries | Where-Object { $_ -notmatch '(?i)horizon_system[/\\\\]bin$' };"
+            f"$nb = '{new_bin.rstrip(chr(92))}';"
+            "if ($cleaned -contains $nb) { exit 0 }"
+            "$newPath = ($cleaned + @($nb)) -join ';';"
+            "[System.Environment]::SetEnvironmentVariable('Path', $newPath, 'Machine')"
+        )
+        try:
+            result = subprocess.run(
+                ["powershell", "-NonInteractive", "-Command", ps_script],
+                capture_output=True, text=True
+            )
+            if result.returncode != 0:
+                # Access denied or other error
+                warn(_ADVISORY)
+                if result.stderr.strip():
+                    info(f"  Detail: {result.stderr.strip()[:200]}")
+            else:
+                ok(f"Updated system PATH -> {new_bin}")
+        except OSError as exc:
+            warn(_ADVISORY)
+            info(f"  Detail: {exc}")
+    else:
+        # Linux / macOS: write /etc/profile.d/horizon_aios.sh
+        profile_d = "/etc/profile.d/horizon_aios.sh"
+        try:
+            # Read existing lines, strip any old horizon_system/bin export
+            if os.path.isfile(profile_d):
+                with open(profile_d, encoding="utf-8") as f:
+                    lines = f.readlines()
+                filtered = [l for l in lines if "horizon_system/bin" not in l]
+            else:
+                filtered = []
+            filtered.append(f'export PATH="{new_bin}:$PATH"\n')
+            with open(profile_d, "w", encoding="utf-8") as f:
+                f.writelines(filtered)
+            os.chmod(profile_d, 0o644)
+            ok(f"Updated system PATH in {profile_d}")
+        except PermissionError:
+            warn(_ADVISORY)
+
+        # macOS: also update /etc/paths.d/horizon-aios
+        import platform
+        if platform.system() == "Darwin":
+            paths_d = "/etc/paths.d/horizon-aios"
+            try:
+                if os.path.isfile(paths_d):
+                    with open(paths_d, encoding="utf-8") as f:
+                        lines = f.readlines()
+                    filtered = [l for l in lines if "horizon_system/bin" not in l]
+                else:
+                    filtered = []
+                filtered.append(f"{new_bin}\n")
+                with open(paths_d, "w", encoding="utf-8") as f:
+                    f.writelines(filtered)
+                os.chmod(paths_d, 0o644)
+                ok(f"Updated system PATH in {paths_d}")
+            except PermissionError:
+                warn(_ADVISORY)
+
+
 def advise_sync(root):
     sched = os.path.join(root, "horizon_system", "sbin", "setup_sync_schedule.py")
     if os.path.isfile(sched):
@@ -392,6 +475,7 @@ def cmd_init(reg, _args):
     active = reg.get("active")
     aroot = reg["aioses"][active]["root"]
     write_active_env(active, aroot, False)
+    update_system_path(aroot, False)
     write_wrappers(False)
     info(f"Generated active_env + aios-exec wrappers for active AIOS '{active}'.")
     if active != name:
@@ -418,6 +502,7 @@ def cmd_switch(reg, args):
     print(f"\n{label}\n")
 
     write_active_env(name, root, args.dry_run)
+    update_system_path(root, args.dry_run)
     write_wrappers(args.dry_run)
     repoint_claude_md(root, args.dry_run)
     repoint_skills_junction(root, args.dry_run)

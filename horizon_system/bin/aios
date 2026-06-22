@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Thin wrapper — delegates to sbin/aios_switch.py
+# Path-agnostic: derives sbin from this file's own location.
+SBIN="$(cd "$(dirname "$0")/../sbin" && pwd)"
+if command -v python3 >/dev/null 2>&1; then
+    exec python3 "$SBIN/aios_switch.py" "$@"
+else
+    exec python "$SBIN/aios_switch.py" "$@"
+fi

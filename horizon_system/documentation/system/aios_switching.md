@@ -50,14 +50,24 @@ AIOS. Bootstrap also runs `aios_switch.py init` to create it on onboarding.
 
 ## Commands
 
+Once `$HORIZON_BIN` is on PATH (bootstrap adds it), use the short form:
+
 ```
-aios_switch.py list                      # registered AIOSs (* = active)
-aios_switch.py current                   # active name + root
-aios_switch.py register <name> <path>    # add/replace a registration
-aios_switch.py unregister <name>         # remove a registration (files untouched)
-aios_switch.py switch <name>             # point local config at <name>
-aios_switch.py switch <name> --dry-run   # show what would change, change nothing
-aios_switch.py init                      # onboarding: registry + env + wrappers
+aios list                      # registered AIOSs (* = active)
+aios current                   # active name + root
+aios register <name> <path>    # add/replace a registration
+aios unregister <name>         # remove a registration (files untouched)
+aios switch <name>             # point local config at <name>
+aios switch <name> --dry-run   # show what would change, change nothing
+aios init                      # onboarding: registry + env + wrappers
+```
+
+If `bin/` is not yet on PATH (e.g. before first bootstrap), use the long form:
+
+```
+python aios_switch.py list
+python aios_switch.py switch <name>
+# etc.
 ```
 
 `register` refuses to silently overwrite an existing name or an already-registered
@@ -85,6 +95,13 @@ at the wrappers. On an existing install, point statusLine + hooks at
 `templates/claude_code/`).
 
 ## Switching
+
+```
+$ aios register home D:\horizon-home
+$ aios switch home
+```
+
+If `bin/` is not yet on PATH, use the long form as a fallback:
 
 ```
 $ python aios_switch.py register home D:\horizon-home
