@@ -1,11 +1,13 @@
 # Horizon AIOS — Utilities Reference
 
-The scripts in `$HORIZON_SYSTEM/sbin/` are administrative utilities that
-operate on the AIOS layer itself: hardening its permissions, monitoring its
-integrity, maintaining its logs, managing brain credentials, and wiring its
-configuration. They run as the primary OS user or elevated (Administrator/root)
-and are excluded from brain accounts by explicit Deny ACLs enforced by
-`harden_aios.py`.
+Most utilities here live in `$HORIZON_SYSTEM/sbin/` (and `scripts/`) and are
+administrative: they operate on the AIOS layer itself — hardening its
+permissions, monitoring its integrity, maintaining its logs, provisioning brain
+accounts and credentials, syncing upstream, and wiring its configuration. They
+run as the primary OS user or elevated (Administrator/root) and are excluded
+from brain accounts by explicit Deny ACLs enforced by `harden_aios.py`. A few
+unprivileged helpers in `$HORIZON_SYSTEM/bin/` (readable by brains) are also
+catalogued where they are useful to invoke directly.
 
 Several utilities are surfaced as Claude skills — when invoked through a skill,
 Claude drives the script with appropriate arguments and interprets the output.
@@ -229,3 +231,160 @@ whenever the `/resync-user-skills` skill reports drift.
   by the `/resync-user-skills` skill's check mode)
 
 **Referenced by a skill?** Yes — the `resync-user-skills` skill.
+
+---
+
+## create_brain.py
+
+**Path:** `$HORIZON_SYSTEM/scripts/create_brain.py`
+
+Provisions a new AI brain: creates the `<brain-name>` OS user, the shared
+`brains` group (Read+Execute on `bin/` and `skills_bin/`) and a per-brain group
+(rwx on the brain folder), the workspace at `$HORIZON_ROOT/brains/<brain-name>/`,
+and a login shell profile that exports the `HORIZON_*` vars and cds into the
+brain folder. The account password is auto-generated (random 64-char) and stored
+in the OS native keystore via `brain_credential.py`. The `sbin/skills_sbin/logs`
+Deny ACEs are always (re)applied after all grants, per the security invariants.
+Requires Administrator/root; stdlib only (Python 3.6+).
+
+**When to use it:** When standing up a new isolated brain account.
+
+**Key flags:**
+
+- `<brain-name>` — required positional name (lowercase, `[a-z][a-z0-9_]{1,31}`)
+- `--horizon-root PATH` — explicit root; otherwise derived from script location
+- `--dry-run` — print every action without making changes
+
+**Referenced by a skill?** No.
+
+---
+
+## remove_brain.py
+
+**Path:** `$HORIZON_SYSTEM/scripts/remove_brain.py`
+
+Deprovisioning counterpart to `create_brain.py`. Removes a brain's OS user
+account, its per-brain group, its workspace folder, its user-profile config
+(including the `~/.claude/skills` junction, deleted with a reparse-point `rmdir`
+so the `skills_bin` target is never followed), and its stored credential. The
+shared `brains` group is left intact. Validates the name and refuses reserved
+names (brains, root/administrator, the invoking user, etc.). Requires
+Administrator/root.
+
+**When to use it:** When retiring a brain account created by `create_brain.py`.
+
+**Key flags:**
+
+- `<brain-name>` — required positional name
+- `--horizon-root PATH` — explicit root; otherwise derived from script location
+- `--yes` — skip the confirmation prompt
+- `--dry-run` — print what would be removed without changing anything
+
+**Referenced by a skill?** No.
+
+---
+
+## sync_aios.py
+
+**Path:** `$HORIZON_SYSTEM/sbin/sync_aios.py`
+
+Pulls upstream AIOS updates into the local tree. Reads sync settings from
+`$HORIZON_ETC/aios_local.conf` (`SYNC_AIOS_FROM_REMOTE`, `AIOS_REPO_REMOTE`,
+`AIOS_REPO_BRANCH`, …), verifies git is available and the working tree is clean,
+and performs a fast-forward-only merge from the configured remote/branch so a
+scheduled run can never create a merge commit or clobber local work. Activity is
+logged to the configured AIOS log dir. This is the script driven by the auto-sync
+scheduled task; run it manually to sync on demand.
+
+**When to use it:** To pull the latest AIOS layer manually, or as the body of the
+scheduled sync job installed by `setup_sync_schedule.py`.
+
+**Key flags:** None — all behaviour comes from `aios_local.conf`.
+
+**Referenced by a skill?** No.
+
+---
+
+## setup_sync_schedule.py
+
+**Path:** `$HORIZON_SYSTEM/sbin/setup_sync_schedule.py`
+
+Installs (or updates) the recurring auto-sync job that runs `sync_aios.py`: a
+Windows Scheduled Task or a Unix cron entry. Reads the schedule settings
+(`AIOS_SYNC_FREQ`, `AIOS_SYNC_TIME`, …) from `$HORIZON_ETC/aios_local.conf` and
+registers the task accordingly. Requires the privilege needed to register a
+system task (Administrator/root).
+
+**When to use it:** During bootstrap, or after changing the sync frequency/time
+in `aios_local.conf` and wanting the schedule re-registered.
+
+**Key flags:**
+
+- `--yes` — auto-confirm prompts (non-interactive install)
+
+**Referenced by a skill?** No.
+
+---
+
+## analyze_aios_monitor.py
+
+**Path:** `$HORIZON_SYSTEM/sbin/analyze_aios_monitor.py`
+
+Reads the JSON-line logs produced by `monitor_aios.py`, summarizes file-change
+events and monitor uptime gaps, and appends a report to
+`$HORIZON_SYSTEM/logs/security.log`. Can optionally forward alerts to the OS
+system log (syslog on Linux; Windows Event Log when `pywin32` is present). Meant
+to run as the administrative context on a schedule. See
+`$HORIZON_DOCS/security/audit_logging.md` for scheduling guidance.
+
+**When to use it:** Periodically (e.g., daily) to triage monitor output into a
+single security log, or ad hoc to review recent integrity events.
+
+**Key flags:**
+
+- `--days N` — number of days back to analyze
+- `--log-dir PATH` — monitor log dir (default: `logs/aios_monitor/`)
+- `--security-log PATH` — output report path (default: `logs/security.log`)
+- `--syslog` — also emit alerts to the OS system log
+
+**Referenced by a skill?** No.
+
+---
+
+## monitor_status.py
+
+**Path:** `$HORIZON_SYSTEM/bin/monitor_status.py`
+
+Tiny status probe: reports whether a `monitor_aios.py` process is currently
+running. Prints `running`, `stopped`, or `unknown`. Cross-platform (CIM query on
+Windows, `pgrep` on Unix). Used by `doctor.py` and the status line to surface
+monitor health without requiring elevation.
+
+**When to use it:** For a quick check that the integrity monitor is up.
+
+**Key flags:** None.
+
+**Referenced by a skill?** No.
+
+---
+
+## resolve_sound.py
+
+**Path:** `$HORIZON_SYSTEM/bin/resolve_sound.py`
+
+Resolves an AIOS event name (e.g. `task_complete`) to an absolute sound-file
+path using the nearest `aios_sounds.conf` ancestor override, then the
+per-harness `sounds.map`, then the system default `sounds/sounds.map`. Prints the
+path or nothing (a missing sound is not an error — always exit 0). Intended to be
+called from harness hooks, which pipe its output to `sounds/play_sound.sh`.
+
+**When to use it:** From a notification hook to look up which sound to play for an
+event; rarely run by hand.
+
+**Key flags:**
+
+- `<event>` — required event name to resolve
+- `--harness NAME` — consult the named harness's `sounds.map` layer
+- `--cwd PATH` — directory whose ancestor chain is searched for overrides
+
+**Referenced by a skill?** No.
