@@ -353,9 +353,6 @@ echo ""
 # -----------------------------------------------------------------------------
 banner "SECTION 8: Local Config and Sync Schedule"
 
-echo ""
-echo "=== Section 8: Local Config and Sync Schedule ==="
-
 LOCAL_CONF="$HORIZON_ETC/aios_local.conf"
 CONF_TEMPLATE="$HORIZON_SYSTEM/templates/aios_local.conf.template"
 

@@ -83,6 +83,8 @@ Each "brain" is an isolated AI persona running as a separate OS user account, sc
 
 `harden_aios.py` (`$HORIZON_SYSTEM/sbin/`) applies all of the above to the AIOS layer at bootstrap, so the machine is protected before any brain exists; `create_brain.py` (`$HORIZON_SYSTEM/scripts/`) re-applies the per-brain grants/denies for each new brain (additively, so it agrees with `harden_aios.py`'s default and never re-strips the shared dirs). Run both as the administrative context. See `$HORIZON_DOCS/security/audit_logging.md` for the monitor setup and `$HORIZON_SYSTEM/sbin/bootstrap.ps1` for first-machine setup.
 
+**`AIOS_SKIP_HARDEN=1` — Docker-only escape hatch.** The environment variable `AIOS_SKIP_HARDEN=1` instructs `bootstrap.sh` to skip the `harden_aios.py` invocation. This is used exclusively in Docker builds where `harden_aios.py` is run as a separate root-context `RUN` step before the `USER aios` switch. Do not set this variable in native (non-Docker) deployments — doing so bypasses the ACL hardening that enforces brain isolation.
+
 ---
 
 ## 3. The bin/sbin Boundary

@@ -360,9 +360,6 @@ Write-Host ""
 # -----------------------------------------------------------------------------
 Banner "SECTION 8: Local Config and Sync Schedule"
 
-Write-Host ""
-Write-Host "=== Section 8: Local Config and Sync Schedule ===" -ForegroundColor Cyan
-
 $localConf = Join-Path $HORIZON_ETC "aios_local.conf"
 $confTemplate = Join-Path $HORIZON_SYSTEM "templates\aios_local.conf.template"
 

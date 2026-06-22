@@ -39,6 +39,14 @@ Ordering invariant (mirrors create_brain.py): all Deny ACEs are applied
 AFTER all brains-group grants, so an inherited permission can never
 accidentally reach a privileged dir.
 
+Docker note:
+    In Docker builds, this script is invoked as a root-context RUN step before
+    the USER switch (see bootstrap_docker.sh / Dockerfile). bootstrap.sh detects
+    this via AIOS_SKIP_HARDEN=1 and skips the normal Section 9 invocation to
+    avoid running harden_aios.py twice. Never set AIOS_SKIP_HARDEN=1 in native
+    (non-Docker) deployments — doing so bypasses the ACL hardening that enforces
+    brain isolation (see security_invariants.md §2).
+
 Usage:
     python harden_aios.py [--horizon-root /path] [--strict] [--dry-run]
 
