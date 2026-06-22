@@ -96,6 +96,27 @@ P.16 **`.git/info/exclude`** in the OS repo is managed automatically by the pre-
 
 ---
 
+## Prerequisites — Elevated Privileges Required
+
+Bootstrap and brain provisioning both run `harden_aios.py`, which sets OS-level filesystem ACLs. This requires administrator or root privileges. **Bootstrap will exit immediately with an error if not run elevated.**
+
+- **Windows:** Open PowerShell by right-clicking the Start button (or the PowerShell icon) and choosing **Run as administrator**. Then run:
+  ```powershell
+  & "$env:HORIZON_SYSTEM\sbin\bootstrap.ps1"
+  ```
+- **Linux:** Run bootstrap with `sudo`:
+  ```bash
+  sudo bash horizon_system/sbin/bootstrap.sh
+  ```
+- **macOS:** Same `sudo` model as Linux. `harden_aios.py` adapts its hardening to macOS ACL semantics automatically:
+  ```bash
+  sudo bash horizon_system/sbin/bootstrap.sh
+  ```
+
+All other bootstrap steps (CLAUDE.md redirect, skills junction, git hooks, settings.json copy) are non-destructive and idempotent. The privilege requirement is solely for the ACL hardening step.
+
+---
+
 ## 1. What Is $HORIZON_ROOT
 
 `$HORIZON_ROOT` is the root folder of the Horizon AIOS installation on this machine. It is the absolute path where the Horizon AIOS repository lives. Every path reference inside the repository — in settings, scripts, and config files — is expressed relative to this root. When setting up a new machine, this path is chosen once and substituted everywhere.

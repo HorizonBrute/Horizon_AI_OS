@@ -17,6 +17,21 @@ $ErrorActionPreference = "Stop"
 $YesAll = $args -contains "--yes" -or $args -contains "-y"
 
 # -----------------------------------------------------------------------------
+# Require Administrator — harden_aios.py (run below) needs elevated privileges
+# to set filesystem ACLs.  Fail fast rather than let the user discover this
+# mid-run at Section 9.
+# -----------------------------------------------------------------------------
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+if (-not $isAdmin) {
+    Write-Host ""
+    Write-Host "  [ERR] Bootstrap must be run as Administrator." -ForegroundColor Red
+    Write-Host "  Right-click PowerShell and choose 'Run as administrator', then re-run:"
+    Write-Host "    .\bootstrap.ps1" -ForegroundColor Cyan
+    Write-Host ""
+    exit 1
+}
+
+# -----------------------------------------------------------------------------
 # Resolve HORIZON_ROOT from script location
 # Script lives at horizon_system/sbin/ - go up two levels to reach repo root.
 # -----------------------------------------------------------------------------

@@ -23,6 +23,20 @@ for arg in "$@"; do
 done
 
 # -----------------------------------------------------------------------------
+# Require root — harden_aios.py (run below) needs root privileges to set
+# filesystem ACLs.  Fail fast rather than let the user discover this mid-run
+# at Section 9.
+# -----------------------------------------------------------------------------
+if [ "$(id -u)" -ne 0 ]; then
+  echo ""
+  echo "  [ERR] Bootstrap must be run with sudo (root privileges required for ACL hardening)."
+  echo "  Re-run as:"
+  echo "    sudo bash $0 $*"
+  echo ""
+  exit 1
+fi
+
+# -----------------------------------------------------------------------------
 # Resolve HORIZON_ROOT from script location (works regardless of CWD)
 # -----------------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
