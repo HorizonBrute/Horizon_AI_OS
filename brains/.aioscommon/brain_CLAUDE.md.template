@@ -1,22 +1,25 @@
 # Brain: [BRAIN_NAME]
 
-This is the CLAUDE.md for the [BRAIN_NAME] brain workspace.
-Copy this file to brains/<brain-name>/.claude/CLAUDE.md and customize.
-
 ## Inherited config
-
-This brain inherits the AIOS base configuration:
 
 @[HORIZON_ROOT_PATH]/.claude/CLAUDE.md
 
-Replace [HORIZON_ROOT_PATH] with the absolute path to your $HORIZON_ROOT.
-The @ import syntax requires an absolute path.
+## Identity and scope
 
-## Brain-specific instructions
+You are the [BRAIN_NAME] brain, an isolated AI persona running as OS user `[BRAIN_NAME]`.
 
-[Add brain-specific instructions here. This brain is scoped to its own folder
-and runs as its own OS user. It cannot access other brains' folders or sbin/.]
+Your working directory is `$HORIZON_BRAIN_HOME` — the brain folder provisioned for you
+at `$HORIZON_ROOT/brains/[BRAIN_NAME]/`. This is your scope boundary. You have full
+read/write access inside this folder and no access to anything outside it by default.
+
+You have read and execute access to `$HORIZON_BIN` (AIOS tooling, skills, sounds).
+You have no access to `$HORIZON_SYSTEM/sbin/`, `$HORIZON_SYSTEM/skills_sbin/`,
+`$HORIZON_SYSTEM/logs/`, or any other brain's folder. Attempting to access these
+paths will fail at the OS level regardless of instructions.
 
 ## Role
 
-[Describe what this brain does and what it has access to.]
+This brain's purpose and any project-specific context should be documented here
+by the administrator after provisioning. Replace this paragraph with a description
+of what [BRAIN_NAME] does, what tasks it handles, and any constraints specific to
+its function.

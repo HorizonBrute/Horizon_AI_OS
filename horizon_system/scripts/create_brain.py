@@ -946,6 +946,9 @@ def _brain_profile_content_posix(brain_name, horizon_root, brain_dir):
     horizon_bin    = os.path.join(horizon_system, 'bin')
     horizon_etc    = os.path.join(horizon_system, 'ai_os_etc')
     horizon_docs   = os.path.join(horizon_system, 'documentation')
+    horizon_sounds = os.path.join(horizon_system, 'sounds')
+    horizon_logs   = os.path.join(horizon_system, 'logs')
+    horizon_usrbin = os.path.join(horizon_root, 'usrbin')
     return (
         f'# Horizon AIOS — brain environment for {brain_name}\n'
         f'export HORIZON_ROOT="{horizon_root}"\n'
@@ -953,6 +956,9 @@ def _brain_profile_content_posix(brain_name, horizon_root, brain_dir):
         f'export HORIZON_BIN="{horizon_bin}"\n'
         f'export HORIZON_ETC="{horizon_etc}"\n'
         f'export HORIZON_DOCS="{horizon_docs}"\n'
+        f'export HORIZON_SOUNDS="{horizon_sounds}"\n'
+        f'export HORIZON_LOGS="{horizon_logs}"\n'
+        f'export HORIZON_USRBIN="{horizon_usrbin}"\n'
         f'export HORIZON_BRAIN_NAME="{brain_name}"\n'
         f'cd "{brain_dir}"\n'
     )
@@ -990,6 +996,9 @@ def _write_brain_profile_windows(brain_name, horizon_root, brain_dir):
     horizon_bin    = os.path.join(horizon_system, 'bin')
     horizon_etc    = os.path.join(horizon_system, 'ai_os_etc')
     horizon_docs   = os.path.join(horizon_system, 'documentation')
+    horizon_sounds = os.path.join(horizon_system, 'sounds')
+    horizon_logs   = os.path.join(horizon_system, 'logs')
+    horizon_usrbin = os.path.join(horizon_root, 'usrbin')
 
     content = (
         f'# Horizon AIOS — brain environment for {brain_name}\n'
@@ -998,6 +1007,9 @@ def _write_brain_profile_windows(brain_name, horizon_root, brain_dir):
         f'$env:HORIZON_BIN         = "{horizon_bin}"\n'
         f'$env:HORIZON_ETC         = "{horizon_etc}"\n'
         f'$env:HORIZON_DOCS        = "{horizon_docs}"\n'
+        f'$env:HORIZON_SOUNDS      = "{horizon_sounds}"\n'
+        f'$env:HORIZON_LOGS        = "{horizon_logs}"\n'
+        f'$env:HORIZON_USRBIN      = "{horizon_usrbin}"\n'
         f'$env:HORIZON_BRAIN_NAME  = "{brain_name}"\n'
         f'Set-Location "{brain_dir}"\n'
     )
@@ -1018,7 +1030,7 @@ def _write_brain_profile_windows(brain_name, horizon_root, brain_dir):
 
 
 def _safe_write_profile(path, content, brain_name):
-    """Write profile content to path; warn on failure."""
+    """Write profile content to path, then chown to the brain user (Unix only)."""
     try:
         with open(path, 'w', encoding='utf-8') as fh:
             fh.write(content)
@@ -1026,6 +1038,17 @@ def _safe_write_profile(path, content, brain_name):
     except OSError as exc:
         warn(f'Could not write shell profile {path}: {exc}')
         warn(f'  Add HORIZON_* exports and cd "{brain_name}_dir" manually.')
+        return
+
+    # Unix only — transfer ownership to the brain user so the profile is
+    # readable/writable by that account and not root-owned.
+    if platform.system() != 'Windows':
+        import pwd
+        try:
+            pw = pwd.getpwnam(brain_name)
+            os.chown(path, pw.pw_uid, pw.pw_gid)
+        except (KeyError, OSError) as e:
+            warn(f'Could not chown {path} to {brain_name}: {e}')
 
 
 def _deploy_template(src, dest, substitutions):
