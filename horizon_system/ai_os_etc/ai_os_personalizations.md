@@ -63,7 +63,7 @@ The harness must not require any changes to `$HORIZON_ETC` invariant documents u
 
 ## 4. How to Create a Brain
 
-Use `$HORIZON_SYSTEM/scripts/create_brain.py` to automate brain setup. Manual steps:
+Use `$HORIZON_SYSTEM/sbin/create_brain.py` to automate brain setup. Manual steps:
 
 1. Create a new OS user account (`brain_researcher`, `brain_coder`, etc.). Windows: Settings > Accounts > Other users. Unix: `useradd`.
 2. Create the brain's home directory under the brains path.

@@ -65,7 +65,7 @@ Bootstrap sets up:
 Brains on a desktop deployment are OS user accounts on the same machine.
 
 ```bash
-python $HORIZON_SYSTEM/scripts/create_brain.py brain-name
+python $HORIZON_SYSTEM/sbin/create_brain.py brain-name
 ```
 
 Run as administrator (Windows) or with `sudo` (Linux/macOS). The script:
@@ -94,9 +94,9 @@ On the desktop, you can switch to a brain session by logging in as that OS user 
 Deprovision a brain with the counterpart script (run elevated):
 
 ```bash
-python $HORIZON_SYSTEM/scripts/remove_brain.py brain-name        # prompts to confirm
-python $HORIZON_SYSTEM/scripts/remove_brain.py brain-name --yes  # non-interactive
-python $HORIZON_SYSTEM/scripts/remove_brain.py brain-name --dry-run
+python $HORIZON_SYSTEM/sbin/remove_brain.py brain-name        # prompts to confirm
+python $HORIZON_SYSTEM/sbin/remove_brain.py brain-name --yes  # non-interactive
+python $HORIZON_SYSTEM/sbin/remove_brain.py brain-name --dry-run
 ```
 
 It reverses `create_brain.py`: removes the OS user account, the per-brain group (the shared `brains` group is kept), the workspace folder `$HORIZON_ROOT/brains/brain-name/`, the user-profile config, and the stored credential. The `~/.claude/skills` junction is removed as a reparse point first, so `skills_bin` is never followed or deleted.

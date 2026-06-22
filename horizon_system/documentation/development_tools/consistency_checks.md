@@ -80,7 +80,7 @@ is a "Needs user input" item.
 
 Each check has a stable ID. Cite evidence for every verdict. "Tools/scripts"
 includes everything under `horizon_system/bin`, `horizon_system/sbin`,
-`horizon_system/scripts`, skills, hooks, and templates.
+skills, hooks, and templates.
 
 ### A. Documentation hierarchy & alignment
 - **CC-A1 — Authority respected.** No lower-tier document contradicts a higher

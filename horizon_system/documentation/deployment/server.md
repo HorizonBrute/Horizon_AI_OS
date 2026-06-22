@@ -66,7 +66,7 @@ In `~/.claude/settings.json`, set hook commands to no-ops or remove the `Stop`, 
 Same as desktop — run as root/admin:
 
 ```bash
-sudo python $HORIZON_SYSTEM/scripts/create_brain.py brain-name
+sudo python $HORIZON_SYSTEM/sbin/create_brain.py brain-name
 ```
 
 This creates the OS user account, directory, and permissions. On server, brains run as daemon processes rather than interactive sessions.

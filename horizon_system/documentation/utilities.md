@@ -236,7 +236,7 @@ whenever the `/resync-user-skills` skill reports drift.
 
 ## create_brain.py
 
-**Path:** `$HORIZON_SYSTEM/scripts/create_brain.py`
+**Path:** `$HORIZON_SYSTEM/sbin/create_brain.py`
 
 Provisions a new AI brain: creates the `<brain-name>` OS user, the shared
 `brains` group (Read+Execute on `bin/` and `skills_bin/`) and a per-brain group
@@ -261,7 +261,7 @@ Requires Administrator/root; stdlib only (Python 3.6+).
 
 ## remove_brain.py
 
-**Path:** `$HORIZON_SYSTEM/scripts/remove_brain.py`
+**Path:** `$HORIZON_SYSTEM/sbin/remove_brain.py`
 
 Deprovisioning counterpart to `create_brain.py`. Removes a brain's OS user
 account, its per-brain group, its workspace folder, its user-profile config

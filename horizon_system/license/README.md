@@ -11,7 +11,7 @@ AI instructions — reproducible on any supported machine with a single bootstra
 2. `horizon_bin/sounds/` — audio feedback files for Claude lifecycle events
 3. `horizon_bin/statusline/` — cross-platform statusline scripts with context alerts
 4. `horizon_bin/harness_configs/` — portable git config and pre-commit hooks
-5. `horizon_bin/scripts/` — brain provisioning and setup scripts
+5. `horizon_bin/sbin/` — brain provisioning and privileged admin scripts
 6. `horizon_bin/documentation/` — setup guides and system reference docs
 7. `handoffs/` — session handoff documents
 

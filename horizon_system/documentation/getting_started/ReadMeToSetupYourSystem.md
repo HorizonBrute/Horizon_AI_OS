@@ -620,7 +620,7 @@ See `$HORIZON_ETC/ai_os_personalizations.md` Section 3 for the full harness addi
 
 ## Adding a Brain
 
-A brain is an isolated AI persona running under a separate OS user account, scoped to its own directory subtree. All OS-level provisioning (user, groups, folder, permissions) is handled by `$HORIZON_SYSTEM/scripts/create_brain.py`.
+A brain is an isolated AI persona running under a separate OS user account, scoped to its own directory subtree. All OS-level provisioning (user, groups, folder, permissions) is handled by `$HORIZON_SYSTEM/sbin/create_brain.py`.
 
 ### Dependencies
 
@@ -642,13 +642,13 @@ Running `create_brain.py` for a brain named `<brain-name>` produces:
 
 ```bash
 # Standard run (will prompt for password interactively)
-python $HORIZON_SYSTEM/scripts/create_brain.py <brain-name>
+python $HORIZON_SYSTEM/sbin/create_brain.py <brain-name>
 
 # With an explicit HORIZON_ROOT (if running the script from outside the repo)
-python $HORIZON_SYSTEM/scripts/create_brain.py <brain-name> --horizon-root /path/to/devroot
+python $HORIZON_SYSTEM/sbin/create_brain.py <brain-name> --horizon-root /path/to/devroot
 
 # Preview every action without executing (no changes made)
-python $HORIZON_SYSTEM/scripts/create_brain.py <brain-name> --dry-run
+python $HORIZON_SYSTEM/sbin/create_brain.py <brain-name> --dry-run
 ```
 
 On Windows, open an **Administrator** PowerShell or Command Prompt first:
@@ -660,7 +660,7 @@ python "$env:HORIZON_SYSTEM\scripts\create_brain.py" <brain-name>
 On Unix:
 
 ```bash
-sudo python "$HORIZON_SYSTEM/scripts/create_brain.py" <brain-name>
+sudo python "$HORIZON_SYSTEM/sbin/create_brain.py" <brain-name>
 ```
 
 ### Brain name rules

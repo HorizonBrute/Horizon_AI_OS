@@ -57,6 +57,9 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   ├── register_user_skills.py     # (Re)link usr_skills into skills_sbin (see Section 7)
 │   │   ├── setup_sync_schedule.py      # Upstream sync scheduler
 │   │   ├── aios_switch.py              # AIOS named-registry switcher (see documentation/system/aios_switching.md)
+│   │   ├── create_brain.py             # Provision a brain OS user + scoped folder/ACLs (admin)
+│   │   ├── remove_brain.py             # Deprovision a brain (reverses create_brain.py) (admin)
+│   │   ├── brain_credential.py         # Brain account credential manager (OS keystore)
 │   │   └── [other privileged scripts]
 │   ├── skills_bin/                     # Group-readable AIOS skills; brains: R+X explicit (see Section 7)
 │   │   └── index.md                    # Skills index — check this first; update when adding a skill
@@ -99,8 +102,7 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   ├── aios_monitor.conf.template  # Template for filesystem-monitor config (see security/audit_logging.md)
 │   │   └── profile_snippet.{ps1,sh}    # One-line profile include sourcing ~/.horizon/active_env.* (AIOS switcher)
 │   ├── harness_configs/                # Harness-specific config (sounds maps, etc.)
-│   ├── logs/                           # $HORIZON_LOGS — canonical audit/operational logs; brains: DENY; scaffold tracked, content gitignored
-│   └── scripts/                        # Admin scripts: create_brain.py / remove_brain.py / brain_credential.py
+│   └── logs/                           # $HORIZON_LOGS — canonical audit/operational logs; brains: DENY; scaffold tracked, content gitignored
 ├── usrbin/                             # $HORIZON_USRBIN — tool repository; admin draws from here to provision brains (see Section 8)
 │   ├── usr_skills/                     # Machine-local user skills; gitignored; linked into skills_sbin (see Section 7)
 │   │   └── <skill-name>/SKILL.md

@@ -197,7 +197,7 @@ def phase1_preflight(args):
         horizon_root = os.path.abspath(args.horizon_root)
     else:
         # Derive from ../../ relative to the script's own location.
-        # Script lives at $HORIZON_ROOT/horizon_system/scripts/create_brain.py
+        # Script lives at $HORIZON_ROOT/horizon_system/sbin/create_brain.py
         # so ../../ is $HORIZON_ROOT.
         script_dir = os.path.dirname(os.path.abspath(__file__))
         horizon_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
@@ -1132,7 +1132,7 @@ def parse_args():
             'Absolute path to HORIZON_ROOT.  '
             'If omitted, derived from ../../ relative to this script\'s location '
             '(i.e., the script is expected to live at '
-            '$HORIZON_ROOT/horizon_system/scripts/create_brain.py).'
+            '$HORIZON_ROOT/horizon_system/sbin/create_brain.py).'
         ),
     )
     parser.add_argument(
