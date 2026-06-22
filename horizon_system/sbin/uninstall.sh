@@ -19,6 +19,7 @@
 #   Section 3  — ~/.claude/skills/ symlink and user-skill symlinks in skills_sbin/
 #   Section 4  — $HORIZON_ROOT/handoffs/ and objectives/ (only if empty)
 #   Section 5  — ~/.horizon/ tree (registry, active_env, wrappers), ~/.claude/settings.json
+#   Section 5b — ~/.claude/projects symlink (memory redirect); memory data left intact
 #   Section 6  — .git/hooks/commit-msg, pre-commit; git core.hooksPath config
 #   Section 7  — /etc/profile.d/horizon_aios.sh and /etc/paths.d/horizon-aios (macOS)
 #   Section 9  — $HORIZON_ETC/aios_local.conf, $HORIZON_SYSTEM/logs/ (only if empty)
@@ -261,6 +262,41 @@ if [ -f "$SETTINGS_JSON" ]; then
   fi
 else
   skip "~/.claude/settings.json not found — nothing to remove."
+fi
+
+# =============================================================================
+# SECTION 5b: ~/.claude/projects memory redirect (reverses bootstrap 5c)
+# Bootstrap links ~/.claude/projects -> $HORIZON_ROOT/memory via redirect_memory.py
+# so the harness's per-project memory lives in the AIOS. We remove only the LINK —
+# never the memory target's contents (that data lives in $HORIZON_ROOT/memory,
+# part of the repo). Mirrors the Section 3 skills-symlink removal.
+# =============================================================================
+banner "SECTION 5b: ~/.claude/projects memory redirect"
+
+PROJECTS_LINK="$OWNER_HOME/.claude/projects"
+if [ -L "$PROJECTS_LINK" ]; then
+  if [ "$DRY_RUN" = "true" ]; then
+    dry "remove ~/.claude/projects symlink (memory redirect); memory data in \$HORIZON_ROOT/memory left intact."
+  else
+    rm -f "$PROJECTS_LINK"
+    ok "Removed ~/.claude/projects symlink (memory redirect) — memory data left intact."
+  fi
+elif [ -d "$PROJECTS_LINK" ]; then
+  warn "~/.claude/projects is a real directory (not a symlink) — leaving as-is."
+  warn "  If bootstrap created it, manage it manually."
+else
+  skip "~/.claude/projects not found — nothing to remove."
+fi
+
+# Advise about any pre-redirect backup redirect_memory.py left behind
+found_proj_backup=false
+for backup in "$OWNER_HOME/.claude/"projects.backup-*; do
+  [ -e "$backup" ] || continue
+  advisory "A pre-redirect harness-memory backup remains: $backup"
+  found_proj_backup=true
+done
+if [ "$found_proj_backup" = "true" ]; then
+  advisory "  To restore it: with the symlink removed (above), rename a backup back to ~/.claude/projects."
 fi
 
 # =============================================================================

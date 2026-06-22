@@ -18,6 +18,7 @@
 #   Section 3  — ~/.claude/skills/ junction and user-skill symlinks in skills_sbin/
 #   Section 4  — $HORIZON_ROOT/handoffs/ and objectives/ (only if empty)
 #   Section 5  — ~/.horizon/ tree (registry, active_env, wrappers), ~/.claude/settings.json
+#   Section 5b — ~/.claude/projects junction (memory redirect); memory data left intact
 #   Section 6  — .git/hooks/commit-msg, pre-commit; git core.hooksPath config
 #   Section 7  — $HORIZON_BIN entry from Machine-scope PATH
 #   Section 9  — $HORIZON_ETC/aios_local.conf, $HORIZON_SYSTEM/logs/ (only if empty)
@@ -271,6 +272,47 @@ if (Test-Path $SettingsJson) {
     }
 } else {
     Skip "~/.claude/settings.json not found — nothing to remove."
+}
+
+# =============================================================================
+# SECTION 5b: ~/.claude/projects memory redirect (reverses bootstrap 5c)
+# Bootstrap junctions ~/.claude/projects → $HORIZON_ROOT/memory via
+# redirect_memory.py so the harness's per-project memory lives in the AIOS.
+# We remove only the JUNCTION — never the memory target's contents (that data
+# lives in $HORIZON_ROOT/memory, part of the repo). Mirrors the Section 3
+# skills-junction removal: link-only delete, not confirm-gated.
+# =============================================================================
+Banner "SECTION 5b: ~/.claude/projects memory redirect"
+
+$ProjectsLink = Join-Path $HOME ".claude\projects"
+if (Test-Path $ProjectsLink) {
+    $projItem = Get-Item $ProjectsLink -Force -ErrorAction SilentlyContinue
+    if ($projItem -and ($projItem.LinkType -eq "Junction" -or $projItem.LinkType -eq "SymbolicLink")) {
+        if ($DryRun) {
+            Dry "remove ~/.claude/projects junction (memory redirect); memory data in `$HORIZON_ROOT/memory left intact."
+        } else {
+            [System.IO.Directory]::Delete($ProjectsLink, $false)
+            Ok "Removed ~/.claude/projects junction (memory redirect) — memory data left intact."
+        }
+    } else {
+        Warn "~/.claude/projects is a real directory (not a junction) — leaving as-is."
+        Warn "  If bootstrap created it, manage it manually."
+    }
+} else {
+    Skip "~/.claude/projects not found — nothing to remove."
+}
+
+# Advise about any pre-redirect backup redirect_memory.py left behind
+$ClaudeHome  = Join-Path $HOME ".claude"
+$ProjBackups = @()
+if (Test-Path $ClaudeHome) {
+    $ProjBackups = @(Get-ChildItem $ClaudeHome -Directory -Filter "projects.backup-*" -ErrorAction SilentlyContinue)
+}
+foreach ($b in $ProjBackups) {
+    Advisory "A pre-redirect harness-memory backup remains: $($b.FullName)"
+}
+if ($ProjBackups.Count -gt 0) {
+    Advisory "  To restore it: with the junction removed (above), rename a backup back to ~/.claude/projects."
 }
 
 # =============================================================================
