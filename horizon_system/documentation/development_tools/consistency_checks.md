@@ -140,6 +140,15 @@ skills, hooks, and templates.
 - **CC-E3 — Defensive posture.** The project adheres to a blue-team philosophy:
   secure defaults, auditability, no detection-evasion or offensive-by-default
   behavior.
+- **CC-E4 — Branding & identification.** Admin-visible artifacts AIOS creates
+  self-identify as Horizon AIOS per the Branding & Identification invariant
+  (`security_invariants.md §8`): log records carry `source: Horizon.AIOS`; log
+  files/dirs and privileged `sbin/` scripts use the `horizon_aios_` prefix; OS
+  user/group descriptions and the Windows Event source carry the `Horizon.AIOS`
+  token. Exempt functional identifiers (public entry points, the `brains` group,
+  `aios_*.conf`, `AIOS_*` env vars, scheduled-task names) are allowed to keep
+  their stable names. A new admin-visible artifact that does not self-identify is
+  a FAIL.
 
 ### F. No AI-harness vendor lock-in
 - **CC-F1 — Harness-swappable.** Harness-specific wiring is isolated (e.g.,

@@ -181,3 +181,27 @@ Audit logging is a first-class security requirement.
 See `$HORIZON_DOCS/security/audit_logging.md` for setup, service registration, Docker usage, how to extend monitoring to additional paths (CLI / env / `aios_monitor.conf`), and how administrators consume the logs (JSON-lines on disk; SIEM/forwarder integration).
 
 **Log location convention:** `$HORIZON_SYSTEM/logs/` (canonical) — owned by the administrative context, not brain accounts. Explicit brains-group Deny set by `horizon_aios_harden.py`.
+
+---
+
+## 8. Branding & Identification
+
+Attribution is a security property. Every artifact Horizon AIOS creates that a blue team, IT administrator, or auditor could encounter **must self-identify as Horizon AIOS without external context** — a running process, an OS account or group, a scheduled task/service, a log file, a log record, or an OS event-log/syslog entry. An investigator must be able to tell what an object is and what created it from the object alone.
+
+**Standard brand tokens:**
+- Human-readable text (OS-object descriptions, log fields, event sources): **`Horizon.AIOS`**.
+- Filenames and machine identifiers: **`horizon_aios_`** prefix — lowercase, underscores.
+
+**Required — these MUST self-identify:**
+- **Audit/log records** — every record carries `source: Horizon.AIOS` and the originating `horizon_root` (see §7).
+- **Log files / directories** — `horizon_aios_` prefix (`horizon_aios_security.log`, `horizon_aios_sync.log`, `horizon_aios_monitor/`).
+- **OS principals** — brain/group `Description` / Linux `--comment` / Windows `FullName` / macOS `RealName` begin with `Horizon.AIOS` (e.g. `Horizon.AIOS brain account`, `Horizon.AIOS group: <name>`). Set by `horizon_aios_create_brain.py` and `horizon_aios_harden.py`.
+- **OS log channels** — Windows Event source `Horizon.AIOS Monitor`; syslog logger under `horizon_aios.*`.
+- **Privileged utility scripts** — `$HORIZON_SYSTEM/sbin/horizon_aios_*.{py,ps1}`, so process listings (`ps`, Task Manager, scheduled-task `/TR` targets) self-identify.
+
+**Deliberately exempt — stable functional identifiers.** These are interface/compatibility contracts; renaming them breaks existing deployments, so they keep their established (already `AIOS`/`HorizonAIOS`-recognizable) names rather than the `horizon_aios_` form:
+- Public entry points: `bootstrap.{ps1,sh}`, `uninstall.{ps1,sh}`, and the `aios` command wrapper.
+- The `brains` OS group; the scheduled-task names `HorizonAIOS_Sync` / `HorizonAIOS_MaintainLogs` and their cron markers.
+- Config filenames (`aios_*.conf`) and `AIOS_*` environment variables.
+
+**On change:** any new admin-visible artifact (log, OS object, scheduled task/service, privileged script, event channel) adopts this invariant at creation — the `Horizon.AIOS` / `horizon_aios_` form is not optional for them. Renaming an exempt functional identifier is a breaking change requiring an ADR. The filename side of this convention is restated in `file_structure_invariants.md §6`.

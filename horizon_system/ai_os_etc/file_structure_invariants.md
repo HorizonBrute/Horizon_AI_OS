@@ -197,6 +197,8 @@ Examples:
 
 This convention applies to all vendor-scoped subdirectories in $HORIZON_SYSTEM, not just sounds. If a new category of vendor-specific asset is added, the subdirectory name follows the same `<vendor>_<category>/` pattern.
 
+**Horizon AIOS artifact naming (branding).** AIOS's own admin-visible artifacts — privileged utility scripts in `sbin/` and the audit/operational log files and directories under `logs/` — carry the `horizon_aios_` filename prefix (lowercase, underscores) so a process listing or a loose log file self-identifies as Horizon AIOS. Stable functional identifiers are exempt (public entry points `bootstrap.*`/`uninstall.*`, the `aios` wrapper, the `brains` group, `aios_*.conf`, `AIOS_*` env vars, scheduled-task names). This is the filename half of the **Branding & Identification invariant** — see `security_invariants.md §8`, which is authoritative and also covers the `Horizon.AIOS` token in log records, OS-object descriptions, and event channels.
+
 ---
 
 ## 7. Skills, Handoffs, and Project Overrides
