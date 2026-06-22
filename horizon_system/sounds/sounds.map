@@ -1,8 +1,8 @@
 # AIOS Default Sound Map
 # Format: event_name = sound_path
-# Paths are relative to $HORIZON_BIN/sounds/ unless absolute.
+# Paths are relative to $HORIZON_SOUNDS/ unless absolute.
 # Harness-specific events use dot-prefix: <harness>.<event>
-# Override per-project: copy $HORIZON_BIN/templates/aios_sounds.conf to your project root.
+# Override per-project: copy $HORIZON_SYSTEM/templates/aios_sounds.conf to your project root.
 
 task_complete   = work_complete.wav
 api_error       = api_fail.wav

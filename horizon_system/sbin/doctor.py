@@ -167,7 +167,33 @@ def check_sbin_acl(horizon_system):
 
 
 # ---------------------------------------------------------------------------
-# 8. Global Claude settings
+# 8. Monitor status
+# Calls monitor_status.py ($HORIZON_BIN/monitor_status.py) and reports
+# PASS/WARN.  The monitor is optional — a stopped monitor is WARN, not FAIL.
+# ---------------------------------------------------------------------------
+def check_monitor_status(horizon_bin):
+    monitor_status_script = horizon_bin / "monitor_status.py"
+    if not monitor_status_script.exists():
+        warn("Monitor: monitor_status.py", f"{monitor_status_script} not found — cannot check monitor")
+        return
+    try:
+        result = subprocess.run(
+            [sys.executable, str(monitor_status_script)],
+            capture_output=True, text=True, timeout=10,
+        )
+        status = result.stdout.strip().lower()
+        if status == "running":
+            ok("Monitor: monitor_aios.py is running")
+        elif status == "stopped":
+            warn("Monitor: monitor_aios.py", "not running — filesystem audit logging is inactive (optional)")
+        else:
+            warn("Monitor: monitor_aios.py", f"unexpected status: {status!r}")
+    except Exception as e:
+        warn("Monitor: monitor_status.py", f"check failed: {e}")
+
+
+# ---------------------------------------------------------------------------
+# 9. Global Claude settings
 # ---------------------------------------------------------------------------
 def check_claude_settings():
     f = Path.home() / ".claude" / "settings.json"
@@ -210,6 +236,11 @@ def main():
         check_local_conf(horizon_system)
         if sys.platform == "win32":
             check_sbin_acl(horizon_system)
+        horizon_bin = env.get("HORIZON_BIN")
+        if horizon_bin:
+            check_monitor_status(horizon_bin)
+        else:
+            warn("Monitor", "skipped — $HORIZON_BIN not available")
     else:
         fail("Skills / hooks / aios_local.conf", "skipped — $HORIZON_SYSTEM not available")
 
