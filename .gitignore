@@ -582,6 +582,10 @@ handoffs/
 # Objective artifacts (machine-local durable goals; not version history)
 objectives/
 
+# Harness per-project state redirected here by redirect_memory.py: conversation
+# transcripts AND agent memory (machine-local; sensitive; never committed/shipped/synced)
+memory/
+
 # Machine-local user skills (linked into skills_sbin at runtime; never tracked)
 usrbin/usr_skills/
 
