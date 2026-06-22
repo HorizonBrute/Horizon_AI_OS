@@ -83,9 +83,9 @@ python $HORIZON_SYSTEM/sbin/create_brain.py mybrain --automation scheduled
 
 On Windows this grants `SeBatchLogonRight` to the brain account and verifies the
 right took. The chosen tier is recorded in the brain's `.aios_provision.json`
-manifest under an `"automation"` key. On Unix, `create_brain.py` instead prints
-`loginctl enable-linger <brain>` / `crontab -u <brain> -e` guidance (not yet
-auto-applied — see *Unix analogs*).
+manifest under an `"automation"` key. On Linux, `create_brain.py --automation
+scheduled` instead enables systemd lingering for the brain and prints the
+unit/cron guidance (see *Unix analogs*).
 
 This does **not** change the brain's ACLs — only its logon rights.
 
@@ -182,7 +182,7 @@ python $HORIZON_SYSTEM/sbin/brain_logon_rights.py grant mybrain   # grant SeBatc
 python $HORIZON_SYSTEM/sbin/brain_logon_rights.py check mybrain   # query whether the right is held
 python $HORIZON_SYSTEM/sbin/brain_logon_rights.py revoke mybrain  # remove it
 
-# Target a specific right (e.g. the reserved service tier):
+# Target a specific right (e.g. the daemon/service tier):
 python $HORIZON_SYSTEM/sbin/brain_logon_rights.py grant mybrain --right SeServiceLogonRight
 ```
 

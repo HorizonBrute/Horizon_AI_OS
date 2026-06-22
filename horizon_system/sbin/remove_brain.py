@@ -262,6 +262,14 @@ def remove_unix(brain_name, brain_dir, os_name, dry_run):
     home = _unix_home(brain_name, os_name)
     _remove_reparse(os.path.join(home, '.claude'), dry_run)
 
+    # Disable systemd lingering (scheduled-tier automation) before deleting the
+    # account, mirroring the Windows logon-right revoke. Best-effort/idempotent.
+    if os_name == 'Linux' and shutil.which('loginctl') and (dry_run or user_exists(brain_name, os_name)):
+        if dry_run:
+            print(f'  [DRY-RUN] loginctl disable-linger {brain_name}')
+        else:
+            run(['loginctl', 'disable-linger', brain_name], check=False)
+
     if dry_run or user_exists(brain_name, os_name):
         if os_name == 'Linux':
             run(['userdel', '-r', brain_name], dry_run=dry_run, check=False)
