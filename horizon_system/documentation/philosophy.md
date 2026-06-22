@@ -141,7 +141,7 @@ Any workflow or knowledge base set up in AIOS-standard format is portable across
 
 ---
 
-## 7. Evaluation: Current Implementation Against These Values
+## 8. Evaluation: Current Implementation Against These Values
 
 ### Aligned
 

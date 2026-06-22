@@ -203,6 +203,8 @@ Each OS directory contains an `index.md` listing its skills. **Always check `ind
 
 Invariant: never edit skills directly in `~/.claude/skills/`. Always edit at the source in the repo. There is no deployed copy — the junction points directly to the source.
 
+**Claude Code marketplace plugins.** Claude Code also loads slash commands from marketplace plugins installed separately (e.g., via `claude plugin install`). These plugins appear alongside AIOS skills in the harness UI but are not stored in `skills_sbin/` or `skills_bin/` — they live in the Claude Code plugin directory outside `$HORIZON_ROOT`. Skills such as `code-review`, `update-config`, and `verify` that appear in the harness but are not found in `skills_sbin/` are marketplace plugins, not AIOS skills. The two systems coexist; AIOS skills and marketplace plugins share the same slash command namespace in the harness.
+
 ### 7.2 Handoffs Directory
 
 `$HORIZON_ROOT/handoffs/` is the default output directory for the `/handoff` skill. Gitignored; machine-local; not tracked by the OS repo.
