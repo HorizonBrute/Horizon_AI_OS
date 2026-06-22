@@ -15,6 +15,7 @@ change** — run `/horizon_aios_documentation_index_update`. (Enforced by CC-G4 
 | `horizon_system/documentation/sync_setup.md` | Horizon AIOS — Sync Setup Reference | How auto-sync keeps a local install current via fast-forward-only git fetch/merge, and the `aios_local.conf` keys that configure it. |
 | `horizon_system/documentation/tested_configurations.md` | Horizon AIOS — Tested Configurations | The verified harness/OS/deployment compatibility matrix and what "tested" means. |
 | `horizon_system/documentation/utilities.md` | Horizon AIOS — Utilities Reference | Quick-lookup catalog of all `sbin/` utility scripts: purpose, flags, and skill cross-references. (Tool catalog — maintained separately.) |
+| `horizon_system/documentation/skills.md` | Horizon AIOS — Skills Reference | Index of all AIOS-native skills with per-skill onboarding/offboarding impact and aggregate summary. |
 
 ## getting_started
 | ID (path) | Title | Purpose |
