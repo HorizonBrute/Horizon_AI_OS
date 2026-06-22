@@ -8,11 +8,11 @@ AI instructions — reproducible on any supported machine with a single bootstra
 ## What's in This Repo
 
 1. `.claude/` — Claude Code settings, permissions, and global AI instructions (CLAUDE.md)
-2. `horizon_bin/sounds/` — audio feedback files for Claude lifecycle events
-3. `horizon_bin/statusline/` — cross-platform statusline scripts with context alerts
-4. `horizon_bin/harness_configs/` — portable git config and pre-commit hooks
-5. `horizon_bin/sbin/` — brain provisioning and privileged admin scripts
-6. `horizon_bin/documentation/` — setup guides and system reference docs
+2. `horizon_system/sounds/` — audio feedback files for Claude lifecycle events
+3. `horizon_system/statusline/` — cross-platform statusline scripts with context alerts
+4. `horizon_system/harness_configs/` — portable git config and pre-commit hooks
+5. `horizon_system/sbin/` — brain provisioning and privileged admin scripts
+6. `horizon_system/documentation/` — setup guides and system reference docs
 7. `handoffs/` — session handoff documents
 
 ## Platform Support
@@ -25,13 +25,13 @@ AI instructions — reproducible on any supported machine with a single bootstra
 
 1. Fork or clone this repo to your preferred root path (e.g. `C:\devroot` on Windows, `~/devroot` on Unix).
 2. Run the bootstrap script:
-   - **Windows:** `.\sbin\bootstrap.ps1`
-   - **Linux/macOS:** `./sbin/bootstrap.sh`
+   - **Windows:** `.\horizon_system\sbin\bootstrap.ps1`
+   - **Linux/macOS:** `./horizon_system/sbin/bootstrap.sh`
 3. Read the full setup guide before your first commit.
 
 ## Full Setup Guide
 
-`horizon_bin/documentation/getting_started/ReadMeToSetupYourSystem.md`
+`horizon_system/documentation/getting_started/ReadMeToSetupYourSystem.md`
 
 ## Contributing
 

@@ -333,6 +333,33 @@ Administrator/root.
 
 ---
 
+## brain_logon_rights.py
+
+**Path:** `$HORIZON_SYSTEM/sbin/brain_logon_rights.py`
+
+Surgical helper for the opt-in brain *automation* tiers: grants, revokes, or
+queries a single Windows LSA logon right on one brain account via
+`LsaAddAccountRights` / `LsaRemoveAccountRights` / `LsaEnumerateAccountRights`,
+touching nothing else in local security policy (mirrors the additive-ACL model
+in `harden_aios.py`). `SeBatchLogonRight` ("Log on as a batch job") backs the
+`scheduled` tier; `SeServiceLogonRight` is reserved for a future `daemon` tier.
+Normally invoked for you by `create_brain.py --automation scheduled` and revoked
+by `remove_brain.py` on teardown; use it directly only for manual right
+management. **Windows only** (no-op/NotImplementedError elsewhere). Requires
+elevation. See `$HORIZON_DOCS/deployment/brain_automation.md`.
+
+**When to use it:** To grant, check, or revoke a brain's logon right by hand
+(e.g. the reserved service tier) outside the normal `--automation` flow.
+
+**Key flags:**
+
+- `grant|check|revoke <brain>` — the action and target account
+- `--right NAME` — target a specific LSA right (default `SeBatchLogonRight`)
+
+**Referenced by a skill?** No. See `$HORIZON_DOCS/deployment/brain_automation.md`.
+
+---
+
 ## sync_aios.py
 
 **Path:** `$HORIZON_SYSTEM/sbin/sync_aios.py`
@@ -372,6 +399,61 @@ in `aios_local.conf` and wanting the schedule re-registered.
 - `--yes` — auto-confirm prompts (non-interactive install)
 
 **Referenced by a skill?** No.
+
+---
+
+## redirect_memory.py
+
+**Path:** `$HORIZON_SYSTEM/sbin/redirect_memory.py`
+
+Redirects the owner's harness per-project state — conversation transcripts and
+agent memory — into the AIOS by replacing `~/.claude/projects/` with a junction
+(Windows) / symlink (Unix) to `$HORIZON_ROOT/memory/`, so the state is governed
+by the AIOS gitignore, sync-exclusion, and monitor rules. Backup-first and
+idempotent: it copies existing content to `~/.claude/projects.backup-<timestamp>`,
+*moves* it into the memory root (skipping name collisions), then links. Run with
+Claude Code CLOSED, then restart it. Brains are handled separately by
+`create_brain.py`. See `$HORIZON_DOCS/system/memory.md`.
+
+**When to use it:** Once on the owner's machine to bring harness memory under
+AIOS governance; safe to re-run (it no-ops if already linked).
+
+**Key flags:**
+
+- `--horizon-root PATH` — target root (default: `$HORIZON_ROOT`, else derived)
+- `--dry-run` — show actions, change nothing
+- `--no-backup` — skip the pre-migration safety copy
+
+**Referenced by a skill?** No. See `$HORIZON_DOCS/system/memory.md`.
+
+---
+
+## backup_user_data.py
+
+**Path:** `$HORIZON_SYSTEM/sbin/backup_user_data.py`
+
+Backs up your gitignored user data (`memory/`, `handoffs/`, `objectives/`) to
+**your own** git remote without ever editing the framework `.gitignore`. It
+force-adds the data paths into a temporary git index, builds a commit containing
+only those paths, and pushes it to a per-machine branch (`aios-backup/<hostname>`
+by default) — the working tree, staging area, and framework branch are never
+touched, so it is safe to run from an active session. **Refuses** to push to the
+public Horizon upstream (exit 2) to avoid publishing private transcripts. Reads
+`AIOS_BACKUP_REMOTE` / `AIOS_BACKUP_BRANCH` / `AIOS_BACKUP_PATHS` from
+`aios_local.conf`. See `$HORIZON_DOCS/system/distribution_and_updates.md`.
+
+**When to use it:** To version-control your memory/handoffs/objectives on your
+own remote for backup and cross-machine awareness; manually or on a schedule.
+
+**Key flags:**
+
+- `--remote R` — git remote name or URL (or `AIOS_BACKUP_REMOTE`); required
+- `--branch B` — backup branch (default `aios-backup/<host>`)
+- `--paths P …` — paths to back up (default `memory handoffs objectives`)
+- `--message M` — commit message (default: timestamped)
+- `--dry-run` — show what would be backed up; do not commit or push
+
+**Referenced by a skill?** No. See `$HORIZON_DOCS/system/distribution_and_updates.md`.
 
 ---
 

@@ -7,7 +7,7 @@
 # Force LF for all scripts — these must be LF to execute correctly on Linux/macOS
 *.sh                text eol=lf
 *.bash              text eol=lf
-horizon_bin/harness_configs/git/hooks/*  text eol=lf
+horizon_system/harness_configs/git/hooks/*  text eol=lf
 
 # PowerShell — keep CRLF on Windows, LF elsewhere
 *.ps1               text eol=crlf

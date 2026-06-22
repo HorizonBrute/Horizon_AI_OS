@@ -12,8 +12,10 @@ security policy, distinct from filesystem ACLs. Granting one is
 **privilege/attack-surface expansion**, so AIOS treats automation as opt-in,
 least-privilege, and reversible.
 
-**Status:** Windows-first (verified). Unix analogs are documented guidance, not
-yet auto-applied. See `tested_configurations.md`.
+**Status:** Windows `scheduled` and `daemon` tiers verified end-to-end (grant →
+verify → revoke). On Linux the `scheduled` tier auto-applies systemd lingering
+(not yet verified on a live Linux host); `daemon` on Unix is documented guidance.
+See `tested_configurations.md`.
 
 ---
 
@@ -50,14 +52,16 @@ each maps to a different automation style.
 |---|---|---|---|---|
 | `none` *(default)* | *(none)* | — | Interactive/manual use only; no automation. | — |
 | `scheduled` | `SeBatchLogonRight` ("Log on as a batch job") | Batch | A Task Scheduler task set to **Run whether user is logged on or not**, using the stored password — a headless scheduled trigger with **no desktop session**. | Linux: `loginctl enable-linger` + a `systemd --user` unit, or `crontab -u <brain>`. macOS: a `launchd` LaunchDaemon. |
-| `daemon` *(reserved / future)* | `SeServiceLogonRight` ("Log on as a service") | Service | A Windows Service running continuously as the brain: starts at boot, auto-restarts — an "always-on / supervised harness". | Linux: a system `systemd` unit with `User=<brain>`. macOS: a LaunchDaemon. |
+| `daemon` | `SeServiceLogonRight` ("Log on as a service") | Service | A Windows Service running continuously as the brain: starts at boot, auto-restarts — an "always-on / supervised harness". | Linux: a system `systemd` unit with `User=<brain>`. macOS: a LaunchDaemon. |
 | *(discouraged)* | `SeInteractiveLogonRight` ("Allow log on locally") + autologon | Interactive | A real desktop session at boot that runs the deployed shell profile. | Linux/macOS: graphical autologin. |
 
-**`--automation` currently accepts only `none` and `scheduled`.** The `daemon`
-tier is a documented future path: the `SeServiceLogonRight` constant exists in
-`brain_logon_rights.py`, but `create_brain.py` does not yet provision it. You can
-grant it by hand today (see *Manual right management*) and register the service
-yourself; AIOS will still revoke it on teardown.
+**`--automation` accepts `none`, `scheduled`, and `daemon`.** Each grants only
+the one logon right its tier needs (`scheduled` → `SeBatchLogonRight`, `daemon` →
+`SeServiceLogonRight`). What AIOS does *not* do is create the task/service for you
+— the scheduled task (Windows) or service registration is harness-specific and is
+yours to define; AIOS only grants the underlying capability and revokes it on
+teardown. The discouraged interactive-autologon row has no `--automation` tier and
+is never granted automatically.
 
 **Autologon is discouraged.** A real interactive desktop session at boot is
 fragile, stores the password at rest in the registry, and is limited to a single
@@ -98,12 +102,20 @@ python $HORIZON_SYSTEM/sbin/brain_credential.py get mybrain --show
 
 Create a task whose principal is the **brain account**, set to **Run whether
 user is logged on or not** — the mode that requires batch-logon — supplying the
-keystore password. Example with `schtasks` (illustrative paths shown concrete;
-use your own `$HORIZON_*` values):
+keystore password.
+
+The `/TR` (or `-Execute`/`-Argument`) target is **your harness's own launch
+command** — AIOS ships no launcher (the harness is yours; see the
+`apply_automation` contract in `create_brain.py` and `deployment/desktop.md`).
+This pattern is for driving a harness that has **no built-in scheduler of its
+own**; if your harness already schedules itself or runs continuously (e.g. a
+run-all-the-time agent loop), use its native scheduling instead. Substitute a
+real headless invocation — e.g. `claude -p "<prompt>"` or
+`ollama launch claude --model qwen3.5 -p "<prompt>"`:
 
 ```powershell
 schtasks /Create /TN "AIOS-mybrain-harness" `
-  /TR "C:\devroot\horizon_system\bin\run_brain_harness.ps1 mybrain" `
+  /TR "claude -p \"Run the inbox-triage skill on all files in the incoming folder\"" `
   /SC DAILY /ST 06:00 `
   /RU "mybrain" /RP "<keystore-password>" `
   /RL LIMITED
@@ -114,8 +126,8 @@ mode (logged on or not). Equivalent with PowerShell, which lets you add
 restart-on-failure for resilience:
 
 ```powershell
-$action  = New-ScheduledTaskAction -Execute "powershell" `
-    -Argument "-File C:\devroot\horizon_system\bin\run_brain_harness.ps1 mybrain"
+$action  = New-ScheduledTaskAction -Execute "claude" `
+    -Argument "-p `"Run the inbox-triage skill on all files in the incoming folder`""
 $trigger = New-ScheduledTaskTrigger -Daily -At "06:00"
 # Principal = the brain account, batch logon (S4U requires no stored password;
 # Password requires the keystore password and enables 'run whether logged on or not')
@@ -129,6 +141,33 @@ Register-ScheduledTask -TaskName "AIOS-mybrain-harness" `
 The task launches the harness/agent as the brain. Because the brain's harness
 config was wired at provisioning (see `deployment/desktop.md`), it comes up
 already pointed at the AIOS layer.
+
+---
+
+## How To: Daemon Automation (Windows)
+
+Use the `daemon` tier when you want the harness to stay **always up** —
+supervised, auto-restarting, starting at boot before any login — rather than
+firing on a schedule.
+
+```bash
+python $HORIZON_SYSTEM/sbin/create_brain.py mybrain --automation daemon
+```
+
+This grants `SeServiceLogonRight` ("Log on as a service") to the brain and
+verifies it. As with `scheduled`, AIOS does **not** register the service itself —
+you create it, using the keystore password as the service's logon credential:
+
+```powershell
+$pw = python $HORIZON_SYSTEM/sbin/brain_credential.py get mybrain --show | Select-Object -Last 1
+$cred = New-Object System.Management.Automation.PSCredential("$env:COMPUTERNAME\mybrain", (ConvertTo-SecureString $pw -AsPlainText -Force))
+New-Service -Name "AIOS-mybrain" -BinaryPathName "C:\devroot\horizon_system\bin\run_brain_harness.exe mybrain" -Credential $cred -StartupType Automatic
+# Add restart-on-failure for resilience:
+sc.exe failure "AIOS-mybrain" reset= 86400 actions= restart/60000/restart/60000/restart/60000
+```
+
+A Windows service is the resilient "keep it up" pattern — prefer it (or a
+scheduled task with restart-on-failure) over interactive autologon.
 
 ---
 
@@ -158,7 +197,8 @@ security policy alone.
 `remove_brain.py` revokes **both** `SeBatchLogonRight` and `SeServiceLogonRight`
 from the account **before** deleting it — idempotently, while the SID still
 resolves — so logon rights never orphan to a future account that reuses the SID.
-No manual cleanup of logon rights is needed when you deprovision a brain.
+On Linux it likewise runs `loginctl disable-linger` before account deletion. No
+manual cleanup of automation capabilities is needed when you deprovision a brain.
 
 ```bash
 python $HORIZON_SYSTEM/sbin/remove_brain.py mybrain --yes
@@ -168,17 +208,23 @@ python $HORIZON_SYSTEM/sbin/remove_brain.py mybrain --yes
 
 ## Unix Analogs (guidance, not yet auto-applied)
 
-On Unix, `create_brain.py --automation scheduled` prints guidance rather than
-applying it. The equivalent setups:
+On Linux, `create_brain.py --automation scheduled` **applies** the account-level
+capability (enables systemd lingering) and prints the unit/cron guidance;
+`--automation daemon` prints system-service guidance (a system unit running as
+the brain needs no per-account right). The equivalent setups:
 
-- **Scheduled (batch analog):**
+- **Scheduled (batch analog):** `create_brain.py --automation scheduled` runs
   ```sh
-  loginctl enable-linger mybrain        # allow the user's services to run while logged out
-  # then a systemd --user unit that launches the harness, OR:
+  loginctl enable-linger mybrain        # applied for you: user services run while logged out
+  ```
+  then you add the recurring job:
+  ```sh
+  # a systemd --user unit owned by mybrain that launches the harness, OR:
   crontab -u mybrain -e                 # schedule the harness as the brain
   ```
-- **Daemon (service analog):** a system `systemd` unit with `User=mybrain`
-  (Linux), or a `launchd` LaunchDaemon (macOS).
+- **Daemon (service analog):** a system `systemd` unit with `[Service] User=mybrain`
+  (Linux, system — not `--user`), or a `launchd` LaunchDaemon with `UserName mybrain`
+  (macOS). No lingering or per-account right is required.
 - **Interactive (discouraged):** graphical autologin — fragile and stores the
   password at rest; use only when a real desktop session is required.
 
