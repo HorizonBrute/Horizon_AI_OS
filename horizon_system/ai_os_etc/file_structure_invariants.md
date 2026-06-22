@@ -35,6 +35,7 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 ├── CLAUDE.md                           # Claude Code counterpart to agents.md — imports it explicitly
 ├── .claude/
 │   ├── CLAUDE.md                       # Thin Claude Code entry point; imports $HORIZON_ROOT/CLAUDE.md
+│   ├── CLAUDE.aios-dev.md              # Owner-only AIOS-dev directives; imported by the OWNER stub only, never by brains
 │   └── settings.json                   # Devroot-scoped permissions (no hooks, no statusLine)
 ├── handoffs/                           # Default output directory for /handoff skill (see Section 7)
 ├── objectives/                         # Default store for /objective skill — durable multi-session goals (see Section 7)
@@ -43,6 +44,7 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   ├── bin/                            # $HORIZON_BIN — user-callable executables; brains: R+X
 │   │   ├── resolve_sound.py            # Resolver: event name → absolute sound path (see Section 10)
 │   │   ├── monitor_status.py           # One-word monitor status check (see agents.md Session Start)
+│   │   ├── context_cost.py             # Harness context-overhead measurement (see documentation/context_loading.md)
 │   │   └── statusline/                 # Status line scripts for harness UI (see Section 11)
 │   ├── sbin/                           # Owner-only privileged scripts; brains: DENY
 │   │   ├── bootstrap.ps1               # Windows bootstrap (PowerShell)
@@ -74,9 +76,16 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   ├── file_structure_invariants.md
 │   │   ├── ai_os_personalizations.md
 │   │   └── horizon_aios_agents.md      # Agent instructions (harness-agnostic)
-│   ├── documentation/                  # $HORIZON_DOCS — user-facing docs
-│   │   ├── deployment/                 # Deployment guides by mode (desktop.md, docker.md, etc.)
-│   │   ├── tested_configurations.md    # Verified harness/OS/deployment compatibility matrix
+│   ├── documentation/                  # $HORIZON_DOCS — user-facing docs (full catalog: documentation/index.md)
+│   │   ├── index.md                    # Documentation index — every doc, referenceable by path (CC-G4)
+│   │   ├── authoring/                  # Authoring guides (e.g. CLAUDE.md authoring)
+│   │   ├── build_decisions/            # Architecture decision log
+│   │   ├── deployment/                 # Deployment guides by mode (desktop, server, docker)
+│   │   ├── development_tools/          # AIOS-dev tooling specs (e.g. consistency_checks.md)
+│   │   ├── getting_started/            # Setup guide
+│   │   ├── security/                   # Security and audit-logging docs
+│   │   ├── system/                     # System config reference, AIOS switching
+│   │   └── *.md                        # Root docs: philosophy, dev_values, utilities, context_loading, etc.
 │   ├── sounds/                         # Audio assets for event hooks
 │   │   ├── sounds.map                  # AIOS default event→sound mapping (see Section 10)
 │   │   ├── *.wav                       # Generic, vendor-agnostic sounds
@@ -139,6 +148,8 @@ Scripts that wire sounds to hooks must reference the appropriate tier. If a hook
 
 **Cross-harness instruction file:** `$HORIZON_ROOT/agents.md` is the canonical agent instruction file for harnesses that read `agents.md` (e.g., Codex, OpenHands). `$HORIZON_ROOT/CLAUDE.md` is its Claude Code counterpart — a filesystem neighbor that explicitly imports `agents.md`. `$HORIZON_ROOT/.claude/CLAUDE.md` is a thin entry point that imports `$HORIZON_ROOT/CLAUDE.md`. Harness-specific extensions live in `$HORIZON_BIN/harness_configs/<harness>/` and do not override agents.md — they supplement it.
 
+**Owner-only development context:** `$HORIZON_ROOT/.claude/CLAUDE.aios-dev.md` holds AIOS-*development* directives (e.g., keep `documentation/index.md` current; run `/horizon_aios_dev_consistency_check`). It is imported **only by the owner/maintainer's machine-local `~/.claude/CLAUDE.md`** — bootstrap adds that import. Brains never import it: `brain_CLAUDE.md.template` chains only the runtime config, so development rules stay out of brain/runtime context. This is the seam for any "applies when *building* the AIOS, not when *using* it" instruction — put it here, never in `agents.md`/`CLAUDE.md`, which every brain loads.
+
 Invariant: project-level config may restrict or extend permissions but must not own hooks or statusLine — those belong to global (~/.claude/settings.json). The devroot layer owns devroot-scoped permissions only.
 
 ---
@@ -199,6 +210,8 @@ Skills come in two classes — OS skills (tracked, shared, overwritable by upstr
 | `$HORIZON_USRBIN/usr_skills/<name>/SKILL.md` | User | Owner-only — machine-local, gitignored | Personal skills kept out of the OS repo and safe from sync |
 
 Each OS directory contains an `index.md` listing its skills. **Always check `index.md` first** before searching individual skill files. **When adding an OS skill, update the index in the same commit.** User skills are not indexed (machine-local).
+
+The same rule governs documentation: any change that adds, moves, renames, or removes a document under `documentation/` (or an authority/invariant doc under `ai_os_etc/`) must update `documentation/index.md` in the **same change** via `/horizon_aios_documentation_index_update` — treat the index entry as part of the doc, exactly as `skill-creation` treats `skills_sbin/index.md`. (Enforced by CC-G4 in `documentation/development_tools/consistency_checks.md`.)
 
 `~/.claude/skills/` is a junction (Windows) or symlink (Unix/macOS) pointing to `$HORIZON_SYSTEM/skills_sbin/` for the primary user, and to `$HORIZON_SYSTEM/skills_bin/` for brain users. Skills are live on disk with no copy step — only a Claude Code session restart is needed after adding or editing a skill. Bootstrap creates the primary user junction; `create_brain.py` creates the brain junction.
 

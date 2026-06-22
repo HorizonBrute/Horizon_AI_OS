@@ -139,6 +139,19 @@ if (Test-Path $ClaudeMd) {
     Ok "Created ~/.claude/CLAUDE.md with @ redirect to repo CLAUDE.md."
 }
 
+# Owner-only AIOS development context: import the dev directives into the owner
+# stub. Brains never import this (their brain_CLAUDE.md.template omits it), so
+# AIOS-development rules stay out of brain/runtime context.
+$DevContextImport = "@$HORIZON_ROOT\.claude\CLAUDE.aios-dev.md"
+$stubContent = if (Test-Path $ClaudeMd) { Get-Content $ClaudeMd -Raw } else { "" }
+if ($stubContent -notmatch [regex]::Escape("CLAUDE.aios-dev.md")) {
+    Add-Content -Path $ClaudeMd -Value "" -Encoding UTF8
+    Add-Content -Path $ClaudeMd -Value $DevContextImport -Encoding UTF8
+    Ok "Added owner-only AIOS development context import to ~/.claude/CLAUDE.md."
+} else {
+    Ok "~/.claude/CLAUDE.md already imports AIOS development context."
+}
+
 # -----------------------------------------------------------------------------
 # SECTION 3: Redirect ~/.claude/skills/ to skills_sbin/
 # Primary user is AIOS root - all skills live in skills_sbin/.

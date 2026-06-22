@@ -135,6 +135,17 @@ else
   ok "Created ~/.claude/CLAUDE.md with @ redirect to repo CLAUDE.md."
 fi
 
+# Owner-only AIOS development context: import the dev directives into the owner
+# stub. Brains never import this (their brain_CLAUDE.md.template omits it), so
+# AIOS-development rules stay out of brain/runtime context.
+DEV_CONTEXT_IMPORT="@$HORIZON_ROOT/.claude/CLAUDE.aios-dev.md"
+if ! grep -qF "CLAUDE.aios-dev.md" "$CLAUDE_MD" 2>/dev/null; then
+  printf '\n%s\n' "$DEV_CONTEXT_IMPORT" >> "$CLAUDE_MD"
+  ok "Added owner-only AIOS development context import to ~/.claude/CLAUDE.md."
+else
+  ok "~/.claude/CLAUDE.md already imports AIOS development context."
+fi
+
 # -----------------------------------------------------------------------------
 # SECTION 3: Redirect ~/.claude/skills/ to skills_sbin/
 # Primary user is AIOS root — all skills live in skills_sbin/.

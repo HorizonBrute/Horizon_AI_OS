@@ -15,3 +15,7 @@
 !skill-creation/**
 !resync-user-skills/
 !resync-user-skills/**
+!horizon_aios_dev_consistency_check/
+!horizon_aios_dev_consistency_check/**
+!horizon_aios_documentation_index_update/
+!horizon_aios_documentation_index_update/**
