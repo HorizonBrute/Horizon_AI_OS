@@ -639,18 +639,10 @@ def _phase3_windows(brain_name, invoking_user,
                  '/deny',  f'{BRAINS_GROUP}:(OI)(CI)F'],
                 dry_run=dry_run)
 
-    # -- Brain ~/.claude/skills/ → skills_bin/ (junction; no admin needed) --
-    system_drive = os.environ.get('SystemDrive', 'C:')
-    brain_home = os.path.join(system_drive + '\\', 'Users', brain_name)
-    brain_claude_dir = os.path.join(brain_home, '.claude')
-    brain_skills_dir = os.path.join(brain_claude_dir, 'skills')
-    info(f'Redirecting brain ~/.claude/skills/ → skills_bin/')
-    if not dry_run:
-        os.makedirs(brain_claude_dir, exist_ok=True)
-    if os.path.exists(brain_skills_dir):
-        run(['cmd', '/c', 'rmdir', brain_skills_dir], dry_run=dry_run)
-    run(['cmd', '/c', 'mklink', '/J', brain_skills_dir, horizon_skills_bin],
-        dry_run=dry_run)
+    # NOTE: the brain's ~/.claude layout (workspace-canonical config + skills
+    # junction, with the home ~/.claude redirecting to it) is set up in Phase 5
+    # by _link_brain_claude(), after the workspace .claude/ and its templates
+    # exist. Phase 3 only sets ACLs here.
 
 
 # ---- Unix permission implementation ----
@@ -681,19 +673,9 @@ def _phase3_unix(brain_name, invoking_user, os_name,
     run(['chown', f':{BRAINS_GROUP}', horizon_skills_bin], dry_run=dry_run)
     run(['chmod', 'g+rx', horizon_skills_bin], dry_run=dry_run)
 
-    # -- Brain ~/.claude/skills/ → skills_bin/ (symlink) --
-    try:
-        import pwd as _pwd
-        brain_home = _pwd.getpwnam(brain_name).pw_dir
-    except KeyError:
-        brain_home = f'/home/{brain_name}'
-    brain_claude_dir = os.path.join(brain_home, '.claude')
-    brain_skills_dir = os.path.join(brain_claude_dir, 'skills')
-    info(f'Redirecting brain ~/.claude/skills/ → skills_bin/')
-    run(['mkdir', '-p', brain_claude_dir], dry_run=dry_run)
-    run(['chown', f'{brain_name}:{brain_name}', brain_claude_dir], dry_run=dry_run)
-    run(['ln', '-sfn', horizon_skills_bin, brain_skills_dir], dry_run=dry_run)
-    run(['chown', '-h', f'{brain_name}:{brain_name}', brain_skills_dir], dry_run=dry_run)
+    # NOTE: the brain's ~/.claude layout (workspace-canonical config + skills
+    # symlink, with the home ~/.claude redirecting to it) is set up in Phase 5
+    # by _link_brain_claude(), after the workspace .claude/ exists.
 
     # -- Privileged dirs: owner-only — MUST be after all grants above --
     for label, path in [('sbin', horizon_sbin),
@@ -864,6 +846,73 @@ def _print_cleanup_instructions(brain_name, brain_dir, os_name):
 # Phase 5: Deploy brain workspace templates, shell profile, and manifest
 # ---------------------------------------------------------------------------
 
+def _link_brain_claude(ctx, dry_run=False):
+    """
+    GAP 1 — unify the brain's .claude in its WORKSPACE, with the brain's HOME
+    ~/.claude redirecting to it, so the brain's CLAUDE.md, settings.json, and
+    skills are all surfaced at the user-level ~/.claude regardless of cwd:
+
+        brains/<name>/.claude/skills  ->  $HORIZON_SYSTEM/skills_bin   (junction/symlink)
+        <brain-home>/.claude          ->  brains/<name>/.claude/       (junction/symlink)
+
+    Always skills_bin (brain tier), never skills_sbin. Idempotent: an existing
+    correct link is replaced safely; junctions/symlinks are deleted as reparse
+    points (rmdir / unlink) so a wrong link never has its TARGET followed.
+    """
+    os_name            = ctx['os_name']
+    brain_name         = ctx['brain_name']
+    brain_dir          = ctx['brain_dir']
+    horizon_skills_bin = ctx['horizon_skills_bin']
+    brain_claude_dir   = os.path.join(brain_dir, '.claude')
+    workspace_skills   = os.path.join(brain_claude_dir, 'skills')
+
+    if os_name == 'Windows':
+        system_drive = os.environ.get('SystemDrive', 'C:')
+        brain_home   = os.path.join(system_drive + '\\', 'Users', brain_name)
+        home_claude  = os.path.join(brain_home, '.claude')
+
+        # 1. workspace skills junction -> skills_bin (brain tier)
+        info(f'Linking workspace skills -> skills_bin: {workspace_skills}')
+        if (not dry_run) and (os.path.exists(workspace_skills) or os.path.islink(workspace_skills)):
+            run(['cmd', '/c', 'rmdir', workspace_skills], dry_run=False, check=False)
+        run(['cmd', '/c', 'mklink', '/J', workspace_skills, horizon_skills_bin], dry_run=dry_run)
+
+        # 2. home ~/.claude junction -> workspace .claude (profile root may not
+        #    exist before first logon, so create it first)
+        info(f'Redirecting brain home ~/.claude -> {brain_claude_dir}')
+        if not dry_run:
+            os.makedirs(brain_home, exist_ok=True)
+        else:
+            print(f'  [DRY-RUN] os.makedirs({brain_home!r}, exist_ok=True)')
+        if (not dry_run) and (os.path.exists(home_claude) or os.path.islink(home_claude)):
+            # reparse-point delete: removes a junction (or empty dir) WITHOUT
+            # following it; a real, non-empty ~/.claude makes this fail safely.
+            run(['cmd', '/c', 'rmdir', home_claude], dry_run=False, check=False)
+        run(['cmd', '/c', 'mklink', '/J', home_claude, brain_claude_dir], dry_run=dry_run)
+
+    else:
+        try:
+            import pwd as _pwd
+            brain_home = _pwd.getpwnam(brain_name).pw_dir
+        except (KeyError, ImportError):
+            brain_home = f'/Users/{brain_name}' if os_name == 'Darwin' else f'/home/{brain_name}'
+        home_claude = os.path.join(brain_home, '.claude')
+
+        # 1. workspace skills symlink -> skills_bin (brain tier)
+        info(f'Linking workspace skills -> skills_bin: {workspace_skills}')
+        run(['ln', '-sfn', horizon_skills_bin, workspace_skills], dry_run=dry_run)
+        run(['chown', '-h', f'{brain_name}:{brain_name}', workspace_skills], dry_run=dry_run, check=False)
+
+        # 2. home ~/.claude symlink -> workspace .claude (ln -sfn replaces an
+        #    existing symlink atomically; never recurse into a real dir)
+        info(f'Redirecting brain home ~/.claude -> {brain_claude_dir}')
+        run(['mkdir', '-p', brain_home], dry_run=dry_run, check=False)
+        if (not dry_run) and os.path.islink(home_claude):
+            run(['rm', '-f', home_claude], dry_run=False, check=False)
+        run(['ln', '-sfn', brain_claude_dir, home_claude], dry_run=dry_run)
+        run(['chown', '-h', f'{brain_name}:{brain_name}', home_claude], dry_run=dry_run, check=False)
+
+
 def phase5_deploy_templates(ctx, dry_run=False):
     """
     Deploy .aioscommon templates into the brain's .claude/ workspace directory,
@@ -873,6 +922,8 @@ def phase5_deploy_templates(ctx, dry_run=False):
     Creates:
         brains/<brain_name>/.claude/CLAUDE.md       (from brain_CLAUDE.md.template)
         brains/<brain_name>/.claude/settings.json   (from brain_settings.json.template)
+        brains/<brain_name>/.claude/skills          (junction/symlink -> skills_bin)
+        <brain_home>/.claude                        (junction/symlink -> brains/<brain_name>/.claude)
         brains/<brain_name>/.aios_provision.json    (provisioning record for auditors)
         <brain_home>/.bashrc (Linux) / .zshrc+.bash_profile (macOS) /
             Documents/WindowsPowerShell/Microsoft.PowerShell_profile.ps1 (Windows)
@@ -895,6 +946,7 @@ def phase5_deploy_templates(ctx, dry_run=False):
         print(f'  [DRY-RUN] Would create {brain_claude_dir}')
         print(f'  [DRY-RUN] Would deploy CLAUDE.md from {aioscommon_dir}/brain_CLAUDE.md.template')
         print(f'  [DRY-RUN] Would deploy settings.json from {aioscommon_dir}/brain_settings.json.template')
+        _link_brain_claude(ctx, dry_run=True)
         print(f'  [DRY-RUN] Would write .aios_provision.json to {brain_dir}')
         print(f'  [DRY-RUN] Would write shell profile for {brain_name}')
         return
@@ -931,10 +983,14 @@ def phase5_deploy_templates(ctx, dry_run=False):
         },
     )
 
-    # 5.4 Write shell profile (sets HORIZON_* env vars + default working dir)
+    # 5.4 Unify the brain's .claude: workspace skills junction + home redirect
+    #     (GAP 1 — must run after the workspace .claude/ and its templates exist)
+    _link_brain_claude(ctx, dry_run=False)
+
+    # 5.5 Write shell profile (sets HORIZON_* env vars + default working dir)
     _write_brain_shell_profile(ctx)
 
-    # 5.5 Write provisioning manifest
+    # 5.6 Write provisioning manifest
     _write_provision_manifest(ctx)
 
     info(f'Phase 5 complete for brain: {brain_name}')

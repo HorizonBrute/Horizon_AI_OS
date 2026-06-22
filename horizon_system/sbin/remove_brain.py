@@ -12,19 +12,23 @@ administrative context (Administrator on Windows, root on Unix).
 
 Removal footprint (mirrors what create_brain.py provisions):
     - OS user account            <brain-name>
-    - Per-brain OS group         <brain-name>   (the shared `brains` group stays)
+    - Per-brain OS group         <brain-name>_group (Windows) / <brain-name> (Unix)
+                                 (the shared `brains` group stays)
+    - Home link                  <home>/.claude  -> brains/<brain-name>/.claude
     - Workspace folder           $HORIZON_ROOT/brains/<brain-name>/
-                                 (CLAUDE.md, settings.json, .aios_provision.json)
-    - User profile config        <home>/.claude/  incl. the skills junction
+                                 (CLAUDE.md, settings.json, .aios_provision.json,
+                                  and skills -> skills_bin)
     - User profile dir           <home>           (Unix: via userdel -r)
     - Stored credential          OS keystore (via brain_credential.py delete)
 
 Safety:
     - Validates the brain name and refuses reserved names (brains, the invoking
       user, administrator/root, etc.).
-    - The ~/.claude/skills entry is a JUNCTION to $HORIZON_SYSTEM/skills_bin.
-      It is removed with `rmdir` (reparse-point delete) BEFORE any recursive
-      delete, so the junction target (skills_bin) is never followed/destroyed.
+    - The brain's links — home <home>/.claude -> workspace, and workspace
+      .claude/skills -> $HORIZON_SYSTEM/skills_bin — are JUNCTIONS/symlinks.
+      Every link is removed with `rmdir`/unlink (reparse-point delete) BEFORE
+      any recursive delete, so neither the workspace nor skills_bin is ever
+      followed/destroyed. Also handles the old topology (~/.claude/skills).
     - Prompts for confirmation unless --yes. Supports --dry-run.
 
 Usage:
@@ -155,48 +159,64 @@ def _windows_profile_dir(brain_name):
     return os.path.join(system_drive + '\\', 'Users', brain_name)
 
 
-def _remove_skills_junction(profile_dir, dry_run):
+def _remove_reparse(path, dry_run):
     """
-    Remove the brain's ~/.claude/skills JUNCTION before any recursive delete,
-    using rmdir so the reparse point is deleted WITHOUT following it into
-    skills_bin. Safe no-op if absent.
+    Delete a junction/symlink at `path` as a REPARSE POINT — `rmdir` (Windows) /
+    `unlink` (Unix) removes only the link, never following it into its target.
+    This is the safety mechanism: the brain's links point at the workspace and
+    at skills_bin, and a recursive delete that followed them would destroy those
+    targets. Always call this on every link BEFORE any recursive delete.
+    Safe no-op if absent; a real non-empty dir makes `rmdir` fail harmlessly.
     """
-    skills = os.path.join(profile_dir, '.claude', 'skills')
-    if not os.path.exists(skills) and not os.path.islink(skills):
+    if dry_run:
+        print(f'  [DRY-RUN] reparse-point delete (rmdir/unlink — does NOT follow target): {path}')
         return
-    info(f'Removing skills junction (reparse-point delete): {skills}')
-    # `rmdir` on a junction removes only the link. On a real dir it removes it
-    # only if empty — it will NOT recurse into / delete a junction target.
-    run(['cmd', '/c', 'rmdir', skills], dry_run=dry_run, check=False)
+    if not (os.path.islink(path) or os.path.exists(path)):
+        return
+    info(f'Removing link (reparse-point delete): {path}')
+    if platform.system() == 'Windows':
+        run(['cmd', '/c', 'rmdir', path], check=False)
+    elif os.path.islink(path):
+        run(['rm', '-f', path], check=False)
+    else:
+        run(['rmdir', path], check=False)  # empty dir only; never recursive
 
 
 def remove_windows(brain_name, brain_dir, dry_run):
-    profile_dir = _windows_profile_dir(brain_name)
+    profile_dir  = _windows_profile_dir(brain_name)
+    home_claude  = os.path.join(profile_dir, '.claude')                 # junction -> workspace .claude (new topology)
+    home_skills  = os.path.join(profile_dir, '.claude', 'skills')       # junction -> skills_bin (old topology)
+    brain_group  = f'{brain_name}_group'                                # per-brain group is <name>_group on Windows
 
-    # 1. Junction first (never recurse through it).
-    _remove_skills_junction(profile_dir, dry_run)
+    # 1. Remove reparse points FIRST, so no later recursive delete can follow a
+    #    junction into the workspace or into skills_bin. Covers both the new
+    #    topology (~/.claude -> workspace) and the old one (~/.claude/skills).
+    _remove_reparse(home_claude, dry_run)
+    _remove_reparse(home_skills, dry_run)
 
     # 2. Remove the OS user account.
-    if user_exists(brain_name, 'Windows'):
+    if dry_run or user_exists(brain_name, 'Windows'):
         run_ps(f'Remove-LocalUser -Name "{brain_name}"', dry_run=dry_run)
     else:
         info(f'User does not exist (skipping): {brain_name}')
 
     # 3. Remove the per-brain group (leave the shared `brains` group).
-    if group_exists(brain_name, 'Windows'):
-        run_ps(f'Remove-LocalGroup -Name "{brain_name}"', dry_run=dry_run)
+    if dry_run or group_exists(brain_group, 'Windows'):
+        run_ps(f'Remove-LocalGroup -Name "{brain_group}"', dry_run=dry_run)
     else:
-        info(f'Per-brain group does not exist (skipping): {brain_name}')
+        info(f'Per-brain group does not exist (skipping): {brain_group}')
 
-    # 4. Remove the user profile directory (config, profile script).
-    if os.path.isdir(profile_dir):
+    # 4. Remove the user profile directory (now junction-free after step 1).
+    if dry_run:
+        print(f'  [DRY-RUN] Remove-Item -Recurse -Force {profile_dir}')
+    elif os.path.isdir(profile_dir):
         info(f'Removing user profile directory: {profile_dir}')
         run_ps(f'Remove-Item -LiteralPath "{profile_dir}" -Recurse -Force '
-               f'-ErrorAction SilentlyContinue', dry_run=dry_run, check=False)
+               f'-ErrorAction SilentlyContinue', check=False)
     else:
         info(f'No user profile directory at: {profile_dir}')
 
-    # 5. Remove the workspace folder.
+    # 5. Remove the workspace folder (its skills junction is cleared first).
     _remove_workspace(brain_dir, dry_run)
 
 
@@ -204,8 +224,22 @@ def remove_windows(brain_name, brain_dir, dry_run):
 # Unix removal
 # ---------------------------------------------------------------------------
 
+def _unix_home(brain_name, os_name):
+    try:
+        import pwd
+        return pwd.getpwnam(brain_name).pw_dir
+    except (KeyError, ImportError):
+        return f'/Users/{brain_name}' if os_name == 'Darwin' else f'/home/{brain_name}'
+
+
 def remove_unix(brain_name, brain_dir, os_name, dry_run):
-    if user_exists(brain_name, os_name):
+    # 1. Remove the home ~/.claude symlink first (reparse-safe). `userdel -r`
+    #    also clears the home tree on Linux, but be explicit and cover macOS
+    #    (dscl delete does not remove the home directory).
+    home = _unix_home(brain_name, os_name)
+    _remove_reparse(os.path.join(home, '.claude'), dry_run)
+
+    if dry_run or user_exists(brain_name, os_name):
         if os_name == 'Linux':
             run(['userdel', '-r', brain_name], dry_run=dry_run, check=False)
         else:  # macOS
@@ -213,7 +247,7 @@ def remove_unix(brain_name, brain_dir, os_name, dry_run):
     else:
         info(f'User does not exist (skipping): {brain_name}')
 
-    if group_exists(brain_name, os_name):
+    if dry_run or group_exists(brain_name, os_name):
         if os_name == 'Linux':
             run(['groupdel', brain_name], dry_run=dry_run, check=False)
         else:
@@ -225,14 +259,19 @@ def remove_unix(brain_name, brain_dir, os_name, dry_run):
 
 
 def _remove_workspace(brain_dir, dry_run):
-    """Remove $HORIZON_ROOT/brains/<name>/. Contains no junctions."""
+    """
+    Remove $HORIZON_ROOT/brains/<name>/. The workspace .claude/skills is a
+    junction/symlink to skills_bin, so it is deleted as a reparse point FIRST —
+    otherwise a recursive delete could follow it and destroy skills_bin.
+    """
+    _remove_reparse(os.path.join(brain_dir, '.claude', 'skills'), dry_run)
+    if dry_run:
+        print(f'  [DRY-RUN] rmtree {brain_dir}')
+        return
     if not os.path.isdir(brain_dir):
         info(f'No workspace folder at: {brain_dir}')
         return
     info(f'Removing workspace folder: {brain_dir}')
-    if dry_run:
-        print(f'  [DRY-RUN] rmtree {brain_dir}')
-        return
     try:
         shutil.rmtree(brain_dir)
         ok(f'Removed workspace: {brain_dir}')
@@ -300,10 +339,13 @@ def main():
     if not args.dry_run:
         check_privileges(os_name)
 
+    # Per-brain group name: <brain>_group on Windows, <brain> on Unix.
+    per_brain_group = f'{brain_name}_group' if os_name == 'Windows' else brain_name
+
     # --- Nothing-to-do short-circuit ---
     exists_user = user_exists(brain_name, os_name)
     exists_ws = os.path.isdir(brain_dir)
-    if not exists_user and not exists_ws and not group_exists(brain_name, os_name):
+    if not exists_user and not exists_ws and not group_exists(per_brain_group, os_name):
         warn(f'No trace of brain "{brain_name}" (user/group/workspace). Nothing to do.')
         sys.exit(0)
 
@@ -345,7 +387,7 @@ def main():
     if not args.dry_run:
         if user_exists(brain_name, os_name):
             remaining.append('user account')
-        if group_exists(brain_name, os_name):
+        if group_exists(per_brain_group, os_name):
             remaining.append('per-brain group')
         if os.path.isdir(brain_dir):
             remaining.append('workspace folder')
