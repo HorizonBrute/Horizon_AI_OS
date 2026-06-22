@@ -26,7 +26,7 @@ Report how much context overhead the Claude Code harness will auto-load for a gi
 
 1.2 Run:
 ```
-python "$HORIZON_SYSTEM/sbin/context_cost.py" <path> --json
+python "$HORIZON_SYSTEM/bin/context_cost.py" <path> --json
 ```
 
 Capture the JSON output. If the command fails (non-zero exit, missing script, bad path), report the error clearly and stop.

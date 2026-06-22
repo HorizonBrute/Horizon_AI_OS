@@ -15,7 +15,7 @@ The scripts also work standalone from any shell.
 
 ## context_cost.py
 
-**Path:** `$HORIZON_SYSTEM/sbin/context_cost.py`
+**Path:** `$HORIZON_SYSTEM/bin/context_cost.py`
 
 Measures the Claude Code harness context overhead (token count, word count,
 KB) contributed by `CLAUDE.md`, `CLAUDE.local.md`, `agents.md`, and all

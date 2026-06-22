@@ -9,6 +9,11 @@ from pathlib import Path
 
 AUTO_LOAD_NAMES = ("CLAUDE.md", "CLAUDE.local.md", "agents.md")
 
+# Only these filenames trigger harness @-import resolution.
+# agents.md contains plain-text AI instructions that may reference @paths
+# but the harness does NOT inline them — do not recurse into them.
+_IMPORT_RESOLVING_NAMES = frozenset({"CLAUDE.md", "CLAUDE.local.md"})
+
 
 def _read(path: Path):
     try:
@@ -74,12 +79,15 @@ def collect(target_dir: Path) -> list:
                 continue
             seen_paths.add(resolved)
             rows.append(_make_row(resolved, content, level, imported_by=None))
-            # Resolve @-imports
-            for imp_path, src_file in _resolve_imports(resolved, content, seen_paths):
-                imp_content = _read(imp_path)
-                if imp_content is None:
-                    continue
-                rows.append(_make_row(imp_path, imp_content, level, imported_by=src_file))
+            # Only CLAUDE.md and CLAUDE.local.md trigger harness @-import inlining.
+            # agents.md uses @-references as plain AI instructions; the harness
+            # does NOT inline them, so do not recurse.
+            if candidate.name in _IMPORT_RESOLVING_NAMES:
+                for imp_path, src_file in _resolve_imports(resolved, content, seen_paths):
+                    imp_content = _read(imp_path)
+                    if imp_content is None:
+                        continue
+                    rows.append(_make_row(imp_path, imp_content, level, imported_by=src_file))
 
     return rows
 
