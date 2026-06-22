@@ -82,14 +82,25 @@ COPY --chown=aios:aios . .
 # Ensure mutable directories exist as mount points
 RUN mkdir -p /aios/horizon_system/logs \
              /aios/handoffs \
+             /aios/objectives \
              /aios/brains \
     && chown -R aios:aios /aios
 
 # ---------------------------------------------------------------------------
-# Bootstrap the AIOS layer (non-interactive, Docker mode)
+# Harden AIOS layer ACLs — must run as root (chown/chmod/setfacl need root).
+# Enforces security_invariants.md §2/§3/§5 before dropping to the aios user.
+# ---------------------------------------------------------------------------
+RUN python3 /aios/horizon_system/sbin/harden_aios.py --yes \
+    || echo "[WARN] harden_aios.py exited non-zero — review ACLs manually"
+
+# ---------------------------------------------------------------------------
+# Bootstrap the AIOS layer (non-interactive, Docker mode).
+# Runs as aios user — hardening already applied above as root.
+# Section 9 of bootstrap.sh (harden) is skipped via AIOS_SKIP_HARDEN=1
+# because it would fail without root and the work is already done.
 # ---------------------------------------------------------------------------
 USER aios
-RUN bash /aios/horizon_system/sbin/bootstrap_docker.sh
+RUN AIOS_SKIP_HARDEN=1 bash /aios/horizon_system/sbin/bootstrap_docker.sh
 
 # ---------------------------------------------------------------------------
 # Default entry point: interactive shell ready for Claude Code

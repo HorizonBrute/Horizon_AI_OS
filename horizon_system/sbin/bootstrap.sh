@@ -181,9 +181,9 @@ if [ -f "$REG_SCRIPT" ]; then
 fi
 
 # -----------------------------------------------------------------------------
-# SECTION 4: Create handoffs directory
+# SECTION 4: Create handoffs and objectives directories
 # -----------------------------------------------------------------------------
-banner "SECTION 4: Handoffs directory"
+banner "SECTION 4: Handoffs and objectives directories"
 
 HANDOFFS_DIR="$HORIZON_ROOT/handoffs"
 
@@ -192,6 +192,15 @@ if [ -d "$HANDOFFS_DIR" ]; then
 else
   mkdir -p "$HANDOFFS_DIR"
   ok "Created handoffs directory: $HANDOFFS_DIR"
+fi
+
+OBJECTIVES_DIR="$HORIZON_ROOT/objectives"
+
+if [ -d "$OBJECTIVES_DIR" ]; then
+  ok "Objectives directory already exists: $OBJECTIVES_DIR"
+else
+  mkdir -p "$OBJECTIVES_DIR"
+  ok "Created objectives directory: $OBJECTIVES_DIR"
 fi
 
 # -----------------------------------------------------------------------------
@@ -287,6 +296,24 @@ else
   fail_check "\$HORIZON_ROOT/handoffs/ not found"
 fi
 
+# Check 4: objectives directory exists
+if [ -d "$HORIZON_ROOT/objectives" ]; then
+  pass_check "\$HORIZON_ROOT/objectives/ exists"
+else
+  fail_check "\$HORIZON_ROOT/objectives/ not found"
+fi
+
+# Check 5: git user.name and user.email set (required for DCO sign-off)
+_git_name="$(git config user.name 2>/dev/null || true)"
+_git_email="$(git config user.email 2>/dev/null || true)"
+if [ -z "$_git_name" ] || [ -z "$_git_email" ]; then
+  warn "git user.name or user.email not set — DCO sign-off lines will be malformed."
+  warn "  Fix: git config --global user.name \"Your Name\""
+  warn "       git config --global user.email \"you@example.com\""
+else
+  pass_check "git user.name and user.email are set"
+fi
+
 echo ""
 echo "------------------------------------------------------------"
 echo "  Bootstrap complete: $PASS passed, $FAIL failed"
@@ -358,7 +385,9 @@ fi
 banner "SECTION 9: Harden AIOS layer ACLs"
 
 HARDEN_SCRIPT="$HORIZON_SYSTEM/sbin/harden_aios.py"
-if [ -f "$HARDEN_SCRIPT" ]; then
+if [ "${AIOS_SKIP_HARDEN:-}" = "1" ]; then
+  ok "Hardening skipped (AIOS_SKIP_HARDEN=1) — already applied as root before this step."
+elif [ -f "$HARDEN_SCRIPT" ]; then
   if command -v python3 >/dev/null 2>&1; then
     if python3 "$HARDEN_SCRIPT"; then
       ok "AIOS layer hardened (brains-group ACLs applied)."

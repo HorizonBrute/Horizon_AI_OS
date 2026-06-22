@@ -192,9 +192,9 @@ if (Test-Path $RegScript) {
 }
 
 # -----------------------------------------------------------------------------
-# SECTION 4: Create handoffs directory
+# SECTION 4: Create handoffs and objectives directories
 # -----------------------------------------------------------------------------
-Banner "SECTION 4: Handoffs directory"
+Banner "SECTION 4: Handoffs and objectives directories"
 
 $HandoffsDir = Join-Path $HORIZON_ROOT "handoffs"
 
@@ -203,6 +203,15 @@ if (Test-Path $HandoffsDir) {
 } else {
     New-Item -ItemType Directory -Path $HandoffsDir -Force | Out-Null
     Ok "Created handoffs directory: $HandoffsDir"
+}
+
+$ObjectivesDir = Join-Path $HORIZON_ROOT "objectives"
+
+if (Test-Path $ObjectivesDir) {
+    Ok "Objectives directory already exists: $ObjectivesDir"
+} else {
+    New-Item -ItemType Directory -Path $ObjectivesDir -Force | Out-Null
+    Ok "Created objectives directory: $ObjectivesDir"
 }
 
 # -----------------------------------------------------------------------------
@@ -294,6 +303,25 @@ if (Test-Path $handoffsPath) {
     PassCheck "`$HORIZON_ROOT/handoffs/ exists"
 } else {
     FailCheck "`$HORIZON_ROOT/handoffs/ not found"
+}
+
+# Check 4: objectives directory exists
+$objectivesPath = Join-Path $HORIZON_ROOT "objectives"
+if (Test-Path $objectivesPath) {
+    PassCheck "`$HORIZON_ROOT/objectives/ exists"
+} else {
+    FailCheck "`$HORIZON_ROOT/objectives/ not found"
+}
+
+# Check 5: git user.name and user.email set (required for DCO sign-off)
+$gitUserName  = git config user.name 2>$null
+$gitUserEmail = git config user.email 2>$null
+if (-not $gitUserName -or -not $gitUserEmail) {
+    Warn "git user.name or user.email not set — DCO sign-off lines will be malformed."
+    Warn "  Fix: git config --global user.name `"Your Name`""
+    Warn "       git config --global user.email `"you@example.com`""
+} else {
+    PassCheck "git user.name and user.email are set"
 }
 
 Write-Host ""
