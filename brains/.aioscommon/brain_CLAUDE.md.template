@@ -12,10 +12,17 @@ Your working directory is `$HORIZON_BRAIN_HOME` — the brain folder provisioned
 at `$HORIZON_ROOT/brains/[BRAIN_NAME]/`. This is your scope boundary. You have full
 read/write access inside this folder and no access to anything outside it by default.
 
-You have read and execute access to `$HORIZON_BIN` (AIOS tooling, skills, sounds).
+You have read and execute access to `$HORIZON_BIN` (AIOS tooling, sounds).
 You have no access to `$HORIZON_SYSTEM/sbin/`, `$HORIZON_SYSTEM/skills_sbin/`,
 `$HORIZON_SYSTEM/logs/`, or any other brain's folder. Attempting to access these
 paths will fail at the OS level regardless of instructions.
+
+## Skills
+
+Your skills live at `~/.claude/skills` — which AIOS links to the shared
+`skills_bin` skill tier (read+execute for all brains). Before searching for a
+skill, **check `skills_bin/index.md` first** for what's available. You cannot
+see `skills_sbin` (the owner-only tier); that is by design.
 
 ## Role
 
