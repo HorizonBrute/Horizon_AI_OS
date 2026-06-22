@@ -196,6 +196,56 @@ def check_sbin_acl(horizon_system):
             warn(name, f"could not run icacls: {detail}")
 
 
+def check_sbin_acl_unix(horizon_system):
+    """
+    Unix equivalent of check_sbin_acl: verify that sbin/, skills_sbin/, and
+    logs/ are mode 0o700 and owned by the current user (not root, not another
+    user). This mirrors the harden_aios.py 'chmod -R 700' posture applied to
+    these privileged directories.
+    """
+    import getpass
+    import stat
+
+    try:
+        current_uid = os.getuid()
+        current_user = getpass.getuser()
+    except Exception as e:
+        warn("sbin ACL (Unix)", f"could not determine current user: {e}")
+        return
+
+    for label, sub in (("sbin", "sbin"),
+                       ("skills_sbin", "skills_sbin"),
+                       ("logs", "logs")):
+        path = horizon_system / sub
+        name = f"{label} ACL (Unix owner-only 700)"
+        if not path.exists():
+            warn(name, f"{path} does not exist — run bootstrap/harden_aios.py")
+            continue
+        try:
+            st = path.stat()
+        except OSError as e:
+            warn(name, f"could not stat {path}: {e}")
+            continue
+
+        mode = stat.S_IMODE(st.st_mode)
+        if mode != 0o700:
+            fail(name, f"{path} mode is {oct(mode)}, expected 0o700 — "
+                       "run harden_aios.py (security_invariants.md §3)")
+            continue
+
+        if st.st_uid != current_uid:
+            try:
+                import pwd
+                owner_name = pwd.getpwuid(st.st_uid).pw_name
+            except Exception:
+                owner_name = str(st.st_uid)
+            fail(name, f"{path} is owned by '{owner_name}' (uid {st.st_uid}), "
+                       f"expected current user '{current_user}' (uid {current_uid})")
+            continue
+
+        ok(f"{label} ACL — mode 0o700, owner '{current_user}'")
+
+
 # ---------------------------------------------------------------------------
 # 8. Monitor status
 # Calls monitor_status.py ($HORIZON_BIN/monitor_status.py) and reports
@@ -266,6 +316,8 @@ def main():
         check_local_conf(horizon_system)
         if sys.platform == "win32":
             check_sbin_acl(horizon_system)
+        else:
+            check_sbin_acl_unix(horizon_system)
         horizon_bin = env.get("HORIZON_BIN")
         if horizon_bin:
             check_monitor_status(horizon_bin)

@@ -47,8 +47,10 @@ HORIZON_ETC="$HORIZON_SYSTEM/ai_os_etc"
 HORIZON_DOCS="$HORIZON_SYSTEM/documentation"
 HORIZON_SOUNDS="$HORIZON_SYSTEM/sounds"
 HORIZON_LOGS="$HORIZON_SYSTEM/logs"
+HORIZON_USRBIN="$HORIZON_ROOT/usrbin"
+HORIZON_PROJECTS="$HORIZON_ROOT/Projects"
 
-export HORIZON_SYSTEM HORIZON_ROOT HORIZON_BIN HORIZON_ETC HORIZON_DOCS HORIZON_SOUNDS HORIZON_LOGS
+export HORIZON_SYSTEM HORIZON_ROOT HORIZON_BIN HORIZON_ETC HORIZON_DOCS HORIZON_SOUNDS HORIZON_LOGS HORIZON_USRBIN HORIZON_PROJECTS
 
 # -----------------------------------------------------------------------------
 # Helpers
@@ -98,6 +100,8 @@ else
   echo "    export HORIZON_BIN=\"\$HORIZON_SYSTEM/bin\""
   echo "    export HORIZON_ETC=\"\$HORIZON_SYSTEM/ai_os_etc\""
   echo "    export HORIZON_DOCS=\"\$HORIZON_SYSTEM/documentation\""
+  echo "    export HORIZON_USRBIN=\"\$HORIZON_ROOT/usrbin\""
+  echo "    export HORIZON_PROJECTS=\"\$HORIZON_ROOT/Projects\""
   echo "    export HORIZON_SOUNDS=\"\$HORIZON_SYSTEM/sounds\""
   echo "    export HORIZON_LOGS=\"\$HORIZON_SYSTEM/logs\""
   echo ""
