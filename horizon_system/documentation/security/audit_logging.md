@@ -1,9 +1,9 @@
 # Audit Logging — AIOS Filesystem Monitor
 
-The AIOS filesystem monitor (`$HORIZON_SYSTEM/sbin/monitor_aios.py`) watches
-`$HORIZON_SYSTEM` for unexpected file changes and logs events as JSON lines.
-It runs as the administrative context; brain accounts must not have write
-access to the log directory.
+The AIOS filesystem monitor (`$HORIZON_SYSTEM/sbin/monitor_aios.py`) watches the
+AIOS **system directories** for unexpected file changes and logs events as JSON
+lines. It runs as the administrative context; brain accounts must not have write
+access to the log directory (enforced by `harden_aios.py`).
 
 ---
 
@@ -18,33 +18,131 @@ Logs write to `$HORIZON_SYSTEM/logs/aios_monitor/monitor_YYYYMMDD.log`.
 
 ---
 
+## What Is Watched
+
+By default the monitor watches the AIOS system directories — the OS layer's
+integrity surface:
+
+| Path | Recursive | Why |
+|---|---|---|
+| `$HORIZON_SYSTEM` | yes | The AIOS layer (`bin`, `sbin`, `skills_bin`, `skills_sbin`, `ai_os_etc`, …) |
+| `$HORIZON_USRBIN` | yes | Shared tool repository + machine-local user skills |
+| `$HORIZON_ROOT/.claude` | yes | OS-layer harness config |
+| `$HORIZON_ROOT` | no | Top-level OS files (`agents.md`, `CLAUDE.md`, `.gitignore`) and structural changes — does **not** descend into `Projects/`, `brains/`, etc. |
+| `$HORIZON_ROOT/brains/` | no | The brains root is functionally a system folder; structural changes (a brain folder created/deleted/renamed) are tracked |
+
+The monitor's own log directory is always excluded (it sits inside the watched
+tree; logging its own writes would loop).
+
+**Brain internals are out of scope by default.** AIOS makes no presumption about
+what happens *inside* a brain — the memory system, file layout, and what counts
+as a problem there are the operator's domain. So brain home *contents* are not
+watched unless you opt in with `--brain-dirs` (or `brain_dirs = true` in the
+config), which escalates the brains-root watch to recursive.
+
+**Excluded by design:** `$HORIZON_PROJECTS` (the user's personal workspace) and
+`handoffs/` / `objectives/` (ephemeral session output) — they are not OS-layer
+state. Add any of them explicitly if you want them logged (see below).
+
+---
+
 ## Extending to Additional Paths
 
-Watch extra paths by repeating `--watch`:
+Three additive mechanisms, in precedence order (highest first):
+
+1. **CLI** — repeat `--watch` (recursive), toggle brains with `--brain-dirs` /
+   `--no-brains-root`:
+   ```sh
+   python monitor_aios.py --watch $HORIZON_PROJECTS/my-project --brain-dirs
+   ```
+2. **Environment** — `AIOS_MONITOR_PATHS` (OS path separator), plus
+   `AIOS_MONITOR_BRAIN_DIRS=1` / `AIOS_MONITOR_BRAINS_ROOT=0`.
+3. **Config file** — see below.
+
+---
+
+## Configuration File
+
+`$HORIZON_SYSTEM/sbin/monitor_aios.py` reads `$HORIZON_ETC/aios_monitor.conf`
+if present (override with `--config` or `AIOS_MONITOR_CONFIG`). Copy the
+template to create it:
 
 ```sh
-python monitor_aios.py --watch $HORIZON_USRBIN --watch $HORIZON_PROJECTS/my-project
+cp $HORIZON_SYSTEM/templates/aios_monitor.conf.template \
+   $HORIZON_ETC/aios_monitor.conf
 ```
 
-Or set `AIOS_MONITOR_PATHS` (OS path separator) in the environment and run
-with no arguments.
+It is machine-local and gitignored (like `aios_local.conf`). Directives:
+
+```ini
+watch = /abs/path          # extra path to watch recursively (repeatable)
+/abs/path                  # bare line — shorthand for "watch ="
+brain_dirs = true          # also watch into brain home dirs (recursive)
+watch_brains_root = false  # disable the default brains-root watch
+log_dir = /abs/path        # override the log directory
+```
 
 ---
 
 ## Log Format
 
-Each line is a JSON object:
+Each line is a JSON object. Every record carries provenance — `source` and the
+`horizon_root` it came from — so an aggregator can attribute events to a
+specific AIOS install:
 
 ```json
-{"ts": "2026-06-20T14:32:01.123456+00:00", "event": "modified", "src": "/path/to/file"}
-{"ts": "2026-06-20T14:32:05.654321+00:00", "event": "moved", "src": "/old", "dest": "/new"}
+{"ts": "2026-06-20T14:32:01.123456+00:00", "source": "horizon-aios", "horizon_root": "C:\\devroot", "event": "monitor_start", "watching": [{"path": "C:\\devroot\\horizon_system", "recursive": true}], "brain_dirs": false, "config": null}
+{"ts": "2026-06-20T14:32:03.123456+00:00", "source": "horizon-aios", "horizon_root": "C:\\devroot", "event": "modified", "src": "C:\\devroot\\horizon_system\\bin\\foo.py"}
+{"ts": "2026-06-20T14:32:05.654321+00:00", "source": "horizon-aios", "horizon_root": "C:\\devroot", "event": "moved", "src": "/old", "dest": "/new"}
 ```
 
-Events: `created`, `modified`, `deleted`, `moved`.
+Events: `created`, `modified`, `deleted`, `moved`, plus lifecycle
+`monitor_start` / `monitor_stop`.
 
 **Note:** This monitor detects file changes (writes). Read detection requires
 OS-level audit (Linux: `auditd` with `IN_ACCESS`; Windows: Security Audit /
 Object Access). Enabling OS audit is optional and outside the AIOS scope.
+
+---
+
+## Consuming the Logs (Administrators / SIEM)
+
+**Where the logs live.** Events are written to **disk** as newline-delimited
+JSON (JSON Lines) — one file per UTC day:
+
+```
+$HORIZON_SYSTEM/logs/aios_monitor/monitor_YYYYMMDD.log
+```
+
+Each line is a complete JSON object (see *Log Format*). There is no database
+and no network listener — the monitor only appends to these files. Every record
+is self-describing: `source` is always `"horizon-aios"` and `horizon_root`
+identifies the install, so logs from multiple machines or installs can be
+merged and still attributed unambiguously.
+
+**Getting them into your logging pipeline.** Because the format is plain
+JSON-lines on disk, any standard log shipper can tail the directory and forward
+to your SIEM with no transformation:
+
+| Tool | Pointer |
+|---|---|
+| Elastic **Filebeat** / **Winlogbeat** | `filebeat.inputs` → `type: filestream`, `paths: [".../logs/aios_monitor/monitor_*.log"]`, `parsers: [{ndjson: {}}]` |
+| **Fluent Bit** / Fluentd | `[INPUT] tail` on `monitor_*.log`, `[FILTER] parser` = `json` |
+| **NXLog** (common on Windows) | `im_file` reading the directory, `xm_json` to parse |
+| **Vector** | `sources.aios.type = "file"`, `include = [".../monitor_*.log"]`, decode as JSON |
+| **Splunk** Universal Forwarder | monitor stanza on the directory, `sourcetype=_json` |
+
+Point any of them at `$HORIZON_SYSTEM/logs/aios_monitor/`. Filter on
+`source="horizon-aios"` to isolate AIOS integrity events in your SIEM.
+
+**Pushing to the OS event log.** If you would rather consume events through the
+native OS log (Windows Event Log / Linux syslog) than tail files, run the
+analyzer with `--syslog` (see below) — it emits summaries to the OS log, which
+your existing collector already ingests.
+
+**Retention.** `maintain_logs.py` prunes/rotates these files
+(`AIOS_LOG_MAX_DAYS`, `AIOS_LOG_MAX_SIZE_MB`, `AIOS_LOG_MAX_ROTATIONS` in
+`aios_local.conf`). If your SIEM is the system of record, ship before pruning.
 
 ---
 

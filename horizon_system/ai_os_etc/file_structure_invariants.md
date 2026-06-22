@@ -84,7 +84,8 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   ├── docker/                     # Docker deployment templates (Dockerfile, docker-compose.yml, .dockerignore)
 │   │   ├── aios_overrides.md           # Template for project-level AIOS config overrides
 │   │   ├── aios_sounds.conf            # Template for per-project sound overrides (see Section 10)
-│   │   └── aios_statusline.conf        # Template for per-project statusline config (see Section 11)
+│   │   ├── aios_statusline.conf        # Template for per-project statusline config (see Section 11)
+│   │   └── aios_monitor.conf.template  # Template for filesystem-monitor config (see security/audit_logging.md)
 │   ├── harness_configs/                # Harness-specific config (sounds maps, etc.)
 │   ├── logs/                           # $HORIZON_LOGS — canonical audit/operational logs; brains: DENY; scaffold tracked, content gitignored
 │   └── scripts/                        # Admin setup scripts (create_brain.py, etc.)

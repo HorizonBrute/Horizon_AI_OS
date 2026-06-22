@@ -592,6 +592,7 @@ usrbin/usr_skills/
 
 # Machine-local AIOS configuration (generated from template; never committed)
 horizon_system/ai_os_etc/aios_local.conf
+horizon_system/ai_os_etc/aios_monitor.conf
 
 # Machine-local personal project ignore list (copy .gitignore.user.template → .gitignore.user)
 .gitignore.user

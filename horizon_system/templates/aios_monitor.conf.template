@@ -1,0 +1,34 @@
+# Horizon AIOS — Filesystem Monitor Configuration
+# Copy to horizon_system/ai_os_etc/aios_monitor.conf and edit. Never commit.
+#
+# Read by $HORIZON_SYSTEM/sbin/monitor_aios.py. Resolution precedence
+# (highest first): CLI flags > environment > this file > built-in defaults.
+# The monitor watches the AIOS system directories by default; the directives
+# below ADD to that set or toggle the brain-watch behavior. Lines starting
+# with '#' are comments. See $HORIZON_DOCS/security/audit_logging.md.
+
+# ---------------------------------------------------------------------------
+# Extra directories to watch (recursive). Repeat the line per directory.
+# A bare path is shorthand for "watch = <path>". Use absolute paths.
+# ---------------------------------------------------------------------------
+# watch = C:\devroot\Projects\my-critical-project
+# watch = /var/data/shared
+
+# ---------------------------------------------------------------------------
+# Brains
+# ---------------------------------------------------------------------------
+# The brains ROOT ($HORIZON_ROOT/brains) is watched by default, non-recursively
+# — structural changes only (a brain folder created/deleted/renamed). AIOS makes
+# no presumption about what happens inside a brain.
+
+# true  -> also watch INTO each brain home directory (recursive). Opts in to
+#          logging brain internals (the operator's domain).
+# brain_dirs = false
+
+# false -> do not watch the brains root at all.
+# watch_brains_root = true
+
+# ---------------------------------------------------------------------------
+# Log directory override. Default: $HORIZON_SYSTEM/logs/aios_monitor/
+# ---------------------------------------------------------------------------
+# log_dir = /var/log/horizon-aios/aios_monitor
