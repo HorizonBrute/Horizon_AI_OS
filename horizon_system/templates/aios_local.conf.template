@@ -28,6 +28,23 @@ AIOS_REPO_BRANCH=main
 # read-only access. See $HORIZON_DOCS/sync_setup.md.
 
 # ---------------------------------------------------------------------------
+# User-data backup (memory, handoffs, objectives -> YOUR remote)
+# ---------------------------------------------------------------------------
+# backup_user_data.py force-adds these paths to a per-machine branch on YOUR
+# remote WITHOUT editing the framework .gitignore (so upstream updates never
+# conflict). It REFUSES to push to the public Horizon upstream. See
+# $HORIZON_DOCS/system/distribution_and_updates.md.
+
+# Your OWN git remote (name or URL). Required for backups. Never the public upstream.
+# AIOS_BACKUP_REMOTE=
+
+# Branch to push backups to. Default: aios-backup/<hostname> (per-machine; avoids divergence).
+# AIOS_BACKUP_BRANCH=
+
+# Space-separated paths to back up. Default: memory handoffs objectives
+# AIOS_BACKUP_PATHS=memory handoffs objectives
+
+# ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
 

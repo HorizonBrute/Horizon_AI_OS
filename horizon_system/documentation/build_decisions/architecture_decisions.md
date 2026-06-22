@@ -69,6 +69,16 @@ Entries are in reverse-chronological order at the top (newest first). Each entry
 
 ---
 
+### 2026-06-22 — Distribution & update model: framework vs. user-space
+
+**Decision:** A downstream install tracks Horizon AIOS as an `upstream` remote and keeps its own work + backups on its own `origin`; updates arrive via `sync_aios.py` (fast-forward-only) or `git merge upstream/<branch>`. The repo splits into **framework** (upstream-owned: `horizon_system/**`, the tracked `.gitignore`, templates) and **user-space**, which upstream never writes: `.gitignore.user`, `aios_local.conf`, `~/.horizon/`, `~/.claude/`, `memory/`, `handoffs/`, `objectives/`, `brains/`, `*.local.*`, `aios_overrides.md`. The contract: **customize only through the user-space/override layers, never by editing framework files.** User data is backed up to the user's OWN remote via `sbin/backup_user_data.py` — it force-adds data to a per-machine branch, never edits the framework `.gitignore`, and refuses to push to the public upstream. `.gitattributes` sets `merge=union` on `.gitignore`/`.gitignore.user` so upstream and local ignore additions never conflict.
+
+**Rationale:** Editing the framework `.gitignore` to un-ignore data (the obvious but wrong move) makes every upstream update conflict. Force-adding to a separate per-machine backup branch keeps framework history clean and updates conflict-free while still giving cross-machine awareness. Fast-forward-only sync is a guardrail — if the user edited a framework file, the sync refuses rather than silently clobbering. The leak guard prevents the catastrophic case of pushing private transcripts to the public upstream.
+
+**Implications:** New `sbin/backup_user_data.py` + `AIOS_BACKUP_*` config keys; `.gitattributes` union-merge; `documentation/system/distribution_and_updates.md` is the authoritative model. Every future feature must respect the framework/user-space line: a feature that produces user data places it in user-space (gitignored), never tracked in the framework.
+
+---
+
 ### 2026-06-22 — AIOS switcher: machine-local registry + indirection layer
 
 **Decision:** A machine can host multiple Horizon AIOS installs and switch which one its local Claude config points at, via `horizon_system/sbin/aios_switch.py` and a self-healing named registry at `~/.horizon/aios_registry.json`. Two of the five machine-global pointers are decoupled through an indirection layer so a switch is a pointer write, not a re-stamp: env vars are sourced from a generated `~/.horizon/active_env.{ps1,sh}`, and `~/.claude/settings.json` points once at stable `~/.horizon/bin/aios-exec.{ps1,sh}` wrappers that resolve the active AIOS at run time. The CLAUDE.md redirect and skills junction are rewritten per switch; the sync schedule is advisory.

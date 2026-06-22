@@ -12,6 +12,13 @@ horizon_bin/harness_configs/git/hooks/*  text eol=lf
 # PowerShell — keep CRLF on Windows, LF elsewhere
 *.ps1               text eol=crlf
 
+# Merge policy — union-merge the ignore lists so an upstream addition and your
+# own local addition both survive a sync instead of conflicting. The framework
+# .gitignore is upstream-owned: prefer .gitignore.user for your own ignores.
+# See documentation/system/distribution_and_updates.md.
+.gitignore          merge=union
+.gitignore.user     merge=union
+
 # Explicitly binary — no line-ending conversion
 *.wav               binary
 *.mp3               binary
