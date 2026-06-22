@@ -74,10 +74,14 @@ the capability table above, the repo root, its platform, and these instructions:
 - **If ALL capabilities PASS on all in-scope platforms** → proceed to step 4.
 
 ### 4. Emit one admin/sudo test-run prompt per platform
-For each platform that fully passed, write a **single self-contained prompt** (to
-chat, and offer to save under `$HORIZON_DOCS/getting_started/` or a scratch path)
-that a **freshly installed Claude Code with Administrator/sudo** on the target
-machine can run end-to-end. Each prompt must:
+For each platform that fully passed, write a **single self-contained prompt** that
+a **freshly installed Claude Code with Administrator/sudo** on the target machine
+can run end-to-end. **Write it to the canonical path**
+`$HORIZON_DOCS/development_tools/<platform>_install_switch_uninstall_test_prompt.md`
+(e.g. `windows_install_switch_uninstall_test_prompt.md`) and register it in
+`documentation/index.md` in the same commit (CC-G4). These prompts are durable,
+shared lifecycle-test artifacts — useful to the owner and any future contributors —
+not throwaway scratch. Each prompt must:
 - State it requires elevation and a clean machine; never run on the dev box.
 - Walk the full lifecycle in order: clone → bootstrap → **create a brain** →
   **register + create a second AIOS in another dir** → **switch back and forth** →
