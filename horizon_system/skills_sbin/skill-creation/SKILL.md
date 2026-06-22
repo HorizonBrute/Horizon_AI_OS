@@ -12,12 +12,15 @@ Create a new AIOS skill with the required directory structure, frontmatter, and 
 
 ## Directory structure
 
-Skills live in one of two locations depending on access tier:
+Skills live in one of three locations depending on access tier:
 
 | Directory | Access | How it reaches Claude Code |
 |---|---|---|
 | `$HORIZON_SYSTEM/skills_sbin/<name>/` | Owner only (privileged) | `~/.claude/skills/` is a junction/symlink → `skills_sbin/` — live immediately |
 | `$HORIZON_SYSTEM/skills_bin/<name>/` | All brains (group-readable) | Brain users' `~/.claude/skills/` is a junction/symlink → `skills_bin/` — live immediately |
+| `$HORIZON_USRBIN/usr_skills/<name>/` | Owner only; **machine-local, gitignored, never synced** | `register_user_skills.py` junctions it into `skills_sbin/` — surfaces flat alongside OS skills |
+
+**OS skills vs user skills:** `skills_bin`/`skills_sbin` are OS-level — tracked, shared, and overwritable by an upstream sync. `usr_skills` is for personal skills you do not want in the OS repo or at risk from sync. They register cohesively (same flat namespace) but live separately.
 
 Each skill is a **directory** containing exactly one required file: `SKILL.md`.
 
@@ -50,7 +53,11 @@ Optional fields: `model`, `isolation`.
 
 ### Step 1 — Choose the tier
 
-1.1 Is this skill safe for all brain users (group members) to invoke?
+1.1 Is this a personal/machine-local skill that should NOT enter the OS repo (and should survive upstream syncs)?
+- Yes → `usr_skills` (user tier). Skip to the user-tier flow at the end of Step 2.
+- No → continue to 1.2.
+
+1.2 Is the skill safe for all brain users (group members) to invoke?
 - Yes → `skills_bin`
 - No (admin/owner-only, touches privileged paths or user accounts) → `skills_sbin`
 
@@ -72,7 +79,12 @@ $HORIZON_SYSTEM/skills_sbin/<skill-name>/
 
 2.3 Name the skill with a lowercase hyphenated slug that matches the intended `/slash-command` name.
 
-### Step 3 — Update the index
+**User-tier flow (`usr_skills`):** if you chose the user tier in Step 1.1:
+- Create `$HORIZON_USRBIN/usr_skills/<skill-name>/SKILL.md` (same frontmatter and body rules).
+- Register it: run `python "$HORIZON_SYSTEM/sbin/register_user_skills.py"` (or invoke `/resync-user-skills`). This junctions it into `skills_sbin/` so it loads flat.
+- Do **not** touch any index or commit anything — user skills are machine-local and gitignored. Skip Steps 3 and the commit; go to Step 4.
+
+### Step 3 — Update the index (OS skills only)
 
 3.1 Open the index for the chosen tier:
 - `$HORIZON_SYSTEM/skills_bin/index.md`
@@ -84,7 +96,9 @@ $HORIZON_SYSTEM/skills_sbin/<skill-name>/
 | <skill-name> | `/<skill-name>` | <one-line purpose> |
 ```
 
-3.3 The index update and the SKILL.md creation must be in the **same commit**.
+3.3 **If the tier is `skills_sbin`**, also add the new skill to the whitelist in `$HORIZON_SYSTEM/skills_sbin/.gitignore` (two lines: `!<skill-name>/` and `!<skill-name>/**`). That file ignores everything by default so user-skill junctions stay out of git; a new OS skill must be explicitly re-included or it will be untracked.
+
+3.4 The index update, the `.gitignore` whitelist update (sbin), and the SKILL.md creation must be in the **same commit**.
 
 ### Step 4 — Deploy (automatic via junction)
 
@@ -101,11 +115,12 @@ No manual copy needed. `~/.claude/skills/` is a junction/symlink to `skills_sbin
 
 ## Checklist
 
-- [ ] Directory created at correct tier (`skills_bin` or `skills_sbin`)
+- [ ] Directory created at correct tier (`skills_bin`, `skills_sbin`, or `usr_skills`)
 - [ ] `SKILL.md` has valid YAML frontmatter with `name`, `description`, `tools`
 - [ ] `name` in frontmatter matches directory name
 - [ ] `description` is specific enough for agent routing (not just "does X")
-- [ ] `index.md` updated in the same commit
+- [ ] **OS skill:** `index.md` updated in the same commit; if `skills_sbin`, `.gitignore` whitelist updated too
+- [ ] **User skill:** registered via `register_user_skills.py` / `/resync-user-skills`; nothing committed
 - [ ] Claude Code restarted to load the new skill (junction is live; restart is sufficient)
 
 ---
@@ -113,5 +128,6 @@ No manual copy needed. `~/.claude/skills/` is a junction/symlink to `skills_sbin
 ## Notes for the executing agent
 
 - Never create a flat `<skill-name>.md` file directly in `skills_bin/` or `skills_sbin/`. The directory-per-skill structure is required — bootstrap and doctor.py both check for it.
+- User-skill junctions appear inside `skills_sbin/` but must never be committed; the `skills_sbin/.gitignore` whitelist keeps them out of git. If a new OS skill is missing from that whitelist it will be silently untracked — always update it when adding an sbin skill.
 - The `name` frontmatter field is what Claude Code uses to register the `/slash-command`. It must exactly match the directory name.
 - If the user already has the skill deployed at `~/.claude/skills/` from a previous run, bootstrap will prompt before overwriting (or auto-overwrite with `--yes`).

@@ -11,4 +11,5 @@ Owner-only privileged skills. Brain users must not have access to this directory
 |---|---|---|
 | handoff | `/handoff` | Write a structured session handoff document |
 | objective | `/objective` | Create/list/show/update durable multi-session objectives that handoffs chain back to |
+| resync-user-skills | `/resync-user-skills` | Rebuild junctions registering machine-local user skills (usrbin/usr_skills) into skills_sbin |
 | skill-creation | `/skill-creation` | Create a new AIOS skill with correct structure and index registration |

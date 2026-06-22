@@ -1,0 +1,17 @@
+# skills_sbin contains tracked OS skills AND machine-local junctions to user
+# skills in $HORIZON_USRBIN/usr_skills (created by register_user_skills.py).
+# git traverses Windows junctions, so without this whitelist those user skills
+# would be staged into the OS repo. Ignore everything, then re-include each
+# tracked OS skill. When adding a new OS skill here, add it to this whitelist
+# (skill-creation enforces this in the same commit).
+*
+!.gitignore
+!index.md
+!handoff/
+!handoff/**
+!objective/
+!objective/**
+!skill-creation/
+!skill-creation/**
+!resync-user-skills/
+!resync-user-skills/**

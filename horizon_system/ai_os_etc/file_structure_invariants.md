@@ -49,15 +49,19 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   ├── doctor.py                   # System health check
 │   │   ├── monitor_aios.py             # Filesystem audit monitor
 │   │   ├── maintain_logs.py            # Log pruning and rotation
+│   │   ├── register_user_skills.py     # (Re)link usr_skills into skills_sbin (see Section 7)
 │   │   ├── setup_sync_schedule.py      # Upstream sync scheduler
 │   │   └── [other privileged scripts]
 │   ├── skills_bin/                     # Group-readable AIOS skills; brains: R+X explicit (see Section 7)
 │   │   └── index.md                    # Skills index — check this first; update when adding a skill
 │   ├── skills_sbin/                    # Owner-only privileged skills; brains: DENY (see Section 7)
 │   │   ├── index.md
+│   │   ├── .gitignore                  # Whitelist: tracks OS skills, ignores user-skill junctions (see Section 7)
 │   │   ├── handoff/                    # /handoff skill (owner-only)
 │   │   │   └── SKILL.md
 │   │   ├── objective/                  # /objective skill (owner-only)
+│   │   │   └── SKILL.md
+│   │   ├── resync-user-skills/         # /resync-user-skills skill (owner-only)
 │   │   │   └── SKILL.md
 │   │   └── skill-creation/             # /skill-creation skill (owner-only)
 │   │       └── SKILL.md
@@ -82,6 +86,8 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   ├── harness_configs/                # Harness-specific config (sounds maps, etc.)
 │   └── scripts/                        # Admin setup scripts (create_brain.py, etc.)
 ├── usrbin/                             # $HORIZON_USRBIN — tool repository; admin draws from here to provision brains (see Section 8)
+│   ├── usr_skills/                     # Machine-local user skills; gitignored; linked into skills_sbin (see Section 7)
+│   │   └── <skill-name>/SKILL.md
 │   └── [installed tools and apps]/     # Admin: full access. Brains: no default access — provisioned selectively per brain.
 └── Projects/                           # $HORIZON_PROJECTS — primary user's project workspace (see Section 8)
     └── [project folders]/              # Primary user sets filesystem permissions per project; no default convention
@@ -173,16 +179,21 @@ This convention applies to all vendor-scoped subdirectories in $HORIZON_SYSTEM, 
 
 AIOS skills define slash commands (e.g., `/handoff`) available in Claude Code sessions. Each skill is a **directory** (not a flat `.md` file) containing a `SKILL.md` with YAML frontmatter (`name:`, `description:`, optional `tools:`).
 
-Skills are split across two source directories mirroring the bin/sbin security model:
+Skills come in two classes — OS skills (tracked, shared, overwritable by upstream sync) and user skills (machine-local, gitignored, never synced) — across three source directories:
 
-| Directory | Access | Purpose |
-|---|---|---|
-| `$HORIZON_SYSTEM/skills_bin/<name>/SKILL.md` | Group-readable — all brains may execute | Standard skills |
-| `$HORIZON_SYSTEM/skills_sbin/<name>/SKILL.md` | Owner-only — brain users denied access | Privileged skills |
+| Directory | Class | Access | Purpose |
+|---|---|---|---|
+| `$HORIZON_SYSTEM/skills_bin/<name>/SKILL.md` | OS | Group-readable — all brains may execute | Standard skills |
+| `$HORIZON_SYSTEM/skills_sbin/<name>/SKILL.md` | OS | Owner-only — brain users denied access | Privileged skills |
+| `$HORIZON_USRBIN/usr_skills/<name>/SKILL.md` | User | Owner-only — machine-local, gitignored | Personal skills kept out of the OS repo and safe from sync |
 
-Each directory contains an `index.md` listing all skills it holds. **Always check `index.md` first** before searching individual skill files. **When adding a skill, update the index in the same commit.**
+Each OS directory contains an `index.md` listing its skills. **Always check `index.md` first** before searching individual skill files. **When adding an OS skill, update the index in the same commit.** User skills are not indexed (machine-local).
 
 `~/.claude/skills/` is a junction (Windows) or symlink (Unix/macOS) pointing to `$HORIZON_SYSTEM/skills_sbin/` for the primary user, and to `$HORIZON_SYSTEM/skills_bin/` for brain users. Skills are live on disk with no copy step — only a Claude Code session restart is needed after adding or editing a skill. Bootstrap creates the primary user junction; `create_brain.py` creates the brain junction.
+
+**User-skill registration.** A user skill in `usr_skills/` is surfaced by a per-skill junction at `skills_sbin/<name>` → the user skill, created by `$HORIZON_SYSTEM/sbin/register_user_skills.py` (run directly or via `/resync-user-skills`). It then appears flat through the `~/.claude/skills` junction, in the same namespace as OS skills. The script is idempotent: it (re)links every `usr_skills/<name>/` that has a `SKILL.md`, prunes stale links, and refuses to shadow a real OS skill of the same name. Because the links are untracked and an upstream sync can refresh `skills_sbin`, re-run it after a sync to rebuild them from `usr_skills` (the source of truth).
+
+**Invariant — git must not capture user-skill junctions.** git traverses Windows junctions, so `skills_sbin/.gitignore` is a whitelist: it ignores everything, then re-includes each tracked OS skill (and `index.md`, `.gitignore`). User-skill junctions are thus invisible to git. When adding a new `skills_sbin` OS skill, add it to this whitelist in the same commit or it will be silently untracked.
 
 Invariant: never edit skills directly in `~/.claude/skills/`. Always edit at the source in the repo. There is no deployed copy — the junction points directly to the source.
 

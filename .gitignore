@@ -581,6 +581,9 @@ handoffs/
 # Objective artifacts (machine-local durable goals; not version history)
 objectives/
 
+# Machine-local user skills (linked into skills_sbin at runtime; never tracked)
+usrbin/usr_skills/
+
 # Machine-local config overrides (configured from templates; never committed)
 *.local.json
 
