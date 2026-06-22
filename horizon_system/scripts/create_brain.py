@@ -602,7 +602,7 @@ def _phase3_windows(brain_name, invoking_user,
             run(['icacls', path,
                  '/inheritance:r',
                  '/grant', f'{invoking_user}:(OI)(CI)F',
-                 '/deny',  f'{BRAINS_GROUP}:(OI)(CI)RX'],
+                 '/deny',  f'{BRAINS_GROUP}:(OI)(CI)F'],
                 dry_run=dry_run)
 
     # -- Brain ~/.claude/skills/ → skills_bin/ (junction; no admin needed) --
