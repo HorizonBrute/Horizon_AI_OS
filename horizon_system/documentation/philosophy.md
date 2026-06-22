@@ -46,6 +46,19 @@ Every architectural decision in Horizon AIOS should be evaluable against the que
 
 The principle of least privilege is no longer sufficient as a statement of intent. It must be enforced at the OS layer. "The developer is smart enough not to delete the database" is not a security model. "The developer's brain cannot authenticate to the database because it holds no credential for it" is.
 
+**What AIOS provides vs. what you must implement:**
+
+AIOS answers questions 2–6 fully: provisioning records, zero-default access, explicit ACLs, credential containment. Question 1 — *what did the agent actually do during a session* — requires OS-level audit that AIOS cannot provide portably across all platforms and deployments. AIOS provides the log directory, the filesystem change monitor (`monitor_aios.py`), and the isolation boundary. Full session-level audit requires integration with the infrastructure your organization already runs.
+
+Recommended OS-level audit integrations (implement in your environment):
+
+- **Linux:** `auditd` with `IN_ACCESS` rules on brain home directories and `$HORIZON_SYSTEM`. Rules like `auditctl -w /path/to/brains/brain_name -p rwxa -k brain_activity` capture reads, writes, executes, and attribute changes per brain. Pipe to your SIEM via `auditd` → `rsyslog` → your log aggregator.
+- **macOS:** Basic Security Module (BSM) / OpenBSM via `audit(8)`. Configure `/etc/security/audit_control` to capture `fc` (file create), `fd` (file delete), `fw` (file write), `fr` (file read) classes for brain accounts.
+- **Windows:** Security Audit → Object Access Auditing. Enable via Group Policy (`Computer Configuration → Windows Settings → Security Settings → Advanced Audit Policy → Object Access → Audit File System`). Set audit ACEs on brain folders using `icacls` or the Security tab. Events land in the Security Event Log and can be forwarded to your SIEM via Windows Event Forwarding.
+- **Docker:** Mount the log volume to your host or a log aggregator sidecar. Add your preferred logging driver (`json-file`, `fluentd`, `awslogs`, etc.) in `docker-compose.yml`. OS-level audit inside a container requires `--cap-add AUDIT_READ` and `auditd` in the container, or relies on the host's audit subsystem if using Linux namespaces.
+
+AIOS gives you the structure. The integration is yours to implement — it plugs directly into whatever audit and SIEM infrastructure your organization already operates.
+
 ---
 
 ## 4. Lean Into Existing IT Infrastructure
@@ -72,9 +85,9 @@ Horizon AIOS must be deployable as infrastructure, not just installed by hand.
 
 2. **Backend / server (native OS)** — same bootstrap as desktop, deployed on a remote or always-on server. Brains run as OS user accounts. Access is via SSH or remote session. Suitable for brains that run unattended (scheduled tasks, cron jobs, daemons) or for separating AI workloads from the user's desktop environment.
 
-3. **Docker container (AIOS as container)** — the entire AIOS layer runs in a container. Brains run as sub-containers or OS users within. Enables consistent deployment across machines, cloud environments, and CI/CD pipelines.
+3. **Docker container (AIOS as container)** — the entire AIOS layer runs in a container. Brains run as OS users within the container, exactly as in the native OS model. Enables consistent deployment across machines, cloud environments, and CI/CD pipelines. This is the supported Docker deployment mode.
 
-4. **Docker container (per-brain)** — each brain runs in its own container managed by the AIOS. AIOS is the orchestrator; Docker adds network and process isolation on top of the OS-level account isolation model.
+4. **Docker container (per-brain)** — each brain runs in its own container. This is outside AIOS scope and is a user implementation choice. BYOH applies here: if a brain's expert function requires container isolation, the brain author provisions and manages that container. The AIOS OS layer doesn't change; the brain's working directory and Claude configuration still live under `$HORIZON_ROOT/brains/<name>/`. The containerization of the brain itself is the author's engineering decision, not an AIOS feature.
 
 The desktop model is the design reference: if a feature works correctly on a user's desktop machine, it will work in server and container deployments. If a feature only works in server or container mode, it is not a core AIOS feature — it is a deployment-specific extension.
 

@@ -90,7 +90,7 @@ RUN mkdir -p /aios/horizon_system/logs \
 # Harden AIOS layer ACLs — must run as root (chown/chmod/setfacl need root).
 # Enforces security_invariants.md §2/§3/§5 before dropping to the aios user.
 # ---------------------------------------------------------------------------
-RUN python3 /aios/horizon_system/sbin/harden_aios.py --yes \
+RUN python3 /aios/horizon_system/sbin/harden_aios.py \
     || echo "[WARN] harden_aios.py exited non-zero — review ACLs manually"
 
 # ---------------------------------------------------------------------------
