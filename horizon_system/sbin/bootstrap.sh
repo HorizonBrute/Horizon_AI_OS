@@ -306,9 +306,53 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# SECTION 7: Verification
+# SECTION 7: System PATH
+# Adds $HORIZON_BIN to the system PATH via /etc/profile.d/horizon_aios.sh so
+# brain accounts and new login shells can run AIOS commands without manually
+# editing PATH. Removes stale horizon_system/bin entries first (AIOS switching).
+# On macOS, also writes to /etc/paths.d/horizon-aios for zsh via path_helper.
 # -----------------------------------------------------------------------------
-banner "SECTION 7: Verification"
+banner "SECTION 7: System PATH"
+
+PROFILE_D_FILE="/etc/profile.d/horizon_aios.sh"
+EXPANDED_BIN="$HORIZON_BIN"
+
+# Remove any stale horizon_system/bin line from /etc/profile.d/horizon_aios.sh
+if [ -f "$PROFILE_D_FILE" ]; then
+  # Strip lines that export PATH with a horizon_system/bin component
+  sed -i '/horizon_system\/bin/d' "$PROFILE_D_FILE"
+  ok "Removed stale horizon_system/bin entry from $PROFILE_D_FILE (if any)."
+fi
+
+# Append the current HORIZON_BIN to PATH in /etc/profile.d/horizon_aios.sh
+# Use the expanded path — /etc/profile.d/ files are sourced before HORIZON_BIN
+# is in scope, so variable references would not resolve correctly.
+mkdir -p /etc/profile.d
+{
+  echo "# Horizon AIOS — managed by bootstrap.sh (do not edit manually)"
+  echo "export PATH=\"$EXPANDED_BIN:\$PATH\""
+} >> "$PROFILE_D_FILE"
+chmod 644 "$PROFILE_D_FILE"
+ok "Added $EXPANDED_BIN to system PATH via $PROFILE_D_FILE"
+
+# macOS: also write to /etc/paths.d/ for zsh (path_helper reads this)
+case "$(uname -s)" in
+  Darwin)
+    PATHS_D_FILE="/etc/paths.d/horizon-aios"
+    # Remove stale horizon_system/bin entries
+    if [ -f "$PATHS_D_FILE" ]; then
+      sed -i '' '/horizon_system\/bin/d' "$PATHS_D_FILE"
+    fi
+    echo "$EXPANDED_BIN" >> "$PATHS_D_FILE"
+    chmod 644 "$PATHS_D_FILE"
+    ok "Added $EXPANDED_BIN to /etc/paths.d/horizon-aios (macOS zsh path_helper)"
+    ;;
+esac
+
+# -----------------------------------------------------------------------------
+# SECTION 8: Verification
+# -----------------------------------------------------------------------------
+banner "SECTION 8: Verification"
 
 echo ""
 
@@ -368,9 +412,9 @@ ok "All checks passed. Horizon AIOS is bootstrapped on this machine."
 echo ""
 
 # -----------------------------------------------------------------------------
-# SECTION 8: Local Config and Sync Schedule
+# SECTION 9: Local Config and Sync Schedule
 # -----------------------------------------------------------------------------
-banner "SECTION 8: Local Config and Sync Schedule"
+banner "SECTION 9: Local Config and Sync Schedule"
 
 LOCAL_CONF="$HORIZON_ETC/aios_local.conf"
 CONF_TEMPLATE="$HORIZON_SYSTEM/templates/aios_local.conf.template"
@@ -411,13 +455,13 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# SECTION 9: Harden AIOS layer ACLs (brains group)
+# SECTION 10: Harden AIOS layer ACLs (brains group)
 # Enforces security_invariants.md §2/§3/§5 — brains denied on sbin/skills_sbin/
 # logs, granted rx on bin/skills_bin, no write elsewhere in $HORIZON_SYSTEM.
 # FATAL: harden_aios.py failure exits bootstrap non-zero — ACL hardening is a
 # security requirement, not a best-effort step.
 # -----------------------------------------------------------------------------
-banner "SECTION 9: Harden AIOS layer ACLs"
+banner "SECTION 10: Harden AIOS layer ACLs"
 
 HARDEN_SCRIPT="$HORIZON_SYSTEM/sbin/harden_aios.py"
 if [ "${AIOS_SKIP_HARDEN:-}" = "1" ]; then

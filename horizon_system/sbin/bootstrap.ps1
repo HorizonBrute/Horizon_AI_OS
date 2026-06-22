@@ -301,9 +301,40 @@ if (Test-Path $GitDir) {
 }
 
 # -----------------------------------------------------------------------------
-# SECTION 7: Verification
+# SECTION 7: System PATH
+# Adds $HORIZON_SYSTEM\bin to the Machine-scope PATH so brain accounts and new
+# shells can run AIOS commands without manually editing PATH.
+# Removes any stale horizon_system\bin entry first (handles AIOS switching).
 # -----------------------------------------------------------------------------
-Banner "SECTION 7: Verification"
+Banner "SECTION 7: System PATH"
+
+$MachinePath = [System.Environment]::GetEnvironmentVariable("Path", "Machine")
+$PathEntries = $MachinePath -split ";" | ForEach-Object { $_.TrimEnd('\').TrimEnd('/') }
+
+# Remove stale entries: any path ending with horizon_system\bin (case-insensitive)
+$Cleaned = $PathEntries | Where-Object {
+    $_ -notmatch '(?i)horizon_system[/\\]bin$'
+}
+
+$BinPath = $HORIZON_BIN.TrimEnd('\')
+
+if ($Cleaned -contains $BinPath) {
+    Ok "System PATH already contains: $BinPath — no change needed."
+} else {
+    $NewPath = ($Cleaned + @($BinPath)) -join ";"
+    [System.Environment]::SetEnvironmentVariable("Path", $NewPath, "Machine")
+    Ok "Added to system PATH: $BinPath"
+}
+
+# Refresh current session PATH so the change is immediately visible
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
+            [System.Environment]::GetEnvironmentVariable("Path", "User")
+Ok "Refreshed session PATH."
+
+# -----------------------------------------------------------------------------
+# SECTION 8: Verification
+# -----------------------------------------------------------------------------
+Banner "SECTION 8: Verification"
 
 Write-Host ""
 
@@ -372,9 +403,9 @@ Ok "All checks passed. Horizon AIOS is bootstrapped on this machine."
 Write-Host ""
 
 # -----------------------------------------------------------------------------
-# SECTION 8: Local Config and Sync Schedule
+# SECTION 9: Local Config and Sync Schedule
 # -----------------------------------------------------------------------------
-Banner "SECTION 8: Local Config and Sync Schedule"
+Banner "SECTION 9: Local Config and Sync Schedule"
 
 $localConf = Join-Path $HORIZON_ETC "aios_local.conf"
 $confTemplate = Join-Path $HORIZON_SYSTEM "templates\aios_local.conf.template"
@@ -412,13 +443,13 @@ if ($env:AIOS_DEPLOY_MODE -eq "docker") {
 }
 
 # -----------------------------------------------------------------------------
-# SECTION 9: Harden AIOS layer ACLs (brains group)
+# SECTION 10: Harden AIOS layer ACLs (brains group)
 # Enforces security_invariants.md §2/§3/§5 — brains denied on sbin/skills_sbin/
 # logs, granted RX on bin/skills_bin, no write elsewhere in $HORIZON_SYSTEM.
 # FATAL: harden_aios.py failure exits bootstrap non-zero — ACL hardening is a
 # security requirement, not a best-effort step.
 # -----------------------------------------------------------------------------
-Banner "SECTION 9: Harden AIOS layer ACLs"
+Banner "SECTION 10: Harden AIOS layer ACLs"
 
 $HardenScript = Join-Path $HORIZON_SYSTEM "sbin\harden_aios.py"
 if (Test-Path $HardenScript) {
