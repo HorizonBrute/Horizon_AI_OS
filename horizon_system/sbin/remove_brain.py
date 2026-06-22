@@ -61,6 +61,16 @@ try:
 except Exception:  # noqa: BLE001 — keyring cleanup is best-effort
     _cred_delete = None
 
+# Logon-rights cleanup (Windows). Any automation logon rights granted by
+# create_brain.py --automation must be revoked BEFORE the account is deleted,
+# while the SID still resolves. Best-effort; harmless if none were granted.
+try:
+    from brain_logon_rights import revoke as _revoke_logon_right, BATCH_LOGON, SERVICE_LOGON
+    _AUTOMATION_RIGHTS = (BATCH_LOGON, SERVICE_LOGON)
+except Exception:  # noqa: BLE001
+    _revoke_logon_right = None
+    _AUTOMATION_RIGHTS = ()
+
 
 # ---------------------------------------------------------------------------
 # Logging helpers (house style, matching create_brain.py)
@@ -193,6 +203,19 @@ def remove_windows(brain_name, brain_dir, dry_run):
     #    topology (~/.claude -> workspace) and the old one (~/.claude/skills).
     _remove_reparse(home_claude, dry_run)
     _remove_reparse(home_skills, dry_run)
+
+    # 1b. Revoke any AIOS automation logon rights BEFORE deleting the account,
+    #     while the SID still resolves. Idempotent: harmless if none were granted.
+    if _revoke_logon_right is not None and (dry_run or user_exists(brain_name, 'Windows')):
+        for right in _AUTOMATION_RIGHTS:
+            if dry_run:
+                print(f'  [DRY-RUN] revoke logon right (if held): {right} from {brain_name}')
+                continue
+            revoked, detail = _revoke_logon_right(brain_name, right)
+            if revoked:
+                info(f'Revoked logon right (if held): {right}')
+            else:
+                warn(f'Could not revoke {right}: {detail}')
 
     # 2. Remove the OS user account.
     if dry_run or user_exists(brain_name, 'Windows'):

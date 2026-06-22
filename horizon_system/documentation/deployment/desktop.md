@@ -92,6 +92,8 @@ So there is no separate "point the brain at AIOS" step: provisioning *is* that s
 
 On the desktop, you can switch to a brain session by logging in as that OS user (fast user switching) or by running the harness as that user (`runas /user:brain-name claude` on Windows).
 
+To let a brain run **unattended** (a scheduled task or service launching the harness with no human present), provision it with `--automation scheduled` and register a Task Scheduler task — see `brain_automation.md`.
+
 ### Removing a brain
 
 Deprovision a brain with the counterpart script (run elevated):

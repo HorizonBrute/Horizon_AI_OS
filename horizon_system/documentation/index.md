@@ -35,6 +35,7 @@ change** — run `/horizon_aios_documentation_index_update`. (Enforced by CC-G4 
 ## deployment
 | ID (path) | Title | Purpose |
 |---|---|---|
+| `horizon_system/documentation/deployment/brain_automation.md` | Horizon AIOS — Brain Automation | Opt-in, least-privilege OS logon rights (Windows `SeBatchLogonRight`/`SeServiceLogonRight`, Unix linger/systemd analogs) that let a brain run unattended via scheduled task or service; how to provision, register, and tear down. |
 | `horizon_system/documentation/deployment/desktop.md` | Horizon AIOS — Desktop Deployment | The primary local always-on deployment model: AIOS and brains run as OS accounts on the user's own machine. |
 | `horizon_system/documentation/deployment/docker.md` | Horizon AIOS — Docker Deployment | Deploying the AIOS layer as a Linux-based Docker container with brains as sub-containers or OS users. |
 | `horizon_system/documentation/deployment/server.md` | Horizon AIOS — Server / Headless Deployment | Running AIOS headless on a remote/always-on machine, accessed via SSH with the audit log as the operational interface. |

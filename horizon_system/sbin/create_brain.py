@@ -63,6 +63,14 @@ try:
 except Exception:
     _HAS_CRED_STORE = False
 
+# Optional logon-rights helper (brain_logon_rights.py in sbin/) — used only by
+# the opt-in --automation tiers to grant a Windows logon right to the brain.
+try:
+    from brain_logon_rights import grant as _grant_logon_right, holds as _holds_logon_right, BATCH_LOGON
+    _HAS_LOGON_RIGHTS = True
+except Exception:
+    _HAS_LOGON_RIGHTS = False
+
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -1174,6 +1182,7 @@ def _write_provision_manifest(ctx):
         'skills_bin_access': 'read+execute',
         'sbin_access':       'deny',
         'credential_store':  'OS native keystore (brain_credential.py)',
+        'automation':        ctx.get('automation', 'none'),
     }
     dest = os.path.join(brain_dir, '.aios_provision.json')
     try:
@@ -1183,6 +1192,65 @@ def _write_provision_manifest(ctx):
         info(f'Wrote provisioning manifest: {dest}')
     except OSError as exc:
         warn(f'Could not write provisioning manifest: {exc}')
+
+
+# ---------------------------------------------------------------------------
+# Automation: opt-in logon rights
+# ---------------------------------------------------------------------------
+
+def apply_automation(ctx, dry_run=False):
+    """
+    Grant the logon right required by the chosen automation tier.
+
+    'none'      — no-op (default; interactive/manual use only).
+    'scheduled' — Windows: grant SeBatchLogonRight ("Log on as a batch job") so
+                  the brain can be the principal of a Task Scheduler task set to
+                  "Run whether user is logged on or not". Unix: print the
+                  loginctl-linger / crontab guidance (Windows-first; not yet
+                  auto-applied).
+
+    Best-effort and warn-only: a failure here never aborts provisioning — the
+    brain is fully usable interactively, automation can be granted later.
+    """
+    level = ctx.get('automation', 'none')
+    if level == 'none':
+        return
+
+    banner('Automation: Logon Rights')
+    os_name = ctx['os_name']
+    brain   = ctx['brain_name']
+
+    if level == 'scheduled':
+        if os_name == 'Windows':
+            if dry_run:
+                print(f'  [DRY-RUN] grant {BATCH_LOGON} ("Log on as a batch job") to {brain}')
+                return
+            if not _HAS_LOGON_RIGHTS:
+                warn('brain_logon_rights module unavailable — grant "Log on as a '
+                     f'batch job" to "{brain}" manually (secpol.msc → Local Policies '
+                     '→ User Rights Assignment) for Task Scheduler use.')
+                return
+            info(f'Granting "Log on as a batch job" ({BATCH_LOGON}) to {brain}')
+            granted, detail = _grant_logon_right(brain, BATCH_LOGON)
+            if not granted:
+                warn(f'Could not grant batch-logon right: {detail}')
+                warn('  Grant it manually via secpol.msc if scheduled automation is needed.')
+                return
+            if _holds_logon_right(brain, BATCH_LOGON):
+                _report_check(f'{brain} holds "Log on as a batch job"', True)
+            else:
+                warn('Grant returned OK but verification does not show the right — '
+                     'inspect with: brain_logon_rights.py check ' + brain)
+            info('Brain can now be the principal of a Task Scheduler task set to')
+            info('  "Run whether user is logged on or not" (use the keystore password:')
+            info(f'  python brain_credential.py get {brain} --show).')
+        else:
+            # Unix scheduled tier == per-user lingering + crontab. Windows-first:
+            # surface the exact commands rather than applying them automatically.
+            info('Scheduled-tier automation on Unix (apply manually):')
+            info(f'  systemd:  loginctl enable-linger {brain}   # run user services without an active login')
+            info(f'  cron:     crontab -u {brain} -e            # schedule jobs as the brain')
+            info('  (cross-platform analog of Windows batch-logon; not auto-applied)')
 
 
 # ---------------------------------------------------------------------------
@@ -1211,6 +1279,19 @@ def parse_args():
         ),
     )
     parser.add_argument(
+        '--automation',
+        choices=['none', 'scheduled'],
+        default='none',
+        help=(
+            'Opt-in automation profile (default: none). '
+            '"scheduled" grants the brain the OS logon right needed to be the '
+            'principal of a scheduled task — Windows: "Log on as a batch job" '
+            '(SeBatchLogonRight), for Task Scheduler "Run whether user is logged '
+            'on or not"; Unix: prints the loginctl-linger / crontab guidance. '
+            '"none" grants no logon rights (interactive/manual use only).'
+        ),
+    )
+    parser.add_argument(
         '--dry-run',
         action='store_true',
         default=False,
@@ -1233,6 +1314,9 @@ def main():
         error(f'Unexpected error in Phase 1: {exc}')
         sys.exit(1)
 
+    # Carry the chosen automation tier through to the rights step and manifest.
+    ctx['automation'] = args.automation
+
     try:
         phase2_create_user_and_groups(ctx, dry_run=args.dry_run)
     except subprocess.CalledProcessError as exc:
@@ -1246,6 +1330,12 @@ def main():
     except Exception as exc:
         error(f'Unexpected error in Phase 2: {exc}')
         sys.exit(2)
+
+    try:
+        apply_automation(ctx, dry_run=args.dry_run)
+    except Exception as exc:
+        warn(f'Automation logon-rights step failed: {exc}')
+        warn('Brain is provisioned; grant the logon right manually if needed.')
 
     try:
         phase3_folders_and_permissions(ctx, dry_run=args.dry_run)
