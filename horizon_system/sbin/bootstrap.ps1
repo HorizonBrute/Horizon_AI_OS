@@ -1,4 +1,4 @@
-# =============================================================================
+﻿# =============================================================================
 # Horizon AIOS - Bootstrap Script (PowerShell)
 # Sets up a new machine with all required Horizon AIOS configuration.
 # Safe to run multiple times (idempotent). Non-destructive by default.
