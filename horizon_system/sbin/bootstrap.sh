@@ -294,6 +294,28 @@ else
   fi
 fi
 
+# 5c: Redirect ~/.claude/projects into $HORIZON_ROOT/memory (owner harness memory).
+# Migrates the Claude harness's per-project state into the AIOS so memory is
+# owned by the OS layer. The script junctions ~/.claude/projects → $HORIZON_ROOT/
+# memory, backing up any existing real directory first. Idempotent: re-running
+# no-ops if already redirected, so it is safe to always call.
+# NOTE: Have Claude Code closed when bootstrap runs — the script moves the live
+# projects directory (it leaves a backup if one was present).
+REDIRECT_MEMORY_SCRIPT="$HORIZON_SYSTEM/sbin/redirect_memory.py"
+if [ -f "$REDIRECT_MEMORY_SCRIPT" ]; then
+  if command -v python3 >/dev/null 2>&1; then
+    if python3 "$REDIRECT_MEMORY_SCRIPT"; then
+      ok "~/.claude/projects redirected to \$HORIZON_ROOT/memory."
+    else
+      warn "redirect_memory.py exited non-zero."
+    fi
+  else
+    warn "python3 not found - skipping memory redirect. Run later: python3 $REDIRECT_MEMORY_SCRIPT"
+  fi
+else
+  warn "redirect_memory.py not found at $REDIRECT_MEMORY_SCRIPT - skipping memory redirect."
+fi
+
 # -----------------------------------------------------------------------------
 # SECTION 6: Git hooks path
 # -----------------------------------------------------------------------------

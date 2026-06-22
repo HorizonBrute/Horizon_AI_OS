@@ -159,6 +159,7 @@ The Horizon AIOS git repository is designed for community release. This means:
 - `.gitignore` must exclude: local settings overrides, brain folders, credential files, session data, and any file that contains a real path or secret.
 - The `.claude/settings.json` at $HORIZON_ROOT is committed because it contains only devroot-scoped permissions and no personal data. If it ever acquires personal data, it must be moved to a gitignored local override.
 - AI agents operating in this repo must refuse to commit files containing hardcoded personal paths or credentials. If such content is detected, the agent must flag it and halt.
+- `$HORIZON_ROOT/memory/` holds redirected per-project harness state — conversation **transcripts** (sensitive) and agent memory. It is gitignored and must never be committed or synced. Brain memory is isolated per-brain by group: each brain's `~/.claude` redirects into its own group-owned `brains/<name>/.claude/`, so no brain sees the owner's or another brain's memory (see §2). See `$HORIZON_DOCS/system/memory.md`.
 
 ---
 

@@ -27,6 +27,7 @@ change** — run `/horizon_aios_documentation_index_update`. (Enforced by CC-G4 
 | ID (path) | Title | Purpose |
 |---|---|---|
 | `horizon_system/documentation/system/aios_switching.md` | Switching between AIOSs | Run multiple AIOS installs on one machine and switch which one the local Claude config points at, via `aios_switch.py`. |
+| `horizon_system/documentation/system/memory.md` | Harness Memory and Per-Project State | Where harness transcripts and agent memory live (`$HORIZON_ROOT/memory/` via the `~/.claude/projects` junction), how the owner/brain redirects work, why it's centralized, and that uninstalling the AIOS destroys memory unless the user backs it up first. |
 | `horizon_system/documentation/system/system_configuration_reference.md` | Horizon AIOS — System Configuration Reference | Authoritative reference for the full configuration architecture: what each file controls, dependencies, and how components fit together. |
 
 ## deployment

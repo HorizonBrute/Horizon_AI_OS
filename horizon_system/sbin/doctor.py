@@ -103,6 +103,38 @@ def check_skills(horizon_system):
 
 
 # ---------------------------------------------------------------------------
+# 2b. Harness memory redirect
+# Claude Code's ~/.claude/projects/ holds per-project memory. redirect_memory.py
+# replaces it with a junction/symlink into $HORIZON_ROOT/memory/ so harness
+# memory falls under AIOS governance. Use resolve() as the authoritative check —
+# same rationale as check_skills (NTFS junctions aren't reliably detected by
+# os.path.islink()).
+# ---------------------------------------------------------------------------
+def check_memory_redirect(horizon_root):
+    memory_dir = horizon_root / "memory"
+    projects_dst = Path.home() / ".claude" / "projects"
+
+    if not projects_dst.exists():
+        warn("Memory: ~/.claude/projects/",
+             "does not exist — Claude Code may not have run yet")
+        return
+
+    try:
+        actual_target = projects_dst.resolve()
+        expected_target = memory_dir.resolve()
+        if actual_target == expected_target:
+            ok("Memory: harness memory redirected into AIOS")
+        elif actual_target == projects_dst.absolute():
+            warn("Memory: ~/.claude/projects/",
+                 "harness memory not under AIOS governance — run sbin/redirect_memory.py "
+                 "with Claude Code closed, then restart")
+        else:
+            fail("Memory: redirect target", f"expected {expected_target}, got {actual_target}")
+    except OSError as e:
+        warn("Memory: redirect target", f"could not resolve target: {e}")
+
+
+# ---------------------------------------------------------------------------
 # 3 & 4. Git hooks installed
 # ---------------------------------------------------------------------------
 def check_hook(name, hook_filename, harness_configs_git_hooks, horizon_root):
@@ -393,6 +425,7 @@ def main():
     if horizon_root:
         check_gitignore_user(horizon_root)
         check_claude_md(horizon_root)
+        check_memory_redirect(horizon_root)
     else:
         fail(".gitignore.user / CLAUDE.md", "skipped — $HORIZON_ROOT not available")
 

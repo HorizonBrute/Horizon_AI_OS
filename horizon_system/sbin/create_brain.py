@@ -603,10 +603,12 @@ def _phase3_windows(brain_name, invoking_user,
     # -- Brain folder: isolate it (drop inherited ACEs) but never strip the
     #    principals that must retain control. Well-known SIDs are locale-safe:
     #    *S-1-5-18 = SYSTEM, *S-1-5-32-544 = BUILTIN\Administrators.
+    brain_group = f'{brain_name}_group'
     info(f'Setting ACLs on brain folder: {brain_dir}')
     run(['icacls', brain_dir,
          '/inheritance:r',
          '/grant', f'{brain_name}:(OI)(CI)F',
+         '/grant', f'{brain_group}:(OI)(CI)F',
          '/grant', f'{invoking_user}:(OI)(CI)F',
          '/grant', '*S-1-5-18:(OI)(CI)F',
          '/grant', '*S-1-5-32-544:(OI)(CI)F'],

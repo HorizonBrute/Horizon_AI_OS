@@ -20,6 +20,12 @@ surface:
                                makes NO presumption about what happens *inside* a
                                brain — that is the operator's domain — so brain
                                home contents are NOT watched unless asked.
+  - $HORIZON_ROOT/memory/      (non-recursive) — AIOS-governed location for the
+                               Claude harness's per-project state. Structural
+                               changes to the top-level per-project dirs are
+                               tracked, but contents are NOT (transcripts churn
+                               on every assistant message — recursive watching
+                               would flood the audit log).
 
 Excluded by design: $HORIZON_PROJECTS (the user's personal workspace) and
 handoffs/ & objectives/ (ephemeral session output) — not OS-layer state. Add
@@ -193,6 +199,11 @@ def _system_specs():
         (HORIZON_ROOT / "usrbin",   True),   # shared tools + machine-local user skills
         (HORIZON_ROOT / ".claude",  True),   # OS-layer harness config
         (HORIZON_ROOT,              False),  # top-level OS files (agents.md, CLAUDE.md, …)
+        # memory/ is AIOS-governed harness state. Watch NON-recursive: track
+        # structural changes (per-project dirs created/deleted/renamed) but do
+        # NOT descend — transcript content churns on every assistant message
+        # and recursive watching would flood the audit log.
+        (HORIZON_ROOT / "memory",   False),  # harness per-project state (structural only)
     ]
 
 

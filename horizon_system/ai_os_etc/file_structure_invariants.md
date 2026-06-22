@@ -39,6 +39,7 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   ├── CLAUDE.aios-dev.md              # Owner-only AIOS-dev directives; imported by the OWNER stub only, never by brains
 │   └── settings.json                   # Devroot-scoped permissions (no hooks, no statusLine)
 ├── handoffs/                           # Default output directory for /handoff skill (see Section 7)
+├── memory/                             # Redirected per-project harness state (transcripts + agent memory); gitignored; ~/.claude/projects junctions here (see documentation/system/memory.md)
 ├── objectives/                         # Default store for /objective skill — durable multi-session goals (see Section 7)
 ├── horizon_system/                     # $HORIZON_SYSTEM — OS system directory
 │   ├── VERSION                         # Canonical version file (SemVer)
@@ -170,7 +171,7 @@ The OS repo does not track (must be gitignored):
 - Brain folders and all their contents.
 - Local settings overrides (any `*.local.json` or `*.local` variants).
 - API keys, tokens, credentials, `.env` files.
-- Session data, conversation logs, cache directories.
+- Session data, conversation logs, cache directories — including `$HORIZON_ROOT/memory/`, where the owner's `~/.claude/projects` is junctioned (redirected per-project transcripts + agent memory; ships the mechanism, never content — see `documentation/system/memory.md`).
 - OS-specific generated files (`.DS_Store`, `Thumbs.db`, etc.).
 - Any file containing a hardcoded real path to this machine's filesystem.
 

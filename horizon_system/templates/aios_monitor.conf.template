@@ -29,6 +29,14 @@
 # watch_brains_root = true
 
 # ---------------------------------------------------------------------------
+# Memory (harness per-project state)
+# ---------------------------------------------------------------------------
+# $HORIZON_ROOT/memory is watched by default, non-recursively — structural
+# changes only (per-project dirs created/deleted/renamed). Contents are NOT
+# watched: transcripts churn on every assistant message and recursive watching
+# would flood the audit log. There is no toggle; it is part of the default set.
+
+# ---------------------------------------------------------------------------
 # Log directory override. Default: $HORIZON_SYSTEM/logs/aios_monitor/
 # ---------------------------------------------------------------------------
 # log_dir = /var/log/horizon-aios/aios_monitor
