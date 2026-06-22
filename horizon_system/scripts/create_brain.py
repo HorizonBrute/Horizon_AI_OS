@@ -341,10 +341,19 @@ def phase2_create_user_and_groups(ctx, dry_run=False):
 # ---- Windows implementation ----
 
 def _phase2_windows(brain_name, invoking_user, password, dry_run):
-    """Windows: use PowerShell Local* cmdlets."""
+    """Windows: use PowerShell Local* cmdlets.
+
+    NOTE — no per-brain group on Windows. Windows' SAM shares a single namespace
+    for local users and groups, so a group named after the brain would collide
+    with the brain user account: New-LocalUser fails with "name already in use".
+    The per-brain group is also unused by any Windows ACL — the brain folder is
+    granted to the brain user + the owner + SYSTEM/Administrators directly (see
+    _phase3_windows), and bin/skills_bin use the shared `brains` group. So on
+    Windows we create only the shared `brains` group. (Unix keeps its
+    user-private-group, where users and groups are separate namespaces.)
+    """
 
     _win_create_group_if_absent(BRAINS_GROUP, dry_run)
-    _win_create_group_if_absent(brain_name, dry_run)
 
     info(f'Creating local user: {brain_name}')
     # Pass the password via an environment variable rather than interpolating it
@@ -355,18 +364,6 @@ def _phase2_windows(brain_name, invoking_user, password, dry_run):
     info(f'Adding {brain_name} to group: {BRAINS_GROUP}')
     run_ps(
         f'Add-LocalGroupMember -Group "{BRAINS_GROUP}" -Member "{brain_name}"',
-        dry_run=dry_run,
-    )
-
-    info(f'Adding {brain_name} to group: {brain_name}')
-    run_ps(
-        f'Add-LocalGroupMember -Group "{brain_name}" -Member "{brain_name}"',
-        dry_run=dry_run,
-    )
-
-    info(f'Adding invoking user ({invoking_user}) to group: {brain_name}')
-    run_ps(
-        f'Add-LocalGroupMember -Group "{brain_name}" -Member "{invoking_user}"',
         dry_run=dry_run,
     )
 
@@ -725,8 +722,11 @@ def phase4_verify(ctx, dry_run=False):
     results['in_brains_group'] = _check_group_membership(brain_name, BRAINS_GROUP, os_name)
     _report_check(f'User in "{BRAINS_GROUP}" group', results['in_brains_group'])
 
-    results['in_brain_group'] = _check_group_membership(brain_name, brain_name, os_name)
-    _report_check(f'User in "{brain_name}" group', results['in_brain_group'])
+    # Per-brain group exists on Unix only (Windows shares the user/group
+    # namespace, so no same-named group is created — see _phase2_windows).
+    if os_name != 'Windows':
+        results['in_brain_group'] = _check_group_membership(brain_name, brain_name, os_name)
+        _report_check(f'User in "{brain_name}" group', results['in_brain_group'])
 
     # -- Brain folder exists --
     results['brain_dir_exists'] = os.path.isdir(brain_dir)
