@@ -154,7 +154,23 @@ Any workflow or knowledge base set up in AIOS-standard format is portable across
 
 ---
 
-## 8. Evaluation: Current Implementation Against These Values
+## 8. Current Scope: Claude Code Only
+
+Section 7 frames AIOS as harness-agnostic, and that is the intended architecture. The current implementation is not there yet. Every concrete artifact — hook scripts, `settings.json` templates, the bootstrap paths, the statusline integration, the skill directory conventions — is implemented against Claude Code specifically. No other harness has a working integration.
+
+What is genuinely harness-neutral today: the conceptual model (brain isolation, the ACL boundary, the registry/switcher pattern, the provision record), the brain directory layout, and `agents.md` itself. `agents.md` is written in harness-neutral language deliberately — it should remain readable and actionable by any harness that supports an equivalent instruction file. The security model (OS users, explicit Deny ACLs, credential containment) has no Claude dependency and applies to any harness that runs as the brain OS user.
+
+Three harnesses have been identified as future targets to explore — not committed roadmap items, but the next logical candidates once the BYOH aspiration moves from design principle to implementation:
+
+- **Ollama** — a local model runtime with no equivalent to Claude Code's hook system or `~/.claude/` config. The open question: whether a parallel config convention (e.g., Modelfile SYSTEM blocks) can carry enough of the AIOS context-loading and hook semantics to make brain isolation meaningful. A minimal stub exists under `harness_configs/ollama/`; it does not yet answer this question.
+- **Codex** (OpenAI) — OpenAI's coding agent / CLI tooling. The open question: whether it has a config home analogous to `~/.claude/`, supports something equivalent to hooks, and can load AIOS context in the same way `@`-imports load it for Claude Code.
+- **LM Studio** — a local model GUI with an OpenAI-compatible API. The open question: whether the API compatibility layer is sufficient to share Codex-style integration, or whether the desktop GUI model requires a separate harness config path.
+
+For each of these, "adding harness support" would require at minimum: a parallel `settings_{harness}.json` template, equivalent hook scripts (or the best available substitute), a parallel bootstrap section, and a parallel `active_env` export in the switcher. The brain model, the ACL layer, and the registry are reusable as-is — they have no harness dependency. The work is in the integration scaffolding, not the OS layer.
+
+---
+
+## 9. Evaluation: Current Implementation Against These Values
 
 ### Aligned
 
