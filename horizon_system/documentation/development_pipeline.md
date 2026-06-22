@@ -73,6 +73,19 @@ Items are grouped by status, not priority — priority is implicit from the grou
   gone). Until then the Linux row in `tested_configurations.md` stays **Partial**.
   See `deployment/brain_automation.md`.
 
+- **macOS — effectively undeveloped/untested** — macOS support is the weakest of
+  the three platforms: it exists only as POSIX-compatible code paths that have
+  never been run on a real Mac. Specifics: `bootstrap.sh` is POSIX but unvalidated
+  on macOS; `create_brain.py`'s macOS branch (`dscl` / `dseditgroup` /
+  `createhomedir`) and `remove_brain.py`'s `dscl -delete` are unrun; the ACL model
+  needs macOS-native equivalents (no NTFS ACLs); and brain automation has **no**
+  applied path on macOS — `brain_logon_rights.py` is Windows-only and there is no
+  `launchd` equivalent of the Linux linger step, so both tiers are guidance only
+  (LaunchDaemon/LaunchAgent). Closing this needs a dedicated pass on real Apple
+  hardware: validate provisioning/removal, define the ACL approach, and implement
+  + verify the `launchd` automation path. The macOS row in
+  `tested_configurations.md` stays **Untested** until then.
+
 ---
 
 ## Known Gaps — Documentation
