@@ -201,6 +201,8 @@ generate the env snippets and wrapper scripts for the first time.
 - `register <name> <path>` — add or replace a named AIOS in the registry
 - `unregister <name>` — remove a registration (files untouched)
 - `switch <name> [--dry-run]` — repoint all pointers to the named AIOS
+- `uninstall [--yes]` — delegate to `uninstall.ps1` / `uninstall.sh` to remove
+  the bootstrap footprint (must be run elevated)
 
 Short-form commands are available once `$HORIZON_BIN` is on PATH (bootstrap
 adds it): `aios switch home`, `aios list`, etc. The wrappers `aios` (bash)
@@ -236,10 +238,15 @@ Does **not** delete the AIOS repo, brain home directories, or non-empty user dat
 
 **When to use it:** When decommissioning AIOS from a machine.
 
+**Invocation:** Run `aios uninstall [--yes]` (delegates to the platform script via
+`aios_switch.py`), or invoke the script directly. Both must be run elevated.
+
 **Key flags (both scripts):**
 
-- `--yes` / `-y` — skip interactive confirmations
-- `--dry-run` — print every action without making any changes
+- `--yes` / `-y` — skip interactive confirmations (non-interactive)
+
+There is no `--dry-run`; each destructive step is confirmed interactively unless
+`--yes` is passed.
 
 **Referenced by a skill?** No. See `$HORIZON_DOCS/system/aios_switching.md` §Uninstalling.
 

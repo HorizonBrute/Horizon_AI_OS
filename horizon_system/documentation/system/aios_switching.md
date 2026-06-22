@@ -60,6 +60,7 @@ aios unregister <name>         # remove a registration (files untouched)
 aios switch <name>             # point local config at <name>
 aios switch <name> --dry-run   # show what would change, change nothing
 aios init                      # onboarding: registry + env + wrappers
+aios uninstall                 # remove the bootstrap footprint (elevated)
 ```
 
 If `bin/` is not yet on PATH (e.g. before first bootstrap), use the long form:
@@ -123,21 +124,30 @@ that `active_env.*` + the wrappers are present.
 ## Uninstalling
 
 To remove all machine-local AIOS configuration (reverse everything bootstrap
-wrote) without deleting the repo or any user data, run as Administrator / root:
+wrote) without deleting the repo or any user data, run as Administrator / root.
+The `aios uninstall` shortcut delegates to the platform script for you:
+
+```
+aios uninstall          # interactive — confirms each destructive step
+aios uninstall --yes    # non-interactive, accept all removals
+```
+
+The scripts can also be invoked directly:
 
 **Windows (Administrator PowerShell):**
 ```powershell
 .\horizon_system\sbin\uninstall.ps1
-.\horizon_system\sbin\uninstall.ps1 --dry-run   # preview, no changes
-.\horizon_system\sbin\uninstall.ps1 --yes        # non-interactive
+.\horizon_system\sbin\uninstall.ps1 --yes   # non-interactive
 ```
 
 **Linux / macOS (sudo):**
 ```bash
 sudo bash horizon_system/sbin/uninstall.sh
-sudo bash horizon_system/sbin/uninstall.sh --dry-run
 sudo bash horizon_system/sbin/uninstall.sh --yes
 ```
+
+(There is no `--dry-run`; the scripts confirm each destructive step interactively
+unless `--yes` is given.)
 
 The scripts are section-by-section mirrors of bootstrap — they remove the skills
 junction, CLAUDE.md redirect, active-env files, aios-exec wrappers, registry,
