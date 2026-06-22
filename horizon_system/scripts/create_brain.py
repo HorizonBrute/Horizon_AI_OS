@@ -759,7 +759,7 @@ def phase4_verify(ctx, dry_run=False):
     print(f'       $HORIZON_ROOT/brains/{brain_name}/.claude/CLAUDE.md')
     print(f'       $HORIZON_ROOT/brains/{brain_name}/.claude/settings.json')
     print(f'    3. Provision tools from $HORIZON_USRBIN into the brain folder as needed.')
-    print(f'    4. Retrieve account password: python brain_credential.py get {brain_name}')
+    print(f'    4. Retrieve account password: python brain_credential.py get {brain_name} --show')
     print(f'       (Stored in OS keystore. Windows Task Scheduler: use this password when setting up scheduled tasks.)')
     print(f'    5. Shell profile written at brain home — sets HORIZON_* env vars and')
     print(f'       changes to brain folder on interactive login as "{brain_name}".')

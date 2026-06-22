@@ -247,7 +247,7 @@ Anyone who clones the Horizon AIOS repo will not have these. They must be create
 
 ### 2026-06-20 — Centralized logging taxonomy
 
-**Decision:** All AIOS operational logs are centralized under `$HORIZON_ROOT/logs/` with subdirectories: `bootstrap/`, `brain_provisioning/`, `agents_output/`, `hooks/`, `brains/`. Log behavior is configurable via `aios_local.conf` (`AIOS_LOG_MAX_DAYS`, `AIOS_LOG_MAX_SIZE_MB`, `AIOS_LOG_MAX_ROTATIONS`). Weekly `maintain_logs.py` in `sbin/` handles pruning and rotation. The `logs/` directory content is gitignored; a `.gitkeep` scaffold is tracked.
+**Decision:** _(Path superseded — see Update below; canonical root is now `$HORIZON_SYSTEM/logs/`.)_ All AIOS operational logs are centralized under `$HORIZON_ROOT/logs/` with subdirectories: `bootstrap/`, `brain_provisioning/`, `agents_output/`, `hooks/`, `brains/`. Log behavior is configurable via `aios_local.conf` (`AIOS_LOG_MAX_DAYS`, `AIOS_LOG_MAX_SIZE_MB`, `AIOS_LOG_MAX_ROTATIONS`). Weekly `maintain_logs.py` in `sbin/` handles pruning and rotation. The `logs/` directory content is gitignored; a `.gitkeep` scaffold is tracked.
 
 **Rationale:** Scattered log files make debugging cross-component issues difficult. A single root with a defined taxonomy makes logs discoverable and allows a single maintenance script to handle all log hygiene. Configurable retention keeps logs useful without unbounded disk growth. Gitignoring content but tracking `.gitkeep` ensures the directory structure is reproducible from a fresh clone without committing machine-specific log data.
 

@@ -8,7 +8,7 @@ Stores and retrieves brain OS account passwords in the native OS keystore
 the 'keyring' library.
 
 CLI Usage (admin/root only):
-    python brain_credential.py get <brain-name>      # print password to stdout
+    python brain_credential.py get <brain-name> --show  # print password to stdout (masked without --show)
     python brain_credential.py rotate <brain-name>   # generate new password, update OS + keyring
     python brain_credential.py delete <brain-name>   # remove credential from keyring
     python brain_credential.py list                  # list brain names with stored credentials

@@ -169,9 +169,10 @@ def _has_brains_deny(path):
         line = raw.strip()
         if BRAINS_GROUP.lower() not in line.lower():
             continue
-        # Deny ACEs contain "(DENY)" or the compact "(N)" perm token in icacls.
-        upper = line.upper()
-        if "(DENY)" in upper or "(N)" in upper:
+        # Deny ACEs are rendered by icacls with an explicit "(DENY)" marker.
+        # (Do not also match "(N)" — it is icacls's no-inheritance/compact token
+        # and can appear on grant lines, causing a false positive.)
+        if "(DENY)" in line.upper():
             return ("deny", line)
     return ("nodeny", "")
 

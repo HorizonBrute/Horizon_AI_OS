@@ -69,6 +69,7 @@ ENV HORIZON_DOCS=/aios/horizon_system/documentation
 ENV HORIZON_USRBIN=/aios/usrbin
 ENV HORIZON_PROJECTS=/aios/Projects
 ENV HORIZON_LOGS=/aios/horizon_system/logs
+ENV HORIZON_SOUNDS=/aios/horizon_system/sounds
 
 # ---------------------------------------------------------------------------
 # Copy AIOS repo into the image

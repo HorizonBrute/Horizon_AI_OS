@@ -58,7 +58,7 @@ A configuration is **Verified** when all of the following have been exercised:
 ### Ollama
 Ollama has no event hook system. The AIOS hook taxonomy (sounds on task complete, permission request, failure) does not apply — Ollama provides no mechanism to fire external commands on model events.
 
-What works: OS-level brain isolation (separate user accounts, NTFS ACLs / POSIX permissions), brain directory scoping, `$HORIZON_KEYS` credential containment, audit logging via `monitor_aios.py`. The AIOS OS layer is fully in effect; only the harness-level integration (hooks, skills) is absent.
+What works: OS-level brain isolation (separate user accounts, NTFS ACLs / POSIX permissions), brain directory scoping, OS-native credential containment via `brain_credential.py`, audit logging via `monitor_aios.py`. The AIOS OS layer is fully in effect; only the harness-level integration (hooks, skills) is absent.
 
 What does not work: sounds, statusline, `/handoff` skill, any skill that depends on a Claude Code session context.
 
