@@ -122,7 +122,7 @@ if [ -n "$used_pct" ]; then
 
   # % To Compact (remaining headroom before approximate auto-compact point)
   to_compact=$(awk -v t="$compact_threshold" -v u="$pct_int" 'BEGIN { d = t - u; if (d < 0) d = 0; print d }')
-  parts+=("$(printf '\033[1;35m%s\033[0m' "% To Compact: ${to_compact}%")")
+  parts+=("$(printf '\033[1;35m%s\033[0m' "Estimated % To Compact: ${to_compact}%")")
 fi
 
 # Cost

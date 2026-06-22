@@ -107,6 +107,6 @@ $parts = @("[$dirname]")
 if ($model -ne "") { $parts += $model }
 if ($git_branch -ne "") { $parts += "git:$git_branch" }
 if ($show_context_bar) { $parts += "Context Window: [$bar]" }
-$parts += "% To Compact: $to_compact%"
+$parts += "Estimated % To Compact: $to_compact%"
 
 Write-Output ($parts -join " ")
