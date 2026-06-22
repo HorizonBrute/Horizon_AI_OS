@@ -22,7 +22,7 @@ P.5 **SSH client** — all remote Git operations use SSH. No HTTPS remote URLs e
 
 **Authentication**
 
-P.6 **SSH key pair** — a key pair must exist (default path: `~/.ssh/id_ed25519`) and the public key must be registered with the remote host (GitHub under the `HorizonBrute` account, or another host on a new machine).
+P.6 **SSH key pair** — a key pair must exist (default path: `~/.ssh/id_ed25519`) and the public key must be registered with your GitHub account (or your organization's remote host).
 
 P.7 **GPG key in keyring** — a GPG key must be generated and importable by the local GPG agent. The full fingerprint must be entered in `horizon_system/harness_configs/git/gitconfig` under `[user] signingkey` as part of setup.
 
@@ -36,7 +36,7 @@ P.8.2 **Statusline** — `horizon_system/bin/statusline/statusline.sh` detects `
 
 P.8.3 **Linux audio dependency** — at least one of `paplay` (PulseAudio), `aplay` (ALSA), `ffplay` (ffmpeg), or `mpg123` must be installed for sounds to play on Linux. If none are found, `play_sound.sh` exits silently with no effect on Claude Code.
 
-P.9 **No administrator privileges required** on any platform. Hard links are used for the `settings.json` bootstrap on Windows (symlinks require elevation there). On Linux/macOS, standard `ln` is used. Hard links on the same volume never require elevation.
+P.9 **Bootstrap requires elevated privileges**: Administrator on Windows (right-click PowerShell → Run as administrator) and sudo/root on Linux and macOS. This is required for `harden_aios.py` to apply filesystem ACLs that enforce brain isolation. See the Prerequisites section in ReadMeToSetupYourSystem.md.
 
 P.10 **Developer Mode not required**.
 
