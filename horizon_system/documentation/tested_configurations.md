@@ -49,7 +49,7 @@ A configuration is **Verified** when all of the following have been exercised:
 
 ### macOS
 - No one has run bootstrap on macOS. POSIX paths should work; `launchd` plist would be needed for sync schedule instead of cron/systemd.
-- `create_brain.py` has no macOS-specific branch; `dscl` (Directory Services) is the macOS equivalent of `useradd`.
+- `create_brain.py` has a macOS-specific branch (`_macos_create_user` using `dscl` / `dseditgroup` / `createhomedir`, the macOS equivalents of `useradd`), but it has not been validated end-to-end on a real macOS machine.
 
 ---
 

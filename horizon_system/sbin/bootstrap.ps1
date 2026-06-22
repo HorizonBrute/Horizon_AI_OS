@@ -75,7 +75,7 @@ Write-Host "  HORIZON_DOCS    = $HORIZON_DOCS"
 Write-Host "  HORIZON_LOGS    = $HORIZON_LOGS"
 Write-Host "  HORIZON_SOUNDS  = $HORIZON_SOUNDS"
 
-if ($env:AIOSDeployMode -eq "docker") {
+if ($env:AIOS_DEPLOY_MODE -eq "docker") {
     Info "Docker mode: HORIZON_* env vars are set in the Dockerfile — no profile changes needed."
 } else {
     Write-Host ""
@@ -343,7 +343,7 @@ if (-not (Test-Path $logsDir)) {
     Write-Host "Created logs/ directory." -ForegroundColor Green
 }
 
-if ($env:AIOSDeployMode -eq "docker") {
+if ($env:AIOS_DEPLOY_MODE -eq "docker") {
     Info "Docker mode: skipping sync schedule setup (refresh via image rebuild or pull)."
 } else {
     $setupSched = if ($YesAll) { $true } else { (Read-Host "Set up daily auto-sync from upstream? [y/N]") -match '^[Yy]' }

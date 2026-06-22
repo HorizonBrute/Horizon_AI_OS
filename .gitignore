@@ -623,6 +623,7 @@ brains/*
 # Un-ignore horizon_system subdirs that match generic VS/build patterns
 !horizon_system/bin/
 !horizon_system/bin/**
+horizon_system/bin/**/__pycache__/
 !horizon_system/logs/
 !horizon_system/logs/*.gitkeep
 !horizon_system/logs/**/.gitkeep

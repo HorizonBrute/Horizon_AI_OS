@@ -408,7 +408,7 @@ def _phase2_unix(brain_name, invoking_user, os_name, password, dry_run):
              '--create-home',
              '--shell', '/bin/bash',
              '--comment', f'Horizon AIOS brain account',
-             '--password', _linux_hash_password(password),
+             '--password', _linux_hash_password(password, brain_name),
              brain_name],
             dry_run=dry_run,
         )
@@ -444,7 +444,7 @@ def _unix_add_user_to_group(user, group, os_name, dry_run):
             dry_run=dry_run)
 
 
-def _linux_hash_password(password):
+def _linux_hash_password(password, brain_name):
     """
     Hash a plaintext password for use with useradd --password.
 
@@ -460,7 +460,7 @@ def _linux_hash_password(password):
     except (FileNotFoundError, subprocess.CalledProcessError):
         warn(
             'openssl not found — password hash could not be generated.\n'
-            '  Set the password manually after provisioning: passwd ' + 'brain_name'
+            f'  Set the password manually after provisioning: passwd {brain_name}'
         )
         return '!'
 

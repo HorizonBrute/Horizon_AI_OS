@@ -127,7 +127,7 @@ In the Docker deployment model, brain isolation is container-level rather than O
 
 **Rationale:** Placing the override file at the project root (not in `.claude/`) makes it easy to discover, not specific to Claude Code, and extensible to other harnesses or tooling that reads the same file. The `/handoff` skill and other AIOS skills walk upward from the working directory to find it before falling back to AIOS defaults.
 
-**Implications:** Any AIOS skill that has configurable behavior must check for `aios_overrides.md` before acting. The template at `$HORIZON_BIN/templates/aios_overrides.md` is the canonical reference for supported keys.
+**Implications:** Any AIOS skill that has configurable behavior must check for `aios_overrides.md` before acting. The template at `$HORIZON_SYSTEM/templates/aios_overrides.md` is the canonical reference for supported keys.
 
 ---
 
@@ -199,7 +199,7 @@ In the Docker deployment model, brain isolation is container-level rather than O
 
 **Rationale:** Hooks and the statusline are system-level behaviors that should fire in every Claude Code session, regardless of which directory Claude is launched from. If they were configured in the devroot settings, they would only be active when Claude is run from inside `$HORIZON_ROOT`. The global settings layer is the correct scope for OS-level behaviors.
 
-**Implications:** When updating hooks or statusline config, edit `~/.claude/settings.json` (the global file, not committed to the repo). The template at `$HORIZON_BIN/templates/claude_code/settings.json` is the reference for what the global settings should contain. The devroot `.claude/settings.json` must never acquire hook or statusLine entries — if it does, those hooks will be double-fired when in devroot and silent elsewhere.
+**Implications:** When updating hooks or statusline config, edit `~/.claude/settings.json` (the global file, not committed to the repo). The template at `$HORIZON_SYSTEM/templates/claude_code/settings.json` is the reference for what the global settings should contain. The devroot `.claude/settings.json` must never acquire hook or statusLine entries — if it does, those hooks will be double-fired when in devroot and silent elsewhere.
 
 ---
 
@@ -215,7 +215,7 @@ The only action needed after adding or editing a skill: **restart the Claude Cod
 
 Signs of a problem: a skill change in the repo has no effect after session restart. Verify that `~/.claude/skills/` is a junction/symlink (not a real directory) and that its target is `$HORIZON_SYSTEM/skills_sbin/`. Re-run bootstrap if the junction is missing.
 
-### 4.2 Template-derived settings: `$HORIZON_BIN/templates/claude_code/settings.json` → `~/.claude/settings.json`
+### 4.2 Template-derived settings: `$HORIZON_SYSTEM/templates/claude_code/settings.json` → `~/.claude/settings.json`
 
 The template is the reference for what global settings should contain. When the template is updated (new hooks, new sounds, statusline changes), review whether your local `~/.claude/settings.json` needs the same update.
 
@@ -229,7 +229,7 @@ Signs of drift: a new sound or hook that works on another machine does not work 
 
 Anyone who clones the Horizon AIOS repo will not have these. They must be created during setup (the bootstrap script handles most of them).
 
-1. `~/.claude/settings.json` — Global Claude Code settings with machine-specific paths, hooks, and statusLine config. Created from the template at `$HORIZON_BIN/templates/claude_code/settings.json`.
+1. `~/.claude/settings.json` — Global Claude Code settings with machine-specific paths, hooks, and statusLine config. Created from the template at `$HORIZON_SYSTEM/templates/claude_code/settings.json`.
 
 2. `~/.claude/CLAUDE.md` — Machine-local stub containing a single `@` redirect to the repo's CLAUDE.md. Created during bootstrap (one line, never changes).
 

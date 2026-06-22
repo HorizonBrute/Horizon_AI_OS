@@ -48,6 +48,27 @@ The Docker image bakes in the AIOS layer (repo contents + bootstrap). Mutable st
 
 Edit `horizon_system/templates/docker/docker-compose.yml` to mount host paths before starting.
 
+### Objectives are not yet persisted
+
+The `/objective` skill stores durable, multi-session goals in `$HORIZON_ROOT/objectives/` (i.e. `/aios/objectives/` in the container). The compose template and Dockerfile define **no volume for this directory**, so objectives are written into the container's writable layer and are **lost on rebuild** (and on any `docker compose down` that removes the container).
+
+`/handoff` is unaffected — `$HORIZON_ROOT/handoffs/` is already backed by the `aios-handoffs` named volume.
+
+To persist objectives, add a volume following the existing pattern. In the `aios` service `volumes:` block:
+
+```yaml
+      - aios-objectives:/aios/objectives
+```
+
+and declare it under the top-level `volumes:` key:
+
+```yaml
+  aios-objectives:
+    driver: local
+```
+
+This change is not yet made in the templates; apply it manually if you rely on `/objective` across rebuilds.
+
 ---
 
 ## Brain Isolation in Docker
@@ -74,7 +95,7 @@ docker compose -f horizon_system/templates/docker/docker-compose.yml build
 docker compose -f horizon_system/templates/docker/docker-compose.yml up -d
 ```
 
-Named volumes (`aios-logs`, `aios-handoffs`) persist across rebuilds. Host-mounted brain and key directories are unaffected.
+Named volumes (`aios-logs`, `aios-handoffs`) persist across rebuilds. Host-mounted brain and key directories are unaffected. **Note:** `/objective` state under `/aios/objectives/` is *not* volume-backed by default and is lost on rebuild — see "Objectives are not yet persisted" above.
 
 ---
 
