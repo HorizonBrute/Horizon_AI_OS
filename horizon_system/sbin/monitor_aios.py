@@ -116,6 +116,13 @@ class _Handler(FileSystemEventHandler):
         except ValueError:  # different drive / unrelated path
             return False
 
+    def __del__(self):
+        try:
+            if self._log and not self._log.closed:
+                self._log.close()
+        except Exception:  # noqa: BLE001
+            pass
+
     def _write(self, event_type: str, src: str, dest: str = None):
         if self._ignored(src):
             return
