@@ -124,6 +124,10 @@ that `active_env.*` + the wrappers are present.
 
 ## Uninstalling
 
+> **Full runbook:** `system/uninstall.md` — what is removed vs. preserved, a
+> post-uninstall verification checklist, and the fresh-machine install→uninstall
+> validation cycle. The summary below is the quick reference.
+
 To remove all machine-local AIOS configuration (reverse everything bootstrap
 wrote) without deleting the repo or any user data, run as Administrator / root.
 The `aios uninstall` shortcut delegates to the platform script for you:
