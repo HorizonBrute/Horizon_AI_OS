@@ -32,7 +32,7 @@ Key properties:
 
 - Inlining is unconditional. There is no lazy loading and no conditional loading. Any language on the same line as the `@` directive — including "only load if needed" — becomes part of the already-loaded content. The harness does not interpret it as a condition.
 - Only `CLAUDE.md` and `CLAUDE.local.md` trigger harness `@`-import resolution. `agents.md` may contain lines starting with `@` but those are passed to Claude as plain text; the harness does not inline the referenced files.
-- `@`-imports are recursive. If `CLAUDE.md` imports `agents.md`, and `agents.md` imports another file, the harness walks the chain — but only when the chain starts from a `CLAUDE.md` or `CLAUDE.local.md`.
+- `@`-imports are recursive. If `CLAUDE.md` imports a file, and that file contains `@`-references, the harness continues resolving them — because the resolution context started from a `CLAUDE.md`. The harness does not re-enter `@`-import resolution on `agents.md` files it encounters as standalone auto-loads.
 
 **The right pattern for optional content:** If you want a file available only when Claude explicitly needs it, do not `@`-import it. Instead, tell Claude where to find it in prose:
 
