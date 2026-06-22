@@ -240,7 +240,8 @@ whenever the `/resync-user-skills` skill reports drift.
 
 Provisions a new AI brain: creates the `<brain-name>` OS user, the shared
 `brains` group (Read+Execute on `bin/` and `skills_bin/`) and a per-brain group
-(rwx on the brain folder), the workspace at `$HORIZON_ROOT/brains/<brain-name>/`,
+(`<brain-name>_group` on Windows to avoid the shared user/group namespace;
+`<brain-name>` on Linux/macOS), the workspace at `$HORIZON_ROOT/brains/<brain-name>/`,
 and a login shell profile that exports the `HORIZON_*` vars and cds into the
 brain folder. The account password is auto-generated (random 64-char) and stored
 in the OS native keystore via `brain_credential.py`. The `sbin/skills_sbin/logs`
@@ -264,7 +265,8 @@ Requires Administrator/root; stdlib only (Python 3.6+).
 **Path:** `$HORIZON_SYSTEM/sbin/remove_brain.py`
 
 Deprovisioning counterpart to `create_brain.py`. Removes a brain's OS user
-account, its per-brain group, its workspace folder, its user-profile config
+account, its per-brain group (`<brain-name>_group` on Windows, `<brain-name>` on
+Linux/macOS), its workspace folder, its user-profile config
 (including the `~/.claude/skills` junction, deleted with a reparse-point `rmdir`
 so the `skills_bin` target is never followed), and its stored credential. The
 shared `brains` group is left intact. Validates the name and refuses reserved
