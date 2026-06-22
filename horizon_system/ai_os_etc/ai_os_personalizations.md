@@ -19,6 +19,8 @@ Three-layer settings hierarchy (Claude Code is the reference implementation). Wr
 
 Committed to the OS repo; hooks and statusLine contain machine-specific paths and must stay out.
 
+**Sync safety:** `sync_aios.py` does a `git merge --ff-only`, which updates this file if it changed upstream. This is intentional — the devroot settings file is OS-layer infrastructure, not personal config. Personal customizations do not belong here. Put them in `~/.claude/settings.json` (global layer), which lives outside the repo and is never touched by sync. Project-level permissions go in the project's own `.claude/settings.json`, also outside the OS repo.
+
 ### Project-level (`.claude/settings.json` inside a project folder)
 
 - Additional `permissions.allow` entries scoped to the project
