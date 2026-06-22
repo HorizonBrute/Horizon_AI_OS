@@ -123,26 +123,28 @@ that `active_env.*` + the wrappers are present.
 ## Uninstalling
 
 To remove all machine-local AIOS configuration (reverse everything bootstrap
-wrote) without deleting the repo or any user data:
+wrote) without deleting the repo or any user data, run as Administrator / root:
 
-```
-python horizon_system/sbin/uninstall_aios.py
-```
-
-Common flags:
-
-```
-python uninstall_aios.py --dry-run    # preview every action, change nothing
-python uninstall_aios.py --yes        # non-interactive (still shows actions)
-python uninstall_aios.py --remove-path  # force system PATH cleanup (needs admin/root)
+**Windows (Administrator PowerShell):**
+```powershell
+.\horizon_system\sbin\uninstall.ps1
+.\horizon_system\sbin\uninstall.ps1 --dry-run   # preview, no changes
+.\horizon_system\sbin\uninstall.ps1 --yes        # non-interactive
 ```
 
-The script removes the skills junction, `~/.claude/CLAUDE.md`, active-env
-files, aios-exec wrappers, and the registry; attempts system PATH cleanup; and
-prints exact instructions for the two steps it cannot automate (shell profile
-line and `core.hooksPath` / `include.path` git config). Brain accounts, the
-AIOS repo, and user data are not touched. See `$HORIZON_DOCS/utilities.md` for
-the full flag reference.
+**Linux / macOS (sudo):**
+```bash
+sudo bash horizon_system/sbin/uninstall.sh
+sudo bash horizon_system/sbin/uninstall.sh --dry-run
+sudo bash horizon_system/sbin/uninstall.sh --yes
+```
+
+The scripts are section-by-section mirrors of bootstrap — they remove the skills
+junction, CLAUDE.md redirect, active-env files, aios-exec wrappers, registry,
+`aios_local.conf`, git hooks, `core.hooksPath`, system PATH entry, and
+brains-group ACEs. Emit `[MANUAL]` advisories for what cannot be automated (shell
+profile line, global gitconfig `include.path`, sync schedule, `brains` group,
+brain accounts). See `$HORIZON_DOCS/utilities.md` for the full reference.
 
 ## Notes & limits
 

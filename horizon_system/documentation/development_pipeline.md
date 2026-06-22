@@ -14,8 +14,8 @@ Items are grouped by status, not priority — priority is implicit from the grou
 - **AIOS switcher** — complete. `aios switch <name>` rewrites all machine pointers,
   updates system PATH on switch, `aios` shortcut in `bin/`. See
   `documentation/system/aios_switching.md`.
-- **AIOS uninstall** — `sbin/uninstall_aios.py` in progress. Reverses all bootstrap
-  machine config; advisories for the two manual steps (shell profile, git config).
+- **AIOS uninstall** — `sbin/uninstall.ps1` / `sbin/uninstall.sh` landed. Section-by-section
+  mirror of bootstrap; requires elevation; covers ACLs, git hooks, PATH, registry.
 - **Future harness scope note** — philosophy.md addition in progress. Acknowledges
   Claude-only current scope; names Ollama, Codex, LM Studio as future exploration targets.
 
@@ -50,7 +50,7 @@ Items are grouped by status, not priority — priority is implicit from the grou
   - `harden_aios.py` — `/harden` re-apply ACLs after structural changes
   - `create_brain.py` — `/create-brain` guided provisioning with interactive prompts
   - `remove_brain.py` — `/remove-brain` guided deprovisioning
-  - `uninstall_aios.py` — `/uninstall-aios` (guided; confirmation-heavy)
+  - `uninstall.ps1` / `uninstall.sh` — `/uninstall-aios` (guided; confirmation-heavy)
 
 - **`remove_brain.py` uninstall integration** — verify that `remove_brain.py` correctly
   deletes `<brain-name>_group` (not `<brain-name>`) on Windows following the group naming

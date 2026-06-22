@@ -212,37 +212,36 @@ for the full switching guide.
 
 ---
 
-## uninstall_aios.py
+## uninstall.ps1 / uninstall.sh
 
-**Path:** `$HORIZON_SYSTEM/sbin/uninstall_aios.py`
+**Path:** `$HORIZON_SYSTEM/sbin/uninstall.ps1` (Windows) / `$HORIZON_SYSTEM/sbin/uninstall.sh` (Linux/macOS)
 
-Reverses the machine-level configuration written by bootstrap, returning the
-machine to a clean pre-AIOS state. Removes the skills junction/symlink
-(`~/.claude/skills/`), the CLAUDE.md redirect (`~/.claude/CLAUDE.md`), the
-active-env snippets (`~/.horizon/active_env.{ps1,sh}`), the aios-exec wrappers
-(`~/.horizon/bin/aios-exec.{ps1,sh}`), and the AIOS registry
-(`~/.horizon/aios_registry.json`). Attempts to clean up the system PATH entry
-(Windows Machine-scope PATH, or `/etc/profile.d/horizon_aios.sh` on Linux, plus
-`/etc/paths.d/horizon-aios` on macOS); degrades gracefully with an advisory if
-not elevated. Offers optional deletion of `~/.claude/settings.json` (advisory by
-default — user may have local changes).
+Section-by-section mirror of `bootstrap.ps1` / `bootstrap.sh` — reverses every
+configuration bootstrap wrote. Requires Administrator (Windows) or root (Linux/macOS)
+because ACL reversal needs elevation.
 
-Does **not** touch brain accounts, brain home directories, the AIOS repo itself,
-or user data (`handoffs/`, `objectives/`, `logs/`). Git config and shell profile
-changes require manual removal; the script prints exact instructions for both.
+Removes: skills junction (`~/.claude/skills/`), CLAUDE.md redirect, active-env
+snippets, aios-exec wrappers, AIOS registry, `aios_local.conf`, `.git/hooks/commit-msg`
+and `pre-commit`, `core.hooksPath` git config, system PATH entry
+(`$HORIZON_BIN` from Machine-scope PATH on Windows; `/etc/profile.d/horizon_aios.sh`
+and `/etc/paths.d/horizon-aios` on Linux/macOS), `$HORIZON_SYSTEM/logs/` /
+`handoffs/` / `objectives/` if empty, and brains-group ACEs from `$HORIZON_SYSTEM`
+subtrees. Offers optional deletion of `~/.claude/settings.json`.
 
-**When to use it:** When decommissioning AIOS from a machine — removes all
-bootstrap-written configuration without deleting the repo or any user data.
+Emits `[MANUAL]` advisories for the steps that cannot be automated: shell profile
+line, global gitconfig `include.path`, sync schedule/cron, `brains` OS group, and
+brain user accounts.
 
-**Key flags:**
+Does **not** delete the AIOS repo, brain home directories, or non-empty user data.
 
-- `--yes` / `-y` — skip interactive confirmations (still shows what it's doing)
+**When to use it:** When decommissioning AIOS from a machine.
+
+**Key flags (both scripts):**
+
+- `--yes` / `-y` — skip interactive confirmations
 - `--dry-run` — print every action without making any changes
-- `--remove-path` — explicitly attempt system PATH removal (requires admin/root;
-  advisory if it fails; attempted by default in interactive mode)
 
-**Referenced by a skill?** No. See `$HORIZON_DOCS/system/aios_switching.md`
-for the uninstalling section.
+**Referenced by a skill?** No. See `$HORIZON_DOCS/system/aios_switching.md` §Uninstalling.
 
 ---
 
