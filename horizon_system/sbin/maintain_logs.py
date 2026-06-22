@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Horizon AIOS log maintenance — prune old logs and rotate oversized files."""
 
+import os
+import platform
+import sys
 import datetime
 from pathlib import Path
 
@@ -18,6 +21,37 @@ DEFAULTS = {
     "AIOS_HANDOFFS_MAX_SIZE_MB": "500",
     "AIOS_OBJECTIVES_MAX_DAYS": "90",
 }
+
+
+def _check_privileges():
+    """Exit with a clear message if not running as Administrator/root.
+
+    maintain_logs.py modifies files in the ACL-protected $HORIZON_SYSTEM/logs/
+    directory. Running without elevation will silently fail on those paths.
+    """
+    os_name = platform.system()
+    if os_name == 'Windows':
+        try:
+            import ctypes
+            is_admin = ctypes.windll.shell32.IsUserAnAdmin()
+        except Exception:
+            is_admin = False
+        if not is_admin:
+            print(
+                '[ERROR] maintain_logs.py must be run as Administrator.\n'
+                '  Right-click your terminal and choose "Run as administrator",\n'
+                '  then re-run the script.',
+                file=sys.stderr,
+            )
+            sys.exit(1)
+    else:
+        if os.geteuid() != 0:
+            print(
+                '[ERROR] maintain_logs.py must be run as root.\n'
+                '  Re-run with: sudo python maintain_logs.py',
+                file=sys.stderr,
+            )
+            sys.exit(1)
 
 
 def read_config():
@@ -100,6 +134,7 @@ def prune_objectives(objectives_dir: Path, max_days: int):
 
 
 def main():
+    _check_privileges()
     config = read_config()
     log_dir = Path(config["AIOS_LOG_DIR"]) if config["AIOS_LOG_DIR"] else HORIZON_SYSTEM / "logs"
 

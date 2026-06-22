@@ -586,6 +586,9 @@ usrbin/usr_skills/
 
 # Machine-local config overrides (configured from templates; never committed)
 *.local.json
+# settings.local.json contains real machine paths — must never be committed (security_invariants §6)
+.claude/settings.local.json
+**/.claude/settings.local.json
 
 # Machine-local AIOS configuration (generated from template; never committed)
 horizon_system/ai_os_etc/aios_local.conf

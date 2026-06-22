@@ -91,6 +91,10 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   ├── usr_skills/                     # Machine-local user skills; gitignored; linked into skills_sbin (see Section 7)
 │   │   └── <skill-name>/SKILL.md
 │   └── [installed tools and apps]/     # Admin: full access. Brains: no default access — provisioned selectively per brain.
+├── brains/                             # Brain home directories (gitignored per brain, but .aioscommon is tracked)
+│   └── .aioscommon/                    # Shared brain provisioning templates — tracked in git; used by create_brain.py Phase 5
+│       ├── brain_CLAUDE.md.template    # Template deployed to brains/<name>/.claude/CLAUDE.md on provisioning
+│       └── brain_settings.json.template # Template deployed to brains/<name>/.claude/settings.json on provisioning
 └── Projects/                           # $HORIZON_PROJECTS — primary user's project workspace (see Section 8)
     └── [project folders]/              # Primary user sets filesystem permissions per project; no default convention
         ├── aios_overrides.md           # Optional — project-level AIOS config overrides (see Section 7)

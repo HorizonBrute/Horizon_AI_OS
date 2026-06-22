@@ -267,8 +267,13 @@ def _list_brains() -> list[str]:
 # CLI commands
 # ---------------------------------------------------------------------------
 
-def cmd_get(brain_name: str) -> int:
-    """Print the stored password to stdout. Admin-only."""
+def cmd_get(brain_name: str, show: bool = False) -> int:
+    """Print the stored password to stdout. Admin-only.
+
+    Without --show, prints a masked placeholder to avoid accidental terminal
+    exposure and scrollback leakage.  Pass --show (or show=True) to print the
+    actual value.
+    """
     password = _get_password(brain_name)
     if password is None:
         print(
@@ -277,7 +282,10 @@ def cmd_get(brain_name: str) -> int:
             file=sys.stderr,
         )
         return 1
-    print(password)
+    if show:
+        print(password)
+    else:
+        print(f'[retrieved — use --show to display]')
     return 0
 
 
@@ -332,7 +340,7 @@ def main() -> None:
     if len(sys.argv) < 2:
         print(
             'Usage:\n'
-            '  brain_credential.py get <brain-name>\n'
+            '  brain_credential.py get <brain-name> [--show]\n'
             '  brain_credential.py rotate <brain-name>\n'
             '  brain_credential.py delete <brain-name>\n'
             '  brain_credential.py list',
@@ -354,7 +362,8 @@ def main() -> None:
     _check_privileges()
 
     if command == 'get':
-        sys.exit(cmd_get(brain_name))
+        show = '--show' in sys.argv or '--plaintext' in sys.argv
+        sys.exit(cmd_get(brain_name, show=show))
     elif command == 'rotate':
         sys.exit(cmd_rotate(brain_name))
     elif command == 'delete':
