@@ -159,7 +159,7 @@ Must be run as Administrator (Windows) or root (Unix).
 | Group | Windows | macOS | Linux |
 |---|---|---|---|
 | `brains` (shared, created once) | Created via `New-LocalGroup` if absent; `<brain-name>` added as member | Created via `dseditgroup -o create` if absent; `<brain-name>` added | Created via `groupadd` if absent; `<brain-name>` added via `usermod -aG` |
-| `<brain-name>` (brain-specific) | **Not created** — Windows shares a namespace for local users and groups; a group named after the brain would collide with the user account | Created via `dseditgroup`; both `<brain-name>` user and the invoking (owner) user are added | Created via `groupadd`; both `<brain-name>` user and invoking user added via `usermod -aG` |
+| `<brain-name>_group` (Windows) / `<brain-name>` (Unix) | Created as `<brain-name>_group` via `New-LocalGroup` — Windows shares a namespace for local users and groups, so the group is named `<brain-name>_group` to avoid colliding with the `<brain-name>` user account; both `<brain-name>` user and the invoking (owner) user are added as members | Created as `<brain-name>` via `dseditgroup`; both `<brain-name>` user and the invoking (owner) user are added | Created as `<brain-name>` via `groupadd`; both `<brain-name>` user and invoking user added via `usermod -aG` |
 
 ### Directories created
 

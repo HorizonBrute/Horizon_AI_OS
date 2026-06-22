@@ -6,7 +6,7 @@ create_brain.py — Horizon AIOS Brain Provisioning Script
 Creates and configures everything needed for a new AI brain:
   - OS user account  (<brain-name>)
   - Group: brains    (common AIOS group, grants horizon_system/bin rx)
-  - Group: <brain-name> (brain-specific group, grants rwx on brain folder)
+  - Group: <brain-name>_group (brain-specific group on Windows) or <brain-name> (Linux/macOS)
   - Brain folder:    $HORIZON_ROOT/brains/<brain-name>/
   - Permissions:     brain folder (770 / icacls full-control for user+group)
                      horizon_system/bin + skills_bin (group brains rx)
@@ -343,17 +343,14 @@ def phase2_create_user_and_groups(ctx, dry_run=False):
 def _phase2_windows(brain_name, invoking_user, password, dry_run):
     """Windows: use PowerShell Local* cmdlets.
 
-    NOTE — no per-brain group on Windows. Windows' SAM shares a single namespace
-    for local users and groups, so a group named after the brain would collide
-    with the brain user account: New-LocalUser fails with "name already in use".
-    The per-brain group is also unused by any Windows ACL — the brain folder is
-    granted to the brain user + the owner + SYSTEM/Administrators directly (see
-    _phase3_windows), and bin/skills_bin use the shared `brains` group. So on
-    Windows we create only the shared `brains` group. (Unix keeps its
-    user-private-group, where users and groups are separate namespaces.)
+    Windows' SAM shares a single namespace for local users and groups, so a
+    group named after the brain would collide with the brain user account.
+    Fix: use <brain-name>_group as the per-brain group name on Windows.
     """
+    brain_group = f'{brain_name}_group'
 
     _win_create_group_if_absent(BRAINS_GROUP, dry_run)
+    _win_create_group_if_absent(brain_group, dry_run)
 
     info(f'Creating local user: {brain_name}')
     # Pass the password via an environment variable rather than interpolating it
@@ -364,6 +361,18 @@ def _phase2_windows(brain_name, invoking_user, password, dry_run):
     info(f'Adding {brain_name} to group: {BRAINS_GROUP}')
     run_ps(
         f'Add-LocalGroupMember -Group "{BRAINS_GROUP}" -Member "{brain_name}"',
+        dry_run=dry_run,
+    )
+
+    info(f'Adding {brain_name} to group: {brain_group}')
+    run_ps(
+        f'Add-LocalGroupMember -Group "{brain_group}" -Member "{brain_name}"',
+        dry_run=dry_run,
+    )
+
+    info(f'Adding invoking user ({invoking_user}) to group: {brain_group}')
+    run_ps(
+        f'Add-LocalGroupMember -Group "{brain_group}" -Member "{invoking_user}"',
         dry_run=dry_run,
     )
 
@@ -722,9 +731,12 @@ def phase4_verify(ctx, dry_run=False):
     results['in_brains_group'] = _check_group_membership(brain_name, BRAINS_GROUP, os_name)
     _report_check(f'User in "{BRAINS_GROUP}" group', results['in_brains_group'])
 
-    # Per-brain group exists on Unix only (Windows shares the user/group
-    # namespace, so no same-named group is created — see _phase2_windows).
-    if os_name != 'Windows':
+    # Per-brain group: <brain-name>_group on Windows, <brain-name> on Unix.
+    if os_name == 'Windows':
+        brain_group = f'{brain_name}_group'
+        results['in_brain_group'] = _check_group_membership(brain_name, brain_group, os_name)
+        _report_check(f'User in "{brain_group}" group', results['in_brain_group'])
+    else:
         results['in_brain_group'] = _check_group_membership(brain_name, brain_name, os_name)
         _report_check(f'User in "{brain_name}" group', results['in_brain_group'])
 
@@ -837,7 +849,7 @@ def _print_cleanup_instructions(brain_name, brain_dir, os_name):
     print('    Or manually:')
     if os_name == 'Windows':
         print(f'    Remove-LocalUser   -Name "{brain_name}"')
-        print(f'    Remove-LocalGroup  -Name "{brain_name}"')
+        print(f'    Remove-LocalGroup  -Name "{brain_name}_group"')
         print(f'    Remove-Item -Recurse -Force "{brain_dir}"')
         print(f'    # Also remove {brain_name} from "{BRAINS_GROUP}" if it was added.')
     else:
@@ -1089,12 +1101,14 @@ def _write_provision_manifest(ctx):
     brain_dir    = ctx['brain_dir']
     horizon_root = ctx['horizon_root']
 
+    # Per-brain group name differs by platform (Windows shares user/group namespace).
+    brain_group = f'{brain_name}_group' if ctx['os_name'] == 'Windows' else brain_name
     manifest = {
         'brain_name':        brain_name,
         'provisioned_at':    datetime.datetime.now(datetime.timezone.utc).isoformat(),
         'provisioned_by':    ctx['invoking_user'],
         'horizon_root':      horizon_root,
-        'groups':            [BRAINS_GROUP, brain_name],
+        'groups':            [BRAINS_GROUP, brain_group],
         'brain_dir':         brain_dir,
         'skills_bin_access': 'read+execute',
         'sbin_access':       'deny',
