@@ -5,7 +5,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NonInteractive -File HORIZON_BIN_PATH/statusline/statusline-context-alerts.ps1"
+    "command": "powershell.exe -NonInteractive -File HORIZON_BIN_PATH/statusline/statusline-context-alerts.ps1"
   },
   "hooks": {
     "Stop": [

@@ -2,6 +2,8 @@
 
 Hard constraints for all users, harnesses, and brain configurations.
 
+> **Deployment prerequisite:** These invariants describe the security properties that Horizon AIOS establishes when correctly deployed. They are enforced by `bootstrap.ps1`/`bootstrap.sh` (which runs as Administrator/root) and `harden_aios.py`. On a machine where bootstrap has not been run, these properties do not yet hold.
+
 ---
 
 ## 0. Usage Model
