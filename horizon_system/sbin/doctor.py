@@ -234,7 +234,7 @@ def check_claude_settings():
 
 
 # ---------------------------------------------------------------------------
-# 9. Stub CLAUDE.md
+# 10. Stub CLAUDE.md
 # ---------------------------------------------------------------------------
 def check_claude_md(horizon_root):
     f = horizon_root / ".claude" / "CLAUDE.md"

@@ -55,6 +55,13 @@ class _Handler(FileSystemEventHandler):
     def __init__(self, log_path: Path):
         self._log = log_path.open("a", buffering=1)
 
+    def __del__(self):
+        try:
+            if self._log and not self._log.closed:
+                self._log.close()
+        except Exception:  # noqa: BLE001
+            pass
+
     def _write(self, event_type: str, src: str, dest: str = None):
         record = {"ts": _now(), "event": event_type, "src": src}
         if dest:
