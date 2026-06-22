@@ -113,11 +113,11 @@ In the Docker deployment model, brain isolation is container-level rather than O
 
 ### 2026-06-20 — Brain provisioning via Python script (`create_brain.py`)
 
-**Decision:** OS-level provisioning of new brains (user account, groups, folder, permissions) is performed by a single Python script at `$HORIZON_BIN/scripts/create_brain.py`, invoked by the primary user with admin/root privileges.
+**Decision:** OS-level provisioning of new brains (user account, groups, folder, permissions) is performed by a single Python script at `$HORIZON_SYSTEM/scripts/create_brain.py`, invoked by the primary user with admin/root privileges.
 
 **Rationale:** Python is cross-platform. A shell script would require separate `.sh` and `.ps1` variants to handle Linux/macOS and Windows, leading to two codebases that can drift. A single Python script with platform branches (`platform.system()`) keeps provisioning logic in one place, makes cross-platform divergences explicit and auditable, and is readable by any contributor without needing to know both Bash and PowerShell. Python 3.6+ is a reasonable dependency for a developer tooling system.
 
-**Implications:** Python 3.6+ is a documented dependency for brain provisioning (added to the "Adding a Brain" section of `ReadMeToSetupYourSystem.md`). The script must be run as Administrator/root — it is placed in `$HORIZON_BIN/scripts/`, not `$HORIZON_BIN/sbin/`, because the primary user invokes it explicitly and intentionally, not as a privileged daemon. No automatic rollback is implemented by design: partial state is preserved and cleanup instructions are printed so the primary user retains full control over what gets undone.
+**Implications:** Python 3.6+ is a documented dependency for brain provisioning (added to the "Adding a Brain" section of `ReadMeToSetupYourSystem.md`). The script must be run as Administrator/root — it is placed in `$HORIZON_SYSTEM/scripts/`, not `$HORIZON_SYSTEM/sbin/`, because the primary user invokes it explicitly and intentionally, not as a privileged daemon. No automatic rollback is implemented by design: partial state is preserved and cleanup instructions are printed so the primary user retains full control over what gets undone.
 
 ---
 

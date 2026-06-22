@@ -183,7 +183,7 @@ git clone git@github.com:HorizonBrute/Horizon_AI_OS.git "$HORIZON_ROOT"
 $HORIZON_ROOT/.claude/settings.json
 $HORIZON_ROOT/.claude/CLAUDE.md
 $HORIZON_BIN/statusline/statusline-context-alerts.ps1
-$HORIZON_BIN/harness_configs/git/hooks/pre-commit
+$HORIZON_SYSTEM/harness_configs/git/hooks/pre-commit
 $HORIZON_ROOT/.gitignore.user
 ```
 
@@ -397,7 +397,9 @@ Several files inside the repository contain hardcoded paths that must reference 
 Open `settings.json` in an editor and replace every occurrence of the previous machine's root path with `$HORIZON_ROOT`. PowerShell one-liner:
 
 ```powershell
-(Get-Content "$HORIZON_ROOT\.claude\settings.json") -replace [regex]::Escape("C:\devroot"), "$HORIZON_ROOT" | Set-Content "$HORIZON_ROOT\.claude\settings.json"
+# Replace <OLD_HORIZON_ROOT> with whatever root path is currently embedded in the file
+# (e.g. C:\devroot or /home/user/devroot — check with: Select-String -Path "$HORIZON_ROOT\.claude\settings.json" -Pattern "devroot|horizon")
+(Get-Content "$HORIZON_ROOT\.claude\settings.json") -replace [regex]::Escape("<OLD_HORIZON_ROOT>"), "$HORIZON_ROOT" | Set-Content "$HORIZON_ROOT\.claude\settings.json"
 ```
 
 Linux / macOS (bash):
