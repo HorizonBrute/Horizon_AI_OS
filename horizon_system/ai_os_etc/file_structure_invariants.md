@@ -14,7 +14,7 @@ Hardcoded paths are forbidden in committed files. Use these variables exclusivel
 | `$HORIZON_ETC` | `$HORIZON_ROOT\horizon_system\ai_os_etc` | OS configuration documents and invariants |
 | `$HORIZON_DOCS` | `$HORIZON_ROOT\horizon_system\documentation` | User-facing documentation |
 | `$HORIZON_SOUNDS` | `$HORIZON_SYSTEM\sounds` | Sound files, maps, and vendor audio |
-| `$HORIZON_LOGS` | `$HORIZON_ROOT\logs` | Centralized audit and operational logs |
+| `$HORIZON_LOGS` | `$HORIZON_ROOT\horizon_system\logs` | Centralized audit and operational logs; brains: DENY |
 | `$HORIZON_USRBIN` | `$HORIZON_ROOT\usrbin` | Common application installs shared across brains and projects |
 | `$HORIZON_PROJECTS` | `$HORIZON_ROOT\Projects` | Primary user's personal project workspace |
 
@@ -47,6 +47,7 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   ├── bootstrap.sh                # Unix/Linux/macOS bootstrap
 │   │   ├── bootstrap_docker.sh         # Docker bootstrap wrapper
 │   │   ├── doctor.py                   # System health check
+│   │   ├── harden_aios.py              # Apply brains-group ACLs to the AIOS layer (run from bootstrap)
 │   │   ├── monitor_aios.py             # Filesystem audit monitor
 │   │   ├── maintain_logs.py            # Log pruning and rotation
 │   │   ├── register_user_skills.py     # (Re)link usr_skills into skills_sbin (see Section 7)
@@ -84,6 +85,7 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   ├── aios_sounds.conf            # Template for per-project sound overrides (see Section 10)
 │   │   └── aios_statusline.conf        # Template for per-project statusline config (see Section 11)
 │   ├── harness_configs/                # Harness-specific config (sounds maps, etc.)
+│   ├── logs/                           # $HORIZON_LOGS — canonical audit/operational logs; brains: DENY; scaffold tracked, content gitignored
 │   └── scripts/                        # Admin setup scripts (create_brain.py, etc.)
 ├── usrbin/                             # $HORIZON_USRBIN — tool repository; admin draws from here to provision brains (see Section 8)
 │   ├── usr_skills/                     # Machine-local user skills; gitignored; linked into skills_sbin (see Section 7)

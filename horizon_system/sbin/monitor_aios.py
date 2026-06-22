@@ -3,7 +3,7 @@
 AIOS filesystem integrity monitor.
 
 Watches $HORIZON_SYSTEM for unexpected file changes (create/modify/delete/move).
-Logs events as JSON lines to $HORIZON_ROOT/logs/aios_monitor/.
+Logs events as JSON lines to $HORIZON_SYSTEM/logs/aios_monitor/.
 
 Run as the administrative context. The log directory must not be writable by
 brain accounts — enforce with OS filesystem permissions.
@@ -13,7 +13,7 @@ Usage:
 
 Defaults:
     --watch     $HORIZON_SYSTEM (this script's parent directory)
-    --log-dir   $HORIZON_ROOT/logs/aios_monitor/
+    --log-dir   $HORIZON_SYSTEM/logs/aios_monitor/
 
 Additional watch paths (Docker, usrbin, project dirs):
     Repeat --watch for each path, or set AIOS_MONITOR_PATHS (OS path-separator-delimited).
@@ -39,7 +39,7 @@ except ImportError:
 SCRIPT_DIR     = Path(__file__).resolve().parent   # horizon_system/sbin/
 HORIZON_SYSTEM = SCRIPT_DIR.parent                 # horizon_system/
 HORIZON_ROOT   = HORIZON_SYSTEM.parent             # repo root
-DEFAULT_LOG_DIR = HORIZON_ROOT / "logs" / "aios_monitor"
+DEFAULT_LOG_DIR = HORIZON_SYSTEM / "logs" / "aios_monitor"
 
 
 def _now() -> str:

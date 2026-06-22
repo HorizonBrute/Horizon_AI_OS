@@ -3,7 +3,7 @@
 AIOS monitor log analyzer.
 
 Reads monitor_aios.py JSON-line logs, checks for file change events and
-monitor uptime gaps, and writes a summary to $HORIZON_ROOT/logs/security.log.
+monitor uptime gaps, and writes a summary to $HORIZON_SYSTEM/logs/security.log.
 Optionally emits alerts to the OS system log (syslog on Linux; Windows Event
 Log if pywin32 is available).
 
@@ -27,8 +27,8 @@ from pathlib import Path
 SCRIPT_DIR     = Path(__file__).resolve().parent   # horizon_system/sbin/
 HORIZON_SYSTEM = SCRIPT_DIR.parent                 # horizon_system/
 HORIZON_ROOT   = HORIZON_SYSTEM.parent             # repo root
-DEFAULT_MONITOR_LOG_DIR = HORIZON_ROOT / "logs" / "aios_monitor"
-DEFAULT_SECURITY_LOG    = HORIZON_ROOT / "logs" / "security.log"
+DEFAULT_MONITOR_LOG_DIR = HORIZON_SYSTEM / "logs" / "aios_monitor"
+DEFAULT_SECURITY_LOG    = HORIZON_SYSTEM / "logs" / "security.log"
 
 FILE_EVENTS = {"created", "modified", "deleted", "moved"}
 

@@ -143,27 +143,56 @@ def check_gitignore_user(horizon_root):
 
 
 # ---------------------------------------------------------------------------
-# 7. sbin ACL (Windows only)
+# 7. Privileged-dir ACLs (Windows only)
+# Verify an explicit DENY ACE for the brains group exists on each privileged
+# directory (sbin, skills_sbin, logs). Per security_invariants.md §3, the
+# default "no entry" posture is insufficient — an explicit Deny is required.
+# A missing Deny is a FAIL (the central security claim is unenforced).
 # ---------------------------------------------------------------------------
-def check_sbin_acl(horizon_system):
-    sbin = horizon_system / "sbin"
-    if not sbin.exists():
-        warn("sbin ACL", f"{sbin} does not exist")
-        return
+BRAINS_GROUP = "brains"
+
+
+def _has_brains_deny(path):
+    """
+    Return (status, detail) where status is 'deny', 'nodeny', or 'error'.
+    Parses `icacls <path>` output for an explicit Deny ACE on the brains group.
+    icacls renders deny ACEs as "<principal>:(DENY)(...)" / "(N)" lines.
+    """
     try:
         result = subprocess.run(
-            ["icacls", str(sbin)],
-            capture_output=True, text=True, timeout=10
+            ["icacls", str(path)], capture_output=True, text=True, timeout=10
         )
-        output = result.stdout
-        broad = [g for g in ("Everyone", "Users", "Authenticated Users") if g.lower() in output.lower()]
-        if broad:
-            groups = ", ".join(broad)
-            warn("sbin ACL", f"broad read access detected for: {groups} — add explicit Deny ACL per security_invariants.md")
+    except Exception as e:  # noqa: BLE001 — surface any icacls failure
+        return ("error", str(e))
+
+    for raw in result.stdout.splitlines():
+        line = raw.strip()
+        if BRAINS_GROUP.lower() not in line.lower():
+            continue
+        # Deny ACEs contain "(DENY)" or the compact "(N)" perm token in icacls.
+        upper = line.upper()
+        if "(DENY)" in upper or "(N)" in upper:
+            return ("deny", line)
+    return ("nodeny", "")
+
+
+def check_sbin_acl(horizon_system):
+    for label, sub in (("sbin", "sbin"),
+                       ("skills_sbin", "skills_sbin"),
+                       ("logs", "logs")):
+        path = horizon_system / sub
+        name = f"{label} ACL (brains DENY)"
+        if not path.exists():
+            warn(name, f"{path} does not exist — run bootstrap/harden_aios.py")
+            continue
+        status, detail = _has_brains_deny(path)
+        if status == "deny":
+            ok(f"{label} ACL — explicit brains Deny present")
+        elif status == "nodeny":
+            fail(name, f"no explicit Deny ACE for '{BRAINS_GROUP}' on {path} — "
+                       "run harden_aios.py (security_invariants.md §3)")
         else:
-            ok("sbin ACL (no broad read groups detected)")
-    except Exception as e:
-        warn("sbin ACL", f"could not run icacls: {e}")
+            warn(name, f"could not run icacls: {detail}")
 
 
 # ---------------------------------------------------------------------------

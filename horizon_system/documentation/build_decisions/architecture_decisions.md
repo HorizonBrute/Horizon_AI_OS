@@ -251,7 +251,9 @@ Anyone who clones the Horizon AIOS repo will not have these. They must be create
 
 **Rationale:** Scattered log files make debugging cross-component issues difficult. A single root with a defined taxonomy makes logs discoverable and allows a single maintenance script to handle all log hygiene. Configurable retention keeps logs useful without unbounded disk growth. Gitignoring content but tracking `.gitkeep` ensures the directory structure is reproducible from a fresh clone without committing machine-specific log data.
 
-**Implications:** Any new component that emits logs must write under `$HORIZON_ROOT/logs/<subdirectory>/`. The log directory is not created by the repo — bootstrap or the writing script must create it on first run (`mkdir -p`). `maintain_logs.py` must be kept in sync with the taxonomy if new subdirectories are added.
+**Implications:** Any new component that emits logs must write under `$HORIZON_SYSTEM/logs/<subdirectory>/`. The log directory is not created by the repo — bootstrap or the writing script must create it on first run (`mkdir -p`). `maintain_logs.py` must be kept in sync with the taxonomy if new subdirectories are added.
+
+> **Update (2026-06-21):** The canonical log root moved from `$HORIZON_ROOT/logs/` to `$HORIZON_SYSTEM/logs/` so the audit log lives inside the AIOS layer that `harden_aios.py` locks down (explicit brains-group Deny). All writers and `$HORIZON_LOGS` now resolve to `$HORIZON_SYSTEM/logs/`. The subdirectory taxonomy is unchanged.
 
 ---
 

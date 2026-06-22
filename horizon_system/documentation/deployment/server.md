@@ -50,7 +50,7 @@ export HORIZON_BIN=$HORIZON_SYSTEM/bin
 export HORIZON_ETC=$HORIZON_SYSTEM/ai_os_etc
 export HORIZON_DOCS=$HORIZON_SYSTEM/documentation
 export HORIZON_SOUNDS=$HORIZON_SYSTEM/sounds
-export HORIZON_LOGS=$HORIZON_ROOT/logs
+export HORIZON_LOGS=$HORIZON_SYSTEM/logs
 ```
 
 ### Disabling sounds on server

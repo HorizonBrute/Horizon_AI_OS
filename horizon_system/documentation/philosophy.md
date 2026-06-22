@@ -148,7 +148,7 @@ Any workflow or knowledge base set up in AIOS-standard format is portable across
 | BYOH / Harness independence | `agents.md` + CLAUDE.md conventions; `harness_configs/` separation; explicit design constraint in `dev_values.md` §6 |
 | Lean into existing IT infra | OS user accounts for brain isolation; NTFS ACLs / `icacls`; no custom access control layer |
 | Least privilege, enforced | Zero-default access posture; explicit Deny ACEs on `sbin`; `create_brain.py` provisions the minimum; every tool grant requires a one-sentence justification |
-| Audit trail | `monitor_aios.py` writes to `$HORIZON_ROOT/logs/`; log dir has Deny ACE for brain users; documented in `security_invariants.md` §8 |
+| Audit trail | `monitor_aios.py` writes to `$HORIZON_SYSTEM/logs/`; log dir has Deny ACE for brain users (set by `harden_aios.py`); documented in `security_invariants.md` §7 |
 | Credential containment | OS-native credential stores via `brain_credential.py` in sbin; no brain has default key access; scoped credential grants |
 | IaC-ready paths | All paths are env vars; no hardcoded values in committed files |
 | Reproducible bootstrap | `bootstrap.ps1` / `bootstrap.sh` cover setup end-to-end |

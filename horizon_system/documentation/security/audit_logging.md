@@ -14,7 +14,7 @@ pip install watchdog
 python $HORIZON_SYSTEM/sbin/monitor_aios.py
 ```
 
-Logs write to `$HORIZON_ROOT/logs/aios_monitor/monitor_YYYYMMDD.log`.
+Logs write to `$HORIZON_SYSTEM/logs/aios_monitor/monitor_YYYYMMDD.log`.
 
 ---
 
@@ -66,7 +66,7 @@ nssm start AIOSMonitor
    accounts cannot:
 
 ```powershell
-icacls "$HORIZON_ROOT\logs\aios_monitor" /grant "<admin-account>:(OI)(CI)F" /inheritance:r
+icacls "$HORIZON_SYSTEM\logs\aios_monitor" /grant "<admin-account>:(OI)(CI)F" /inheritance:r
 ```
 
 ### Windows — Task Scheduler (no extra dependency)
@@ -125,7 +125,7 @@ volumes:
 
 `$HORIZON_SYSTEM/sbin/analyze_aios_monitor.py` reads monitor logs, checks for
 file change events and uptime gaps, and writes a human-readable summary to
-`$HORIZON_ROOT/logs/security.log`. Run it periodically from the administrative
+`$HORIZON_SYSTEM/logs/security.log`. Run it periodically from the administrative
 context.
 
 ```sh

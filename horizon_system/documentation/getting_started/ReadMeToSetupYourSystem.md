@@ -237,7 +237,7 @@ The script will:
 - Create `~/.claude/skills/` as a junction/symlink pointing to `$HORIZON_SYSTEM/skills_sbin/` (Step 7)
 - Register machine-local user skills (`usrbin/usr_skills/` → `skills_sbin/` junctions) via `register_user_skills.py` (best-effort; see Step 7)
 - Offer to copy `settings.json` from the template (Step 8)
-- Create `$HORIZON_ROOT/handoffs/` and `$HORIZON_ROOT/logs/`
+- Create `$HORIZON_ROOT/handoffs/` and `$HORIZON_SYSTEM/logs/`
 - Wire git `core.hooksPath` and install DCO hooks
 - Run a verification pass and print PASS/FAIL for each check
 
@@ -706,7 +706,7 @@ See `$HORIZON_ETC/security_invariants.md` for the full ownership and ACL model, 
 | Skills (Claude Code reads here — junction) | `~/.claude/skills/` → `skills_sbin/` |
 | Handoffs (default output) | `$HORIZON_ROOT/handoffs/` |
 | Objectives (default store) | `$HORIZON_ROOT/objectives/` |
-| Operational logs | `$HORIZON_ROOT/logs/` |
+| Operational logs | `$HORIZON_SYSTEM/logs/` |
 | Sounds (generic) | `$HORIZON_SYSTEM/sounds/*.wav` |
 | Sounds (vendor-voiced) | `$HORIZON_SYSTEM/sounds/<vendor>_event_sounds/` |
 | Statusline scripts | `$HORIZON_BIN/statusline/` |

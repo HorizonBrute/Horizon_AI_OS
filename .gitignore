@@ -595,16 +595,10 @@ horizon_system/ai_os_etc/aios_local.conf
 horizon_system/harness_configs/claude_code/known_marketplaces.json
 horizon_system/harness_configs/claude_code/project_settings.json
 
-# Operational logs — directory scaffold tracked, log content gitignored.
-# Pattern explanation: ignore everything under logs/, then un-ignore subdirs
-# so git traverses into them, then ignore subdir contents, then un-ignore
-# .gitkeep placeholders so empty dirs remain in the index.
-!logs/
-logs/*
-!logs/.gitkeep
-!logs/*/
-logs/*/*
-!logs/*/.gitkeep
+# Operational logs live at the canonical path $HORIZON_SYSTEM/logs/ — the
+# scaffold there is tracked, log *content* stays gitignored (see the
+# horizon_system/logs un-ignore block at the end of this file). The old
+# $HORIZON_ROOT/logs/ scaffold has been retired.
 
 # Windows Explorer metadata
 desktop.ini
@@ -624,7 +618,14 @@ brains/*
 !horizon_system/bin/
 !horizon_system/bin/**
 horizon_system/bin/**/__pycache__/
+# Canonical operational logs scaffold ($HORIZON_SYSTEM/logs/).
+# Track the directory scaffold (.gitkeep + README.md) but never log content.
+# Pattern: traverse into logs/ and its subdirs, ignore their contents, then
+# re-include the scaffold placeholders so empty dirs persist in the index.
 !horizon_system/logs/
-!horizon_system/logs/*.gitkeep
-!horizon_system/logs/**/.gitkeep
+horizon_system/logs/*
+!horizon_system/logs/.gitkeep
+!horizon_system/logs/*/
+horizon_system/logs/*/*
+!horizon_system/logs/*/.gitkeep
 !horizon_system/logs/**/README.md

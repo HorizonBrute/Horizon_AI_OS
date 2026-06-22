@@ -27,7 +27,7 @@ $HORIZON_ETC      = Join-Path $HORIZON_SYSTEM "ai_os_etc"
 $HORIZON_DOCS     = Join-Path $HORIZON_SYSTEM "documentation"
 $HORIZON_USRBIN   = Join-Path $HORIZON_ROOT "usrbin"
 $HORIZON_PROJECTS = Join-Path $HORIZON_ROOT "Projects"
-$HORIZON_LOGS     = Join-Path $HORIZON_ROOT "logs"
+$HORIZON_LOGS     = Join-Path $HORIZON_SYSTEM "logs"
 $HORIZON_SOUNDS   = Join-Path $HORIZON_SYSTEM "sounds"
 
 $env:HORIZON_SYSTEM   = $HORIZON_SYSTEM
@@ -89,7 +89,7 @@ if ($env:AIOS_DEPLOY_MODE -eq "docker") {
     Write-Host "    `$env:HORIZON_DOCS     = `"`$env:HORIZON_SYSTEM\documentation`""
     Write-Host "    `$env:HORIZON_USRBIN   = `"`$env:HORIZON_ROOT\usrbin`""
     Write-Host "    `$env:HORIZON_PROJECTS = `"`$env:HORIZON_ROOT\Projects`""
-    Write-Host "    `$env:HORIZON_LOGS     = `"`$env:HORIZON_ROOT\logs`""
+    Write-Host "    `$env:HORIZON_LOGS     = `"`$env:HORIZON_SYSTEM\logs`""
     Write-Host "    `$env:HORIZON_SOUNDS   = `"`$env:HORIZON_SYSTEM\sounds`""
     Write-Host ""
     Write-Host "  Then reload your profile: . `$PROFILE"
@@ -336,8 +336,8 @@ if (-not (Test-Path $localConf)) {
     Write-Host "aios_local.conf already exists - skipping template copy." -ForegroundColor Green
 }
 
-# Ensure logs directory exists at canonical location ($HORIZON_ROOT/logs/)
-$logsDir = Join-Path $HORIZON_ROOT "logs"
+# Ensure logs directory exists at canonical location ($HORIZON_SYSTEM/logs/)
+$logsDir = Join-Path $HORIZON_SYSTEM "logs"
 if (-not (Test-Path $logsDir)) {
     New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
     Write-Host "Created logs/ directory." -ForegroundColor Green
@@ -353,4 +353,25 @@ if ($env:AIOS_DEPLOY_MODE -eq "docker") {
     } else {
         Write-Host "Skipped. Run later: python $HORIZON_SYSTEM\sbin\setup_sync_schedule.py"
     }
+}
+
+# -----------------------------------------------------------------------------
+# SECTION 9: Harden AIOS layer ACLs (brains group)
+# Enforces security_invariants.md §2/§3/§5 — brains denied on sbin/skills_sbin/
+# logs, granted RX on bin/skills_bin, no write elsewhere in $HORIZON_SYSTEM.
+# Best-effort: warn, never abort bootstrap; skip if python is missing.
+# -----------------------------------------------------------------------------
+Banner "SECTION 9: Harden AIOS layer ACLs"
+
+$HardenScript = Join-Path $HORIZON_SYSTEM "sbin\harden_aios.py"
+if (Test-Path $HardenScript) {
+    if (Get-Command python -ErrorAction SilentlyContinue) {
+        python $HardenScript
+        if ($LASTEXITCODE -eq 0) { Ok "AIOS layer hardened (brains-group ACLs applied)." }
+        else { Warn "harden_aios.py exited with code $LASTEXITCODE — review ACLs manually (run elevated)." }
+    } else {
+        Warn "python not found - skipping AIOS hardening. Run later (elevated): python $HardenScript"
+    }
+} else {
+    Warn "harden_aios.py not found at $HardenScript - skipping AIOS hardening."
 }

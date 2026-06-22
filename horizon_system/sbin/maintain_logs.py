@@ -101,7 +101,7 @@ def prune_objectives(objectives_dir: Path, max_days: int):
 
 def main():
     config = read_config()
-    log_dir = Path(config["AIOS_LOG_DIR"]) if config["AIOS_LOG_DIR"] else HORIZON_ROOT / "logs"
+    log_dir = Path(config["AIOS_LOG_DIR"]) if config["AIOS_LOG_DIR"] else HORIZON_SYSTEM / "logs"
 
     if log_dir.exists():
         max_days = int(config["AIOS_LOG_MAX_DAYS"]) if config["AIOS_LOG_MAX_DAYS"] != "0" else 0

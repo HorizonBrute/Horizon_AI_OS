@@ -60,7 +60,7 @@ Each "brain" is an isolated AI persona running as a separate OS user account, sc
 
 **Brains group:** All brain user accounts are members of a single OS-level group, conventionally named `brains`. Administrative convenience only — lets the admin grant or deny a path for all brains without enumerating accounts. Does not imply shared access. OS construct, not an AIOS construct.
 
-**Default brains group filesystem permissions** — set by `create_brain.py` and `bootstrap.ps1`:
+**Default brains group filesystem permissions** — enforced on the AIOS layer by `$HORIZON_SYSTEM/sbin/harden_aios.py` (run from bootstrap, independent of any brain) and re-applied per brain by `create_brain.py`:
 
 | Path | Brains Group |
 |---|---|
@@ -69,12 +69,12 @@ Each "brain" is an isolated AI persona running as a separate OS user account, sc
 | `$HORIZON_SYSTEM/skills_bin/` | Read + Execute (explicit grant — not inherited from `$HORIZON_BIN`) |
 | `$HORIZON_SYSTEM/skills_sbin/` | **DENY** (explicit) |
 | `$HORIZON_USRBIN/` | None (tools provisioned selectively per brain) |
-| `$HORIZON_ROOT/logs/` | **DENY** (explicit — audit log must not be writable by brains) |
+| `$HORIZON_SYSTEM/logs/` | **DENY** (explicit — audit log must not be writable by brains) |
 | `$HORIZON_PROJECTS/` | No default convention — per-project decision |
 | `$HORIZON_ROOT/` | None |
 | `brains/<brain-name>/` | That brain's account: full. All others: none. |
 
-`create_brain.py` (`$HORIZON_SYSTEM/scripts/`) applies all of the above for each new brain. Run it as the administrative context. See `$HORIZON_DOCS/security/audit_logging.md` for the monitor setup and `$HORIZON_SYSTEM/sbin/bootstrap.ps1` for first-machine setup.
+`harden_aios.py` (`$HORIZON_SYSTEM/sbin/`) applies all of the above to the AIOS layer at bootstrap, so the machine is protected before any brain exists; `create_brain.py` (`$HORIZON_SYSTEM/scripts/`) re-applies the per-brain grants/denies for each new brain. Run both as the administrative context. See `$HORIZON_DOCS/security/audit_logging.md` for the monitor setup and `$HORIZON_SYSTEM/sbin/bootstrap.ps1` for first-machine setup.
 
 ---
 
@@ -162,10 +162,10 @@ Audit logging is a first-class security requirement.
 - Append-only from the brain's perspective (if any write access is needed at all)
 - Controlled exclusively by the administrative context
 
-**Implemented audit coverage:** `$HORIZON_SYSTEM/sbin/monitor_aios.py` watches `$HORIZON_SYSTEM` for file *write* events (creates, modifies, deletes, moves) using the `watchdog` library. It logs JSON-line events to `$HORIZON_ROOT/logs/aios_monitor/`. Run as the administrative context; brain accounts must not have write access to the log directory.
+**Implemented audit coverage:** `$HORIZON_SYSTEM/sbin/monitor_aios.py` watches `$HORIZON_SYSTEM` for file *write* events (creates, modifies, deletes, moves) using the `watchdog` library. It logs JSON-line events to `$HORIZON_SYSTEM/logs/aios_monitor/`. Run as the administrative context; brain accounts must not have write access to the log directory (enforced by `harden_aios.py`, which sets an explicit Deny on `$HORIZON_SYSTEM/logs/`).
 
 **OS-level audit extensions (not implemented by AIOS):** Tool invocations, file reads, network calls made, and events inside brain folders require OS-level audit: `auditd` with `IN_ACCESS` on Linux, or Windows Security Audit / Object Access Auditing. Enabling these is optional and documented as an extension in `$HORIZON_DOCS/security/audit_logging.md`.
 
 See `$HORIZON_DOCS/security/audit_logging.md` for setup, service registration, Docker usage, and how to extend monitoring to additional paths.
 
-**Log location convention:** `$HORIZON_ROOT/logs/` — owned by the administrative context, not brain accounts.
+**Log location convention:** `$HORIZON_SYSTEM/logs/` (canonical) — owned by the administrative context, not brain accounts. Explicit brains-group Deny set by `harden_aios.py`.

@@ -32,7 +32,7 @@ HORIZON_BIN="$HORIZON_SYSTEM/bin"
 HORIZON_ETC="$HORIZON_SYSTEM/ai_os_etc"
 HORIZON_DOCS="$HORIZON_SYSTEM/documentation"
 HORIZON_SOUNDS="$HORIZON_SYSTEM/sounds"
-HORIZON_LOGS="$HORIZON_ROOT/logs"
+HORIZON_LOGS="$HORIZON_SYSTEM/logs"
 
 export HORIZON_SYSTEM HORIZON_ROOT HORIZON_BIN HORIZON_ETC HORIZON_DOCS HORIZON_SOUNDS HORIZON_LOGS
 
@@ -85,7 +85,7 @@ else
   echo "    export HORIZON_ETC=\"\$HORIZON_SYSTEM/ai_os_etc\""
   echo "    export HORIZON_DOCS=\"\$HORIZON_SYSTEM/documentation\""
   echo "    export HORIZON_SOUNDS=\"\$HORIZON_SYSTEM/sounds\""
-  echo "    export HORIZON_LOGS=\"\$HORIZON_ROOT/logs\""
+  echo "    export HORIZON_LOGS=\"\$HORIZON_SYSTEM/logs\""
   echo ""
   echo "  Then run: source ~/.bashrc  (or open a new terminal)"
 fi
@@ -332,7 +332,7 @@ else
     echo "aios_local.conf already exists — skipping template copy."
 fi
 
-mkdir -p "$HORIZON_ROOT/logs"
+mkdir -p "$HORIZON_SYSTEM/logs"
 
 if [ "${AIOS_DEPLOY_MODE:-}" = "docker" ]; then
     info "Docker mode: skipping sync schedule setup (refresh via image rebuild or pull)."
@@ -347,4 +347,27 @@ else
     else
         echo "Skipped. Run later: python3 $HORIZON_SYSTEM/sbin/setup_sync_schedule.py"
     fi
+fi
+
+# -----------------------------------------------------------------------------
+# SECTION 9: Harden AIOS layer ACLs (brains group)
+# Enforces security_invariants.md §2/§3/§5 — brains denied on sbin/skills_sbin/
+# logs, granted rx on bin/skills_bin, no write elsewhere in $HORIZON_SYSTEM.
+# Best-effort: warn, never abort bootstrap; skip if python is missing.
+# -----------------------------------------------------------------------------
+banner "SECTION 9: Harden AIOS layer ACLs"
+
+HARDEN_SCRIPT="$HORIZON_SYSTEM/sbin/harden_aios.py"
+if [ -f "$HARDEN_SCRIPT" ]; then
+  if command -v python3 >/dev/null 2>&1; then
+    if python3 "$HARDEN_SCRIPT"; then
+      ok "AIOS layer hardened (brains-group ACLs applied)."
+    else
+      warn "harden_aios.py exited non-zero — review ACLs manually (run with sudo)."
+    fi
+  else
+    warn "python3 not found — skipping AIOS hardening. Run later (sudo): python3 $HARDEN_SCRIPT"
+  fi
+else
+  warn "harden_aios.py not found at $HARDEN_SCRIPT — skipping AIOS hardening."
 fi

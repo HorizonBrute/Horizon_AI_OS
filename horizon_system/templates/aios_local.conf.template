@@ -31,7 +31,7 @@ AIOS_REPO_BRANCH=main
 # Logging
 # ---------------------------------------------------------------------------
 
-# Override log root. Default: $HORIZON_ROOT/logs (derived at runtime).
+# Override log root. Default: $HORIZON_SYSTEM/logs (derived at runtime).
 # AIOS_LOG_DIR=/var/log/horizon-aios
 
 # Days before logs are pruned. 0 = disabled.

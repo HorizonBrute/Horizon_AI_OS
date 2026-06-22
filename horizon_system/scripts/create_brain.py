@@ -216,7 +216,7 @@ def phase1_preflight(args):
     horizon_skills_sbin = os.path.join(horizon_system, 'skills_sbin')
     brains_dir          = os.path.join(horizon_root, 'brains')
     brain_dir           = os.path.join(brains_dir,   brain_name)
-    logs_dir            = os.path.join(horizon_root, 'logs')
+    logs_dir            = os.path.join(horizon_system, 'logs')
 
     for label, path in [('HORIZON_SYSTEM', horizon_system),
                         ('HORIZON_BIN',    horizon_bin),
