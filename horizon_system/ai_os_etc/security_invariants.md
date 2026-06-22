@@ -74,9 +74,14 @@ Each "brain" is an isolated AI persona running as a separate OS user account, sc
 | `$HORIZON_SYSTEM/logs/` | **DENY** (explicit — audit log must not be writable by brains) |
 | `$HORIZON_PROJECTS/` | No default convention — per-project decision |
 | `$HORIZON_ROOT/` | None |
+| `$HORIZON_SYSTEM/` (everything else: `ai_os_etc`, `scripts`, `templates`, `documentation`, …) | No write anywhere (read permitted) |
 | `brains/<brain-name>/` | That brain's account: full. All others: none. |
 
-`harden_aios.py` (`$HORIZON_SYSTEM/sbin/`) applies all of the above to the AIOS layer at bootstrap, so the machine is protected before any brain exists; `create_brain.py` (`$HORIZON_SYSTEM/scripts/`) re-applies the per-brain grants/denies for each new brain. Run both as the administrative context. See `$HORIZON_DOCS/security/audit_logging.md` for the monitor setup and `$HORIZON_SYSTEM/sbin/bootstrap.ps1` for first-machine setup.
+**Provisioning model.** AIOS hardening is an administrative/root action — hence bootstrap and `harden_aios.py` require elevation. The model is expressed entirely through two kinds of principal: the **owner + SYSTEM + Administrators**, who must always retain Full control (they are never stripped, and are re-granted by SID so this is locale-independent on Windows), and the **`brains` group**, which is restricted as above. *Human* operators are never granted access by AIOS — they are owners or members of Administrators, whatever the OS/infra already made them. On a single-user home workstation the operator is simultaneously owner and Administrator, so the model applies unchanged.
+
+**Two hardening modes (`harden_aios.py`).** *Additive* (default) preserves all existing/inherited ACLs — including GPO/SCCM/Intune pushes — and enforces the brains model by *adding* ACEs only: an inheritable brains Deny-Write across `$HORIZON_SYSTEM` (an explicit/inherited Deny beats any Allow, so "no write anywhere" holds even under broad infra grants) plus full Deny on the privileged dirs. *`--strict`* additionally drops inherited ACEs (`/inheritance:r`) at the root and on each privileged dir, re-establishing owner + SYSTEM + Administrators first — for locked-down standalone installs that want no inherited ACEs. Neither mode ever drops SYSTEM/Administrators.
+
+`harden_aios.py` (`$HORIZON_SYSTEM/sbin/`) applies all of the above to the AIOS layer at bootstrap, so the machine is protected before any brain exists; `create_brain.py` (`$HORIZON_SYSTEM/scripts/`) re-applies the per-brain grants/denies for each new brain (additively, so it agrees with `harden_aios.py`'s default and never re-strips the shared dirs). Run both as the administrative context. See `$HORIZON_DOCS/security/audit_logging.md` for the monitor setup and `$HORIZON_SYSTEM/sbin/bootstrap.ps1` for first-machine setup.
 
 ---
 

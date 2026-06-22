@@ -594,12 +594,16 @@ def _phase3_windows(brain_name, invoking_user,
     permissions never accidentally reach privileged dirs.
     """
 
-    # -- Brain folder: remove inheritance, grant brain user + group full control --
+    # -- Brain folder: isolate it (drop inherited ACEs) but never strip the
+    #    principals that must retain control. Well-known SIDs are locale-safe:
+    #    *S-1-5-18 = SYSTEM, *S-1-5-32-544 = BUILTIN\Administrators.
     info(f'Setting ACLs on brain folder: {brain_dir}')
     run(['icacls', brain_dir,
          '/inheritance:r',
          '/grant', f'{brain_name}:(OI)(CI)F',
-         '/grant', f'{invoking_user}:(OI)(CI)F'],
+         '/grant', f'{invoking_user}:(OI)(CI)F',
+         '/grant', '*S-1-5-18:(OI)(CI)F',
+         '/grant', '*S-1-5-32-544:(OI)(CI)F'],
         dry_run=dry_run)
 
     # -- horizon_system/bin: grant brains group RX --
@@ -615,14 +619,17 @@ def _phase3_windows(brain_name, invoking_user,
         dry_run=dry_run)
 
     # -- Deny on privileged dirs (MUST be after all grants above) --
+    # Additive: add the full Deny without stripping inheritance, so SYSTEM /
+    # Administrators / owner (and any infra-pushed ACLs) on these shared dirs
+    # are preserved. This mirrors harden_aios.py's default mode — the two must
+    # agree, since harden_aios may have already set these dirs and create_brain
+    # re-touches them per brain. (harden_aios --strict owns inheritance strips.)
     for label, path in [('sbin', horizon_sbin),
                         ('skills_sbin', horizon_skills_sbin),
                         ('logs', logs_dir)]:
         if os.path.isdir(path):
             info(f'Denying brains group on {label}: {path}')
             run(['icacls', path,
-                 '/inheritance:r',
-                 '/grant', f'{invoking_user}:(OI)(CI)F',
                  '/deny',  f'{BRAINS_GROUP}:(OI)(CI)F'],
                 dry_run=dry_run)
 
