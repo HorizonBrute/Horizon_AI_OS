@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Horizon AIOS health-check. Run as the primary OS user."""
 
+import json
 import os
 import subprocess
 import sys
@@ -304,6 +305,60 @@ def check_claude_md(horizon_root):
 
 
 # ---------------------------------------------------------------------------
+# 11. AIOS switcher (registry + indirection layer)
+# The machine-local registry at ~/.horizon/aios_registry.json records which
+# AIOSs this machine knows and which is active. active_env.* and the aios-exec
+# wrappers are the indirection layer the profile and settings.json point at.
+# A missing registry is WARN (switcher not initialized — bootstrap creates it);
+# a corrupt registry or an active AIOS that no longer exists is FAIL.
+# ---------------------------------------------------------------------------
+def check_aios_registry():
+    horizon_home = Path.home() / ".horizon"
+    registry = horizon_home / "aios_registry.json"
+    if not registry.exists():
+        warn("AIOS registry", "~/.horizon/aios_registry.json not found — "
+             "run 'python aios_switch.py init' (or bootstrap) to initialize")
+        return
+
+    try:
+        reg = json.loads(registry.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as e:
+        fail("AIOS registry", f"unreadable/corrupt: {e} — re-init with aios_switch.py")
+        return
+
+    aioses = reg.get("aioses")
+    active = reg.get("active")
+    if not isinstance(aioses, dict) or not aioses:
+        fail("AIOS registry", "no registered AIOSs — re-init with aios_switch.py")
+        return
+    ok(f"AIOS registry — {len(aioses)} registered, active: '{active}'")
+
+    entry = aioses.get(active)
+    if not entry:
+        fail("AIOS active", f"active '{active}' is not in the registry")
+    else:
+        root = Path(entry.get("root", ""))
+        if (root / "horizon_system" / "ai_os_etc").is_dir():
+            ok(f"AIOS active root — {root} is a valid AIOS")
+        else:
+            fail("AIOS active root", f"'{root}' is not a valid AIOS (moved/deleted?)")
+
+    # Indirection layer: platform-appropriate env snippet + wrappers.
+    env_snippet = horizon_home / ("active_env.ps1" if sys.platform == "win32"
+                                  else "active_env.sh")
+    wrapper = horizon_home / "bin" / ("aios-exec.ps1" if sys.platform == "win32"
+                                      else "aios-exec.sh")
+    if env_snippet.exists():
+        ok(f"AIOS env snippet — {env_snippet.name} present")
+    else:
+        warn("AIOS env snippet", f"{env_snippet} missing — run aios_switch.py init/switch")
+    if wrapper.exists():
+        ok(f"AIOS exec wrapper — {wrapper.name} present")
+    else:
+        warn("AIOS exec wrapper", f"{wrapper} missing — run aios_switch.py init/switch")
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 def main():
@@ -342,6 +397,7 @@ def main():
         fail(".gitignore.user / CLAUDE.md", "skipped — $HORIZON_ROOT not available")
 
     check_claude_settings()
+    check_aios_registry()
 
     print()
     print(f"  {passed} checks passed, {warnings} warnings, {failures} failures")

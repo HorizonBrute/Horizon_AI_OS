@@ -92,19 +92,14 @@ if [ "${AIOS_DEPLOY_MODE:-}" = "docker" ]; then
   info "Docker mode: HORIZON_* env vars (including HORIZON_SOUNDS, HORIZON_LOGS) are set in the Dockerfile — no shell profile changes needed."
 else
   echo ""
-  echo "Add the following to your shell profile (~/.bashrc, ~/.zshrc, or ~/.bash_profile):"
-  echo "  (Replace the HORIZON_ROOT value with your actual path if different)"
+  echo "Add ONE line to your shell profile (~/.bashrc, ~/.zshrc, or ~/.bash_profile)"
+  echo "to load whichever AIOS is active (Section 5 generates this file; the AIOS"
+  echo "switcher regenerates it on switch):"
   echo ""
-  echo "    export HORIZON_ROOT=\"$HORIZON_ROOT\""
-  echo "    export HORIZON_SYSTEM=\"\$HORIZON_ROOT/horizon_system\""
-  echo "    export HORIZON_BIN=\"\$HORIZON_SYSTEM/bin\""
-  echo "    export HORIZON_ETC=\"\$HORIZON_SYSTEM/ai_os_etc\""
-  echo "    export HORIZON_DOCS=\"\$HORIZON_SYSTEM/documentation\""
-  echo "    export HORIZON_USRBIN=\"\$HORIZON_ROOT/usrbin\""
-  echo "    export HORIZON_PROJECTS=\"\$HORIZON_ROOT/Projects\""
-  echo "    export HORIZON_SOUNDS=\"\$HORIZON_SYSTEM/sounds\""
-  echo "    export HORIZON_LOGS=\"\$HORIZON_SYSTEM/logs\""
+  echo "    . \"\$HOME/.horizon/active_env.sh\""
   echo ""
+  echo "  This sets HORIZON_ROOT + all derived vars for the active AIOS, so"
+  echo "  'aios switch <name>' repoints your shell without editing your profile."
   echo "  Then run: source ~/.bashrc  (or open a new terminal)"
 fi
 
@@ -222,21 +217,46 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# SECTION 5: ~/.claude/settings.json
+# SECTION 5: settings.json + AIOS indirection layer
+# Initializes the machine-local AIOS registry (~/.horizon/) and generates the
+# active_env snippet + aios-exec wrappers, then wires settings.json at the
+# stable wrapper so switching AIOS never rewrites settings.json. See
+# aios_switch.py and $HORIZON_DOCS/system/aios_switching.md.
 # -----------------------------------------------------------------------------
-banner "SECTION 5: ~/.claude/settings.json"
+banner "SECTION 5: settings.json + AIOS indirection layer"
 
+# 5a: AIOS registry + active_env + wrappers (idempotent; self-heals registry).
+SWITCH_SCRIPT="$HORIZON_SYSTEM/sbin/aios_switch.py"
+if [ -f "$SWITCH_SCRIPT" ]; then
+  if command -v python3 >/dev/null 2>&1; then
+    if python3 "$SWITCH_SCRIPT" init; then
+      ok "AIOS registry + indirection layer initialized."
+    else
+      warn "aios_switch.py init exited non-zero."
+    fi
+  else
+    warn "python3 not found - skipping AIOS registry init. Run later: python3 $SWITCH_SCRIPT init"
+  fi
+else
+  warn "aios_switch.py not found at $SWITCH_SCRIPT - skipping AIOS registry init."
+fi
+
+# 5b: settings.json points at the stable, AIOS-independent wrapper.
+AIOS_EXEC_WRAPPER="$HOME/.horizon/bin/aios-exec.sh"
 SETTINGS_DST="$HOME/.claude/settings.json"
 # Select template based on OS: Windows (Git Bash) uses PowerShell hooks; Linux/macOS use bash hooks.
 case "$(uname -s)" in
-  MINGW*|MSYS*|CYGWIN*) SETTINGS_TEMPLATE="$HORIZON_SYSTEM/templates/claude_code/settings.json" ;;
+  MINGW*|MSYS*|CYGWIN*)
+    SETTINGS_TEMPLATE="$HORIZON_SYSTEM/templates/claude_code/settings.json"
+    AIOS_EXEC_WRAPPER="$HOME/.horizon/bin/aios-exec.ps1" ;;
   *) SETTINGS_TEMPLATE="$HORIZON_SYSTEM/templates/claude_code/settings_unix.json" ;;
 esac
 
 if [ -f "$SETTINGS_DST" ]; then
   info "~/.claude/settings.json already exists."
-  info "Review $SETTINGS_TEMPLATE and merge any new entries manually."
-  info "See $HORIZON_DOCS/getting_started/ReadMeToSetupYourSystem.md Step 8 for the hard-link approach."
+  info "To use the AIOS switcher, point statusLine + hooks at the wrapper:"
+  info "  $AIOS_EXEC_WRAPPER  (actions: statusline, hook-stop, hook-permission, hook-stopfailure)"
+  info "Compare with $SETTINGS_TEMPLATE and merge manually."
 else
   if [ -f "$SETTINGS_TEMPLATE" ]; then
     echo ""
@@ -249,11 +269,10 @@ else
       read -r answer </dev/tty
     fi
     if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
-      # Substitute path placeholders
-      sed "s|HORIZON_BIN_PATH|$HORIZON_BIN|g; s|HORIZON_SYSTEM_PATH|$HORIZON_SYSTEM|g" "$SETTINGS_TEMPLATE" > "$SETTINGS_DST"
-      ok "Copied template to ~/.claude/settings.json (HORIZON_BIN_PATH substituted)."
-      warn "Review ~/.claude/settings.json — some paths may still need manual adjustment."
-      warn "See $HORIZON_DOCS/getting_started/ReadMeToSetupYourSystem.md Step 8 for path substitution details."
+      # Point settings.json at the stable, AIOS-independent wrapper.
+      sed "s|AIOS_EXEC_WRAPPER|$AIOS_EXEC_WRAPPER|g" "$SETTINGS_TEMPLATE" > "$SETTINGS_DST"
+      ok "Copied template to ~/.claude/settings.json (pointed at aios-exec wrapper)."
+      info "settings.json now resolves the active AIOS at run time - switching never rewrites it."
     else
       info "Skipping settings.json — create it manually from the template."
     fi

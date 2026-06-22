@@ -5,7 +5,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "powershell.exe -NonInteractive -File HORIZON_BIN_PATH/statusline/statusline-context-alerts.ps1"
+    "command": "powershell.exe -NonInteractive -File 'AIOS_EXEC_WRAPPER' statusline"
   },
   "hooks": {
     "Stop": [
@@ -13,7 +13,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "& 'HORIZON_SYSTEM_PATH/harness_configs/claude_code/hooks/log_hook_event.ps1' -Event Stop; $s = python 'HORIZON_SYSTEM_PATH/bin/resolve_sound.py' task_complete --harness claude_code; if ($s) { (New-Object Media.SoundPlayer $s).PlaySync() }",
+            "command": "& 'AIOS_EXEC_WRAPPER' hook-stop",
             "shell": "powershell"
           }
         ]
@@ -24,7 +24,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "& 'HORIZON_SYSTEM_PATH/harness_configs/claude_code/hooks/log_hook_event.ps1' -Event PermissionRequest; $s = python 'HORIZON_SYSTEM_PATH/bin/resolve_sound.py' input_needed --harness claude_code; if ($s) { (New-Object Media.SoundPlayer $s).PlaySync() }",
+            "command": "& 'AIOS_EXEC_WRAPPER' hook-permission",
             "shell": "powershell",
             "async": true
           }
@@ -36,7 +36,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "& 'HORIZON_SYSTEM_PATH/harness_configs/claude_code/hooks/log_hook_event.ps1' -Event StopFailure; $s = python 'HORIZON_SYSTEM_PATH/bin/resolve_sound.py' api_error --harness claude_code; if ($s) { (New-Object Media.SoundPlayer $s).PlaySync() }",
+            "command": "& 'AIOS_EXEC_WRAPPER' hook-stopfailure",
             "shell": "powershell",
             "async": true
           }
