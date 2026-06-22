@@ -788,10 +788,13 @@ def _report_check(label, passed):
 def _check_group_membership(user, group, os_name):
     """Return True if *user* belongs to *group*."""
     if os_name == 'Windows':
+        # Get-LocalGroupMember returns each member's .Name fully qualified
+        # (e.g. "COMPUTERNAME\testbrain"), so strip the domain/machine prefix
+        # before comparing — a bare "-contains <user>" never matches.
         result = subprocess.run(
             ['powershell', '-NonInteractive', '-Command',
-             f'(Get-LocalGroupMember -Group "{group}" -ErrorAction SilentlyContinue)'
-             f'.Name -contains "{user}"'],
+             f'((Get-LocalGroupMember -Group "{group}" -ErrorAction SilentlyContinue)'
+             f'.Name -replace ".*\\\\","") -contains "{user}"'],
             capture_output=True, text=True,
         )
         return result.stdout.strip().lower() == 'true'
