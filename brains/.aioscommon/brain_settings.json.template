@@ -6,7 +6,7 @@
       "Write([HORIZON_ROOT_PATH]/brains/[BRAIN_NAME]/**)",
       "Bash(cd [HORIZON_ROOT_PATH]/brains/[BRAIN_NAME] && *)"
     ],
-    "_deny_note": "Harness-layer reinforcement only — not OS enforcement. Real isolation is NTFS ACLs/POSIX permissions set by create_brain.py. These add defense-in-depth for Claude Code sessions only.",
+    "_deny_note": "Harness-layer reinforcement only — not OS enforcement. Real isolation is NTFS ACLs/POSIX permissions set by horizon_aios_create_brain.py. These add defense-in-depth for Claude Code sessions only.",
     "deny": [
       "Read([HORIZON_ROOT_PATH]/horizon_system/sbin/**)",
       "Write([HORIZON_ROOT_PATH]/horizon_system/**)",

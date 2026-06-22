@@ -23,7 +23,7 @@ Config (horizon_system/ai_os_etc/aios_local.conf), overridable by CLI flags:
     AIOS_BACKUP_PATHS=memory handoffs objectives    # default
 
 Usage:
-    python backup_user_data.py [--remote R] [--branch B] [--paths P ...]
+    python horizon_aios_backup_user_data.py [--remote R] [--branch B] [--paths P ...]
                                [--message M] [--dry-run]
 """
 

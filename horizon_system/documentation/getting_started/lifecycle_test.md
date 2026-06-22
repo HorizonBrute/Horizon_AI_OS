@@ -59,12 +59,12 @@ aios current                                         # root back to C:\devroot
 aios unregister home                                # (optional) drop the 2nd registration; files untouched
 
 # ── 4. Optional: exercise the rest of the lifecycle ────────────────
-#   python horizon_system\sbin\create_brain.py testbrain --automation scheduled
-#   python horizon_system\sbin\sync_aios.py            # simulate FF upstream update
-#   python horizon_system\sbin\backup_user_data.py     # to YOUR remote (never public upstream)
+#   python horizon_system\sbin\horizon_aios_create_brain.py testbrain --automation scheduled
+#   python horizon_system\sbin\horizon_aios_sync.py            # simulate FF upstream update
+#   python horizon_system\sbin\horizon_aios_backup_user_data.py     # to YOUR remote (never public upstream)
 
 # ── 5. Reset to clean ──────────────────────────────────────────────
-#   if you made a brain:  python horizon_system\sbin\remove_brain.py testbrain --yes
+#   if you made a brain:  python horizon_system\sbin\horizon_aios_remove_brain.py testbrain --yes
 .\horizon_system\sbin\uninstall.ps1 --dry-run       # preview full reversal
 .\horizon_system\sbin\uninstall.ps1 --yes
 #   then on C:\horizon-home if you bootstrapped it too:
@@ -73,7 +73,7 @@ aios unregister home                                # (optional) drop the 2nd re
 
 If `aios` isn't found right after bootstrap (PATH not refreshed in that shell),
 open a fresh elevated shell or use the long form
-`python horizon_system\sbin\aios_switch.py ...`.
+`python horizon_system\sbin\horizon_aios_switch.py ...`.
 
 ---
 
@@ -91,7 +91,7 @@ open a fresh elevated shell or use the long form
 
 ### Clean reset after uninstall (step 5)
 Run the **post-uninstall verification checklist in `system/uninstall.md`** — it is
-authoritative (doctor.py failures = success, skills/memory junctions gone with
+authoritative (horizon_aios_doctor.py failures = success, skills/memory junctions gone with
 targets intact, PATH cleaned, ACEs stripped, idempotent re-run).
 
 One switch-test-specific note: the registry (`aios_registry.json`) lives under

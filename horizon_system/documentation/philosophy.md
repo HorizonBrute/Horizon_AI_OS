@@ -48,7 +48,7 @@ The principle of least privilege is no longer sufficient as a statement of inten
 
 **What AIOS provides vs. what you must implement:**
 
-AIOS answers questions 2–6 fully: provisioning records, zero-default access, explicit ACLs, credential containment. Question 1 — *what did the agent actually do during a session* — requires OS-level audit that AIOS cannot provide portably across all platforms and deployments. AIOS provides the log directory, the filesystem change monitor (`monitor_aios.py`), and the isolation boundary. Full session-level audit requires integration with the infrastructure your organization already runs.
+AIOS answers questions 2–6 fully: provisioning records, zero-default access, explicit ACLs, credential containment. Question 1 — *what did the agent actually do during a session* — requires OS-level audit that AIOS cannot provide portably across all platforms and deployments. AIOS provides the log directory, the filesystem change monitor (`horizon_aios_monitor.py`), and the isolation boundary. Full session-level audit requires integration with the infrastructure your organization already runs.
 
 Recommended OS-level audit integrations (implement in your environment):
 
@@ -67,7 +67,7 @@ Horizon AIOS is not a security framework. It is a configuration layer that redir
 
 - **User isolation** is done by the OS (NTFS ACLs / POSIX permissions), not by AIOS code.
 - **Audit logging** uses the OS filesystem and optionally `auditd` / Windows Security Audit — tools the security team already knows.
-- **Credential containment** uses OS-native credential stores accessed via `brain_credential.py` in sbin, not a custom secrets store.
+- **Credential containment** uses OS-native credential stores accessed via `horizon_aios_brain_credential.py` in sbin, not a custom secrets store.
 - **Centralized logging** follows the standard log taxonomy the ops team already has tooling for.
 - **Access control** is enforced by `icacls` / `chmod` — not reimplemented.
 
@@ -94,7 +94,7 @@ The desktop model is the design reference: if a feature works correctly on a use
 **IaC compatibility requirements:**
 - No hardcoded paths in any committed file — all paths are env vars (`$HORIZON_ROOT`, `$HORIZON_SYSTEM`, etc.).
 - Bootstrap scripts are the single source of truth for setup — cloning the repo + running bootstrap produces a working AIOS.
-- Brain provisioning is a single script invocation (`create_brain.py`) — not a sequence of manual steps.
+- Brain provisioning is a single script invocation (`horizon_aios_create_brain.py`) — not a sequence of manual steps.
 - Configuration is file-driven — the entire AIOS state can be recreated from the repo + a local config file.
 
 AIOS Docker images are Linux-container based and run on Windows, macOS, and Linux hosts via the container runtime (Docker Desktop / WSL2 on Windows and macOS, Docker Engine on Linux). Native Windows containers are out of scope.
@@ -178,9 +178,9 @@ For each of these, "adding harness support" would require at minimum: a parallel
 |---|---|
 | BYOH / Harness independence | `agents.md` + CLAUDE.md conventions; `harness_configs/` separation; explicit design constraint in `dev_values.md` §6 |
 | Lean into existing IT infra | OS user accounts for brain isolation; NTFS ACLs / `icacls`; no custom access control layer |
-| Least privilege, enforced | Zero-default access posture; explicit Deny ACEs on `sbin`; `create_brain.py` provisions the minimum; every tool grant requires a one-sentence justification |
-| Audit trail | `monitor_aios.py` writes to `$HORIZON_SYSTEM/logs/`; log dir has Deny ACE for brain users (set by `harden_aios.py`); documented in `security_invariants.md` §7 |
-| Credential containment | OS-native credential stores via `brain_credential.py` in sbin; no brain has default key access; scoped credential grants |
+| Least privilege, enforced | Zero-default access posture; explicit Deny ACEs on `sbin`; `horizon_aios_create_brain.py` provisions the minimum; every tool grant requires a one-sentence justification |
+| Audit trail | `horizon_aios_monitor.py` writes to `$HORIZON_SYSTEM/logs/`; log dir has Deny ACE for brain users (set by `horizon_aios_harden.py`); documented in `security_invariants.md` §7 |
+| Credential containment | OS-native credential stores via `horizon_aios_brain_credential.py` in sbin; no brain has default key access; scoped credential grants |
 | IaC-ready paths | All paths are env vars; no hardcoded values in committed files |
 | Reproducible bootstrap | `bootstrap.ps1` / `bootstrap.sh` cover setup end-to-end |
 | Brain isolation | Separate OS user accounts; own folder only by default; blast radius limited |
@@ -193,6 +193,6 @@ For each of these, "adding harness support" would require at minimum: a parallel
 | Blue Team Answerability | AIOS logs lifecycle events (Stop/PermissionRequest/StopFailure) and AIOS-layer file changes, but not tool invocations or reads inside brain folders. Full session-level audit requires OS-level infrastructure integration. | **Addressed by design** — AIOS provides the boundary and the log location; §3 now documents concrete OS-level audit recommendations (Linux `auditd`, macOS BSM, Windows Security Audit, Docker logging drivers). Integration is the operator's responsibility, consistent with how every other application in their environment is audited. |
 | Brain vs. AIOS conceptual vocabulary | The distinction between Brain (expert app) and AIOS (OS layer) was implicit. | **Addressed** — this document defines the vocabulary. |
 | Second Brain as goal state | Not articulated in any existing document. | **Addressed** — §2 of this document. |
-| Per-brain provisioning record | No generated audit artifact per brain. | **Addressed** — `create_brain.py` Phase 5 writes `.aios_provision.json` to each brain's directory at provisioning time. Post-creation grants are not auto-recorded. |
+| Per-brain provisioning record | No generated audit artifact per brain. | **Addressed** — `horizon_aios_create_brain.py` Phase 5 writes `.aios_provision.json` to each brain's directory at provisioning time. Post-creation grants are not auto-recorded. |
 | Docker-aware bootstrap | No container-aware bootstrap variant. | **Addressed** — `bootstrap_docker.sh` wraps `bootstrap.sh` with `AIOS_DEPLOY_MODE=docker`; `bootstrap_docker.ps1` is the equivalent wrapper for driving the build from a Windows host. Images are Linux containers (run on Windows/macOS/Linux via the container runtime). |
-| Brain verification on Windows | `create_brain.py` Phase 4 verifies brain folder existence on Windows but does not verify ACL correctness — it trusts that the `icacls` commands in Phase 3 succeeded. A failed `icacls` call raises an exception and aborts provisioning, so catastrophic failures are detected; partial ACL success is not re-checked. | **Open** — full ACL re-verification on Windows would require parsing `icacls` output, which adds significant complexity. Current posture: fail-loudly on error, trust-on-success. |
+| Brain verification on Windows | `horizon_aios_create_brain.py` Phase 4 verifies brain folder existence on Windows but does not verify ACL correctness — it trusts that the `icacls` commands in Phase 3 succeeded. A failed `icacls` call raises an exception and aborts provisioning, so catastrophic failures are detected; partial ACL success is not re-checked. | **Open** — full ACL re-verification on Windows would require parsing `icacls` output, which adds significant complexity. Current posture: fail-loudly on error, trust-on-success. |

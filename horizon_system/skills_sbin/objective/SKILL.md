@@ -58,7 +58,7 @@ C.1 Ensure `<objectives_dir>` exists; create if missing (`mkdir -p`). If `index.
 # Objectives Index
 
 Durable, multi-session goals. Reference by number or name. Ephemeral by design —
-objectives not updated within the retention window are pruned by maintain_logs.py
+objectives not updated within the retention window are pruned by horizon_aios_maintain_logs.py
 (AIOS_OBJECTIVES_MAX_DAYS). This is intentional; there is no task tracking here.
 
 | # | Name | Created | Description |
@@ -129,6 +129,6 @@ U.3 Writing the file refreshes its modification time, keeping it from being prun
 
 - Keep objective files tight and durable — loaded on demand, but bloat costs tokens every time they are shown or chained. Capture the goal, not a play-by-play.
 - Never invent a status/done/close concept. There is none. The user retires an objective by ceasing to reference it.
-- Retention is age-based, handled externally by `$HORIZON_SYSTEM/sbin/maintain_logs.py` (`AIOS_OBJECTIVES_MAX_DAYS`). `index.md`, `.gitkeep`, and `README.md` are never pruned. Do not implement pruning here.
+- Retention is age-based, handled externally by `$HORIZON_SYSTEM/sbin/horizon_aios_maintain_logs.py` (`AIOS_OBJECTIVES_MAX_DAYS`). `index.md`, `.gitkeep`, and `README.md` are never pruned. Do not implement pruning here.
 - The objectives directory is machine-local and gitignored, like `handoffs/`.
 - Number is the stable handle. Names can collide loosely across time; disambiguate by number when both are available.

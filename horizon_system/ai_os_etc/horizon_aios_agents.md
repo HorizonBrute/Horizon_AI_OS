@@ -46,7 +46,7 @@ Check whether the AIOS filesystem monitor is running:
 python $HORIZON_BIN/monitor_status.py
 ```
 
-Output: `running` or `stopped`. If `stopped`, ask the user: "The AIOS filesystem monitor is not running. Enable file access logging? Run: `python $HORIZON_SYSTEM/sbin/monitor_aios.py` (administrative context required)."
+Output: `running` or `stopped`. If `stopped`, ask the user: "The AIOS filesystem monitor is not running. Enable file access logging? Run: `python $HORIZON_SYSTEM/sbin/horizon_aios_monitor.py` (administrative context required)."
 
 Do not start the monitor yourself.
 

@@ -21,7 +21,7 @@ The user types `/doctor`, or asks you to "run the doctor", "health-check the AIO
 ### Step 1 — Run the check
 
 ```
-python "$HORIZON_SYSTEM/sbin/doctor.py"
+python "$HORIZON_SYSTEM/sbin/horizon_aios_doctor.py"
 ```
 
 Read-only — no elevation required. It takes no arguments and runs every check unconditionally.
@@ -30,7 +30,7 @@ Read-only — no elevation required. It takes no arguments and runs every check 
 
 2.1 Relay the summary line (`N checks passed, M warnings, K failures`).
 
-2.2 For each `[FAIL]` and `[WARN]`, surface the line and its remediation hint (the script prints the fix inline, e.g. "run bootstrap", "run harden_aios.py", "run aios_switch.py init"). Do not invent fixes — quote the script's own guidance.
+2.2 For each `[FAIL]` and `[WARN]`, surface the line and its remediation hint (the script prints the fix inline, e.g. "run bootstrap", "run horizon_aios_harden.py", "run horizon_aios_switch.py init"). Do not invent fixes — quote the script's own guidance.
 
 2.3 Exit code is `1` if any check failed, `0` if only warnings or clean. Report success/failure accordingly.
 

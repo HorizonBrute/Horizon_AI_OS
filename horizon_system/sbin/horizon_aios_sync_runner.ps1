@@ -1,9 +1,9 @@
 # Thin launcher for Windows Task Scheduler.
-# Resolves Python and delegates to sync_aios.py.
-# Lives in sbin alongside sync_aios.py.
+# Resolves Python and delegates to horizon_aios_sync.py.
+# Lives in sbin alongside horizon_aios_sync.py.
 
 $ScriptDir = $PSScriptRoot
-$PythonScript = Join-Path $ScriptDir "sync_aios.py"
+$PythonScript = Join-Path $ScriptDir "horizon_aios_sync.py"
 
 $python = (Get-Command python -ErrorAction SilentlyContinue).Source
 if (-not $python) { $python = (Get-Command python3 -ErrorAction SilentlyContinue).Source }

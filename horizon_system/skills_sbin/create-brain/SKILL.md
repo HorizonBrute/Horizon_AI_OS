@@ -6,7 +6,7 @@ tools: Bash, Read
 
 # Skill: /create-brain
 
-Provision a new isolated AI brain with `create_brain.py`: an OS user account, the shared `brains` group, a per-brain group, the workspace at `$HORIZON_ROOT/brains/<brain-name>/`, a login shell profile, and an auto-generated 64-char password stored in the OS native keystore. The `sbin/skills_sbin/logs` Deny ACEs are re-applied after all grants per the security invariants.
+Provision a new isolated AI brain with `horizon_aios_create_brain.py`: an OS user account, the shared `brains` group, a per-brain group, the workspace at `$HORIZON_ROOT/brains/<brain-name>/`, a login shell profile, and an auto-generated 64-char password stored in the OS native keystore. The `sbin/skills_sbin/logs` Deny ACEs are re-applied after all grants per the security invariants.
 
 ---
 
@@ -36,7 +36,7 @@ This **hard-requires** the administrative context — the script exits with an e
 ### Step 2 — Run
 
 ```
-python "$HORIZON_SYSTEM/sbin/create_brain.py" <brain-name>
+python "$HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py" <brain-name>
 ```
 
 Append `--automation` / `--horizon-root` / `--dry-run` as requested.
@@ -45,15 +45,15 @@ Append `--automation` / `--horizon-root` / `--dry-run` as requested.
 
 3.1 Relay the Phase 4 verification checks (`[PASS]`/`[FAIL]`) and the Summary.
 
-3.2 Surface the "Next steps" the script prints — notably retrieving the account password: `python "$HORIZON_SYSTEM/sbin/brain_credential.py" get <brain-name> --show`. The password is never printed by provisioning; it lives in the OS keystore.
+3.2 Surface the "Next steps" the script prints — notably retrieving the account password: `python "$HORIZON_SYSTEM/sbin/horizon_aios_brain_credential.py" get <brain-name> --show`. The password is never printed by provisioning; it lives in the OS keystore.
 
-3.3 If verification reported failures, relay the script's cleanup instructions (it points at `remove_brain.py <name> --yes`).
+3.3 If verification reported failures, relay the script's cleanup instructions (it points at `horizon_aios_remove_brain.py <name> --yes`).
 
 ---
 
 ## Notes for the executing agent
 
-- The generated password is stored in the OS native keystore via `brain_credential.py` and is NEVER echoed. Do not attempt to print or log it.
+- The generated password is stored in the OS native keystore via `horizon_aios_brain_credential.py` and is NEVER echoed. Do not attempt to print or log it.
 - If the user already exists, the script reports "Nothing to do" and exits 0 — that is not a failure.
 - Per-brain group naming: `<brain-name>_group` on Windows (shared user/group namespace), `<brain-name>` on Linux/macOS.
 - Deny ACEs on `sbin/skills_sbin/logs` are always (re)applied AFTER all brains grants — do not reorder; just run the script.

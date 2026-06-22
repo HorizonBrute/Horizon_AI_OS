@@ -28,7 +28,7 @@ change** — run `/horizon_aios_documentation_index_update`. (Enforced by CC-G4 
 ## system
 | ID (path) | Title | Purpose |
 |---|---|---|
-| `horizon_system/documentation/system/aios_switching.md` | Switching between AIOSs | Run multiple AIOS installs on one machine and switch which one the local Claude config points at, via `aios_switch.py`. |
+| `horizon_system/documentation/system/aios_switching.md` | Switching between AIOSs | Run multiple AIOS installs on one machine and switch which one the local Claude config points at, via `horizon_aios_switch.py`. |
 | `horizon_system/documentation/system/distribution_and_updates.md` | Distribution, Updates, and Backing Up Your Data | The framework vs. user-space model: getting upstream updates without losing customizations, protecting your config, and backing up memory/handoffs/objectives to your own remote. |
 | `horizon_system/documentation/system/memory.md` | Harness Memory and Per-Project State | Where harness transcripts and agent memory live (`$HORIZON_ROOT/memory/` via the `~/.claude/projects` junction), how the owner/brain redirects work, why it's centralized, and that uninstalling the AIOS destroys memory unless the user backs it up first. |
 | `horizon_system/documentation/system/system_configuration_reference.md` | Horizon AIOS — System Configuration Reference | Authoritative reference for the full configuration architecture: what each file controls, dependencies, and how components fit together. |
@@ -50,7 +50,7 @@ change** — run `/horizon_aios_documentation_index_update`. (Enforced by CC-G4 
 ## security
 | ID (path) | Title | Purpose |
 |---|---|---|
-| `horizon_system/documentation/security/audit_logging.md` | Audit Logging — AIOS Filesystem Monitor | How `monitor_aios.py` watches AIOS system directories and logs unexpected file changes as JSON-line audit events. |
+| `horizon_system/documentation/security/audit_logging.md` | Audit Logging — AIOS Filesystem Monitor | How `horizon_aios_monitor.py` watches AIOS system directories and logs unexpected file changes as JSON-line audit events. |
 
 ## development_tools
 | ID (path) | Title | Purpose |

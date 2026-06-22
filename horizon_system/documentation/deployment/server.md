@@ -12,7 +12,7 @@ The server deployment runs the AIOS on a remote or always-on machine without a d
 - Brains run unattended as scheduled tasks or services under their own OS user accounts.
 - No sound device — hook commands that play audio will fail or silently no-op. Disable them or suppress errors.
 - No statusline — harness UI features (context bar, git display) do not render in a non-interactive session.
-- The audit log (`$HORIZON_LOGS/aios_monitor/`) is the operational view: tail it to observe what agents are doing.
+- The audit log (`$HORIZON_LOGS/horizon_aios_monitor/`) is the operational view: tail it to observe what agents are doing.
 
 ---
 
@@ -53,7 +53,7 @@ export HORIZON_SOUNDS=$HORIZON_SYSTEM/sounds
 export HORIZON_LOGS=$HORIZON_SYSTEM/logs
 ```
 
-> **Note:** These explicit system-profile exports are a deliberate simplification for a server pinned to a single AIOS (so the vars are available to all users and cron jobs). On a desktop or any machine that uses the AIOS switcher, prefer sourcing `~/.horizon/active_env.sh` instead (run `aios_switch.py init` once); `aios switch <name>` then repoints every shell without editing the system profile. See `system/aios_switching.md`.
+> **Note:** These explicit system-profile exports are a deliberate simplification for a server pinned to a single AIOS (so the vars are available to all users and cron jobs). On a desktop or any machine that uses the AIOS switcher, prefer sourcing `~/.horizon/active_env.sh` instead (run `horizon_aios_switch.py init` once); `aios switch <name>` then repoints every shell without editing the system profile. See `system/aios_switching.md`.
 
 ### Disabling sounds on server
 
@@ -66,7 +66,7 @@ In `~/.claude/settings.json`, set hook commands to no-ops or remove the `Stop`, 
 Same as desktop — run as root/admin:
 
 ```bash
-sudo python $HORIZON_SYSTEM/sbin/create_brain.py brain-name
+sudo python $HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py brain-name
 ```
 
 This creates the OS user account, directory, and permissions. On server, brains run as daemon processes rather than interactive sessions.
@@ -125,7 +125,7 @@ The audit log is the primary way to observe what a brain is doing on a server:
 
 ```bash
 # Watch live monitor events (file access, writes, creates)
-tail -f $HORIZON_LOGS/aios_monitor/*.jsonl
+tail -f $HORIZON_LOGS/horizon_aios_monitor/*.jsonl
 
 # Watch hook events
 tail -f $HORIZON_LOGS/hooks/*.log
@@ -136,12 +136,12 @@ tail -f $HORIZON_LOGS/brains/BRAINNAME/*.log
 
 Pipe to `jq` for structured queries:
 ```bash
-tail -f $HORIZON_LOGS/aios_monitor/*.jsonl | jq 'select(.type == "created")'
+tail -f $HORIZON_LOGS/horizon_aios_monitor/*.jsonl | jq 'select(.type == "created")'
 ```
 
-Ensure `monitor_aios.py` is running as the administrative context (not as a brain user):
+Ensure `horizon_aios_monitor.py` is running as the administrative context (not as a brain user):
 ```bash
-python $HORIZON_SYSTEM/sbin/monitor_aios.py &
+python $HORIZON_SYSTEM/sbin/horizon_aios_monitor.py &
 ```
 
 ---

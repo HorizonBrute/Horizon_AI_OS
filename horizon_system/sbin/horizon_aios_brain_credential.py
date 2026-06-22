@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-brain_credential.py — Horizon AIOS Brain Credential Manager
+horizon_aios_brain_credential.py — Horizon AIOS Brain Credential Manager
 ============================================================
 
 Stores and retrieves brain OS account passwords in the native OS keystore
@@ -8,13 +8,13 @@ Stores and retrieves brain OS account passwords in the native OS keystore
 the 'keyring' library.
 
 CLI Usage (admin/root only):
-    python brain_credential.py get <brain-name> --show  # print password to stdout (masked without --show)
-    python brain_credential.py rotate <brain-name>   # generate new password, update OS + keyring
-    python brain_credential.py delete <brain-name>   # remove credential from keyring
-    python brain_credential.py list                  # list brain names with stored credentials
+    python horizon_aios_brain_credential.py get <brain-name> --show  # print password to stdout (masked without --show)
+    python horizon_aios_brain_credential.py rotate <brain-name>   # generate new password, update OS + keyring
+    python horizon_aios_brain_credential.py delete <brain-name>   # remove credential from keyring
+    python horizon_aios_brain_credential.py list                  # list brain names with stored credentials
 
-Importable interface (used by create_brain.py):
-    from brain_credential import store_password
+Importable interface (used by horizon_aios_create_brain.py):
+    from horizon_aios_brain_credential import store_password
     store_password(brain_name, password)  -> bool
 
 Keyring service name : "horizon_aios"
@@ -85,7 +85,7 @@ def _check_privileges() -> None:
         if os.geteuid() != 0:
             print(
                 '[ERROR] This script must be run as root.\n'
-                '  Re-run with: sudo python brain_credential.py <command> <brain-name>',
+                '  Re-run with: sudo python horizon_aios_brain_credential.py <command> <brain-name>',
                 file=sys.stderr,
             )
             sys.exit(1)
@@ -155,7 +155,7 @@ def store_password(brain_name: str, password: str) -> bool:
 
     Returns True on success, False if keyring is unavailable or the
     operation fails.  This function is safe to import and call from
-    create_brain.py without crashing provisioning if keyring is absent.
+    horizon_aios_create_brain.py without crashing provisioning if keyring is absent.
     """
     if not _KEYRING_AVAILABLE:
         _warn_no_keyring(brain_name)
@@ -253,7 +253,7 @@ def _list_brains() -> list[str]:
         print(
             '[INFO] Enumeration not supported by the active keyring backend '
             f'({backend_name}).\n'
-            '  Use "brain_credential.py get <name>" to check individual brains.',
+            '  Use "horizon_aios_brain_credential.py get <name>" to check individual brains.',
             file=sys.stderr,
         )
         return []
@@ -340,10 +340,10 @@ def main() -> None:
     if len(sys.argv) < 2:
         print(
             'Usage:\n'
-            '  brain_credential.py get <brain-name> [--show]\n'
-            '  brain_credential.py rotate <brain-name>\n'
-            '  brain_credential.py delete <brain-name>\n'
-            '  brain_credential.py list',
+            '  horizon_aios_brain_credential.py get <brain-name> [--show]\n'
+            '  horizon_aios_brain_credential.py rotate <brain-name>\n'
+            '  horizon_aios_brain_credential.py delete <brain-name>\n'
+            '  horizon_aios_brain_credential.py list',
             file=sys.stderr,
         )
         sys.exit(1)

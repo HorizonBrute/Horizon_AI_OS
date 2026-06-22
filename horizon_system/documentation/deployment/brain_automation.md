@@ -27,19 +27,19 @@ read or write.
 - **Opt-in per brain.** No brain gets a logon right unless you ask for one. The
   default automation tier is `none`.
 - **Least privilege.** Each automation tier needs exactly one logon right. AIOS
-  grants only that one — `brain_logon_rights.py` changes a single LSA right on a
+  grants only that one — `horizon_aios_brain_logon_rights.py` changes a single LSA right on a
   single account and never touches the rest of local security policy (mirroring
-  the additive-ACL philosophy in `harden_aios.py`).
-- **Revoked on teardown.** `remove_brain.py` strips the logon rights before
+  the additive-ACL philosophy in `horizon_aios_harden.py`).
+- **Revoked on teardown.** `horizon_aios_remove_brain.py` strips the logon rights before
   deleting the account, so a right can never orphan to a recycled SID.
 - **Read/write posture is untouched.** Granting a logon right does **not** change
   the brain's ACLs: the no-write Deny on `sbin`/`skills_sbin`/`logs` and the
-  read-only `bin`/`skills_bin` grants are exactly as `harden_aios.py` set them
+  read-only `bin`/`skills_bin` grants are exactly as `horizon_aios_harden.py` set them
   (see `security_invariants.md §2`). A scheduled brain can log on headlessly but
   still cannot write the AIOS layer or reach `sbin`.
 - **The password is the keystore password.** The credential Task Scheduler or a
   service consumes is the one AIOS already stored for the brain
-  (`brain_credential.py`). It is never printed during provisioning.
+  (`horizon_aios_brain_credential.py`). It is never printed during provisioning.
 
 ---
 
@@ -78,12 +78,12 @@ session. Use it only when a genuine interactive desktop/GUI is required. For
 Run elevated (administrative context):
 
 ```bash
-python $HORIZON_SYSTEM/sbin/create_brain.py mybrain --automation scheduled
+python $HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py mybrain --automation scheduled
 ```
 
 On Windows this grants `SeBatchLogonRight` to the brain account and verifies the
 right took. The chosen tier is recorded in the brain's `.aios_provision.json`
-manifest under an `"automation"` key. On Linux, `create_brain.py --automation
+manifest under an `"automation"` key. On Linux, `horizon_aios_create_brain.py --automation
 scheduled` instead enables systemd lingering for the brain and prints the
 unit/cron guidance (see *Unix analogs*).
 
@@ -95,7 +95,7 @@ Task Scheduler needs the brain's credential to run the task while logged out.
 Retrieve it from the OS keystore (elevated):
 
 ```bash
-python $HORIZON_SYSTEM/sbin/brain_credential.py get mybrain --show
+python $HORIZON_SYSTEM/sbin/horizon_aios_brain_credential.py get mybrain --show
 ```
 
 ### 3. Register the scheduled task
@@ -106,7 +106,7 @@ keystore password.
 
 The `/TR` (or `-Execute`/`-Argument`) target is **your harness's own launch
 command** — AIOS ships no launcher (the harness is yours; see the
-`apply_automation` contract in `create_brain.py` and `deployment/desktop.md`).
+`apply_automation` contract in `horizon_aios_create_brain.py` and `deployment/desktop.md`).
 This pattern is for driving a harness that has **no built-in scheduler of its
 own**; if your harness already schedules itself or runs continuously (e.g. a
 run-all-the-time agent loop), use its native scheduling instead. Substitute a
@@ -151,7 +151,7 @@ supervised, auto-restarting, starting at boot before any login — rather than
 firing on a schedule.
 
 ```bash
-python $HORIZON_SYSTEM/sbin/create_brain.py mybrain --automation daemon
+python $HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py mybrain --automation daemon
 ```
 
 This grants `SeServiceLogonRight` ("Log on as a service") to the brain and
@@ -159,7 +159,7 @@ verifies it. As with `scheduled`, AIOS does **not** register the service itself 
 you create it, using the keystore password as the service's logon credential:
 
 ```powershell
-$pw = python $HORIZON_SYSTEM/sbin/brain_credential.py get mybrain --show | Select-Object -Last 1
+$pw = python $HORIZON_SYSTEM/sbin/horizon_aios_brain_credential.py get mybrain --show | Select-Object -Last 1
 $cred = New-Object System.Management.Automation.PSCredential("$env:COMPUTERNAME\mybrain", (ConvertTo-SecureString $pw -AsPlainText -Force))
 New-Service -Name "AIOS-mybrain" -BinaryPathName "C:\devroot\horizon_system\bin\run_brain_harness.exe mybrain" -Credential $cred -StartupType Automatic
 # Add restart-on-failure for resilience:
@@ -173,17 +173,17 @@ scheduled task with restart-on-failure) over interactive autologon.
 
 ## Manual Right Management
 
-`create_brain.py --automation scheduled` is the normal path, but you can manage
+`horizon_aios_create_brain.py --automation scheduled` is the normal path, but you can manage
 the underlying logon right directly with the surgical helper (elevated,
 Windows-only):
 
 ```bash
-python $HORIZON_SYSTEM/sbin/brain_logon_rights.py grant mybrain   # grant SeBatchLogonRight (default)
-python $HORIZON_SYSTEM/sbin/brain_logon_rights.py check mybrain   # query whether the right is held
-python $HORIZON_SYSTEM/sbin/brain_logon_rights.py revoke mybrain  # remove it
+python $HORIZON_SYSTEM/sbin/horizon_aios_brain_logon_rights.py grant mybrain   # grant SeBatchLogonRight (default)
+python $HORIZON_SYSTEM/sbin/horizon_aios_brain_logon_rights.py check mybrain   # query whether the right is held
+python $HORIZON_SYSTEM/sbin/horizon_aios_brain_logon_rights.py revoke mybrain  # remove it
 
 # Target a specific right (e.g. the daemon/service tier):
-python $HORIZON_SYSTEM/sbin/brain_logon_rights.py grant mybrain --right SeServiceLogonRight
+python $HORIZON_SYSTEM/sbin/horizon_aios_brain_logon_rights.py grant mybrain --right SeServiceLogonRight
 ```
 
 It changes exactly one right on one account via `LsaAddAccountRights` /
@@ -194,26 +194,26 @@ security policy alone.
 
 ## Teardown
 
-`remove_brain.py` revokes **both** `SeBatchLogonRight` and `SeServiceLogonRight`
+`horizon_aios_remove_brain.py` revokes **both** `SeBatchLogonRight` and `SeServiceLogonRight`
 from the account **before** deleting it — idempotently, while the SID still
 resolves — so logon rights never orphan to a future account that reuses the SID.
 On Linux it likewise runs `loginctl disable-linger` before account deletion. No
 manual cleanup of automation capabilities is needed when you deprovision a brain.
 
 ```bash
-python $HORIZON_SYSTEM/sbin/remove_brain.py mybrain --yes
+python $HORIZON_SYSTEM/sbin/horizon_aios_remove_brain.py mybrain --yes
 ```
 
 ---
 
 ## Unix Analogs (guidance, not yet auto-applied)
 
-On Linux, `create_brain.py --automation scheduled` **applies** the account-level
+On Linux, `horizon_aios_create_brain.py --automation scheduled` **applies** the account-level
 capability (enables systemd lingering) and prints the unit/cron guidance;
 `--automation daemon` prints system-service guidance (a system unit running as
 the brain needs no per-account right). The equivalent setups:
 
-- **Scheduled (batch analog):** `create_brain.py --automation scheduled` runs
+- **Scheduled (batch analog):** `horizon_aios_create_brain.py --automation scheduled` runs
   ```sh
   loginctl enable-linger mybrain        # applied for you: user services run while logged out
   ```

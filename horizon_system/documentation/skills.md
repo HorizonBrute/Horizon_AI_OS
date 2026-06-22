@@ -123,13 +123,13 @@ Creates, lists, shows, and updates durable objective files (plain Markdown) in t
 objectives directory (default: `$HORIZON_ROOT/objectives/`). Objectives hold the
 long-term goal behind a stream of work — not a task tracker, but a durable
 notepad that handoffs reference by number so the goal survives across sessions.
-Pruning of stale objectives is handled externally by `maintain_logs.py`.
+Pruning of stale objectives is handled externally by `horizon_aios_maintain_logs.py`.
 
 **Onboarding:** Provides a lightweight, persistent goal-tracking layer that handoffs
 can chain back to, preventing goal drift across many sessions.
 **Offboarding:** You lose the structured create/list/show/update interface. Objective
 files are plain Markdown in the objectives directory and remain fully readable;
-they can be managed by hand. The pruning logic in `maintain_logs.py` remains
+they can be managed by hand. The pruning logic in `horizon_aios_maintain_logs.py` remains
 independent of the skill.
 
 ---
@@ -137,20 +137,20 @@ independent of the skill.
 ### /resync-user-skills
 
 **Location:** `skills_sbin/` (owner only)
-**Underlying tool:** `$HORIZON_SYSTEM/sbin/register_user_skills.py`
+**Underlying tool:** `$HORIZON_SYSTEM/sbin/horizon_aios_register_user_skills.py`
 
 Reports whether the owner's aggregated skill view (`skills_bin/` + `usr_skills/`
 linked into `skills_sbin/`) matches the filesystem, then heals any drift by
 rebuilding junctions or symlinks. Also compares the on-disk state to what is
 loaded in the current session and advises on restarts. An upstream sync that
 refreshes `skills_sbin/` can drop these links; running this skill or
-`register_user_skills.py --check` detects that.
+`horizon_aios_register_user_skills.py --check` detects that.
 
 **Onboarding:** Provides a single command to verify and repair the skill wiring
 after any sync or new skill is added, without needing to understand the junction
 mechanics.
 **Offboarding:** You lose the check/heal UX. The underlying
-`register_user_skills.py` script remains at `$HORIZON_SYSTEM/sbin/` and can be
+`horizon_aios_register_user_skills.py` script remains at `$HORIZON_SYSTEM/sbin/` and can be
 run directly with `--check` or without flags to rebuild.
 
 ---

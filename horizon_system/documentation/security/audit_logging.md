@@ -1,9 +1,9 @@
 # Audit Logging — AIOS Filesystem Monitor
 
-The AIOS filesystem monitor (`$HORIZON_SYSTEM/sbin/monitor_aios.py`) watches the
+The AIOS filesystem monitor (`$HORIZON_SYSTEM/sbin/horizon_aios_monitor.py`) watches the
 AIOS **system directories** for unexpected file changes and logs events as JSON
 lines. It runs as the administrative context; brain accounts must not have write
-access to the log directory (enforced by `harden_aios.py`).
+access to the log directory (enforced by `horizon_aios_harden.py`).
 
 ---
 
@@ -11,10 +11,10 @@ access to the log directory (enforced by `harden_aios.py`).
 
 ```sh
 pip install watchdog
-python $HORIZON_SYSTEM/sbin/monitor_aios.py
+python $HORIZON_SYSTEM/sbin/horizon_aios_monitor.py
 ```
 
-Logs write to `$HORIZON_SYSTEM/logs/aios_monitor/monitor_YYYYMMDD.log`.
+Logs write to `$HORIZON_SYSTEM/logs/horizon_aios_monitor/monitor_YYYYMMDD.log`.
 
 ---
 
@@ -53,7 +53,7 @@ Three additive mechanisms, in precedence order (highest first):
 1. **CLI** — repeat `--watch` (recursive), toggle brains with `--brain-dirs` /
    `--no-brains-root`:
    ```sh
-   python monitor_aios.py --watch $HORIZON_PROJECTS/my-project --brain-dirs
+   python horizon_aios_monitor.py --watch $HORIZON_PROJECTS/my-project --brain-dirs
    ```
 2. **Environment** — `AIOS_MONITOR_PATHS` (OS path separator), plus
    `AIOS_MONITOR_BRAIN_DIRS=1` / `AIOS_MONITOR_BRAINS_ROOT=0`.
@@ -63,7 +63,7 @@ Three additive mechanisms, in precedence order (highest first):
 
 ## Configuration File
 
-`$HORIZON_SYSTEM/sbin/monitor_aios.py` reads `$HORIZON_ETC/aios_monitor.conf`
+`$HORIZON_SYSTEM/sbin/horizon_aios_monitor.py` reads `$HORIZON_ETC/aios_monitor.conf`
 if present (override with `--config` or `AIOS_MONITOR_CONFIG`). Copy the
 template to create it:
 
@@ -111,7 +111,7 @@ Object Access). Enabling OS audit is optional and outside the AIOS scope.
 JSON (JSON Lines) — one file per UTC day:
 
 ```
-$HORIZON_SYSTEM/logs/aios_monitor/monitor_YYYYMMDD.log
+$HORIZON_SYSTEM/logs/horizon_aios_monitor/monitor_YYYYMMDD.log
 ```
 
 Each line is a complete JSON object (see *Log Format*). There is no database
@@ -126,13 +126,13 @@ to your SIEM with no transformation:
 
 | Tool | Pointer |
 |---|---|
-| Elastic **Filebeat** / **Winlogbeat** | `filebeat.inputs` → `type: filestream`, `paths: [".../logs/aios_monitor/monitor_*.log"]`, `parsers: [{ndjson: {}}]` |
+| Elastic **Filebeat** / **Winlogbeat** | `filebeat.inputs` → `type: filestream`, `paths: [".../logs/horizon_aios_monitor/monitor_*.log"]`, `parsers: [{ndjson: {}}]` |
 | **Fluent Bit** / Fluentd | `[INPUT] tail` on `monitor_*.log`, `[FILTER] parser` = `json` |
 | **NXLog** (common on Windows) | `im_file` reading the directory, `xm_json` to parse |
 | **Vector** | `sources.aios.type = "file"`, `include = [".../monitor_*.log"]`, decode as JSON |
 | **Splunk** Universal Forwarder | monitor stanza on the directory, `sourcetype=_json` |
 
-Point any of them at `$HORIZON_SYSTEM/logs/aios_monitor/`. Filter on
+Point any of them at `$HORIZON_SYSTEM/logs/horizon_aios_monitor/`. Filter on
 `source="Horizon.AIOS"` to isolate AIOS integrity events in your SIEM.
 
 **Pushing to the OS event log.** If you would rather consume events through the
@@ -140,7 +140,7 @@ native OS log (Windows Event Log / Linux syslog) than tail files, run the
 analyzer with `--syslog` (see below) — it emits summaries to the OS log, which
 your existing collector already ingests.
 
-**Retention.** `maintain_logs.py` prunes/rotates these files
+**Retention.** `horizon_aios_maintain_logs.py` prunes/rotates these files
 (`AIOS_LOG_MAX_DAYS`, `AIOS_LOG_MAX_SIZE_MB`, `AIOS_LOG_MAX_ROTATIONS` in
 `aios_local.conf`). If your SIEM is the system of record, ship before pruning.
 
@@ -154,7 +154,7 @@ your existing collector already ingests.
 2. Register the service:
 
 ```powershell
-nssm install AIOSMonitor powershell -File "$HORIZON_SYSTEM\sbin\monitor_aios_runner.ps1"
+nssm install AIOSMonitor powershell -File "$HORIZON_SYSTEM\sbin\horizon_aios_monitor_runner.ps1"
 nssm set AIOSMonitor AppDirectory $HORIZON_SYSTEM\sbin
 nssm set AIOSMonitor ObjectName ".\<admin-account>" "<password>"
 nssm start AIOSMonitor
@@ -164,14 +164,14 @@ nssm start AIOSMonitor
    accounts cannot:
 
 ```powershell
-icacls "$HORIZON_SYSTEM\logs\aios_monitor" /grant "<admin-account>:(OI)(CI)F" /inheritance:r
+icacls "$HORIZON_SYSTEM\logs\horizon_aios_monitor" /grant "<admin-account>:(OI)(CI)F" /inheritance:r
 ```
 
 ### Windows — Task Scheduler (no extra dependency)
 
 ```powershell
 $action = New-ScheduledTaskAction -Execute "powershell" `
-    -Argument "-File `"$HORIZON_SYSTEM\sbin\monitor_aios_runner.ps1`""
+    -Argument "-File `"$HORIZON_SYSTEM\sbin\horizon_aios_monitor_runner.ps1`""
 $trigger = New-ScheduledTaskTrigger -AtStartup
 $principal = New-ScheduledTaskPrincipal -UserId "<admin-account>" -RunLevel Highest
 Register-ScheduledTask -TaskName "AIOSMonitor" -Action $action -Trigger $trigger -Principal $principal
@@ -188,7 +188,7 @@ After=network.target
 [Service]
 Type=simple
 User=<admin-account>
-ExecStart=python $HORIZON_SYSTEM/sbin/monitor_aios.py
+ExecStart=python $HORIZON_SYSTEM/sbin/horizon_aios_monitor.py
 Restart=on-failure
 
 [Install]
@@ -205,14 +205,14 @@ Pass the paths in as environment variables and mount the log directory:
 
 ```dockerfile
 ENV AIOS_MONITOR_PATHS=/horizon_system
-ENV AIOS_MONITOR_LOG_DIR=/logs/aios_monitor
+ENV AIOS_MONITOR_LOG_DIR=/logs/horizon_aios_monitor
 ```
 
 ```yaml
 # docker-compose.yml excerpt
 volumes:
   - ./horizon_system:/horizon_system:ro
-  - ./logs/aios_monitor:/logs/aios_monitor
+  - ./logs/horizon_aios_monitor:/logs/horizon_aios_monitor
 ```
 
 ---
@@ -221,15 +221,15 @@ volumes:
 
 ## Log Analysis and Alerting
 
-`$HORIZON_SYSTEM/sbin/analyze_aios_monitor.py` reads monitor logs, checks for
+`$HORIZON_SYSTEM/sbin/horizon_aios_monitor_analyze.py` reads monitor logs, checks for
 file change events and uptime gaps, and writes a human-readable summary to
-`$HORIZON_SYSTEM/logs/security.log`. Run it periodically from the administrative
+`$HORIZON_SYSTEM/logs/horizon_aios_security.log`. Run it periodically from the administrative
 context.
 
 ```sh
-python $HORIZON_SYSTEM/sbin/analyze_aios_monitor.py          # last 2 days
-python $HORIZON_SYSTEM/sbin/analyze_aios_monitor.py --days 7 # last 7 days
-python $HORIZON_SYSTEM/sbin/analyze_aios_monitor.py --syslog  # also emit to OS log
+python $HORIZON_SYSTEM/sbin/horizon_aios_monitor_analyze.py          # last 2 days
+python $HORIZON_SYSTEM/sbin/horizon_aios_monitor_analyze.py --days 7 # last 7 days
+python $HORIZON_SYSTEM/sbin/horizon_aios_monitor_analyze.py --syslog  # also emit to OS log
 ```
 
 The security log records:
@@ -242,7 +242,7 @@ The security log records:
 Windows Task Scheduler:
 ```powershell
 $action = New-ScheduledTaskAction -Execute "powershell" `
-    -Argument "-File `"$HORIZON_SYSTEM\sbin\analyze_aios_monitor_runner.ps1`""
+    -Argument "-File `"$HORIZON_SYSTEM\sbin\horizon_aios_monitor_analyze_runner.ps1`""
 $trigger = New-ScheduledTaskTrigger -Daily -At "06:00"
 $principal = New-ScheduledTaskPrincipal -UserId "<admin-account>" -RunLevel Highest
 Register-ScheduledTask -TaskName "AIOSMonitorAnalyzer" -Action $action `
@@ -251,7 +251,7 @@ Register-ScheduledTask -TaskName "AIOSMonitorAnalyzer" -Action $action `
 
 Linux cron (daily at 6am):
 ```sh
-0 6 * * * /usr/bin/python3 $HORIZON_SYSTEM/sbin/analyze_aios_monitor.py --syslog
+0 6 * * * /usr/bin/python3 $HORIZON_SYSTEM/sbin/horizon_aios_monitor_analyze.py --syslog
 ```
 
 **Note on read detection:** The monitor and analyzer detect file *changes*
@@ -264,5 +264,5 @@ documented in your OS vendor's security hardening guides.
 
 ## Opt-Out
 
-Do not start `monitor_aios.py`. Do not schedule `analyze_aios_monitor.py`.
+Do not start `horizon_aios_monitor.py`. Do not schedule `horizon_aios_monitor_analyze.py`.
 No other configuration needed — neither script is auto-started by AIOS.

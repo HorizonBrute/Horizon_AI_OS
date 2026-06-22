@@ -19,7 +19,7 @@ Three-layer settings hierarchy (Claude Code is the reference implementation). Wr
 
 Committed to the OS repo; hooks and statusLine contain machine-specific paths and must stay out.
 
-**Sync safety:** `sync_aios.py` does a `git merge --ff-only`, which updates this file if it changed upstream. This is intentional — the devroot settings file is OS-layer infrastructure, not personal config. Personal customizations do not belong here. Put them in `~/.claude/settings.json` (global layer), which lives outside the repo and is never touched by sync. Project-level permissions go in the project's own `.claude/settings.json`, also outside the OS repo.
+**Sync safety:** `horizon_aios_sync.py` does a `git merge --ff-only`, which updates this file if it changed upstream. This is intentional — the devroot settings file is OS-layer infrastructure, not personal config. Personal customizations do not belong here. Put them in `~/.claude/settings.json` (global layer), which lives outside the repo and is never touched by sync. Project-level permissions go in the project's own `.claude/settings.json`, also outside the OS repo.
 
 ### Project-level (`.claude/settings.json` inside a project folder)
 
@@ -63,7 +63,7 @@ The harness must not require any changes to `$HORIZON_ETC` invariant documents u
 
 ## 4. How to Create a Brain
 
-Use `$HORIZON_SYSTEM/sbin/create_brain.py` to automate brain setup. Manual steps:
+Use `$HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py` to automate brain setup. Manual steps:
 
 1. Create a new OS user account (`brain_researcher`, `brain_coder`, etc.). Windows: Settings > Accounts > Other users. Unix: `useradd`.
 2. Create the brain's home directory under the brains path.

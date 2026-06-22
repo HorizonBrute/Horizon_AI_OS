@@ -26,7 +26,7 @@ DEFAULTS = {
 def _check_privileges():
     """Exit with a clear message if not running as Administrator/root.
 
-    maintain_logs.py modifies files in the ACL-protected $HORIZON_SYSTEM/logs/
+    horizon_aios_maintain_logs.py modifies files in the ACL-protected $HORIZON_SYSTEM/logs/
     directory. Running without elevation will silently fail on those paths.
     """
     os_name = platform.system()
@@ -38,7 +38,7 @@ def _check_privileges():
             is_admin = False
         if not is_admin:
             print(
-                '[ERROR] maintain_logs.py must be run as Administrator.\n'
+                '[ERROR] horizon_aios_maintain_logs.py must be run as Administrator.\n'
                 '  Right-click your terminal and choose "Run as administrator",\n'
                 '  then re-run the script.',
                 file=sys.stderr,
@@ -47,8 +47,8 @@ def _check_privileges():
     else:
         if os.geteuid() != 0:
             print(
-                '[ERROR] maintain_logs.py must be run as root.\n'
-                '  Re-run with: sudo python maintain_logs.py',
+                '[ERROR] horizon_aios_maintain_logs.py must be run as root.\n'
+                '  Re-run with: sudo python horizon_aios_maintain_logs.py',
                 file=sys.stderr,
             )
             sys.exit(1)

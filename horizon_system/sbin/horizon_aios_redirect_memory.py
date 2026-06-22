@@ -9,7 +9,7 @@ into the AIOS so every per-project hash dir (existing and future) lands under
 `$HORIZON_ROOT/memory/` - centrally available to any harness the operator points
 at the AIOS, and subject to AIOS governance.
 
-This is the OWNER redirect. Brains are handled separately by create_brain.py,
+This is the OWNER redirect. Brains are handled separately by horizon_aios_create_brain.py,
 whose `~/.claude` → `brains/<name>/.claude/` redirect already places each brain's
 projects/memory inside its own isolated, group-owned brain folder.
 
@@ -25,7 +25,7 @@ IMPORTANT: close Claude Code before running - the active session holds its own
 project dir open. Run this, then restart Claude.
 
 Usage:
-    python redirect_memory.py [--horizon-root PATH] [--dry-run] [--no-backup]
+    python horizon_aios_redirect_memory.py [--horizon-root PATH] [--dry-run] [--no-backup]
 """
 
 import argparse

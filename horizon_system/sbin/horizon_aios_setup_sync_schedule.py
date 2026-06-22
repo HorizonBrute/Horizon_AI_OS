@@ -64,7 +64,7 @@ def parse_time(time_str):
 
 
 def install_windows(config):
-    runner = SBIN / "sync_aios_runner.ps1"
+    runner = SBIN / "horizon_aios_sync_runner.ps1"
     freq = config["AIOS_SYNC_FREQ"].lower()
     hour, minute = parse_time(config["AIOS_SYNC_TIME"])
     task_name = "HorizonAIOS_Sync"
@@ -112,7 +112,7 @@ def install_windows(config):
 
     # Register weekly log maintenance task
     maint_task_name = "HorizonAIOS_MaintainLogs"
-    maint_runner = SBIN / "maintain_logs_runner.ps1"
+    maint_runner = SBIN / "horizon_aios_maintain_logs_runner.ps1"
     maint_cmd = [
         "schtasks", "/Create",
         "/TN", maint_task_name,
@@ -130,13 +130,13 @@ def install_windows(config):
     print(f"[OK] Scheduled task '{maint_task_name}' registered — runs weekly on Sunday at 04:00")
 
     log_dir = Path(config["AIOS_LOG_DIR"]) if config["AIOS_LOG_DIR"] else HORIZON_SYSTEM / "logs"
-    print_next_steps(config, log_dir / "aios_sync.log")
+    print_next_steps(config, log_dir / "horizon_aios_sync.log")
 
 
 def install_unix(config, log_file):
     freq = config["AIOS_SYNC_FREQ"].lower()
     hour, minute = parse_time(config["AIOS_SYNC_TIME"])
-    sync_script = SBIN / "sync_aios.py"
+    sync_script = SBIN / "horizon_aios_sync.py"
     marker = "# HorizonAIOS_Sync"
 
     if freq == "hourly":
@@ -163,7 +163,7 @@ def install_unix(config, log_file):
         print(f"[OK] Cron entry installed — runs {freq} at {hour:02d}:{minute:02d}")
 
     # Register weekly log maintenance cron entry
-    maint_script = SBIN / "maintain_logs.py"
+    maint_script = SBIN / "horizon_aios_maintain_logs.py"
     maint_marker = "# HorizonAIOS_MaintainLogs"
     maint_cron_line = f"0 4 * * 0 /usr/bin/env python3 {maint_script}"
 
@@ -188,7 +188,7 @@ def print_next_steps(config, log_file=None):
     remote = config["AIOS_REPO_REMOTE"]
     if log_file is None:
         log_dir = Path(config["AIOS_LOG_DIR"]) if config["AIOS_LOG_DIR"] else HORIZON_SYSTEM / "logs"
-        log_file = log_dir / "aios_sync.log"
+        log_file = log_dir / "horizon_aios_sync.log"
     print(textwrap.dedent(f"""
     [NEXT STEPS] For unattended sync to work:
 
@@ -202,7 +202,7 @@ def print_next_steps(config, log_file=None):
          for the advanced stored-credential + deploy key setup.
 
     2. Test manually before relying on automation:
-         python {SBIN / 'sync_aios.py'}
+         python {SBIN / 'horizon_aios_sync.py'}
 
     3. Check sync logs at:
          {log_file}
@@ -213,7 +213,7 @@ def main():
     config = read_config()
 
     log_dir = Path(config["AIOS_LOG_DIR"]) if config["AIOS_LOG_DIR"] else HORIZON_SYSTEM / "logs"
-    log_file = log_dir / "aios_sync.log"
+    log_file = log_dir / "horizon_aios_sync.log"
 
     if config["SYNC_AIOS_FROM_REMOTE"].lower() == "no":
         print("[INFO] SYNC_AIOS_FROM_REMOTE=no in aios_local.conf — scheduler not installed.")

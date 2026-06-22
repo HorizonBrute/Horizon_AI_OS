@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-harden_aios.py — Horizon AIOS Layer Hardening
+horizon_aios_harden.py — Horizon AIOS Layer Hardening
 =============================================
 
 Applies the authoritative brains-group ACL model to the AIOS layer
@@ -35,7 +35,7 @@ Two modes (Windows):
         Administrators first. For locked-down standalone installs that want no
         inherited ACEs at all. Never silently drops SYSTEM/Administrators.
 
-Ordering invariant (mirrors create_brain.py): all Deny ACEs are applied
+Ordering invariant (mirrors horizon_aios_create_brain.py): all Deny ACEs are applied
 AFTER all brains-group grants, so an inherited permission can never
 accidentally reach a privileged dir.
 
@@ -43,12 +43,12 @@ Docker note:
     In Docker builds, this script is invoked as a root-context RUN step before
     the USER switch (see bootstrap_docker.sh / Dockerfile). bootstrap.sh detects
     this via AIOS_SKIP_HARDEN=1 and skips the normal Section 9 invocation to
-    avoid running harden_aios.py twice. Never set AIOS_SKIP_HARDEN=1 in native
+    avoid running horizon_aios_harden.py twice. Never set AIOS_SKIP_HARDEN=1 in native
     (non-Docker) deployments — doing so bypasses the ACL hardening that enforces
     brain isolation (see security_invariants.md §2).
 
 Usage:
-    python harden_aios.py [--horizon-root /path] [--strict] [--dry-run]
+    python horizon_aios_harden.py [--horizon-root /path] [--strict] [--dry-run]
 
 Requirements:
     - Python 3.6+, stdlib only
@@ -147,8 +147,8 @@ def run(cmd, dry_run=False, check=True, capture=False):
 def resolve_paths(horizon_root_arg):
     """
     Resolve the AIOS layer paths. The script lives at
-    $HORIZON_SYSTEM/sbin/harden_aios.py, so ../ is $HORIZON_SYSTEM and
-    ../../ is $HORIZON_ROOT (matches maintain_logs.py / sync_aios.py).
+    $HORIZON_SYSTEM/sbin/horizon_aios_harden.py, so ../ is $HORIZON_SYSTEM and
+    ../../ is $HORIZON_ROOT (matches horizon_aios_maintain_logs.py / horizon_aios_sync.py).
     """
     if horizon_root_arg:
         horizon_root = os.path.abspath(horizon_root_arg)
@@ -370,7 +370,7 @@ def harden_unix(paths, os_name, owner, have_group, dry_run, strict):
     Administrators analogue on Unix; the owner is the must-have principal.
 
     Privileged-dir denies are applied AFTER the brains rx grants so the grants
-    can never cascade into them (mirrors create_brain.py).
+    can never cascade into them (mirrors horizon_aios_create_brain.py).
     """
     system = paths['horizon_system']
     have_setfacl = shutil.which('setfacl') is not None
@@ -465,7 +465,7 @@ def parse_args():
         '--horizon-root', metavar='PATH', default=None,
         help='Absolute path to HORIZON_ROOT. If omitted, derived from ../../ '
              'relative to this script (script lives at '
-             '$HORIZON_SYSTEM/sbin/harden_aios.py).',
+             '$HORIZON_SYSTEM/sbin/horizon_aios_harden.py).',
     )
     parser.add_argument(
         '--strict', action='store_true', default=False,

@@ -1,7 +1,7 @@
 # Horizon AIOS — Filesystem Monitor Configuration
 # Copy to horizon_system/ai_os_etc/aios_monitor.conf and edit. Never commit.
 #
-# Read by $HORIZON_SYSTEM/sbin/monitor_aios.py. Resolution precedence
+# Read by $HORIZON_SYSTEM/sbin/horizon_aios_monitor.py. Resolution precedence
 # (highest first): CLI flags > environment > this file > built-in defaults.
 # The monitor watches the AIOS system directories by default; the directives
 # below ADD to that set or toggle the brain-watch behavior. Lines starting
@@ -37,6 +37,6 @@
 # would flood the audit log. There is no toggle; it is part of the default set.
 
 # ---------------------------------------------------------------------------
-# Log directory override. Default: $HORIZON_SYSTEM/logs/aios_monitor/
+# Log directory override. Default: $HORIZON_SYSTEM/logs/horizon_aios_monitor/
 # ---------------------------------------------------------------------------
-# log_dir = /var/log/horizon-aios/aios_monitor
+# log_dir = /var/log/horizon-aios/horizon_aios_monitor

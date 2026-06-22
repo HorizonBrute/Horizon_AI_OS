@@ -76,10 +76,10 @@ The scripts mirror `bootstrap` section by section:
 
 - The shell-profile line that sources `active_env.*` (you added it).
 - The global gitconfig `include.path` for `harness_configs/git/gitconfig`.
-- The optional upstream-sync schedule / cron entries (`setup_sync_schedule.py`).
+- The optional upstream-sync schedule / cron entries (`horizon_aios_setup_sync_schedule.py`).
 - The `brains` OS group (it may still have brain members).
-- Brain OS user accounts and their data — use `remove_brain.py` (`/remove-brain`).
-- A `~/.claude/projects.backup-*` left by `redirect_memory.py` (restore by
+- Brain OS user accounts and their data — use `horizon_aios_remove_brain.py` (`/remove-brain`).
+- A `~/.claude/projects.backup-*` left by `horizon_aios_redirect_memory.py` (restore by
   renaming it back once the junction is gone).
 - The repo itself and Python packages (`watchdog`, `keyring`).
 
@@ -91,7 +91,7 @@ The scripts mirror `bootstrap` section by section:
 but it cannot exercise the mutations. After a real `--yes` run, confirm by hand —
 this is where uninstall bugs hide:
 
-1. **Registry/env gone:** `python horizon_system/sbin/doctor.py` now reports
+1. **Registry/env gone:** `python horizon_system/sbin/horizon_aios_doctor.py` now reports
    **failures** — here, failures = success (the registry, junction, and env it
    checks for are intentionally removed).
 2. **`~/.horizon/` is gone.**
@@ -124,23 +124,23 @@ git clone <your-remote> C:\devroot
 C:\devroot\horizon_system\sbin\bootstrap.ps1
 
 # 3. Verify install is healthy
-python C:\devroot\horizon_system\sbin\doctor.py        # expect: all checks pass
+python C:\devroot\horizon_system\sbin\horizon_aios_doctor.py        # expect: all checks pass
 
 # 4. (optional) Open a NEW shell; confirm `aios current`, env vars,
 #    ~/.claude/CLAUDE.md redirect, and the skills junction are present.
 
 # 5. Preview the uninstall plan
-python C:\devroot\horizon_system\sbin\aios_switch.py uninstall --dry-run
+python C:\devroot\horizon_system\sbin\horizon_aios_switch.py uninstall --dry-run
 
 # 6. Real uninstall (elevated)
-python C:\devroot\horizon_system\sbin\aios_switch.py uninstall --yes
+python C:\devroot\horizon_system\sbin\horizon_aios_switch.py uninstall --yes
 
 # 7. Verify clean — run the Verification checklist above
-python C:\devroot\horizon_system\sbin\doctor.py        # expect: FAILURES = success
+python C:\devroot\horizon_system\sbin\horizon_aios_doctor.py        # expect: FAILURES = success
 
 # 8. (optional) Re-bootstrap to prove idempotent re-install
 C:\devroot\horizon_system\sbin\bootstrap.ps1
-python C:\devroot\horizon_system\sbin\doctor.py        # expect: clean again
+python C:\devroot\horizon_system\sbin\horizon_aios_doctor.py        # expect: clean again
 ```
 
 On Linux / macOS substitute `bootstrap.sh` and `sudo bash … uninstall.sh`.
@@ -151,13 +151,13 @@ On Linux / macOS substitute `bootstrap.sh` and `sudo bash … uninstall.sh`.
 
 Uninstall removes only machine-local configuration; the repo is untouched. To
 return: run `bootstrap` again from the same (or a fresh) clone, then
-`doctor.py`. Bootstrap is idempotent and prompts before overwriting anything it
+`horizon_aios_doctor.py`. Bootstrap is idempotent and prompts before overwriting anything it
 finds.
 
 ## See also
 
 - `system/aios_switching.md` — the `aios` switcher and the pointers uninstall reverses.
 - `system/memory.md` — what the memory redirect is and why backing it up matters.
-- `utilities.md` — `uninstall.ps1` / `uninstall.sh` and `aios_switch.py` reference.
+- `utilities.md` — `uninstall.ps1` / `uninstall.sh` and `horizon_aios_switch.py` reference.
 - `getting_started/ReadMeToSetupYourSystem.md` — the install side of the cycle.
 - `getting_started/lifecycle_test.md` — the broader operator lifecycle runbook (adds the AIOS-switch test + optional provisioning around this uninstall).

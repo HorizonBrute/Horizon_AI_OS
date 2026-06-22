@@ -18,7 +18,7 @@ Skills live in one of three locations depending on access tier:
 |---|---|---|
 | `$HORIZON_SYSTEM/skills_sbin/<name>/` | Owner only (privileged) | `~/.claude/skills/` is a junction/symlink → `skills_sbin/` — live immediately |
 | `$HORIZON_SYSTEM/skills_bin/<name>/` | All brains (group-readable) | Brain users' `~/.claude/skills/` is a junction/symlink → `skills_bin/` — live immediately |
-| `$HORIZON_USRBIN/usr_skills/<name>/` | Owner only; **machine-local, gitignored, never synced** | `register_user_skills.py` junctions it into `skills_sbin/` — surfaces flat alongside OS skills |
+| `$HORIZON_USRBIN/usr_skills/<name>/` | Owner only; **machine-local, gitignored, never synced** | `horizon_aios_register_user_skills.py` junctions it into `skills_sbin/` — surfaces flat alongside OS skills |
 
 **OS skills vs user skills:** `skills_bin`/`skills_sbin` are OS-level — tracked, shared, and overwritable by an upstream sync. `usr_skills` is for personal skills you do not want in the OS repo or at risk from sync. They register cohesively (same flat namespace) but live separately.
 
@@ -81,7 +81,7 @@ $HORIZON_SYSTEM/skills_sbin/<skill-name>/
 
 **User-tier flow (`usr_skills`):** if you chose the user tier in Step 1.1:
 - Create `$HORIZON_USRBIN/usr_skills/<skill-name>/SKILL.md` (same frontmatter and body rules).
-- Register it: run `python "$HORIZON_SYSTEM/sbin/register_user_skills.py"` (or invoke `/resync-user-skills`). This junctions it into `skills_sbin/` so it loads flat.
+- Register it: run `python "$HORIZON_SYSTEM/sbin/horizon_aios_register_user_skills.py"` (or invoke `/resync-user-skills`). This junctions it into `skills_sbin/` so it loads flat.
 - Do **not** touch any index or commit anything — user skills are machine-local and gitignored. Skip Steps 3 and the commit; go to Step 4.
 
 ### Step 3 — Update the index (OS skills only)
@@ -120,14 +120,14 @@ No manual copy needed. `~/.claude/skills/` is a junction/symlink to `skills_sbin
 - [ ] `name` in frontmatter matches directory name
 - [ ] `description` is specific enough for agent routing (not just "does X")
 - [ ] **OS skill:** `index.md` updated in the same commit; if `skills_sbin`, `.gitignore` whitelist updated too
-- [ ] **User skill:** registered via `register_user_skills.py` / `/resync-user-skills`; nothing committed
+- [ ] **User skill:** registered via `horizon_aios_register_user_skills.py` / `/resync-user-skills`; nothing committed
 - [ ] Claude Code restarted to load the new skill (junction is live; restart is sufficient)
 
 ---
 
 ## Notes for the executing agent
 
-- Never create a flat `<skill-name>.md` file directly in `skills_bin/` or `skills_sbin/`. The directory-per-skill structure is required — bootstrap and doctor.py both check for it.
+- Never create a flat `<skill-name>.md` file directly in `skills_bin/` or `skills_sbin/`. The directory-per-skill structure is required — bootstrap and horizon_aios_doctor.py both check for it.
 - User-skill junctions appear inside `skills_sbin/` but must never be committed; the `skills_sbin/.gitignore` whitelist keeps them out of git. If a new OS skill is missing from that whitelist it will be silently untracked — always update it when adding an sbin skill.
 - The `name` frontmatter field is what Claude Code uses to register the `/slash-command`. It must exactly match the directory name.
 - If the user already has the skill deployed at `~/.claude/skills/` from a previous run, bootstrap will prompt before overwriting (or auto-overwrite with `--yes`).

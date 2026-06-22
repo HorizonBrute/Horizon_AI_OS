@@ -24,13 +24,13 @@ This skill answers three things: what skills exist on disk, whether the owner vi
 
 1. **Check filesystem sync (read-only):**
    ```
-   python "$HORIZON_SYSTEM/sbin/register_user_skills.py" --check
+   python "$HORIZON_SYSTEM/sbin/horizon_aios_register_user_skills.py" --check
    ```
    This reports each source skill (`skills_bin` + `usr_skills`) as `[OK]` (linked), `[DRIFT]` (missing/incorrect/stale link), or `[SHADOW]` (blocked by a real OS skill). Exit 0 = in sync; exit 1 = drift.
 
 2. **Heal if drift:** if step 1 reported drift (exit 1), run the script without `--check` to rebuild the links, then report what changed (`[LINK]`/`[STALE]`):
    ```
-   python "$HORIZON_SYSTEM/sbin/register_user_skills.py"
+   python "$HORIZON_SYSTEM/sbin/horizon_aios_register_user_skills.py"
    ```
    If in sync, skip this — no changes needed.
 

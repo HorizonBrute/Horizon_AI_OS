@@ -17,7 +17,7 @@ $ErrorActionPreference = "Stop"
 $YesAll = $args -contains "--yes" -or $args -contains "-y"
 
 # -----------------------------------------------------------------------------
-# Require Administrator — harden_aios.py (run below) needs elevated privileges
+# Require Administrator — horizon_aios_harden.py (run below) needs elevated privileges
 # to set filesystem ACLs.  Fail fast rather than let the user discover this
 # mid-run at Section 9.
 # -----------------------------------------------------------------------------
@@ -204,12 +204,12 @@ if (-not (Test-Path $SkillsSrc)) {
 
 # Register machine-local user skills (usrbin/usr_skills -> skills_sbin junctions).
 # Best-effort: never abort bootstrap if python is missing or no user skills exist.
-$RegScript = Join-Path $HORIZON_SYSTEM "sbin\register_user_skills.py"
+$RegScript = Join-Path $HORIZON_SYSTEM "sbin\horizon_aios_register_user_skills.py"
 if (Test-Path $RegScript) {
     if (Get-Command python -ErrorAction SilentlyContinue) {
         python $RegScript
         if ($LASTEXITCODE -eq 0) { Ok "Registered machine-local user skills." }
-        else { Warn "register_user_skills.py exited with code $LASTEXITCODE." }
+        else { Warn "horizon_aios_register_user_skills.py exited with code $LASTEXITCODE." }
     } else {
         Warn "python not found - skipping user-skill registration. Run later: python $RegScript"
     }
@@ -243,22 +243,22 @@ if (Test-Path $ObjectivesDir) {
 # Initializes the machine-local AIOS registry (~/.horizon/) and generates the
 # active_env snippet + aios-exec wrappers, then wires settings.json at the
 # stable wrapper so switching AIOS never rewrites settings.json. See
-# aios_switch.py and $HORIZON_DOCS/system/aios_switching.md.
+# horizon_aios_switch.py and $HORIZON_DOCS/system/aios_switching.md.
 # -----------------------------------------------------------------------------
 Banner "SECTION 5: settings.json + AIOS indirection layer"
 
 # 5a: AIOS registry + active_env + wrappers (idempotent; self-heals registry).
-$SwitchScript = Join-Path $HORIZON_SYSTEM "sbin\aios_switch.py"
+$SwitchScript = Join-Path $HORIZON_SYSTEM "sbin\horizon_aios_switch.py"
 if (Test-Path $SwitchScript) {
     if (Get-Command python -ErrorAction SilentlyContinue) {
         python $SwitchScript init
         if ($LASTEXITCODE -eq 0) { Ok "AIOS registry + indirection layer initialized." }
-        else { Warn "aios_switch.py init exited with code $LASTEXITCODE." }
+        else { Warn "horizon_aios_switch.py init exited with code $LASTEXITCODE." }
     } else {
         Warn "python not found - skipping AIOS registry init. Run later: python $SwitchScript init"
     }
 } else {
-    Warn "aios_switch.py not found at $SwitchScript - skipping AIOS registry init."
+    Warn "horizon_aios_switch.py not found at $SwitchScript - skipping AIOS registry init."
 }
 
 # 5b: settings.json points at the stable, AIOS-independent wrapper. Use forward
@@ -301,17 +301,17 @@ if (Test-Path $SettingsDst) {
 # no-ops if already redirected, so it is safe to always call.
 # NOTE: Have Claude Code closed when bootstrap runs — the script moves the live
 # projects directory (it leaves a backup if one was present).
-$RedirectMemoryScript = Join-Path $HORIZON_SYSTEM "sbin\redirect_memory.py"
+$RedirectMemoryScript = Join-Path $HORIZON_SYSTEM "sbin\horizon_aios_redirect_memory.py"
 if (Test-Path $RedirectMemoryScript) {
     if (Get-Command python -ErrorAction SilentlyContinue) {
         python $RedirectMemoryScript
         if ($LASTEXITCODE -eq 0) { Ok "~/.claude/projects redirected to `$HORIZON_ROOT/memory." }
-        else { Warn "redirect_memory.py exited with code $LASTEXITCODE." }
+        else { Warn "horizon_aios_redirect_memory.py exited with code $LASTEXITCODE." }
     } else {
         Warn "python not found - skipping memory redirect. Run later: python $RedirectMemoryScript"
     }
 } else {
-    Warn "redirect_memory.py not found at $RedirectMemoryScript - skipping memory redirect."
+    Warn "horizon_aios_redirect_memory.py not found at $RedirectMemoryScript - skipping memory redirect."
 }
 
 # -----------------------------------------------------------------------------
@@ -470,10 +470,10 @@ if ($env:AIOS_DEPLOY_MODE -eq "docker") {
 } else {
     $setupSched = if ($YesAll) { $true } else { (Read-Host "Set up daily auto-sync from upstream? [y/N]") -match '^[Yy]' }
     if ($setupSched) {
-        $schedScript = Join-Path $HORIZON_SYSTEM "sbin\setup_sync_schedule.py"
+        $schedScript = Join-Path $HORIZON_SYSTEM "sbin\horizon_aios_setup_sync_schedule.py"
         python $schedScript $(if ($YesAll) { "--yes" })
     } else {
-        Write-Host "Skipped. Run later: python $HORIZON_SYSTEM\sbin\setup_sync_schedule.py"
+        Write-Host "Skipped. Run later: python $HORIZON_SYSTEM\sbin\horizon_aios_setup_sync_schedule.py"
     }
 }
 
@@ -481,27 +481,27 @@ if ($env:AIOS_DEPLOY_MODE -eq "docker") {
 # SECTION 10: Harden AIOS layer ACLs (brains group)
 # Enforces security_invariants.md §2/§3/§5 — brains denied on sbin/skills_sbin/
 # logs, granted RX on bin/skills_bin, no write elsewhere in $HORIZON_SYSTEM.
-# FATAL: harden_aios.py failure exits bootstrap non-zero — ACL hardening is a
+# FATAL: horizon_aios_harden.py failure exits bootstrap non-zero — ACL hardening is a
 # security requirement, not a best-effort step.
 # -----------------------------------------------------------------------------
 Banner "SECTION 10: Harden AIOS layer ACLs"
 
-$HardenScript = Join-Path $HORIZON_SYSTEM "sbin\harden_aios.py"
+$HardenScript = Join-Path $HORIZON_SYSTEM "sbin\horizon_aios_harden.py"
 if (Test-Path $HardenScript) {
     if (Get-Command python -ErrorAction SilentlyContinue) {
         python $HardenScript
         if ($LASTEXITCODE -eq 0) { Ok "AIOS layer hardened (brains-group ACLs applied)." }
         else {
-            Err "harden_aios.py exited with code $LASTEXITCODE — ACL hardening FAILED. The system is NOT secured."
-            Err "Re-run bootstrap elevated and review harden_aios.py output before using this installation."
+            Err "horizon_aios_harden.py exited with code $LASTEXITCODE — ACL hardening FAILED. The system is NOT secured."
+            Err "Re-run bootstrap elevated and review horizon_aios_harden.py output before using this installation."
             exit 1
         }
     } else {
-        Err "python not found — cannot run harden_aios.py. ACL hardening FAILED. The system is NOT secured."
+        Err "python not found — cannot run horizon_aios_harden.py. ACL hardening FAILED. The system is NOT secured."
         Err "Install Python 3.6+ and re-run bootstrap elevated: python $HardenScript"
         exit 1
     }
 } else {
-    Err "harden_aios.py not found at $HardenScript — ACL hardening FAILED. The system is NOT secured."
+    Err "horizon_aios_harden.py not found at $HardenScript — ACL hardening FAILED. The system is NOT secured."
     exit 1
 }

@@ -18,7 +18,7 @@ installs these for you.
 |---|---|---|---|---|---|
 | **Git 2.9+** | Required | `core.hooksPath` (introduced in 2.9) wires the version-controlled pre-commit hook; earlier versions silently ignore it | `winget install Git.Git` | `brew install git` | `apt install git` / `dnf install git` |
 | **Claude Code CLI** | Required | The AI harness AIOS configures; must exist at `~/.claude/` before bootstrap | `npm install -g @anthropic-ai/claude-code` | Same | Same |
-| **Python 3.6+** | Required | `bootstrap.ps1`/`bootstrap.sh` call `aios_switch.py`, `register_user_skills.py`, and `harden_aios.py`; `create_brain.py` uses stdlib only | `winget install Python.Python.3` | `brew install python3` | `apt install python3` |
+| **Python 3.6+** | Required | `bootstrap.ps1`/`bootstrap.sh` call `horizon_aios_switch.py`, `horizon_aios_register_user_skills.py`, and `horizon_aios_harden.py`; `horizon_aios_create_brain.py` uses stdlib only | `winget install Python.Python.3` | `brew install python3` | `apt install python3` |
 | **Bash** | Required | Git hook scripts and the statusline dispatcher (`statusline.sh`) run in bash | Provided by Git for Windows (Git Bash) — no separate install | Built-in | Built-in |
 | **PowerShell 5.1+** | Required on Windows; optional on macOS/Linux | Windows statusline (`statusline-context-alerts.ps1`) and sound playback use PowerShell; Linux/macOS use bash equivalents and do not require `pwsh` | Built-in (Windows PowerShell 5.1); PowerShell 7 optional | `brew install --cask powershell` (optional) | `apt install powershell` (optional) |
 | **jq** | Required | Some statusline scripts parse JSON output from Claude Code | `winget install jqlang.jq` | `brew install jq` | `apt install jq` |
@@ -26,18 +26,18 @@ installs these for you.
 | **SSH client** | Required | All remote Git operations use SSH; no HTTPS and no `gh` CLI is used anywhere | Built-in (OpenSSH, Windows 10+) | Built-in | Built-in (`openssh-client`) |
 | **SSH key pair** | Required | Public key must be registered with the Git host (`~/.ssh/id_ed25519` or similar) | `ssh-keygen -t ed25519` | Same | Same |
 | **GPG key in local keyring** | Required | Fingerprint is written to `$HORIZON_BIN/harness_configs/git/gitconfig` during setup | `gpg --full-generate-key` | Same | Same |
-| **`watchdog` Python library** | Optional | Required only by `sbin/monitor_aios.py` (filesystem audit monitor); the monitor is opt-in and not auto-started | `pip install watchdog` | `pip3 install watchdog` | `pip3 install watchdog` |
-| **`keyring` Python library** | Optional | Used by `sbin/brain_credential.py` to store brain account passwords in the OS native keystore; brain provisioning continues (with a warning) if absent | `pip install keyring` | `pip3 install keyring` | `pip3 install keyring` |
+| **`watchdog` Python library** | Optional | Required only by `sbin/horizon_aios_monitor.py` (filesystem audit monitor); the monitor is opt-in and not auto-started | `pip install watchdog` | `pip3 install watchdog` | `pip3 install watchdog` |
+| **`keyring` Python library** | Optional | Used by `sbin/horizon_aios_brain_credential.py` to store brain account passwords in the OS native keystore; brain provisioning continues (with a warning) if absent | `pip install keyring` | `pip3 install keyring` | `pip3 install keyring` |
 | **Audio player** | Optional | Required for event hook sounds to play; hooks fail silently if no player is found | Built-in (`Media.SoundPlayer` via PowerShell) | Built-in (`afplay`) | One of: `paplay` (PulseAudio), `aplay` (ALSA), `ffplay` (ffmpeg), `mpg123` |
-| **OS user/group management** | Required for brain provisioning only | `create_brain.py` creates OS user accounts and groups; requires the platform tools to be present | Built-in (`New-LocalUser`, `New-LocalGroup` PowerShell cmdlets) | Built-in (`dscl`, `dseditgroup`, `createhomedir`) | Built-in (`useradd`, `groupadd`, `usermod`) |
-| **`icacls`** | Required for brain/harden on Windows | `harden_aios.py` and `create_brain.py` use `icacls` to set filesystem ACLs | Built-in | N/A | N/A |
-| **`setfacl`** | Optional on Linux | Used by `harden_aios.py` for POSIX ACL hardening (additive mode); falls back to `chmod` mode bits if absent | N/A | N/A | `apt install acl` |
-| **`chmod` / `chown`** | Required for brain/harden on Unix | Used by `harden_aios.py` and `create_brain.py` for permission hardening | N/A | Built-in | Built-in |
+| **OS user/group management** | Required for brain provisioning only | `horizon_aios_create_brain.py` creates OS user accounts and groups; requires the platform tools to be present | Built-in (`New-LocalUser`, `New-LocalGroup` PowerShell cmdlets) | Built-in (`dscl`, `dseditgroup`, `createhomedir`) | Built-in (`useradd`, `groupadd`, `usermod`) |
+| **`icacls`** | Required for brain/harden on Windows | `horizon_aios_harden.py` and `horizon_aios_create_brain.py` use `icacls` to set filesystem ACLs | Built-in | N/A | N/A |
+| **`setfacl`** | Optional on Linux | Used by `horizon_aios_harden.py` for POSIX ACL hardening (additive mode); falls back to `chmod` mode bits if absent | N/A | N/A | `apt install acl` |
+| **`chmod` / `chown`** | Required for brain/harden on Unix | Used by `horizon_aios_harden.py` and `horizon_aios_create_brain.py` for permission hardening | N/A | Built-in | Built-in |
 | **`openssl`** | Optional on Linux | Used to hash brain account passwords (`openssl passwd -6`); if absent, `useradd` creates a locked account and the password must be set manually | N/A | N/A | Built-in on most distros |
 
 ### Privilege requirement
 
-Bootstrap and brain provisioning both call `harden_aios.py`, which sets OS-level
+Bootstrap and brain provisioning both call `horizon_aios_harden.py`, which sets OS-level
 filesystem ACLs. This is a hard requirement — bootstrap exits immediately with an
 error if not run elevated.
 
@@ -59,7 +59,7 @@ What changes on the machine when `bootstrap.ps1` / `bootstrap.sh` runs.
 |---|---|---|---|---|
 | `~/.claude/CLAUDE.md` | Created | Created | Created | Single-line `@` redirect to `$HORIZON_ROOT/.claude/CLAUDE.md`; also appends a second `@` import for `$HORIZON_ROOT/.claude/CLAUDE.aios-dev.md` (owner-only dev context) |
 | `~/.claude/settings.json` | Created (if absent; interactive prompt) | Created (if absent; interactive prompt) | Created (if absent; interactive prompt) | Copied from `$HORIZON_SYSTEM/templates/claude_code/settings.json` (Windows) or `settings_unix.json` (macOS/Linux); `AIOS_EXEC_WRAPPER` placeholder substituted with path to `~/.horizon/bin/aios-exec.{ps1,sh}` |
-| `~/.horizon/aios_registry.json` | Created | Created | Created | AIOS named-registry; created by `aios_switch.py init` (Section 5 of bootstrap) |
+| `~/.horizon/aios_registry.json` | Created | Created | Created | AIOS named-registry; created by `horizon_aios_switch.py init` (Section 5 of bootstrap) |
 | `~/.horizon/active_env.ps1` | Created | N/A | N/A | Sourced by PowerShell `$PROFILE` to load `HORIZON_*` env vars |
 | `~/.horizon/active_env.sh` | N/A | Created | Created | Sourced by `~/.bashrc` / `~/.zshrc` to load `HORIZON_*` env vars |
 | `~/.horizon/bin/aios-exec.ps1` | Created | N/A (`.sh` instead) | N/A (`.sh` instead) | Stable wrapper called by `settings.json`; resolves the active AIOS at run time so `aios switch` never rewrites settings |
@@ -74,9 +74,9 @@ What changes on the machine when `bootstrap.ps1` / `bootstrap.sh` runs.
 |---|---|---|---|---|
 | `$HORIZON_ROOT/handoffs/` | Created | Created | Created | Default output dir for `/handoff` skill |
 | `$HORIZON_ROOT/objectives/` | Created | Created | Created | Default store for `/objective` skill |
-| `$HORIZON_SYSTEM/logs/` | Created | Created | Created | Canonical audit and operational log directory (`$HORIZON_LOGS`); created by bootstrap and `harden_aios.py` if absent |
+| `$HORIZON_SYSTEM/logs/` | Created | Created | Created | Canonical audit and operational log directory (`$HORIZON_LOGS`); created by bootstrap and `horizon_aios_harden.py` if absent |
 | `~/.claude/` | Created if absent | Created if absent | Created if absent | Bootstrap creates it if Claude Code has not been launched yet; Claude Code itself creates it on first launch |
-| `~/.horizon/bin/` | Created | Created | Created | Created by `aios_switch.py init` alongside the wrapper scripts |
+| `~/.horizon/bin/` | Created | Created | Created | Created by `horizon_aios_switch.py init` alongside the wrapper scripts |
 
 ### Junctions / symlinks created
 
@@ -103,9 +103,9 @@ What changes on the machine when `bootstrap.ps1` / `bootstrap.sh` runs.
 | `commit.gpgsign` | Global (via included gitconfig) | `true` | Every commit on the machine is GPG-signed after setup |
 | `user.signingkey` | Global (via included gitconfig) | User's GPG fingerprint | Set during setup Step 8.2 |
 
-### ACLs / permissions set by `harden_aios.py`
+### ACLs / permissions set by `horizon_aios_harden.py`
 
-`harden_aios.py` runs as the final bootstrap step. It enforces the brains-group ACL
+`horizon_aios_harden.py` runs as the final bootstrap step. It enforces the brains-group ACL
 model on `$HORIZON_SYSTEM`. It has two modes: **additive** (default — preserves all
 existing ACLs, adds ACEs only) and **strict** (`--strict` — drops inherited ACEs and
 rebuilds from scratch).
@@ -132,7 +132,7 @@ invariant so no inherited permission can accidentally reach a privileged directo
 - No system-wide package installs (no `apt install`, `brew install`, `winget` runs are made by bootstrap).
 - No registry writes beyond the Machine-scope PATH entry on Windows.
 - No Windows services are installed or registered.
-- No scheduled tasks or cron jobs are created (the optional sync scheduler `setup_sync_schedule.py` is a separate opt-in step).
+- No scheduled tasks or cron jobs are created (the optional sync scheduler `horizon_aios_setup_sync_schedule.py` is a separate opt-in step).
 - `$HORIZON_ROOT/.claude/settings.json` (devroot project-level) is not modified; it is version-controlled and owns only devroot-scoped permissions. Only `~/.claude/settings.json` (global) is created/modified.
 - The OS repo's `settings.local.json` is never created by bootstrap — this file is machine-local and must be created manually per machine.
 
@@ -140,7 +140,7 @@ invariant so no inherited permission can accidentally reach a privileged directo
 
 ## Section 3 — System Footprint: Adding One Brain
 
-What changes when `python $HORIZON_SYSTEM/sbin/create_brain.py <brain-name>` runs.
+What changes when `python $HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py <brain-name>` runs.
 Must be run as Administrator (Windows) or root (Unix).
 
 ### OS user account created
@@ -195,13 +195,13 @@ access only the group-readable skill tier; `skills_sbin/` is explicitly denied.
 
 | Platform | Store | Mechanism |
 |---|---|---|
-| Windows | Windows Credential Manager | `keyring` library (via `brain_credential.py`) |
+| Windows | Windows Credential Manager | `keyring` library (via `horizon_aios_brain_credential.py`) |
 | macOS | Keychain | `keyring` library |
 | Linux | Secret Service (e.g., GNOME Keyring, KWallet) | `keyring` library |
 
 The password is auto-generated (64 chars, `secrets.token_urlsafe(48)`) and is never
 written to any file and never printed to the terminal. Retrieve it with:
-`python $HORIZON_SYSTEM/sbin/brain_credential.py get <brain-name>` (requires
+`python $HORIZON_SYSTEM/sbin/horizon_aios_brain_credential.py get <brain-name>` (requires
 Administrator / root).
 
 If the `keyring` library is absent, a warning is printed and the password is not
@@ -214,7 +214,7 @@ stored — it must be set manually: `passwd <brain-name>` (Unix) or
 |---|---|---|
 | `$HORIZON_ROOT/brains/<brain-name>/.claude/CLAUDE.md` | `$HORIZON_ROOT/brains/.aioscommon/brain_CLAUDE.md.template` | `[BRAIN_NAME]` and `[HORIZON_ROOT_PATH]` placeholders substituted; customize after provisioning to define the brain's persona |
 | `$HORIZON_ROOT/brains/<brain-name>/.claude/settings.json` | `$HORIZON_ROOT/brains/.aioscommon/brain_settings.json.template` | `[BRAIN_NAME]` and `[HORIZON_ROOT_PATH]` placeholders substituted; customize to scope allowed tools |
-| `$HORIZON_ROOT/brains/<brain-name>/.aios_provision.json` | Generated by `create_brain.py` Phase 5 | Machine-readable provisioning manifest (timestamp, invoking user, groups, paths, credential store note) for auditors |
+| `$HORIZON_ROOT/brains/<brain-name>/.aios_provision.json` | Generated by `horizon_aios_create_brain.py` Phase 5 | Machine-readable provisioning manifest (timestamp, invoking user, groups, paths, credential store note) for auditors |
 
 ### Shell profile written (brain user's login environment)
 
@@ -226,15 +226,15 @@ stored — it must be set manually: `passwd <brain-name>` (Unix) or
 
 ### Hooks / services
 
-No hooks, services, scheduled tasks, or cron jobs are created by `create_brain.py`.
+No hooks, services, scheduled tasks, or cron jobs are created by `horizon_aios_create_brain.py`.
 A brain can be wired to Task Scheduler (Windows) or cron/systemd (Unix) after
 provisioning — this is a manual post-provisioning step. The filesystem monitor
-(`sbin/monitor_aios.py`) is a separate opt-in tool and is not auto-started.
+(`sbin/horizon_aios_monitor.py`) is a separate opt-in tool and is not auto-started.
 
 ---
 
 ## See Also
 
 - `getting_started/ReadMeToSetupYourSystem.md` — procedural step-by-step instructions for AIOS installation
-- `documentation/utilities.md` — quick-lookup catalog for `harden_aios.py`, `create_brain.py`, `brain_credential.py`, and all other `sbin/` utilities
+- `documentation/utilities.md` — quick-lookup catalog for `horizon_aios_harden.py`, `horizon_aios_create_brain.py`, `horizon_aios_brain_credential.py`, and all other `sbin/` utilities
 - `ai_os_etc/security_invariants.md` — the ACL ownership model, the three-tier principal hierarchy, and why the Deny-after-grant ordering is a hard invariant

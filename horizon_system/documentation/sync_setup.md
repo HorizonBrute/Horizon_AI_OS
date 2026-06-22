@@ -29,14 +29,14 @@ is git-ignored; never commit it.
 Run from `$HORIZON_SYSTEM/sbin/`:
 
 ```
-python setup_sync_schedule.py
+python horizon_aios_setup_sync_schedule.py
 ```
 
 The script reads `aios_local.conf`, detects the platform, and installs the
 appropriate automation:
 
 - **Windows**: registers a Task Scheduler task named `HorizonAIOS_Sync` that
-  runs `sbin/sync_aios_runner.ps1` at the configured frequency and time.
+  runs `sbin/horizon_aios_sync_runner.ps1` at the configured frequency and time.
 - **Linux / macOS**: appends a cron entry (marked `# HorizonAIOS_Sync`) to
   your user crontab.
 
@@ -44,7 +44,7 @@ Pass `--yes` to skip all interactive confirmation prompts (useful in unattended
 bootstrap runs):
 
 ```
-python setup_sync_schedule.py --yes
+python horizon_aios_setup_sync_schedule.py --yes
 ```
 
 If the task or cron entry already exists, the script prompts before overwriting
@@ -148,14 +148,14 @@ crontab -e
 
 **Check the log file:**
 ```
-logs/aios_sync.log
+logs/horizon_aios_sync.log
 ```
 Every sync run appends timestamped `[OK]`, `[WARN]`, `[ERR]`, or `[INFO]`
 entries. Start here when a sync fails silently.
 
 **Run sync manually to see live output:**
 ```
-python horizon_system/sbin/sync_aios.py
+python horizon_system/sbin/horizon_aios_sync.py
 ```
 This runs the same logic the scheduler calls and prints directly to stdout in
 addition to writing the log.

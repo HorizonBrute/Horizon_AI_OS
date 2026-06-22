@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-remove_brain.py — Horizon AIOS Brain Deprovisioning
+horizon_aios_remove_brain.py — Horizon AIOS Brain Deprovisioning
 ===================================================
 
-Reverses create_brain.py: removes a brain's OS user account, its per-brain
+Reverses horizon_aios_create_brain.py: removes a brain's OS user account, its per-brain
 group, its workspace folder, its user-profile config, and its stored
 credential. The shared `brains` group is left intact (other brains may use it).
 
-This is the deprovisioning counterpart to create_brain.py. Run it as the
+This is the deprovisioning counterpart to horizon_aios_create_brain.py. Run it as the
 administrative context (Administrator on Windows, root on Unix).
 
-Removal footprint (mirrors what create_brain.py provisions):
+Removal footprint (mirrors what horizon_aios_create_brain.py provisions):
     - OS user account            <brain-name>
     - Per-brain OS group         <brain-name>_group (Windows) / <brain-name> (Unix)
                                  (the shared `brains` group stays)
@@ -19,7 +19,7 @@ Removal footprint (mirrors what create_brain.py provisions):
                                  (CLAUDE.md, settings.json, .aios_provision.json,
                                   and skills -> skills_bin)
     - User profile dir           <home>           (Unix: via userdel -r)
-    - Stored credential          OS keystore (via brain_credential.py delete)
+    - Stored credential          OS keystore (via horizon_aios_brain_credential.py delete)
 
 Safety:
     - Validates the brain name and refuses reserved names (brains, the invoking
@@ -32,7 +32,7 @@ Safety:
     - Prompts for confirmation unless --yes. Supports --dry-run.
 
 Usage:
-    python remove_brain.py <brain-name> [--horizon-root PATH] [--yes] [--dry-run]
+    python horizon_aios_remove_brain.py <brain-name> [--horizon-root PATH] [--yes] [--dry-run]
 """
 
 import argparse
@@ -57,15 +57,15 @@ _sys_path_added = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..',
 if os.path.isdir(_sys_path_added):
     sys.path.insert(0, os.path.abspath(_sys_path_added))
 try:
-    from brain_credential import _delete_credential as _cred_delete
+    from horizon_aios_brain_credential import _delete_credential as _cred_delete
 except Exception:  # noqa: BLE001 — keyring cleanup is best-effort
     _cred_delete = None
 
 # Logon-rights cleanup (Windows). Any automation logon rights granted by
-# create_brain.py --automation must be revoked BEFORE the account is deleted,
+# horizon_aios_create_brain.py --automation must be revoked BEFORE the account is deleted,
 # while the SID still resolves. Best-effort; harmless if none were granted.
 try:
-    from brain_logon_rights import revoke as _revoke_logon_right, BATCH_LOGON, SERVICE_LOGON
+    from horizon_aios_brain_logon_rights import revoke as _revoke_logon_right, BATCH_LOGON, SERVICE_LOGON
     _AUTOMATION_RIGHTS = (BATCH_LOGON, SERVICE_LOGON)
 except Exception:  # noqa: BLE001
     _revoke_logon_right = None
@@ -73,7 +73,7 @@ except Exception:  # noqa: BLE001
 
 
 # ---------------------------------------------------------------------------
-# Logging helpers (house style, matching create_brain.py)
+# Logging helpers (house style, matching horizon_aios_create_brain.py)
 # ---------------------------------------------------------------------------
 
 def banner(text):
@@ -404,13 +404,13 @@ def main():
         print(f'  [DRY-RUN] delete OS-keystore credential for {brain_name}')
     elif _cred_delete is None:
         warn('brain_credential module unavailable — delete the credential '
-             f'manually: brain_credential.py delete {brain_name}')
+             f'manually: horizon_aios_brain_credential.py delete {brain_name}')
     else:
         if _cred_delete(brain_name):
             ok('Stored credential removed from OS keystore.')
         else:
             warn('Could not remove stored credential — remove manually: '
-                 f'brain_credential.py delete {brain_name}')
+                 f'horizon_aios_brain_credential.py delete {brain_name}')
 
     # --- Post-removal verification ---
     banner('Verify removal')

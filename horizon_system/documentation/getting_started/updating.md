@@ -18,11 +18,11 @@ git remote set-url origin <your-own-private-repo>      # your fork / backup repo
 
 1. *(Recommended)* Back up your data first:
    ```bash
-   python horizon_system/sbin/backup_user_data.py        # memory/handoffs/objectives -> your remote
+   python horizon_system/sbin/horizon_aios_backup_user_data.py        # memory/handoffs/objectives -> your remote
    ```
 2. Pull upstream — **fast-forward-only**:
    ```bash
-   python horizon_system/sbin/sync_aios.py
+   python horizon_system/sbin/horizon_aios_sync.py
    #   equivalently: git fetch upstream && git merge --ff-only upstream/<branch>
    ```
 3. If it reports already up to date, you're done. Your user-space files
@@ -48,7 +48,7 @@ the tracked `.gitignore`, a template) was edited locally. Don't force it. Instea
    `CLAUDE.local.md` (instructions) — then restore the framework file:
    ```bash
    git checkout -- <the framework file you edited>
-   python horizon_system/sbin/sync_aios.py
+   python horizon_system/sbin/horizon_aios_sync.py
    ```
 3. Or, if the local change is intentional and you accept the maintenance cost,
    merge manually and resolve conflicts:
@@ -65,7 +65,7 @@ the tracked `.gitignore`, a template) was edited locally. Don't force it. Instea
    ./horizon_system/sbin/bootstrap.ps1      # Windows (Administrator)
    sudo bash horizon_system/sbin/bootstrap.sh   # Linux/macOS
    ```
-2. Verify health: `python horizon_system/sbin/doctor.py`.
+2. Verify health: `python horizon_system/sbin/horizon_aios_doctor.py`.
 3. **Restart Claude Code** and open a new shell so it reloads config.
 
 ## Rolling back a bad update
@@ -80,7 +80,7 @@ git reset --hard <that-commit>
 
 ## Automating it
 
-`sync_aios.py` can run on a schedule (cron / Task Scheduler) via
-`setup_sync_schedule.py`; configure cadence in `aios_local.conf`
+`horizon_aios_sync.py` can run on a schedule (cron / Task Scheduler) via
+`horizon_aios_setup_sync_schedule.py`; configure cadence in `aios_local.conf`
 (`SYNC_AIOS_FROM_REMOTE`, `AIOS_SYNC_FREQ`, `AIOS_REPO_REMOTE`, `AIOS_REPO_BRANCH`).
 See `$HORIZON_DOCS/sync_setup.md`.

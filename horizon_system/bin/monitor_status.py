@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check whether monitor_aios.py is running. Prints 'running' or 'stopped'."""
+"""Check whether horizon_aios_monitor.py is running. Prints 'running' or 'stopped'."""
 import subprocess, sys
 
 def main():
@@ -18,7 +18,7 @@ def main():
             )
             print("running" if "running" in r.stdout else "stopped")
         else:
-            r = subprocess.run(["pgrep", "-f", "monitor_aios.py"], capture_output=True)
+            r = subprocess.run(["pgrep", "-f", "horizon_aios_monitor.py"], capture_output=True)
             print("running" if r.returncode == 0 else "stopped")
     except Exception:
         print("unknown")

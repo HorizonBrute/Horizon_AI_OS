@@ -35,7 +35,7 @@ Items are grouped by status, not priority — priority is implicit from the grou
 ## Owner-Handled (not tracked here)
 
 - **ACL verification (C-1)** — run `bootstrap.ps1` as Administrator on the Windows
-  reference machine with at least one provisioned brain, then `doctor.py` to confirm
+  reference machine with at least one provisioned brain, then `horizon_aios_doctor.py` to confirm
   Deny ACEs are applied and non-inherited. This is a verification step, not a code
   change.
 - **QC Round 6** — post-QC5 consistency pass was interrupted. Owner will run this after
@@ -53,33 +53,33 @@ Items are grouped by status, not priority — priority is implicit from the grou
   operation, invoked directly (`aios uninstall` / `uninstall.ps1`), not something
   an AI or an uninformed user should run via a slash command.
 
-- **`remove_brain.py` uninstall integration** — verify that `remove_brain.py` correctly
+- **`horizon_aios_remove_brain.py` uninstall integration** — verify that `horizon_aios_remove_brain.py` correctly
   deletes `<brain-name>_group` (not `<brain-name>`) on Windows following the group naming
   fix landed this session.
 
-- **`maintain_logs.py` scheduler** — `setup_sync_schedule.py` handles sync scheduling;
-  no equivalent for `maintain_logs.py`. A scheduled-task / cron setup step for log
+- **`horizon_aios_maintain_logs.py` scheduler** — `horizon_aios_setup_sync_schedule.py` handles sync scheduling;
+  no equivalent for `horizon_aios_maintain_logs.py`. A scheduled-task / cron setup step for log
   maintenance is undocumented. Consider a `setup_log_maintenance.py` or fold into
-  `setup_sync_schedule.py`.
+  `horizon_aios_setup_sync_schedule.py`.
 
 - **Brain automation — Linux linger path unverified** — the `scheduled` automation
-  tier (`create_brain.py --automation scheduled`) applies `loginctl enable-linger`
-  on Linux, and `remove_brain.py` runs `loginctl disable-linger` on teardown. Both
+  tier (`horizon_aios_create_brain.py --automation scheduled`) applies `loginctl enable-linger`
+  on Linux, and `horizon_aios_remove_brain.py` runs `loginctl disable-linger` on teardown. Both
   Windows tiers (`scheduled`/`daemon`, LSA logon rights) are verified end-to-end, but
   the Linux linger path has only been code-reviewed, not run on a live Linux host.
-  To close: on a real Linux machine, `create_brain.py <name> --automation scheduled`
+  To close: on a real Linux machine, `horizon_aios_create_brain.py <name> --automation scheduled`
   then `loginctl show-user <name> --property=Linger` must report `Linger=yes`;
-  `remove_brain.py <name> --yes` then re-check must report `Linger=no` (or the user
+  `horizon_aios_remove_brain.py <name> --yes` then re-check must report `Linger=no` (or the user
   gone). Until then the Linux row in `tested_configurations.md` stays **Partial**.
   See `deployment/brain_automation.md`.
 
 - **macOS — effectively undeveloped/untested** — macOS support is the weakest of
   the three platforms: it exists only as POSIX-compatible code paths that have
   never been run on a real Mac. Specifics: `bootstrap.sh` is POSIX but unvalidated
-  on macOS; `create_brain.py`'s macOS branch (`dscl` / `dseditgroup` /
-  `createhomedir`) and `remove_brain.py`'s `dscl -delete` are unrun; the ACL model
+  on macOS; `horizon_aios_create_brain.py`'s macOS branch (`dscl` / `dseditgroup` /
+  `createhomedir`) and `horizon_aios_remove_brain.py`'s `dscl -delete` are unrun; the ACL model
   needs macOS-native equivalents (no NTFS ACLs); and brain automation has **no**
-  applied path on macOS — `brain_logon_rights.py` is Windows-only and there is no
+  applied path on macOS — `horizon_aios_brain_logon_rights.py` is Windows-only and there is no
   `launchd` equivalent of the Linux linger step, so both tiers are guidance only
   (LaunchDaemon/LaunchAgent). Closing this needs a dedicated pass on real Apple
   hardware: validate provisioning/removal, define the ACL approach, and implement
@@ -94,7 +94,7 @@ Items are grouped by status, not priority — priority is implicit from the grou
   audio playback are undocumented. No entry in `utilities.md`; no authoring guide for
   adding new sounds or cues.
 
-- **Sync system** — `sync_aios.py` and `setup_sync_schedule.py` are listed in
+- **Sync system** — `horizon_aios_sync.py` and `horizon_aios_setup_sync_schedule.py` are listed in
   `utilities.md` but the sync workflow (what gets synced, upstream vs. downstream,
   conflict handling) has no dedicated doc. `sync_setup.md` exists but may be stale.
 

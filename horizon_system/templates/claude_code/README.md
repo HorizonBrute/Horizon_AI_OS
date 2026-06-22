@@ -37,14 +37,14 @@ use **forward slashes** on Windows (`C:/Users/you/.horizon/bin/aios-exec.ps1`);
 backslashes form invalid JSON escape sequences. `powershell.exe -File` accepts
 forward slashes.
 
-Generate the wrapper first with `python "$HORIZON_SYSTEM/sbin/aios_switch.py" init`.
+Generate the wrapper first with `python "$HORIZON_SYSTEM/sbin/horizon_aios_switch.py" init`.
 The bootstrap script (`bootstrap.ps1` / `bootstrap.sh`, Section 5) runs `init` and
 performs this substitution automatically when you copy the template.
 
 ### Quick substitution (PowerShell — manual)
 
 ```powershell
-python "$env:HORIZON_SYSTEM\sbin\aios_switch.py" init   # generates ~/.horizon/bin/aios-exec.ps1
+python "$env:HORIZON_SYSTEM\sbin\horizon_aios_switch.py" init   # generates ~/.horizon/bin/aios-exec.ps1
 $wrapper  = ("$HOME\.horizon\bin\aios-exec.ps1") -replace '\\','/'   # forward slashes for JSON
 $template = Get-Content "$env:HORIZON_SYSTEM\templates\claude_code\settings.json" -Raw
 $template -replace 'AIOS_EXEC_WRAPPER', $wrapper | Set-Content "$env:USERPROFILE\.claude\settings.json" -Encoding utf8

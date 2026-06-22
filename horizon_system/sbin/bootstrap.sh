@@ -23,7 +23,7 @@ for arg in "$@"; do
 done
 
 # -----------------------------------------------------------------------------
-# Require root — harden_aios.py (run below) needs root privileges to set
+# Require root — horizon_aios_harden.py (run below) needs root privileges to set
 # filesystem ACLs.  Fail fast rather than let the user discover this mid-run
 # at Section 9.
 # -----------------------------------------------------------------------------
@@ -192,13 +192,13 @@ fi
 
 # Register machine-local user skills (usrbin/usr_skills -> skills_sbin symlinks).
 # Best-effort: never abort bootstrap if python is missing or no user skills exist.
-REG_SCRIPT="$HORIZON_SYSTEM/sbin/register_user_skills.py"
+REG_SCRIPT="$HORIZON_SYSTEM/sbin/horizon_aios_register_user_skills.py"
 if [ -f "$REG_SCRIPT" ]; then
   if command -v python3 >/dev/null 2>&1; then
     if python3 "$REG_SCRIPT"; then
       ok "Registered machine-local user skills."
     else
-      warn "register_user_skills.py exited non-zero."
+      warn "horizon_aios_register_user_skills.py exited non-zero."
     fi
   else
     warn "python3 not found — skipping user-skill registration. Run later: python3 $REG_SCRIPT"
@@ -233,24 +233,24 @@ fi
 # Initializes the machine-local AIOS registry (~/.horizon/) and generates the
 # active_env snippet + aios-exec wrappers, then wires settings.json at the
 # stable wrapper so switching AIOS never rewrites settings.json. See
-# aios_switch.py and $HORIZON_DOCS/system/aios_switching.md.
+# horizon_aios_switch.py and $HORIZON_DOCS/system/aios_switching.md.
 # -----------------------------------------------------------------------------
 banner "SECTION 5: settings.json + AIOS indirection layer"
 
 # 5a: AIOS registry + active_env + wrappers (idempotent; self-heals registry).
-SWITCH_SCRIPT="$HORIZON_SYSTEM/sbin/aios_switch.py"
+SWITCH_SCRIPT="$HORIZON_SYSTEM/sbin/horizon_aios_switch.py"
 if [ -f "$SWITCH_SCRIPT" ]; then
   if command -v python3 >/dev/null 2>&1; then
     if python3 "$SWITCH_SCRIPT" init; then
       ok "AIOS registry + indirection layer initialized."
     else
-      warn "aios_switch.py init exited non-zero."
+      warn "horizon_aios_switch.py init exited non-zero."
     fi
   else
     warn "python3 not found - skipping AIOS registry init. Run later: python3 $SWITCH_SCRIPT init"
   fi
 else
-  warn "aios_switch.py not found at $SWITCH_SCRIPT - skipping AIOS registry init."
+  warn "horizon_aios_switch.py not found at $SWITCH_SCRIPT - skipping AIOS registry init."
 fi
 
 # 5b: settings.json points at the stable, AIOS-independent wrapper.
@@ -301,19 +301,19 @@ fi
 # no-ops if already redirected, so it is safe to always call.
 # NOTE: Have Claude Code closed when bootstrap runs — the script moves the live
 # projects directory (it leaves a backup if one was present).
-REDIRECT_MEMORY_SCRIPT="$HORIZON_SYSTEM/sbin/redirect_memory.py"
+REDIRECT_MEMORY_SCRIPT="$HORIZON_SYSTEM/sbin/horizon_aios_redirect_memory.py"
 if [ -f "$REDIRECT_MEMORY_SCRIPT" ]; then
   if command -v python3 >/dev/null 2>&1; then
     if python3 "$REDIRECT_MEMORY_SCRIPT"; then
       ok "~/.claude/projects redirected to \$HORIZON_ROOT/memory."
     else
-      warn "redirect_memory.py exited non-zero."
+      warn "horizon_aios_redirect_memory.py exited non-zero."
     fi
   else
     warn "python3 not found - skipping memory redirect. Run later: python3 $REDIRECT_MEMORY_SCRIPT"
   fi
 else
-  warn "redirect_memory.py not found at $REDIRECT_MEMORY_SCRIPT - skipping memory redirect."
+  warn "horizon_aios_redirect_memory.py not found at $REDIRECT_MEMORY_SCRIPT - skipping memory redirect."
 fi
 
 # -----------------------------------------------------------------------------
@@ -477,14 +477,14 @@ if [ "${AIOS_DEPLOY_MODE:-}" = "docker" ]; then
     info "Docker mode: skipping sync schedule setup (refresh via image rebuild or pull)."
 elif [ "$YES_ALL" = "true" ]; then
     setup_sched=y
-    echo "$setup_sched" | grep -qi "^y" && python3 "$HORIZON_SYSTEM/sbin/setup_sync_schedule.py" --yes
+    echo "$setup_sched" | grep -qi "^y" && python3 "$HORIZON_SYSTEM/sbin/horizon_aios_setup_sync_schedule.py" --yes
 else
     printf "Set up daily auto-sync from upstream? [y/N] "
     read -r setup_sched
     if echo "$setup_sched" | grep -qi "^y"; then
-        python3 "$HORIZON_SYSTEM/sbin/setup_sync_schedule.py"
+        python3 "$HORIZON_SYSTEM/sbin/horizon_aios_setup_sync_schedule.py"
     else
-        echo "Skipped. Run later: python3 $HORIZON_SYSTEM/sbin/setup_sync_schedule.py"
+        echo "Skipped. Run later: python3 $HORIZON_SYSTEM/sbin/horizon_aios_setup_sync_schedule.py"
     fi
 fi
 
@@ -492,12 +492,12 @@ fi
 # SECTION 10: Harden AIOS layer ACLs (brains group)
 # Enforces security_invariants.md §2/§3/§5 — brains denied on sbin/skills_sbin/
 # logs, granted rx on bin/skills_bin, no write elsewhere in $HORIZON_SYSTEM.
-# FATAL: harden_aios.py failure exits bootstrap non-zero — ACL hardening is a
+# FATAL: horizon_aios_harden.py failure exits bootstrap non-zero — ACL hardening is a
 # security requirement, not a best-effort step.
 # -----------------------------------------------------------------------------
 banner "SECTION 10: Harden AIOS layer ACLs"
 
-HARDEN_SCRIPT="$HORIZON_SYSTEM/sbin/harden_aios.py"
+HARDEN_SCRIPT="$HORIZON_SYSTEM/sbin/horizon_aios_harden.py"
 if [ "${AIOS_SKIP_HARDEN:-}" = "1" ]; then
   ok "Hardening skipped (AIOS_SKIP_HARDEN=1) — already applied as root before this step."
 elif [ -f "$HARDEN_SCRIPT" ]; then
@@ -505,16 +505,16 @@ elif [ -f "$HARDEN_SCRIPT" ]; then
     if python3 "$HARDEN_SCRIPT"; then
       ok "AIOS layer hardened (brains-group ACLs applied)."
     else
-      err "harden_aios.py exited non-zero — ACL hardening FAILED. The system is NOT secured."
-      err "Review harden_aios.py output above and re-run bootstrap with sudo before using this installation."
+      err "horizon_aios_harden.py exited non-zero — ACL hardening FAILED. The system is NOT secured."
+      err "Review horizon_aios_harden.py output above and re-run bootstrap with sudo before using this installation."
       exit 1
     fi
   else
-    err "python3 not found — cannot run harden_aios.py. ACL hardening FAILED. The system is NOT secured."
+    err "python3 not found — cannot run horizon_aios_harden.py. ACL hardening FAILED. The system is NOT secured."
     err "Install Python 3.6+ and re-run: sudo python3 $HARDEN_SCRIPT"
     exit 1
   fi
 else
-  err "harden_aios.py not found at $HARDEN_SCRIPT — ACL hardening FAILED. The system is NOT secured."
+  err "horizon_aios_harden.py not found at $HARDEN_SCRIPT — ACL hardening FAILED. The system is NOT secured."
   exit 1
 fi

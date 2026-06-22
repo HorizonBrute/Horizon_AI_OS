@@ -105,7 +105,7 @@ The AIOS OS layer (env vars, bootstrap, skills, audit hooks, brain isolation) is
 
 ## Known Gaps
 
-- `create_brain.py` is not yet adapted for Docker — it provisions OS user accounts, not Docker containers. Brain container provisioning is currently manual (duplicate the compose service template).
+- `horizon_aios_create_brain.py` is not yet adapted for Docker — it provisions OS user accounts, not Docker containers. Brain container provisioning is currently manual (duplicate the compose service template).
 - `bootstrap_docker.sh` (and the `bootstrap_docker.ps1` Windows-host wrapper) runs the standard bootstrap; the skills symlink (`~/.claude/skills/ → skills_sbin/`) is created but not verified in a full session.
-- Sync schedule (`setup_sync_schedule.py`) is skipped in Docker mode. AIOS updates are delivered by rebuilding the image.
+- Sync schedule (`horizon_aios_setup_sync_schedule.py`) is skipped in Docker mode. AIOS updates are delivered by rebuilding the image.
 - The images are Linux containers and run on Windows/macOS/Linux hosts via the container runtime; Linux host is the only host end-to-end verified so far. Windows and macOS hosts (Docker Desktop / WSL2) run the same Linux images but have not been verified.

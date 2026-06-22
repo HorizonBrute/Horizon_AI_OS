@@ -49,11 +49,11 @@ bash /path/to/horizon_system/sbin/bootstrap.sh    # macOS / Linux
 ```
 
 Bootstrap sets up:
-- The AIOS registry + indirection layer (`~/.horizon/`: `aios_registry.json`, `active_env.{ps1,sh}`, `bin/aios-exec.{ps1,sh}`) via `aios_switch.py init`
+- The AIOS registry + indirection layer (`~/.horizon/`: `aios_registry.json`, `active_env.{ps1,sh}`, `bin/aios-exec.{ps1,sh}`) via `horizon_aios_switch.py init`
 - Generates `~/.horizon/active_env.*` and prints the one-line profile include to add — it sets `HORIZON_ROOT` + derived vars for the active AIOS (see `system/aios_switching.md`)
 - `~/.claude/CLAUDE.md` stub redirect
 - `~/.claude/skills/` junction/symlink → `skills_sbin/`
-- Machine-local user skills (`usrbin/usr_skills/` → `skills_sbin/`) registered via `register_user_skills.py`
+- Machine-local user skills (`usrbin/usr_skills/` → `skills_sbin/`) registered via `horizon_aios_register_user_skills.py`
 - `~/.claude/settings.json` from template, pointed at the `aios-exec` wrapper
 - Git hooks (DCO sign-off enforcement)
 - Handoffs directory
@@ -65,7 +65,7 @@ Bootstrap sets up:
 Brains on a desktop deployment are OS user accounts on the same machine.
 
 ```bash
-python $HORIZON_SYSTEM/sbin/create_brain.py brain-name
+python $HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py brain-name
 ```
 
 Run as administrator (Windows) or with `sudo` (Linux/macOS). The script:
@@ -78,7 +78,7 @@ Run as administrator (Windows) or with `sudo` (Linux/macOS). The script:
 
 ### How a brain's harness is wired to AIOS
 
-**Brain users do not run `bootstrap.ps1`/`bootstrap.sh`.** Bootstrap is the *owner/admin* machine-setup step, run once. `create_brain.py` is the per-brain onboarding script — it configures each brain user's harness so that, the moment the brain logs in and launches the harness, it is already pointed at the AIOS layer.
+**Brain users do not run `bootstrap.ps1`/`bootstrap.sh`.** Bootstrap is the *owner/admin* machine-setup step, run once. `horizon_aios_create_brain.py` is the per-brain onboarding script — it configures each brain user's harness so that, the moment the brain logs in and launches the harness, it is already pointed at the AIOS layer.
 
 The brain's config is **canonical in its workspace** `brains/<name>/.claude/`, and the brain's home `~/.claude` is a **junction/symlink to it** — so everything is surfaced at the user-level `~/.claude` regardless of the brain's cwd. Phase 5 deploys/links:
 
@@ -99,12 +99,12 @@ To let a brain run **unattended** (a scheduled task or service launching the har
 Deprovision a brain with the counterpart script (run elevated):
 
 ```bash
-python $HORIZON_SYSTEM/sbin/remove_brain.py brain-name        # prompts to confirm
-python $HORIZON_SYSTEM/sbin/remove_brain.py brain-name --yes  # non-interactive
-python $HORIZON_SYSTEM/sbin/remove_brain.py brain-name --dry-run
+python $HORIZON_SYSTEM/sbin/horizon_aios_remove_brain.py brain-name        # prompts to confirm
+python $HORIZON_SYSTEM/sbin/horizon_aios_remove_brain.py brain-name --yes  # non-interactive
+python $HORIZON_SYSTEM/sbin/horizon_aios_remove_brain.py brain-name --dry-run
 ```
 
-It reverses `create_brain.py`: removes the OS user account, the per-brain group (`<name>_group` on Windows; the shared `brains` group is kept), the workspace folder `$HORIZON_ROOT/brains/brain-name/`, the user-profile config, and the stored credential. All links — the home `~/.claude` → workspace junction and the workspace `.claude/skills` → `skills_bin` junction — are deleted as reparse points **before** any recursive delete, so neither the workspace nor `skills_bin` is ever followed or destroyed.
+It reverses `horizon_aios_create_brain.py`: removes the OS user account, the per-brain group (`<name>_group` on Windows; the shared `brains` group is kept), the workspace folder `$HORIZON_ROOT/brains/brain-name/`, the user-profile config, and the stored credential. All links — the home `~/.claude` → workspace junction and the workspace `.claude/skills` → `skills_bin` junction — are deleted as reparse points **before** any recursive delete, so neither the workspace nor `skills_bin` is ever followed or destroyed.
 
 ---
 
@@ -115,7 +115,7 @@ It reverses `create_brain.py`: removes the OS user account, the per-brain group 
 | **Sounds** | Event hooks play audio through the local sound device — works immediately. |
 | **Statusline** | Statusline scripts render in the harness UI (Claude Code statusBar). |
 | **Audit log** | Written to `$HORIZON_SYSTEM/logs/` — readable in any editor. |
-| **Monitor** | `monitor_aios.py` runs in a background terminal; alerts visible on-screen. |
+| **Monitor** | `horizon_aios_monitor.py` runs in a background terminal; alerts visible on-screen. |
 | **Handoffs** | Written to `$HORIZON_ROOT/handoffs/` — local file, immediately accessible. |
 | **Brains** | OS user accounts — visible in user management tools; no extra tooling needed. |
 

@@ -29,9 +29,9 @@
 # What this does NOT remove:
 #   - Shell-profile line sourcing active_env.sh (user added this manually)
 #   - Global git include.path pointing to harness_configs/git/gitconfig (user added manually)
-#   - Optional sync schedule / cron entries from setup_sync_schedule.py (separate opt-in)
+#   - Optional sync schedule / cron entries from horizon_aios_setup_sync_schedule.py (separate opt-in)
 #   - 'brains' OS group (may have brain OS users as members)
-#   - Brain OS user accounts and their data (use create_brain.py remove flow)
+#   - Brain OS user accounts and their data (use horizon_aios_create_brain.py remove flow)
 #   - Python packages (watchdog, keyring) installed by the user
 # =============================================================================
 
@@ -169,7 +169,7 @@ banner "SECTION 3: Skills symlink and user-skill symlinks"
 SKILLS_DST="$OWNER_HOME/.claude/skills"
 SKILLS_SBIN="$HORIZON_SYSTEM/skills_sbin"
 
-# Remove user-skill symlinks from skills_sbin/ (created by register_user_skills.py)
+# Remove user-skill symlinks from skills_sbin/ (created by horizon_aios_register_user_skills.py)
 if [ -d "$SKILLS_SBIN" ]; then
   while IFS= read -r -d '' link; do
     target="$(readlink "$link" 2>/dev/null || true)"
@@ -225,7 +225,7 @@ done
 
 # =============================================================================
 # SECTION 5: ~/.horizon/ tree and ~/.claude/settings.json
-# Bootstrap creates (via aios_switch.py init):
+# Bootstrap creates (via horizon_aios_switch.py init):
 #   ~/.horizon/aios_registry.json
 #   ~/.horizon/active_env.sh  (or active_env.ps1 on Windows Git Bash)
 #   ~/.horizon/bin/aios-exec.sh  (and .ps1 on Windows)
@@ -266,7 +266,7 @@ fi
 
 # =============================================================================
 # SECTION 5b: ~/.claude/projects memory redirect (reverses bootstrap 5c)
-# Bootstrap links ~/.claude/projects -> $HORIZON_ROOT/memory via redirect_memory.py
+# Bootstrap links ~/.claude/projects -> $HORIZON_ROOT/memory via horizon_aios_redirect_memory.py
 # so the harness's per-project memory lives in the AIOS. We remove only the LINK —
 # never the memory target's contents (that data lives in $HORIZON_ROOT/memory,
 # part of the repo). Mirrors the Section 3 skills-symlink removal.
@@ -288,7 +288,7 @@ else
   skip "~/.claude/projects not found — nothing to remove."
 fi
 
-# Advise about any pre-redirect backup redirect_memory.py left behind
+# Advise about any pre-redirect backup horizon_aios_redirect_memory.py left behind
 found_proj_backup=false
 for backup in "$OWNER_HOME/.claude/"projects.backup-*; do
   [ -e "$backup" ] || continue
@@ -429,12 +429,12 @@ else
   skip "logs/ directory not found — nothing to remove."
 fi
 
-advisory "If you set up a cron sync schedule with setup_sync_schedule.py, remove the cron entries manually:"
+advisory "If you set up a cron sync schedule with horizon_aios_setup_sync_schedule.py, remove the cron entries manually:"
 advisory "  crontab -e   # remove lines between the Horizon AIOS marker comments"
 
 # =============================================================================
 # SECTION 10: Remove brains-group ACEs from $HORIZON_SYSTEM subtrees
-# harden_aios.py added these ACEs; we strip the brains group from each dir.
+# horizon_aios_harden.py added these ACEs; we strip the brains group from each dir.
 # We do NOT remove the 'brains' group itself — it may have brain OS user members.
 # =============================================================================
 banner "SECTION 10: Remove brains-group ACEs"
@@ -479,7 +479,7 @@ if group_exists "$BRAINS_GROUP"; then
           fi
           ;;
         Darwin)
-          # macOS: chmod was the mechanism harden_aios.py used (no setfacl)
+          # macOS: chmod was the mechanism horizon_aios_harden.py used (no setfacl)
           chmod -R g+w "$dir" 2>/dev/null || true
           ok "Restored group-write permission on: $dir"
           ;;
@@ -523,5 +523,5 @@ echo "    1. Remove the active_env.sh source line from your shell profile (~/.ba
 echo "    2. Remove the 'include.path' from your global gitconfig (if set)"
 echo "    3. Remove cron sync entries (if you set them up)"
 echo "    4. Remove the 'brains' OS group (if no brain accounts remain)"
-echo "    5. Remove any brain OS user accounts (use create_brain.py remove flow)"
+echo "    5. Remove any brain OS user accounts (use horizon_aios_create_brain.py remove flow)"
 echo ""

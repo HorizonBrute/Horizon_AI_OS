@@ -36,7 +36,7 @@ P.8.2 **Statusline** — `horizon_system/bin/statusline/statusline.sh` detects `
 
 P.8.3 **Linux audio dependency** — at least one of `paplay` (PulseAudio), `aplay` (ALSA), `ffplay` (ffmpeg), or `mpg123` must be installed for sounds to play on Linux. If none are found, `play_sound.sh` exits silently with no effect on Claude Code.
 
-P.9 **Bootstrap requires elevated privileges**: Administrator on Windows (right-click PowerShell → Run as administrator) and sudo/root on Linux and macOS. This is required for `harden_aios.py` to apply filesystem ACLs that enforce brain isolation. See the Prerequisites section in ReadMeToSetupYourSystem.md.
+P.9 **Bootstrap requires elevated privileges**: Administrator on Windows (right-click PowerShell → Run as administrator) and sudo/root on Linux and macOS. This is required for `horizon_aios_harden.py` to apply filesystem ACLs that enforce brain isolation. See the Prerequisites section in ReadMeToSetupYourSystem.md.
 
 P.10 **Developer Mode not required**.
 
@@ -304,7 +304,7 @@ To bring a new machine into Horizon AIOS, follow the full setup in `horizon_syst
 ```powershell
 Set-Content -Path "$HOME\.claude\CLAUDE.md" -Value "@$HORIZON_ROOT\.claude\CLAUDE.md"
 # Global settings.json is a template copy pointed at the aios-exec wrapper (not a hard link):
-python "$HORIZON_SYSTEM\sbin\aios_switch.py" init
+python "$HORIZON_SYSTEM\sbin\horizon_aios_switch.py" init
 $wrapper = ("$HOME\.horizon\bin\aios-exec.ps1") -replace '\\','/'
 Copy-Item "$HORIZON_SYSTEM\templates\claude_code\settings.json" "$HOME\.claude\settings.json"
 (Get-Content "$HOME\.claude\settings.json") -replace "AIOS_EXEC_WRAPPER", $wrapper | Set-Content "$HOME\.claude\settings.json"

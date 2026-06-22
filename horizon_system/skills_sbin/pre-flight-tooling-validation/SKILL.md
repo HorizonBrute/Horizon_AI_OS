@@ -37,11 +37,11 @@ For its platform, an agent confirms the repo ships working tooling for each of:
 
 | # | Capability | Expected tooling (verify presence + correct interface) |
 |---|---|---|
-| 1 | **Install an AIOS from a fresh clone** | `horizon_system/sbin/bootstrap.{ps1,sh}` (idempotent, `--yes`); supporting `harden_aios.py`, `doctor.py`, `aios_switch.py init` |
-| 2 | **Create a new brain in that AIOS** | `horizon_system/sbin/create_brain.py` (`--automation`, `--dry-run`); supporting `brain_credential.py`, `brain_logon_rights.py`, `harden_aios.py` |
-| 3 | **Create a new AIOS in another directory** | a second clone + `bootstrap.{ps1,sh}` + `aios_switch.py register <name> <path>` (no dedicated script — the path is clone→bootstrap→register; confirm `register` exists and validates the target root) |
-| 4 | **Switch back and forth between AIOSs** | `horizon_system/sbin/aios_switch.py` with `list`/`current`/`register`/`switch` (+ `switch --dry-run`); the `aios` wrapper in `horizon_system/bin/` |
-| 5 | **Delete an AIOS** | `horizon_system/sbin/uninstall.{ps1,sh}` (`--dry-run`, `--yes`, unknown-arg reject) and `aios uninstall`; brain teardown via `remove_brain.py` (`--yes`) |
+| 1 | **Install an AIOS from a fresh clone** | `horizon_system/sbin/bootstrap.{ps1,sh}` (idempotent, `--yes`); supporting `horizon_aios_harden.py`, `horizon_aios_doctor.py`, `horizon_aios_switch.py init` |
+| 2 | **Create a new brain in that AIOS** | `horizon_system/sbin/horizon_aios_create_brain.py` (`--automation`, `--dry-run`); supporting `horizon_aios_brain_credential.py`, `horizon_aios_brain_logon_rights.py`, `horizon_aios_harden.py` |
+| 3 | **Create a new AIOS in another directory** | a second clone + `bootstrap.{ps1,sh}` + `horizon_aios_switch.py register <name> <path>` (no dedicated script — the path is clone→bootstrap→register; confirm `register` exists and validates the target root) |
+| 4 | **Switch back and forth between AIOSs** | `horizon_system/sbin/horizon_aios_switch.py` with `list`/`current`/`register`/`switch` (+ `switch --dry-run`); the `aios` wrapper in `horizon_system/bin/` |
+| 5 | **Delete an AIOS** | `horizon_system/sbin/uninstall.{ps1,sh}` (`--dry-run`, `--yes`, unknown-arg reject) and `aios uninstall`; brain teardown via `horizon_aios_remove_brain.py` (`--yes`) |
 
 "Validate" means: the file **exists**, is non-empty, and exposes the **expected
 interface** (subcommand / flag / argparse option) — grep the source for the flag

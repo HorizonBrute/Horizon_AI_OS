@@ -31,12 +31,12 @@ git remote add upstream git@github.com:HorizonBrute/Horizon_AI_OS.git
 git remote set-url origin <your-own-private-repo>     # your work + backups
 
 # to update:
-python horizon_system/sbin/sync_aios.py               # fast-forward-only
+python horizon_system/sbin/horizon_aios_sync.py               # fast-forward-only
 #   or: git fetch upstream && git merge upstream/<branch>
 ```
 
 Framework files advance; your user-space files are untouched because upstream
-never modified them. `sync_aios.py` is **fast-forward-only** on purpose: if you
+never modified them. `horizon_aios_sync.py` is **fast-forward-only** on purpose: if you
 *did* edit a framework file, it refuses rather than silently overwriting — that
 refusal is the signal to move your change into the override layer.
 
@@ -62,8 +62,8 @@ un-ignore them in `.gitignore` (that collides with every upstream update). Use:
 ```bash
 # configure your OWN remote in aios_local.conf:
 #   AIOS_BACKUP_REMOTE=<your remote>     (never the public upstream)
-python horizon_system/sbin/backup_user_data.py
-#   or: backup_user_data.py --remote <your-remote> --paths memory handoffs objectives
+python horizon_system/sbin/horizon_aios_backup_user_data.py
+#   or: horizon_aios_backup_user_data.py --remote <your-remote> --paths memory handoffs objectives
 ```
 
 What it does:
@@ -94,5 +94,5 @@ the AIOS documents it but does not auto-rescue it.
 1. Clone, then `git remote add upstream …` and point `origin` at your private repo.
 2. Run bootstrap (`sbin/bootstrap.{ps1,sh}`).
 3. Add personal ignores to `.gitignore.user` (never the framework `.gitignore`).
-4. Set `AIOS_BACKUP_REMOTE` in `aios_local.conf`; run `backup_user_data.py` (cron it).
-5. Update with `sync_aios.py` whenever you want upstream changes.
+4. Set `AIOS_BACKUP_REMOTE` in `aios_local.conf`; run `horizon_aios_backup_user_data.py` (cron it).
+5. Update with `horizon_aios_sync.py` whenever you want upstream changes.

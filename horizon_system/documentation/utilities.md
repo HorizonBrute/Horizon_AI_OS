@@ -5,7 +5,7 @@ administrative: they operate on the AIOS layer itself — hardening its
 permissions, monitoring its integrity, maintaining its logs, provisioning brain
 accounts and credentials, syncing upstream, and wiring its configuration. They
 run as the primary OS user or elevated (Administrator/root) and are excluded
-from brain accounts by explicit Deny ACLs enforced by `harden_aios.py`. A few
+from brain accounts by explicit Deny ACLs enforced by `horizon_aios_harden.py`. A few
 unprivileged helpers in `$HORIZON_SYSTEM/bin/` (readable by brains) are also
 catalogued where they are useful to invoke directly.
 
@@ -40,9 +40,9 @@ files or `@`-imports to confirm the overhead stayed in budget (see
 
 ---
 
-## doctor.py
+## horizon_aios_doctor.py
 
-**Path:** `$HORIZON_SYSTEM/sbin/doctor.py`
+**Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_doctor.py`
 
 System health check. Verifies that the AIOS install is correctly bootstrapped:
 environment variables are set and point to real directories, the skills junction
@@ -63,20 +63,20 @@ Exit code is 1 if any check failed, 0 if only warnings or clean.
 
 ---
 
-## monitor_aios.py
+## horizon_aios_monitor.py
 
-**Path:** `$HORIZON_SYSTEM/sbin/monitor_aios.py`
+**Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_monitor.py`
 
 Filesystem integrity monitor. Watches the AIOS system directories for
 unexpected creates, modifies, deletes, and moves, and appends each event as a
-JSON line to a daily log file in `$HORIZON_SYSTEM/logs/aios_monitor/`. The
+JSON line to a daily log file in `$HORIZON_SYSTEM/logs/horizon_aios_monitor/`. The
 default watch set covers `$HORIZON_SYSTEM` (recursive), `$HORIZON_USRBIN`
 (recursive), `$HORIZON_ROOT/.claude` (recursive), `$HORIZON_ROOT` top-level
 (non-recursive), and the brains root (non-recursive, structural changes only).
 Brain home contents are excluded by default; opt in with `--brain-dirs`.
 
 Runs as the administrative context. Brain accounts must not have write access
-to the log directory — `harden_aios.py` enforces this.
+to the log directory — `horizon_aios_harden.py` enforces this.
 
 **When to use it:** Run it as a persistent background process (or service) on
 any installation where audit logging is required. For full setup instructions
@@ -88,15 +88,15 @@ and log consumption guidance see `$HORIZON_DOCS/security/audit_logging.md`.
 - `--brain-dirs` — escalate brains-root watch to recursive (logs brain internals)
 - `--no-brains-root` — disable the default brains-root watch
 - `--config PATH` — config file (default: `$HORIZON_ETC/aios_monitor.conf`)
-- `--log-dir PATH` — log directory (default: `$HORIZON_SYSTEM/logs/aios_monitor/`)
+- `--log-dir PATH` — log directory (default: `$HORIZON_SYSTEM/logs/horizon_aios_monitor/`)
 
 **Referenced by a skill?** No.
 
 ---
 
-## harden_aios.py
+## horizon_aios_harden.py
 
-**Path:** `$HORIZON_SYSTEM/sbin/harden_aios.py`
+**Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_harden.py`
 
 Applies the authoritative brains-group ACL model to the AIOS layer. Grants
 the `brains` group Read+Execute on `bin/` and `skills_bin/`, applies a broad
@@ -107,7 +107,7 @@ uses `setfacl` when available and falls back to `chmod`; on macOS it uses
 after structural changes to `$HORIZON_SYSTEM`.
 
 **When to use it:** Initial bootstrap, after adding or removing directories
-under `$HORIZON_SYSTEM`, or when `doctor.py` reports a missing Deny ACE.
+under `$HORIZON_SYSTEM`, or when `horizon_aios_doctor.py` reports a missing Deny ACE.
 
 **Key flags:**
 
@@ -122,9 +122,9 @@ under `$HORIZON_SYSTEM`, or when `doctor.py` reports a missing Deny ACE.
 
 ---
 
-## maintain_logs.py
+## horizon_aios_maintain_logs.py
 
-**Path:** `$HORIZON_SYSTEM/sbin/maintain_logs.py`
+**Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_maintain_logs.py`
 
 Prunes and rotates the AIOS log directory. Deletes log files older than the
 configured retention window (`AIOS_LOG_MAX_DAYS`, default 30 days), rotates
@@ -146,9 +146,9 @@ a disk-space-sensitive operation.
 
 ---
 
-## brain_credential.py
+## horizon_aios_brain_credential.py
 
-**Path:** `$HORIZON_SYSTEM/sbin/brain_credential.py`
+**Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_brain_credential.py`
 
 Manages brain OS-account passwords in the native OS keystore (Windows
 Credential Manager, macOS Keychain, Linux Secret Service via the `keyring`
@@ -156,7 +156,7 @@ library). Provides CLI commands to store, retrieve, rotate, delete, and list
 brain credentials. `rotate` generates a cryptographically random 64-character
 password, updates the OS account, and stores the new value in the keystore
 atomically. Requires Administrator/root. Also importable as a library
-(`from brain_credential import store_password`) for use by `create_brain.py`
+(`from brain_credential import store_password`) for use by `horizon_aios_create_brain.py`
 during provisioning.
 
 **When to use it:** After creating a brain account, when rotating credentials
@@ -174,9 +174,9 @@ caution).
 
 ---
 
-## aios_switch.py
+## horizon_aios_switch.py
 
-**Path:** `$HORIZON_SYSTEM/sbin/aios_switch.py`
+**Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_switch.py`
 
 Switches the local machine's Claude Code harness configuration to point at a
 different named Horizon AIOS install. A machine is normally bound to one AIOS
@@ -240,7 +240,7 @@ Does **not** delete the AIOS repo, brain home directories, or non-empty user dat
 **When to use it:** When decommissioning AIOS from a machine.
 
 **Invocation:** Run `aios uninstall [--dry-run] [--yes]` (delegates to the platform
-script via `aios_switch.py`), or invoke the script directly. A real removal must be
+script via `horizon_aios_switch.py`), or invoke the script directly. A real removal must be
 run elevated; `--dry-run` needs no elevation.
 
 **Key flags (both scripts):**
@@ -254,9 +254,9 @@ Unknown arguments are rejected (exit code 2) rather than silently ignored.
 
 ---
 
-## register_user_skills.py
+## horizon_aios_register_user_skills.py
 
-**Path:** `$HORIZON_SYSTEM/sbin/register_user_skills.py`
+**Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_register_user_skills.py`
 
 Aggregates the owner's complete skill view into `skills_sbin/` by creating
 per-skill junctions (Windows) or symlinks (Unix) for skills from two sources:
@@ -281,9 +281,9 @@ whenever the `/resync-user-skills` skill reports drift.
 
 ---
 
-## create_brain.py
+## horizon_aios_create_brain.py
 
-**Path:** `$HORIZON_SYSTEM/sbin/create_brain.py`
+**Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py`
 
 Provisions a new AI brain: creates the `<brain-name>` OS user, the shared
 `brains` group (Read+Execute on `bin/` and `skills_bin/`) and a per-brain group
@@ -291,7 +291,7 @@ Provisions a new AI brain: creates the `<brain-name>` OS user, the shared
 `<brain-name>` on Linux/macOS), the workspace at `$HORIZON_ROOT/brains/<brain-name>/`,
 and a login shell profile that exports the `HORIZON_*` vars and cds into the
 brain folder. The account password is auto-generated (random 64-char) and stored
-in the OS native keystore via `brain_credential.py`. The `sbin/skills_sbin/logs`
+in the OS native keystore via `horizon_aios_brain_credential.py`. The `sbin/skills_sbin/logs`
 Deny ACEs are always (re)applied after all grants, per the security invariants.
 Requires Administrator/root; stdlib only (Python 3.6+).
 
@@ -307,11 +307,11 @@ Requires Administrator/root; stdlib only (Python 3.6+).
 
 ---
 
-## remove_brain.py
+## horizon_aios_remove_brain.py
 
-**Path:** `$HORIZON_SYSTEM/sbin/remove_brain.py`
+**Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_remove_brain.py`
 
-Deprovisioning counterpart to `create_brain.py`. Removes a brain's OS user
+Deprovisioning counterpart to `horizon_aios_create_brain.py`. Removes a brain's OS user
 account, its per-brain group (`<brain-name>_group` on Windows, `<brain-name>` on
 Linux/macOS), its workspace folder, its user-profile config
 (including the `~/.claude/skills` junction, deleted with a reparse-point `rmdir`
@@ -320,7 +320,7 @@ shared `brains` group is left intact. Validates the name and refuses reserved
 names (brains, root/administrator, the invoking user, etc.). Requires
 Administrator/root.
 
-**When to use it:** When retiring a brain account created by `create_brain.py`.
+**When to use it:** When retiring a brain account created by `horizon_aios_create_brain.py`.
 
 **Key flags:**
 
@@ -333,18 +333,18 @@ Administrator/root.
 
 ---
 
-## brain_logon_rights.py
+## horizon_aios_brain_logon_rights.py
 
-**Path:** `$HORIZON_SYSTEM/sbin/brain_logon_rights.py`
+**Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_brain_logon_rights.py`
 
 Surgical helper for the opt-in brain *automation* tiers: grants, revokes, or
 queries a single Windows LSA logon right on one brain account via
 `LsaAddAccountRights` / `LsaRemoveAccountRights` / `LsaEnumerateAccountRights`,
 touching nothing else in local security policy (mirrors the additive-ACL model
-in `harden_aios.py`). `SeBatchLogonRight` ("Log on as a batch job") backs the
+in `horizon_aios_harden.py`). `SeBatchLogonRight` ("Log on as a batch job") backs the
 `scheduled` tier; `SeServiceLogonRight` is reserved for a future `daemon` tier.
-Normally invoked for you by `create_brain.py --automation scheduled` and revoked
-by `remove_brain.py` on teardown; use it directly only for manual right
+Normally invoked for you by `horizon_aios_create_brain.py --automation scheduled` and revoked
+by `horizon_aios_remove_brain.py` on teardown; use it directly only for manual right
 management. **Windows only** (no-op/NotImplementedError elsewhere). Requires
 elevation. See `$HORIZON_DOCS/deployment/brain_automation.md`.
 
@@ -360,9 +360,9 @@ elevation. See `$HORIZON_DOCS/deployment/brain_automation.md`.
 
 ---
 
-## sync_aios.py
+## horizon_aios_sync.py
 
-**Path:** `$HORIZON_SYSTEM/sbin/sync_aios.py`
+**Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_sync.py`
 
 Pulls upstream AIOS updates into the local tree. Reads sync settings from
 `$HORIZON_ETC/aios_local.conf` (`SYNC_AIOS_FROM_REMOTE`, `AIOS_REPO_REMOTE`,
@@ -373,7 +373,7 @@ logged to the configured AIOS log dir. This is the script driven by the auto-syn
 scheduled task; run it manually to sync on demand.
 
 **When to use it:** To pull the latest AIOS layer manually, or as the body of the
-scheduled sync job installed by `setup_sync_schedule.py`.
+scheduled sync job installed by `horizon_aios_setup_sync_schedule.py`.
 
 **Key flags:** None — all behaviour comes from `aios_local.conf`.
 
@@ -381,11 +381,11 @@ scheduled sync job installed by `setup_sync_schedule.py`.
 
 ---
 
-## setup_sync_schedule.py
+## horizon_aios_setup_sync_schedule.py
 
-**Path:** `$HORIZON_SYSTEM/sbin/setup_sync_schedule.py`
+**Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_setup_sync_schedule.py`
 
-Installs (or updates) the recurring auto-sync job that runs `sync_aios.py`: a
+Installs (or updates) the recurring auto-sync job that runs `horizon_aios_sync.py`: a
 Windows Scheduled Task or a Unix cron entry. Reads the schedule settings
 (`AIOS_SYNC_FREQ`, `AIOS_SYNC_TIME`, …) from `$HORIZON_ETC/aios_local.conf` and
 registers the task accordingly. Requires the privilege needed to register a
@@ -402,9 +402,9 @@ in `aios_local.conf` and wanting the schedule re-registered.
 
 ---
 
-## redirect_memory.py
+## horizon_aios_redirect_memory.py
 
-**Path:** `$HORIZON_SYSTEM/sbin/redirect_memory.py`
+**Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_redirect_memory.py`
 
 Redirects the owner's harness per-project state — conversation transcripts and
 agent memory — into the AIOS by replacing `~/.claude/projects/` with a junction
@@ -413,7 +413,7 @@ by the AIOS gitignore, sync-exclusion, and monitor rules. Backup-first and
 idempotent: it copies existing content to `~/.claude/projects.backup-<timestamp>`,
 *moves* it into the memory root (skipping name collisions), then links. Run with
 Claude Code CLOSED, then restart it. Brains are handled separately by
-`create_brain.py`. See `$HORIZON_DOCS/system/memory.md`.
+`horizon_aios_create_brain.py`. See `$HORIZON_DOCS/system/memory.md`.
 
 **When to use it:** Once on the owner's machine to bring harness memory under
 AIOS governance; safe to re-run (it no-ops if already linked).
@@ -428,9 +428,9 @@ AIOS governance; safe to re-run (it no-ops if already linked).
 
 ---
 
-## backup_user_data.py
+## horizon_aios_backup_user_data.py
 
-**Path:** `$HORIZON_SYSTEM/sbin/backup_user_data.py`
+**Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_backup_user_data.py`
 
 Backs up your gitignored user data (`memory/`, `handoffs/`, `objectives/`) to
 **your own** git remote without ever editing the framework `.gitignore`. It
@@ -457,13 +457,13 @@ own remote for backup and cross-machine awareness; manually or on a schedule.
 
 ---
 
-## analyze_aios_monitor.py
+## horizon_aios_monitor_analyze.py
 
-**Path:** `$HORIZON_SYSTEM/sbin/analyze_aios_monitor.py`
+**Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_monitor_analyze.py`
 
-Reads the JSON-line logs produced by `monitor_aios.py`, summarizes file-change
+Reads the JSON-line logs produced by `horizon_aios_monitor.py`, summarizes file-change
 events and monitor uptime gaps, and appends a report to
-`$HORIZON_SYSTEM/logs/security.log`. Can optionally forward alerts to the OS
+`$HORIZON_SYSTEM/logs/horizon_aios_security.log`. Can optionally forward alerts to the OS
 system log (syslog on Linux; Windows Event Log when `pywin32` is present). Meant
 to run as the administrative context on a schedule. See
 `$HORIZON_DOCS/security/audit_logging.md` for scheduling guidance.
@@ -474,8 +474,8 @@ single security log, or ad hoc to review recent integrity events.
 **Key flags:**
 
 - `--days N` — number of days back to analyze
-- `--log-dir PATH` — monitor log dir (default: `logs/aios_monitor/`)
-- `--security-log PATH` — output report path (default: `logs/security.log`)
+- `--log-dir PATH` — monitor log dir (default: `logs/horizon_aios_monitor/`)
+- `--security-log PATH` — output report path (default: `logs/horizon_aios_security.log`)
 - `--syslog` — also emit alerts to the OS system log
 
 **Referenced by a skill?** No.
@@ -486,9 +486,9 @@ single security log, or ad hoc to review recent integrity events.
 
 **Path:** `$HORIZON_SYSTEM/bin/monitor_status.py`
 
-Tiny status probe: reports whether a `monitor_aios.py` process is currently
+Tiny status probe: reports whether a `horizon_aios_monitor.py` process is currently
 running. Prints `running`, `stopped`, or `unknown`. Cross-platform (CIM query on
-Windows, `pgrep` on Unix). Used by `doctor.py` and the status line to surface
+Windows, `pgrep` on Unix). Used by `horizon_aios_doctor.py` and the status line to surface
 monitor health without requiring elevation.
 
 **When to use it:** For a quick check that the integrity monitor is up.

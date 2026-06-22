@@ -1,12 +1,12 @@
 ---
 name: harden
-description: Apply the authoritative brains-group ACL model to the AIOS layer — grants brains Read+Execute on bin/skills_bin, a no-write Deny across $HORIZON_SYSTEM, and an explicit full Deny on sbin/skills_sbin/logs. Use when the user types /harden, asks to "harden the AIOS", "apply the ACL model", "lock down sbin", or after doctor.py reports a missing Deny ACE.
+description: Apply the authoritative brains-group ACL model to the AIOS layer — grants brains Read+Execute on bin/skills_bin, a no-write Deny across $HORIZON_SYSTEM, and an explicit full Deny on sbin/skills_sbin/logs. Use when the user types /harden, asks to "harden the AIOS", "apply the ACL model", "lock down sbin", or after horizon_aios_doctor.py reports a missing Deny ACE.
 tools: Bash, Read
 ---
 
 # Skill: /harden
 
-Apply the authoritative brains-group ACL model to the AIOS layer (`harden_aios.py`), enforcing security_invariants.md §2/§3/§5. Run at bootstrap, after adding/removing directories under `$HORIZON_SYSTEM`, or when `doctor.py` reports a missing brains Deny ACE.
+Apply the authoritative brains-group ACL model to the AIOS layer (`horizon_aios_harden.py`), enforcing security_invariants.md §2/§3/§5. Run at bootstrap, after adding/removing directories under `$HORIZON_SYSTEM`, or when `horizon_aios_doctor.py` reports a missing brains Deny ACE.
 
 ---
 
@@ -35,7 +35,7 @@ ACL changes require the **administrative context** (Administrator on Windows, ro
 ### Step 2 — Run
 
 ```
-python "$HORIZON_SYSTEM/sbin/harden_aios.py"
+python "$HORIZON_SYSTEM/sbin/horizon_aios_harden.py"
 ```
 
 Append `--strict` / `--dry-run` / `--horizon-root` as the user requested. The script warns and continues (rather than crashing) when not elevated, so failures are visible.

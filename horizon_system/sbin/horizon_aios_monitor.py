@@ -3,7 +3,7 @@
 AIOS filesystem integrity monitor.
 
 Watches the AIOS layer for unexpected file changes (create/modify/delete/move)
-and logs events as JSON lines to $HORIZON_SYSTEM/logs/aios_monitor/.
+and logs events as JSON lines to $HORIZON_SYSTEM/logs/horizon_aios_monitor/.
 
 By default it watches the AIOS *system directories* — the OS layer's integrity
 surface:
@@ -32,10 +32,10 @@ handoffs/ & objectives/ (ephemeral session output) — not OS-layer state. Add
 any of them via --watch or the config file if you want them logged.
 
 Run as the administrative context. The log directory must not be writable by
-brain accounts (enforced by harden_aios.py).
+brain accounts (enforced by horizon_aios_harden.py).
 
 Usage:
-    python monitor_aios.py [--watch PATH ...] [--brain-dirs] [--no-brains-root]
+    python horizon_aios_monitor.py [--watch PATH ...] [--brain-dirs] [--no-brains-root]
                            [--config PATH] [--log-dir PATH]
 
 Resolution precedence (highest first): CLI flags > environment > config file >
@@ -49,7 +49,7 @@ built-in defaults. --watch / config paths are ADDITIVE to the defaults.
                      (env: AIOS_MONITOR_CONFIG)
   --watch PATH       Extra path to watch, recursively (repeatable).
                      (env: AIOS_MONITOR_PATHS, OS path-separator-delimited)
-  --log-dir PATH     Log directory. Default: $HORIZON_SYSTEM/logs/aios_monitor/
+  --log-dir PATH     Log directory. Default: $HORIZON_SYSTEM/logs/horizon_aios_monitor/
                      (env: AIOS_MONITOR_LOG_DIR)
 
 Service installation and log consumption (SIEM/forwarders):
@@ -75,7 +75,7 @@ HORIZON_SYSTEM = SCRIPT_DIR.parent                 # horizon_system/
 HORIZON_ROOT   = HORIZON_SYSTEM.parent             # repo root
 HORIZON_ETC    = HORIZON_SYSTEM / "ai_os_etc"
 HORIZON_BRAINS = HORIZON_ROOT / "brains"
-DEFAULT_LOG_DIR = HORIZON_SYSTEM / "logs" / "aios_monitor"
+DEFAULT_LOG_DIR = HORIZON_SYSTEM / "logs" / "horizon_aios_monitor"
 DEFAULT_CONFIG  = HORIZON_ETC / "aios_monitor.conf"
 
 # Provenance stamped on every record so consumers can unambiguously attribute

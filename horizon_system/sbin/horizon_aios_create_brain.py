@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-create_brain.py — Horizon AIOS Brain Provisioning Script
+horizon_aios_create_brain.py — Horizon AIOS Brain Provisioning Script
 =========================================================
 
 Creates and configures everything needed for a new AI brain:
@@ -13,12 +13,12 @@ Creates and configures everything needed for a new AI brain:
                      sbin/skills_sbin/logs locked to owner-only AFTER
                      all grants (security invariant)
   - Password:        stored in OS native keystore (Windows Credential Manager /
-                     macOS Keychain / Linux Secret Service) via brain_credential.py
+                     macOS Keychain / Linux Secret Service) via horizon_aios_brain_credential.py
   - Shell profile:   sets HORIZON_* env vars and cds to brain folder on
                      interactive login as the brain user
 
 Usage:
-    python create_brain.py <brain-name> [--horizon-root /path] [--dry-run]
+    python horizon_aios_create_brain.py <brain-name> [--horizon-root /path] [--dry-run]
 
 Requirements:
     - Python 3.6+, stdlib only
@@ -35,7 +35,7 @@ Security invariants honored (see $HORIZON_ETC/security_invariants.md):
     - Brain user gets rwx on its own folder, rx on bin + skills_bin, nothing on sbin.
     - No credentials are stored in this script.
     - Account password is auto-generated (random 64-char) and stored in
-      the OS native keystore via brain_credential.py (sbin/).
+      the OS native keystore via horizon_aios_brain_credential.py (sbin/).
 """
 
 import argparse
@@ -51,7 +51,7 @@ import subprocess
 import sys
 
 # ---------------------------------------------------------------------------
-# Optional credential store (brain_credential.py in sbin/)
+# Optional credential store (horizon_aios_brain_credential.py in sbin/)
 # ---------------------------------------------------------------------------
 
 try:
@@ -59,15 +59,15 @@ try:
     import os as _os
     _sbin = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'sbin')
     _sys.path.insert(0, _sbin)
-    from brain_credential import store_password as _store_password
+    from horizon_aios_brain_credential import store_password as _store_password
     _HAS_CRED_STORE = True
 except Exception:
     _HAS_CRED_STORE = False
 
-# Optional logon-rights helper (brain_logon_rights.py in sbin/) — used only by
+# Optional logon-rights helper (horizon_aios_brain_logon_rights.py in sbin/) — used only by
 # the opt-in --automation tiers to grant a Windows logon right to the brain.
 try:
-    from brain_logon_rights import (
+    from horizon_aios_brain_logon_rights import (
         grant as _grant_logon_right,
         holds as _holds_logon_right,
         BATCH_LOGON,
@@ -215,7 +215,7 @@ def phase1_preflight(args):
         horizon_root = os.path.abspath(args.horizon_root)
     else:
         # Derive from ../../ relative to the script's own location.
-        # Script lives at $HORIZON_ROOT/horizon_system/sbin/create_brain.py
+        # Script lives at $HORIZON_ROOT/horizon_system/sbin/horizon_aios_create_brain.py
         # so ../../ is $HORIZON_ROOT.
         script_dir = os.path.dirname(os.path.abspath(__file__))
         horizon_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
@@ -298,7 +298,7 @@ def _check_privileges(os_name):
         if os.geteuid() != 0:
             error(
                 'This script must be run as root.\n'
-                '  Re-run with: sudo python create_brain.py <brain-name>'
+                '  Re-run with: sudo python horizon_aios_create_brain.py <brain-name>'
             )
             sys.exit(1)
         info('Running as root: OK')
@@ -340,7 +340,7 @@ def phase2_create_user_and_groups(ctx, dry_run=False):
     password = _generate_password()
     ctx['password'] = password
     info('Generated random account password — will be stored in the OS native keystore.')
-    info('  Password will NOT be printed here. Retrieve with: brain_credential.py get <name>')
+    info('  Password will NOT be printed here. Retrieve with: horizon_aios_brain_credential.py get <name>')
 
     if os_name == 'Windows':
         _phase2_windows(brain_name, invoking_user, password, dry_run)
@@ -349,7 +349,7 @@ def phase2_create_user_and_groups(ctx, dry_run=False):
 
     if _HAS_CRED_STORE:
         if _store_password(brain_name, password):
-            info('Account password stored in OS keystore (keyring). Retrieve with: brain_credential.py get <name>')
+            info('Account password stored in OS keystore (keyring). Retrieve with: horizon_aios_brain_credential.py get <name>')
         else:
             warn('Password not stored in keystore — reset manually if needed for runas/Task Scheduler.')
     else:
@@ -647,7 +647,7 @@ def _phase3_windows(brain_name, invoking_user,
     # -- Deny on privileged dirs (MUST be after all grants above) --
     # Additive: add the full Deny without stripping inheritance, so SYSTEM /
     # Administrators / owner (and any infra-pushed ACLs) on these shared dirs
-    # are preserved. This mirrors harden_aios.py's default mode — the two must
+    # are preserved. This mirrors horizon_aios_harden.py's default mode — the two must
     # agree, since harden_aios may have already set these dirs and create_brain
     # re-touches them per brain. (harden_aios --strict owns inheritance strips.)
     for label, path in [('sbin', horizon_sbin),
@@ -780,7 +780,7 @@ def phase4_verify(ctx, dry_run=False):
     print(f'       $HORIZON_ROOT/brains/{brain_name}/.claude/CLAUDE.md')
     print(f'       $HORIZON_ROOT/brains/{brain_name}/.claude/settings.json')
     print(f'    3. Provision tools from $HORIZON_USRBIN into the brain folder as needed.')
-    print(f'    4. Retrieve account password: python brain_credential.py get {brain_name} --show')
+    print(f'    4. Retrieve account password: python horizon_aios_brain_credential.py get {brain_name} --show')
     print(f'       (Stored in OS keystore. Windows Task Scheduler: use this password when setting up scheduled tasks.)')
     print(f'    5. Shell profile written at brain home — sets HORIZON_* env vars and')
     print(f'       changes to brain folder on interactive login as "{brain_name}".')
@@ -850,7 +850,7 @@ def _print_cleanup_instructions(brain_name, brain_dir, os_name):
     """Print manual cleanup instructions in case of partial failure."""
     print()
     print('  ---- Cleanup instructions ----')
-    print(f'    Easiest: python remove_brain.py {brain_name} --yes')
+    print(f'    Easiest: python horizon_aios_remove_brain.py {brain_name} --yes')
     print('    Or manually:')
     if os_name == 'Windows':
         print(f'    Remove-LocalUser   -Name "{brain_name}"')
@@ -1191,7 +1191,7 @@ def _write_provision_manifest(ctx):
         'brain_dir':         brain_dir,
         'skills_bin_access': 'read+execute',
         'sbin_access':       'deny',
-        'credential_store':  'OS native keystore (brain_credential.py)',
+        'credential_store':  'OS native keystore (horizon_aios_brain_credential.py)',
         'automation':        ctx.get('automation', 'none'),
     }
     dest = os.path.join(brain_dir, '.aios_provision.json')
@@ -1272,16 +1272,16 @@ def _automation_windows(level, brain, dry_run):
         _report_check(f'{brain} holds "{label}"', True)
     else:
         warn(f'Grant returned OK but verification does not show {right} — inspect '
-             f'with: brain_logon_rights.py check {brain} --right {right}')
+             f'with: horizon_aios_brain_logon_rights.py check {brain} --right {right}')
 
     if level == 'scheduled':
         info('Brain can now be the principal of a Task Scheduler task set to')
         info('  "Run whether user is logged on or not" (use the keystore password:')
-        info(f'  python brain_credential.py get {brain} --show).')
+        info(f'  python horizon_aios_brain_credential.py get {brain} --show).')
     else:  # daemon
         info('Brain can now be the logon account of a Windows service — register one')
         info('  with New-Service / sc.exe using the keystore password:')
-        info(f'  python brain_credential.py get {brain} --show.')
+        info(f'  python horizon_aios_brain_credential.py get {brain} --show.')
 
 
 def _linger_enabled(brain):
@@ -1351,7 +1351,7 @@ def parse_args():
             'Absolute path to HORIZON_ROOT.  '
             'If omitted, derived from ../../ relative to this script\'s location '
             '(i.e., the script is expected to live at '
-            '$HORIZON_ROOT/horizon_system/sbin/create_brain.py).'
+            '$HORIZON_ROOT/horizon_system/sbin/horizon_aios_create_brain.py).'
         ),
     )
     parser.add_argument(

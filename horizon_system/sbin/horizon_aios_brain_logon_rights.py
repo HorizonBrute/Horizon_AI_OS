@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-brain_logon_rights.py — Horizon AIOS brain automation logon rights (Windows)
+horizon_aios_brain_logon_rights.py — Horizon AIOS brain automation logon rights (Windows)
 ============================================================================
 
 Grant / revoke / query a single Windows LSA *logon right* on a brain account,
-for the opt-in brain "automation" tiers (see create_brain.py --automation).
+for the opt-in brain "automation" tiers (see horizon_aios_create_brain.py --automation).
 
 Why LSA and not secedit
 ------------------------
 This uses the LSA policy API (`LsaAddAccountRights` / `LsaRemoveAccountRights`)
 so exactly one right on one account is changed and nothing else in local
 security policy is touched. That mirrors the AIOS *additive* model used for
-ACLs in harden_aios.py: never clobber existing/infra-pushed policy, only add
+ACLs in horizon_aios_harden.py: never clobber existing/infra-pushed policy, only add
 (or remove) the specific ACE/right we own. `secedit /configure` would reimport
 a whole policy template and risk side effects, so it is deliberately avoided.
 
@@ -24,7 +24,7 @@ Rights AIOS uses for brain automation
                          `daemon` tier (always-on supervised harness).
 
 Security note: granting a logon right widens a brain's privilege/attack surface,
-so it is opt-in per brain and revoked on teardown (remove_brain.py). The brain's
+so it is opt-in per brain and revoked on teardown (horizon_aios_remove_brain.py). The brain's
 no-write/Deny ACL posture is unaffected — this only governs *how* the account may
 log on, not what it can read or write.
 

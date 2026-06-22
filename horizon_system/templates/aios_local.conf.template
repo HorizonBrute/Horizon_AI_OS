@@ -30,7 +30,7 @@ AIOS_REPO_BRANCH=main
 # ---------------------------------------------------------------------------
 # User-data backup (memory, handoffs, objectives -> YOUR remote)
 # ---------------------------------------------------------------------------
-# backup_user_data.py force-adds these paths to a per-machine branch on YOUR
+# horizon_aios_backup_user_data.py force-adds these paths to a per-machine branch on YOUR
 # remote WITHOUT editing the framework .gitignore (so upstream updates never
 # conflict). It REFUSES to push to the public Horizon upstream. See
 # $HORIZON_DOCS/system/distribution_and_updates.md.

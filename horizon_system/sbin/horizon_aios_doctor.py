@@ -104,7 +104,7 @@ def check_skills(horizon_system):
 
 # ---------------------------------------------------------------------------
 # 2b. Harness memory redirect
-# Claude Code's ~/.claude/projects/ holds per-project memory. redirect_memory.py
+# Claude Code's ~/.claude/projects/ holds per-project memory. horizon_aios_redirect_memory.py
 # replaces it with a junction/symlink into $HORIZON_ROOT/memory/ so harness
 # memory falls under AIOS governance. Use resolve() as the authoritative check —
 # same rationale as check_skills (NTFS junctions aren't reliably detected by
@@ -126,7 +126,7 @@ def check_memory_redirect(horizon_root):
             ok("Memory: harness memory redirected into AIOS")
         elif actual_target == projects_dst.absolute():
             warn("Memory: ~/.claude/projects/",
-                 "harness memory not under AIOS governance — run sbin/redirect_memory.py "
+                 "harness memory not under AIOS governance — run sbin/horizon_aios_redirect_memory.py "
                  "with Claude Code closed, then restart")
         else:
             fail("Memory: redirect target", f"expected {expected_target}, got {actual_target}")
@@ -226,14 +226,14 @@ def check_sbin_acl(horizon_system):
         path = horizon_system / sub
         name = f"{label} ACL (brains DENY)"
         if not path.exists():
-            warn(name, f"{path} does not exist — run bootstrap/harden_aios.py")
+            warn(name, f"{path} does not exist — run bootstrap/horizon_aios_harden.py")
             continue
         status, detail = _has_brains_deny(path)
         if status == "deny":
             ok(f"{label} ACL — explicit brains Deny present")
         elif status == "nodeny":
             fail(name, f"no explicit Deny ACE for '{BRAINS_GROUP}' on {path} — "
-                       "run harden_aios.py (security_invariants.md §3)")
+                       "run horizon_aios_harden.py (security_invariants.md §3)")
         else:
             warn(name, f"could not run icacls: {detail}")
 
@@ -242,7 +242,7 @@ def check_sbin_acl_unix(horizon_system):
     """
     Unix equivalent of check_sbin_acl: verify that sbin/, skills_sbin/, and
     logs/ are mode 0o700 and owned by the current user (not root, not another
-    user). This mirrors the harden_aios.py 'chmod -R 700' posture applied to
+    user). This mirrors the horizon_aios_harden.py 'chmod -R 700' posture applied to
     these privileged directories.
     """
     import getpass
@@ -261,7 +261,7 @@ def check_sbin_acl_unix(horizon_system):
         path = horizon_system / sub
         name = f"{label} ACL (Unix owner-only 700)"
         if not path.exists():
-            warn(name, f"{path} does not exist — run bootstrap/harden_aios.py")
+            warn(name, f"{path} does not exist — run bootstrap/horizon_aios_harden.py")
             continue
         try:
             st = path.stat()
@@ -272,7 +272,7 @@ def check_sbin_acl_unix(horizon_system):
         mode = stat.S_IMODE(st.st_mode)
         if mode != 0o700:
             fail(name, f"{path} mode is {oct(mode)}, expected 0o700 — "
-                       "run harden_aios.py (security_invariants.md §3)")
+                       "run horizon_aios_harden.py (security_invariants.md §3)")
             continue
 
         if st.st_uid != current_uid:
@@ -305,11 +305,11 @@ def check_monitor_status(horizon_bin):
         )
         status = result.stdout.strip().lower()
         if status == "running":
-            ok("Monitor: monitor_aios.py is running")
+            ok("Monitor: horizon_aios_monitor.py is running")
         elif status == "stopped":
-            warn("Monitor: monitor_aios.py", "not running — filesystem audit logging is inactive (optional)")
+            warn("Monitor: horizon_aios_monitor.py", "not running — filesystem audit logging is inactive (optional)")
         else:
-            warn("Monitor: monitor_aios.py", f"unexpected status: {status!r}")
+            warn("Monitor: horizon_aios_monitor.py", f"unexpected status: {status!r}")
     except Exception as e:
         warn("Monitor: monitor_status.py", f"check failed: {e}")
 
@@ -349,19 +349,19 @@ def check_aios_registry():
     registry = horizon_home / "aios_registry.json"
     if not registry.exists():
         warn("AIOS registry", "~/.horizon/aios_registry.json not found — "
-             "run 'python aios_switch.py init' (or bootstrap) to initialize")
+             "run 'python horizon_aios_switch.py init' (or bootstrap) to initialize")
         return
 
     try:
         reg = json.loads(registry.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError) as e:
-        fail("AIOS registry", f"unreadable/corrupt: {e} — re-init with aios_switch.py")
+        fail("AIOS registry", f"unreadable/corrupt: {e} — re-init with horizon_aios_switch.py")
         return
 
     aioses = reg.get("aioses")
     active = reg.get("active")
     if not isinstance(aioses, dict) or not aioses:
-        fail("AIOS registry", "no registered AIOSs — re-init with aios_switch.py")
+        fail("AIOS registry", "no registered AIOSs — re-init with horizon_aios_switch.py")
         return
     ok(f"AIOS registry — {len(aioses)} registered, active: '{active}'")
 
@@ -383,11 +383,11 @@ def check_aios_registry():
     if env_snippet.exists():
         ok(f"AIOS env snippet — {env_snippet.name} present")
     else:
-        warn("AIOS env snippet", f"{env_snippet} missing — run aios_switch.py init/switch")
+        warn("AIOS env snippet", f"{env_snippet} missing — run horizon_aios_switch.py init/switch")
     if wrapper.exists():
         ok(f"AIOS exec wrapper — {wrapper.name} present")
     else:
-        warn("AIOS exec wrapper", f"{wrapper} missing — run aios_switch.py init/switch")
+        warn("AIOS exec wrapper", f"{wrapper} missing — run horizon_aios_switch.py init/switch")
 
 
 # ---------------------------------------------------------------------------

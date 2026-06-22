@@ -70,7 +70,7 @@ def main():
 
     global _log_file
     log_dir = Path(config["AIOS_LOG_DIR"]) if config["AIOS_LOG_DIR"] else HORIZON_SYSTEM / "logs"
-    _log_file = log_dir / "aios_sync.log"
+    _log_file = log_dir / "horizon_aios_sync.log"
 
     if config["SYNC_AIOS_FROM_REMOTE"].lower() == "no":
         log("INFO", "SYNC_AIOS_FROM_REMOTE=no — skipping sync")
@@ -119,13 +119,13 @@ def main():
     # A sync may have refreshed skills_sbin and dropped the untracked junctions
     # that register machine-local user skills. Rebuild them from usr_skills (the
     # source of truth). Best-effort: a failure here must not fail the sync.
-    reg_script = SCRIPT_DIR / "register_user_skills.py"
+    reg_script = SCRIPT_DIR / "horizon_aios_register_user_skills.py"
     if reg_script.exists():
         reg = subprocess.run([sys.executable, str(reg_script)], capture_output=True, text=True)
         if reg.returncode == 0:
             log("OK", "Re-registered machine-local user skills")
         else:
-            log("WARN", f"register_user_skills.py failed: {reg.stderr.strip()}")
+            log("WARN", f"horizon_aios_register_user_skills.py failed: {reg.stderr.strip()}")
 
     sys.exit(0)
 

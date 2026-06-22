@@ -24,7 +24,7 @@ Rules:
 - Scripts resolve these variables at startup; never hardcode paths.
 - Templates use placeholder strings (e.g., `AIOS_EXEC_WRAPPER` in the Claude Code settings template) substituted at setup time in local, non-committed copies.
 - $HORIZON_ROOT is the only machine-specific variable; all others derive from it.
-- Machine-local switcher state lives outside `$HORIZON_ROOT` in `~/.horizon/`: the registry `aios_registry.json`, the generated `active_env.{ps1,sh}`, and the `bin/aios-exec.{ps1,sh}` wrappers. Created by `aios_switch.py init`; never committed, never synced — analogous to `~/.claude/`. See `documentation/system/aios_switching.md`.
+- Machine-local switcher state lives outside `$HORIZON_ROOT` in `~/.horizon/`: the registry `aios_registry.json`, the generated `active_env.{ps1,sh}`, and the `bin/aios-exec.{ps1,sh}` wrappers. Created by `horizon_aios_switch.py init`; never committed, never synced — analogous to `~/.claude/`. See `documentation/system/aios_switching.md`.
 
 ---
 
@@ -52,16 +52,16 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   ├── bootstrap.ps1               # Windows bootstrap (PowerShell)
 │   │   ├── bootstrap.sh                # Unix/Linux/macOS bootstrap
 │   │   ├── bootstrap_docker.sh         # Docker bootstrap wrapper
-│   │   ├── doctor.py                   # System health check
-│   │   ├── harden_aios.py              # Apply brains-group ACLs to the AIOS layer (run from bootstrap)
-│   │   ├── monitor_aios.py             # Filesystem audit monitor
-│   │   ├── maintain_logs.py            # Log pruning and rotation
-│   │   ├── register_user_skills.py     # (Re)link usr_skills into skills_sbin (see Section 7)
-│   │   ├── setup_sync_schedule.py      # Upstream sync scheduler
-│   │   ├── aios_switch.py              # AIOS named-registry switcher (see documentation/system/aios_switching.md)
-│   │   ├── create_brain.py             # Provision a brain OS user + scoped folder/ACLs (admin)
-│   │   ├── remove_brain.py             # Deprovision a brain (reverses create_brain.py) (admin)
-│   │   ├── brain_credential.py         # Brain account credential manager (OS keystore)
+│   │   ├── horizon_aios_doctor.py                   # System health check
+│   │   ├── horizon_aios_harden.py              # Apply brains-group ACLs to the AIOS layer (run from bootstrap)
+│   │   ├── horizon_aios_monitor.py             # Filesystem audit monitor
+│   │   ├── horizon_aios_maintain_logs.py            # Log pruning and rotation
+│   │   ├── horizon_aios_register_user_skills.py     # (Re)link usr_skills into skills_sbin (see Section 7)
+│   │   ├── horizon_aios_setup_sync_schedule.py      # Upstream sync scheduler
+│   │   ├── horizon_aios_switch.py              # AIOS named-registry switcher (see documentation/system/aios_switching.md)
+│   │   ├── horizon_aios_create_brain.py             # Provision a brain OS user + scoped folder/ACLs (admin)
+│   │   ├── horizon_aios_remove_brain.py             # Deprovision a brain (reverses horizon_aios_create_brain.py) (admin)
+│   │   ├── horizon_aios_brain_credential.py         # Brain account credential manager (OS keystore)
 │   │   └── [other privileged scripts]
 │   ├── skills_bin/                     # Group-readable AIOS skills; brains: R+X explicit (see Section 7)
 │   │   └── index.md                    # Skills index — check this first; update when adding a skill
@@ -110,7 +110,7 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   └── <skill-name>/SKILL.md
 │   └── [installed tools and apps]/     # Admin: full access. Brains: no default access — provisioned selectively per brain.
 ├── brains/                             # Brain home directories (gitignored per brain, but .aioscommon is tracked)
-│   └── .aioscommon/                    # Shared brain provisioning templates — tracked in git; used by create_brain.py Phase 5
+│   └── .aioscommon/                    # Shared brain provisioning templates — tracked in git; used by horizon_aios_create_brain.py Phase 5
 │       ├── brain_CLAUDE.md.template    # Template deployed to brains/<name>/.claude/CLAUDE.md on provisioning
 │       └── brain_settings.json.template # Template deployed to brains/<name>/.claude/settings.json on provisioning
 └── Projects/                           # $HORIZON_PROJECTS — primary user's project workspace (see Section 8)
@@ -217,11 +217,11 @@ Each OS directory contains an `index.md` listing its skills. **Always check `ind
 
 The same rule governs documentation: any change that adds, moves, renames, or removes a document under `documentation/` (or an authority/invariant doc under `ai_os_etc/`) must update `documentation/index.md` in the **same change** via `/horizon_aios_documentation_index_update` — treat the index entry as part of the doc, exactly as `skill-creation` treats `skills_sbin/index.md`. (Enforced by CC-G4 in `documentation/development_tools/consistency_checks.md`.)
 
-`~/.claude/skills/` is a junction (Windows) or symlink (Unix/macOS) resolving to the appropriate skill tier. For the **primary user** it points to `$HORIZON_SYSTEM/skills_sbin/` (bootstrap creates it). For a **brain**, the brain's home `~/.claude` is itself a symlink/junction to its workspace `brains/<name>/.claude/`, and inside that, `skills/` is a junction to `$HORIZON_SYSTEM/skills_bin/` — so the brain's identity (`CLAUDE.md`, `settings.json`) and skills are surfaced together at the user-level `~/.claude` regardless of cwd. `create_brain.py` Phase 5 (`_link_brain_claude`) creates both links; `remove_brain.py` deletes them as reparse points (never following them into the workspace or `skills_bin`). Skills are live on disk with no copy step — only a Claude Code session restart is needed after adding or editing a skill.
+`~/.claude/skills/` is a junction (Windows) or symlink (Unix/macOS) resolving to the appropriate skill tier. For the **primary user** it points to `$HORIZON_SYSTEM/skills_sbin/` (bootstrap creates it). For a **brain**, the brain's home `~/.claude` is itself a symlink/junction to its workspace `brains/<name>/.claude/`, and inside that, `skills/` is a junction to `$HORIZON_SYSTEM/skills_bin/` — so the brain's identity (`CLAUDE.md`, `settings.json`) and skills are surfaced together at the user-level `~/.claude` regardless of cwd. `horizon_aios_create_brain.py` Phase 5 (`_link_brain_claude`) creates both links; `horizon_aios_remove_brain.py` deletes them as reparse points (never following them into the workspace or `skills_bin`). Skills are live on disk with no copy step — only a Claude Code session restart is needed after adding or editing a skill.
 
 **Discovery assumption (operator responsibility if the harness changes).** AIOS skill discovery — for both the owner and brains — relies on onboarding *linking* the home `~/.claude/skills` into the AIOS skill tier (owner → `skills_sbin` aggregate; brain → `skills_bin`) and on the harness auto-discovering `SKILL.md` directories there. AIOS guarantees the link; it does not control the harness's discovery behavior. If a different or updated harness stops scanning `~/.claude/skills`, re-establishing discovery is an operator configuration item, not something AIOS enforces.
 
-**Owner-view aggregation.** The primary user's `~/.claude/skills` points at `skills_sbin`, so the owner sees the brain tier and machine-local skills only if they are linked into that view. `$HORIZON_SYSTEM/sbin/register_user_skills.py` (run directly or via `/resync-user-skills`) creates a per-skill junction `skills_sbin/<name>` → source for every skill in `skills_bin/` (brain tier) and `usr_skills/` (machine-local), so the owner sees all three tiers flat in one namespace — like `/usr/bin` on root's PATH while `/usr/sbin` stays root-only. **Brains are unaffected:** their `~/.claude/skills` points at `skills_bin` only, so they never see `skills_sbin` or `usr_skills`. The script is idempotent: it (re)links every source `<name>/` that has a `SKILL.md`, prunes stale links, and refuses to shadow a real `skills_sbin` OS skill. It runs automatically from `bootstrap` and at the end of a successful `sync_aios.py` (both best-effort — they never fail on it), so the links self-heal after a sync refreshes `skills_sbin`. Run it manually (or `/resync-user-skills`) any time you add or remove a skill mid-session.
+**Owner-view aggregation.** The primary user's `~/.claude/skills` points at `skills_sbin`, so the owner sees the brain tier and machine-local skills only if they are linked into that view. `$HORIZON_SYSTEM/sbin/horizon_aios_register_user_skills.py` (run directly or via `/resync-user-skills`) creates a per-skill junction `skills_sbin/<name>` → source for every skill in `skills_bin/` (brain tier) and `usr_skills/` (machine-local), so the owner sees all three tiers flat in one namespace — like `/usr/bin` on root's PATH while `/usr/sbin` stays root-only. **Brains are unaffected:** their `~/.claude/skills` points at `skills_bin` only, so they never see `skills_sbin` or `usr_skills`. The script is idempotent: it (re)links every source `<name>/` that has a `SKILL.md`, prunes stale links, and refuses to shadow a real `skills_sbin` OS skill. It runs automatically from `bootstrap` and at the end of a successful `horizon_aios_sync.py` (both best-effort — they never fail on it), so the links self-heal after a sync refreshes `skills_sbin`. Run it manually (or `/resync-user-skills`) any time you add or remove a skill mid-session.
 
 **Invariant — git must not capture aggregation junctions.** git traverses Windows junctions, so `skills_sbin/.gitignore` is a whitelist: it ignores everything, then re-includes each tracked OS skill (and `index.md`, `.gitignore`). The junctions linking `skills_bin`/`usr_skills` skills into the owner view are thus invisible to git. When adding a new `skills_sbin` OS skill, add it to this whitelist in the same commit or it will be silently untracked.
 
@@ -239,7 +239,7 @@ The `/handoff` skill searches upward from the current working directory for a pr
 
 `$HORIZON_ROOT/objectives/` is the default store for the `/objective` skill — durable, multi-session goals holding long-term context. Gitignored, machine-local, not tracked by the OS repo. Resolution mirrors handoffs: walk upward for `aios_overrides.md` → `objectives_dir` key, else default.
 
-Durable but ephemeral by design. Pruned by age (last modification) via `maintain_logs.py` using `AIOS_OBJECTIVES_MAX_DAYS` (default 90); `index.md` is never pruned. No completion or status concept — an objective is retired by ceasing to reference it. Handoffs chain an objective forward by recording its number, name, and path; the objective carries the durable goal a single handoff is too short-lived to hold.
+Durable but ephemeral by design. Pruned by age (last modification) via `horizon_aios_maintain_logs.py` using `AIOS_OBJECTIVES_MAX_DAYS` (default 90); `index.md` is never pruned. No completion or status concept — an objective is retired by ceasing to reference it. Handoffs chain an objective forward by recording its number, name, and path; the objective carries the durable goal a single handoff is too short-lived to hold.
 
 ### 7.4 `aios_overrides.md` — Project-Level Config Overrides
 

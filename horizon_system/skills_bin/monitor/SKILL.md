@@ -6,7 +6,7 @@ tools: Bash, Read
 
 # Skill: /monitor
 
-Start the Horizon AIOS filesystem integrity monitor (`monitor_aios.py`), which watches the AIOS system directories and appends each create/modify/delete/move event as a JSON line to a daily log in `$HORIZON_SYSTEM/logs/aios_monitor/`.
+Start the Horizon AIOS filesystem integrity monitor (`horizon_aios_monitor.py`), which watches the AIOS system directories and appends each create/modify/delete/move event as a JSON line to a daily log in `$HORIZON_SYSTEM/logs/horizon_aios_monitor/`.
 
 ---
 
@@ -33,7 +33,7 @@ The monitor must write to the ACL-protected log directory, which brain accounts 
 ### Step 2 — Start the watcher
 
 ```
-python "$HORIZON_SYSTEM/sbin/monitor_aios.py"
+python "$HORIZON_SYSTEM/sbin/horizon_aios_monitor.py"
 ```
 
 Append any flags the user gave. The process runs until interrupted (Ctrl+C) — it is a long-running foreground watcher. Run it in the background if the user wants the session to stay interactive, and report the log path it prints (`Log : ...`).
@@ -46,7 +46,7 @@ Relay the `Watching :` / `Log :` / `Source :` lines the script prints on start s
 
 ## Notes for the executing agent
 
-- Requires elevation to start (writes the protected audit log). `harden_aios.py` is what denies brains write access to that log dir.
+- Requires elevation to start (writes the protected audit log). `horizon_aios_harden.py` is what denies brains write access to that log dir.
 - Default watch set: `$HORIZON_SYSTEM` (recursive), `$HORIZON_ROOT/usrbin` (recursive), `$HORIZON_ROOT/.claude` (recursive), `$HORIZON_ROOT` top-level (non-recursive), `$HORIZON_ROOT/memory` (non-recursive), and the brains root (non-recursive, structural only). Brain home *contents* are excluded — opt in with `--brain-dirs`.
 - Resolution precedence is CLI > env > config file (`$HORIZON_ETC/aios_monitor.conf`) > built-in defaults. `--watch` and config paths are additive.
 - Requires the `watchdog` package; the script exits with an install hint if it is missing.

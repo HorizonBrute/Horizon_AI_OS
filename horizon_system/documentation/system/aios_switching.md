@@ -2,7 +2,7 @@
 
 Run two (or more) Horizon AIOS installs on one machine and switch which one your
 local Claude config points at, without re-running bootstrap or hand-editing
-config. Backed by `horizon_system/sbin/aios_switch.py`.
+config. Backed by `horizon_system/sbin/horizon_aios_switch.py`.
 
 ## What binds a machine to an AIOS
 
@@ -46,7 +46,7 @@ AIOSs and which is active:
 
 It is **self-healing**: any command rebuilds it silently if missing, registering
 the current tree (resolved from the script's own location) as the sole active
-AIOS. Bootstrap also runs `aios_switch.py init` to create it on onboarding.
+AIOS. Bootstrap also runs `horizon_aios_switch.py init` to create it on onboarding.
 
 ## Commands
 
@@ -67,8 +67,8 @@ aios uninstall --dry-run       # preview the removal; change nothing
 If `bin/` is not yet on PATH (e.g. before first bootstrap), use the long form:
 
 ```
-python aios_switch.py list
-python aios_switch.py switch <name>
+python horizon_aios_switch.py list
+python horizon_aios_switch.py switch <name>
 # etc.
 ```
 
@@ -106,20 +106,20 @@ $ aios switch home
 If `bin/` is not yet on PATH, use the long form as a fallback:
 
 ```
-$ python aios_switch.py register home D:\horizon-home
-$ python aios_switch.py switch home
+$ python horizon_aios_switch.py register home D:\horizon-home
+$ python horizon_aios_switch.py switch home
 ```
 
 After a switch:
 
 - **Restart Claude Code** and **open a new shell.** Env-var changes do not reach
   already-running sessions.
-- If you use auto-sync, run the printed `setup_sync_schedule.py` command to point
+- If you use auto-sync, run the printed `horizon_aios_setup_sync_schedule.py` command to point
   it at the new AIOS.
 
 ## Verifying
 
-`doctor.py` reports registry validity, that the active root is a real AIOS, and
+`horizon_aios_doctor.py` reports registry validity, that the active root is a real AIOS, and
 that `active_env.*` + the wrappers are present.
 
 ## Uninstalling

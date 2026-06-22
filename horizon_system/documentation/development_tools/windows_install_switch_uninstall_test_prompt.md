@@ -44,13 +44,13 @@ Set these variables first:
    git clone $Remote $Root1 ; cd $Root1
    .\horizon_system\sbin\uninstall.ps1 --dry-run        # baseline: expect ~nothing to remove
    .\horizon_system\sbin\bootstrap.ps1 --yes
-   python .\horizon_system\sbin\doctor.py               # PASS = all checks healthy
+   python .\horizon_system\sbin\horizon_aios_doctor.py               # PASS = all checks healthy
    aios list ; aios current                              # note the auto-registered name + (*) = $Root1
 
 2. CREATE A BRAIN (capability 2)
-   python .\horizon_system\sbin\create_brain.py $Brain --automation scheduled --dry-run
-   python .\horizon_system\sbin\create_brain.py $Brain --automation scheduled
-   python .\horizon_system\sbin\brain_logon_rights.py check $Brain   # expect SeBatchLogonRight held
+   python .\horizon_system\sbin\horizon_aios_create_brain.py $Brain --automation scheduled --dry-run
+   python .\horizon_system\sbin\horizon_aios_create_brain.py $Brain --automation scheduled
+   python .\horizon_system\sbin\horizon_aios_brain_logon_rights.py check $Brain   # expect SeBatchLogonRight held
    # Verify: OS user $Brain exists, 'brains' group exists, brains\$Brain workspace created.
    # PASS = brain provisioned and the batch-logon right is verified.
 
@@ -71,16 +71,16 @@ Set these variables first:
    # PASS = switch repoints active_env + `aios current` both ways; settings.json untouched.
 
 5. BACK UP USER DATA (distribution model)
-   python .\horizon_system\sbin\backup_user_data.py      # to $BackupRemote
+   python .\horizon_system\sbin\horizon_aios_backup_user_data.py      # to $BackupRemote
    # PASS = pushes memory/handoffs/objectives to YOUR remote AND refuses the public upstream.
 
 6. DELETE / RESET (capability 5)
-   python .\horizon_system\sbin\remove_brain.py $Brain --yes    # tear down the brain first
+   python .\horizon_system\sbin\horizon_aios_remove_brain.py $Brain --yes    # tear down the brain first
    .\horizon_system\sbin\uninstall.ps1 --dry-run
    .\horizon_system\sbin\uninstall.ps1 --yes
    # Run the post-uninstall VERIFICATION CHECKLIST in
    #   horizon_system\documentation\system\uninstall.md
-   # (doctor.py failures = success; ~/.horizon gone; ~/.claude/projects + skills junctions gone
+   # (horizon_aios_doctor.py failures = success; ~/.horizon gone; ~/.claude/projects + skills junctions gone
    #  with targets intact; horizon_system\bin out of Machine PATH; brains ACEs stripped).
    aios unregister home 2>$null                            # if registry survived; usually removed with ~/.horizon
    # (optional) if you bootstrapped $Root2: cd $Root2 ; .\horizon_system\sbin\uninstall.ps1 --yes

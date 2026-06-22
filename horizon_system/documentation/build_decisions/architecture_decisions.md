@@ -23,7 +23,7 @@ This section is the authoritative reference for which files have a source-of-tru
 | File / Directory | Source (in repo) | Deployed / Machine-Local | Sync Mechanism | In Git Repo |
 |---|---|---|---|---|
 | CLAUDE.md instructions | `$HORIZON_ROOT/.claude/CLAUDE.md` | `~/.claude/CLAUDE.md` | One-time stub creation (@ redirect, not a copy) | Source only — stub is machine-local |
-| settings.json template | `$HORIZON_SYSTEM/templates/claude_code/settings.json` | `~/.claude/settings.json` | Copy template + substitute `AIOS_EXEC_WRAPPER` (bootstrap §5 / `aios_switch.py init`) | Template only — local copy is NOT committed |
+| settings.json template | `$HORIZON_SYSTEM/templates/claude_code/settings.json` | `~/.claude/settings.json` | Copy template + substitute `AIOS_EXEC_WRAPPER` (bootstrap §5 / `horizon_aios_switch.py init`) | Template only — local copy is NOT committed |
 
 **Note on settings.json:** The deployed `~/.claude/settings.json` is a copy of the template with the single `AIOS_EXEC_WRAPPER` placeholder substituted to the machine-local `aios-exec` wrapper (`~/.horizon/bin/aios-exec.{ps1,sh}`). It is AIOS-independent — the wrapper resolves the active AIOS at run time — so it is not rewritten on `aios switch`. The bootstrap script (Section 5) does the substitution. See `$HORIZON_DOCS/getting_started/ReadMeToSetupYourSystem.md` §6.2 and `$HORIZON_DOCS/system/aios_switching.md`.
 
@@ -71,21 +71,21 @@ Entries are in reverse-chronological order at the top (newest first). Each entry
 
 ### 2026-06-22 — Distribution & update model: framework vs. user-space
 
-**Decision:** A downstream install tracks Horizon AIOS as an `upstream` remote and keeps its own work + backups on its own `origin`; updates arrive via `sync_aios.py` (fast-forward-only) or `git merge upstream/<branch>`. The repo splits into **framework** (upstream-owned: `horizon_system/**`, the tracked `.gitignore`, templates) and **user-space**, which upstream never writes: `.gitignore.user`, `aios_local.conf`, `~/.horizon/`, `~/.claude/`, `memory/`, `handoffs/`, `objectives/`, `brains/`, `*.local.*`, `aios_overrides.md`. The contract: **customize only through the user-space/override layers, never by editing framework files.** User data is backed up to the user's OWN remote via `sbin/backup_user_data.py` — it force-adds data to a per-machine branch, never edits the framework `.gitignore`, and refuses to push to the public upstream. `.gitattributes` sets `merge=union` on `.gitignore`/`.gitignore.user` so upstream and local ignore additions never conflict.
+**Decision:** A downstream install tracks Horizon AIOS as an `upstream` remote and keeps its own work + backups on its own `origin`; updates arrive via `horizon_aios_sync.py` (fast-forward-only) or `git merge upstream/<branch>`. The repo splits into **framework** (upstream-owned: `horizon_system/**`, the tracked `.gitignore`, templates) and **user-space**, which upstream never writes: `.gitignore.user`, `aios_local.conf`, `~/.horizon/`, `~/.claude/`, `memory/`, `handoffs/`, `objectives/`, `brains/`, `*.local.*`, `aios_overrides.md`. The contract: **customize only through the user-space/override layers, never by editing framework files.** User data is backed up to the user's OWN remote via `sbin/horizon_aios_backup_user_data.py` — it force-adds data to a per-machine branch, never edits the framework `.gitignore`, and refuses to push to the public upstream. `.gitattributes` sets `merge=union` on `.gitignore`/`.gitignore.user` so upstream and local ignore additions never conflict.
 
 **Rationale:** Editing the framework `.gitignore` to un-ignore data (the obvious but wrong move) makes every upstream update conflict. Force-adding to a separate per-machine backup branch keeps framework history clean and updates conflict-free while still giving cross-machine awareness. Fast-forward-only sync is a guardrail — if the user edited a framework file, the sync refuses rather than silently clobbering. The leak guard prevents the catastrophic case of pushing private transcripts to the public upstream.
 
-**Implications:** New `sbin/backup_user_data.py` + `AIOS_BACKUP_*` config keys; `.gitattributes` union-merge; `documentation/system/distribution_and_updates.md` is the authoritative model. Every future feature must respect the framework/user-space line: a feature that produces user data places it in user-space (gitignored), never tracked in the framework.
+**Implications:** New `sbin/horizon_aios_backup_user_data.py` + `AIOS_BACKUP_*` config keys; `.gitattributes` union-merge; `documentation/system/distribution_and_updates.md` is the authoritative model. Every future feature must respect the framework/user-space line: a feature that produces user data places it in user-space (gitignored), never tracked in the framework.
 
 ---
 
 ### 2026-06-22 — AIOS switcher: machine-local registry + indirection layer
 
-**Decision:** A machine can host multiple Horizon AIOS installs and switch which one its local Claude config points at, via `horizon_system/sbin/aios_switch.py` and a self-healing named registry at `~/.horizon/aios_registry.json`. Two of the five machine-global pointers are decoupled through an indirection layer so a switch is a pointer write, not a re-stamp: env vars are sourced from a generated `~/.horizon/active_env.{ps1,sh}`, and `~/.claude/settings.json` points once at stable `~/.horizon/bin/aios-exec.{ps1,sh}` wrappers that resolve the active AIOS at run time. The CLAUDE.md redirect and skills junction are rewritten per switch; the sync schedule is advisory.
+**Decision:** A machine can host multiple Horizon AIOS installs and switch which one its local Claude config points at, via `horizon_system/sbin/horizon_aios_switch.py` and a self-healing named registry at `~/.horizon/aios_registry.json`. Two of the five machine-global pointers are decoupled through an indirection layer so a switch is a pointer write, not a re-stamp: env vars are sourced from a generated `~/.horizon/active_env.{ps1,sh}`, and `~/.claude/settings.json` points once at stable `~/.horizon/bin/aios-exec.{ps1,sh}` wrappers that resolve the active AIOS at run time. The CLAUDE.md redirect and skills junction are rewritten per switch; the sync schedule is advisory.
 
 **Rationale:** Previously every pointer hardcoded one `HORIZON_ROOT`, so running a second AIOS meant hand-editing the profile, settings.json, the CLAUDE.md redirect, and the skills junction. Indirecting the two highest-churn pointers (env + settings.json) means they never change on switch — only a generated file does. A named registry (vs. path-based) suits long-lived AIOSs switched often; it self-heals — any command rebuilds it from the current tree if missing — so a fresh machine never hard-fails.
 
-**Implications:** New machine-local state lives in `~/.horizon/` (registry, `active_env`, wrappers), outside `$HORIZON_ROOT`, never committed or synced. `settings.json` gains a single AIOS-independent placeholder `AIOS_EXEC_WRAPPER` (replacing `HORIZON_BIN_PATH`/`HORIZON_SYSTEM_PATH`). The profile now sources `active_env` instead of hardcoding `HORIZON_*`. Bootstrap Section 5 runs `aios_switch.py init`. Switching the operator's config does not touch brain users (pinned per AIOS). A switch requires a Claude restart + new shell (env changes do not reach running sessions). See `documentation/system/aios_switching.md`.
+**Implications:** New machine-local state lives in `~/.horizon/` (registry, `active_env`, wrappers), outside `$HORIZON_ROOT`, never committed or synced. `settings.json` gains a single AIOS-independent placeholder `AIOS_EXEC_WRAPPER` (replacing `HORIZON_BIN_PATH`/`HORIZON_SYSTEM_PATH`). The profile now sources `active_env` instead of hardcoding `HORIZON_*`. Bootstrap Section 5 runs `horizon_aios_switch.py init`. Switching the operator's config does not touch brain users (pinned per AIOS). A switch requires a Claude restart + new shell (env changes do not reach running sessions). See `documentation/system/aios_switching.md`.
 
 ---
 
@@ -95,7 +95,7 @@ Entries are in reverse-chronological order at the top (newest first). Each entry
 
 **Rationale:** The copy-based model required a manual deploy step after every skill change, with no way to detect drift between source and deployed copies. Per-skill symlinks inside `~/.claude/skills/` were considered but rejected as inelegant (one symlink per skill, all pointing into the same source tree). Redirecting the entire directory via a single junction/symlink is simpler, drift-proof, and consistent with how other AIOS config files are managed (the CLAUDE.md stub uses the same pattern). Windows directory junctions require no administrator rights, keeping the bootstrap friction-free.
 
-**Implications:** Skills are split across two source directories mirroring the bin/sbin security model: `skills_sbin/` (primary user only) and `skills_bin/` (brain-readable). Bootstrap creates the primary user junction to `skills_sbin/`; `create_brain.py` creates the brain junction to `skills_bin/`. A session restart is the only action needed after adding or editing a skill. The "deployed copy" concept no longer applies to skills.
+**Implications:** Skills are split across two source directories mirroring the bin/sbin security model: `skills_sbin/` (primary user only) and `skills_bin/` (brain-readable). Bootstrap creates the primary user junction to `skills_sbin/`; `horizon_aios_create_brain.py` creates the brain junction to `skills_bin/`. A session restart is the only action needed after adding or editing a skill. The "deployed copy" concept no longer applies to skills.
 
 ---
 
@@ -107,7 +107,7 @@ In the Docker deployment model, brain isolation is container-level rather than O
 
 **Rationale:** IaC/containerization compatibility is a first-class design goal (see `philosophy.md §5`). The native OS user model and the Docker container model are isomorphic at the security boundary level — both use OS-enforced isolation with explicit provisioning of tools and credentials per brain. Docker adds network isolation and makes deployment reproducible and portable. The two models coexist: the Docker templates wrap the native AIOS layer without modifying it.
 
-**Implications:** `create_brain.py` is not yet Docker-aware — it provisions OS accounts, not containers. Brain container provisioning in Docker is currently manual (duplicate the compose service template). This is tracked as a gap in `tested_configurations.md`. The Dockerfile is harness-agnostic except for Claude Code CLI installation; the BYOH principle is documented in the Dockerfile and `docker.md`.
+**Implications:** `horizon_aios_create_brain.py` is not yet Docker-aware — it provisions OS accounts, not containers. Brain container provisioning in Docker is currently manual (duplicate the compose service template). This is tracked as a gap in `tested_configurations.md`. The Dockerfile is harness-agnostic except for Claude Code CLI installation; the BYOH principle is documented in the Dockerfile and `docker.md`.
 
 ---
 
@@ -127,13 +127,13 @@ In the Docker deployment model, brain isolation is container-level rather than O
 
 **Rationale:** Separates two distinct privileges into two distinct groups. The `brains` group answers "can this account use shared AIOS tooling?" The `<brain-name>` group answers "who owns this brain's data?" Adding the primary user to the brain-specific group enables oversight (read/write to the brain folder) without placing the primary user in a catch-all group that spans all brains. This keeps group membership semantics clean and least-privilege.
 
-**Implications:** The `brains` group ACL on `$HORIZON_BIN` must never cascade to `$HORIZON_BIN/sbin`. The `sbin` ACL must be explicitly set and verified *after* any `$HORIZON_BIN` group change — this is enforced structurally in `create_brain.py` (Phase 3 always re-locks `sbin` last). On Windows, `sbin` requires an explicit `/inheritance:r` ACE reset, not just absence of a grant, because inherited permissions take precedence over "no entry."
+**Implications:** The `brains` group ACL on `$HORIZON_BIN` must never cascade to `$HORIZON_BIN/sbin`. The `sbin` ACL must be explicitly set and verified *after* any `$HORIZON_BIN` group change — this is enforced structurally in `horizon_aios_create_brain.py` (Phase 3 always re-locks `sbin` last). On Windows, `sbin` requires an explicit `/inheritance:r` ACE reset, not just absence of a grant, because inherited permissions take precedence over "no entry."
 
 ---
 
-### 2026-06-20 — Brain provisioning via Python script (`create_brain.py`)
+### 2026-06-20 — Brain provisioning via Python script (`horizon_aios_create_brain.py`)
 
-**Decision:** OS-level provisioning of new brains (user account, groups, folder, permissions) is performed by a single Python script at `$HORIZON_SYSTEM/sbin/create_brain.py`, invoked by the primary user with admin/root privileges.
+**Decision:** OS-level provisioning of new brains (user account, groups, folder, permissions) is performed by a single Python script at `$HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py`, invoked by the primary user with admin/root privileges.
 
 **Rationale:** Python is cross-platform. A shell script would require separate `.sh` and `.ps1` variants to handle Linux/macOS and Windows, leading to two codebases that can drift. A single Python script with platform branches (`platform.system()`) keeps provisioning logic in one place, makes cross-platform divergences explicit and auditable, and is readable by any contributor without needing to know both Bash and PowerShell. Python 3.6+ is a reasonable dependency for a developer tooling system.
 
@@ -267,13 +267,13 @@ Anyone who clones the Horizon AIOS repo will not have these. They must be create
 
 ### 2026-06-20 — Centralized logging taxonomy
 
-**Decision:** _(Path superseded — see Update below; canonical root is now `$HORIZON_SYSTEM/logs/`.)_ All AIOS operational logs are centralized under `$HORIZON_ROOT/logs/` with subdirectories: `bootstrap/`, `brain_provisioning/`, `agents_output/`, `hooks/`, `brains/`. Log behavior is configurable via `aios_local.conf` (`AIOS_LOG_MAX_DAYS`, `AIOS_LOG_MAX_SIZE_MB`, `AIOS_LOG_MAX_ROTATIONS`). Weekly `maintain_logs.py` in `sbin/` handles pruning and rotation. The `logs/` directory content is gitignored; a `.gitkeep` scaffold is tracked.
+**Decision:** _(Path superseded — see Update below; canonical root is now `$HORIZON_SYSTEM/logs/`.)_ All AIOS operational logs are centralized under `$HORIZON_ROOT/logs/` with subdirectories: `bootstrap/`, `brain_provisioning/`, `agents_output/`, `hooks/`, `brains/`. Log behavior is configurable via `aios_local.conf` (`AIOS_LOG_MAX_DAYS`, `AIOS_LOG_MAX_SIZE_MB`, `AIOS_LOG_MAX_ROTATIONS`). Weekly `horizon_aios_maintain_logs.py` in `sbin/` handles pruning and rotation. The `logs/` directory content is gitignored; a `.gitkeep` scaffold is tracked.
 
 **Rationale:** Scattered log files make debugging cross-component issues difficult. A single root with a defined taxonomy makes logs discoverable and allows a single maintenance script to handle all log hygiene. Configurable retention keeps logs useful without unbounded disk growth. Gitignoring content but tracking `.gitkeep` ensures the directory structure is reproducible from a fresh clone without committing machine-specific log data.
 
-**Implications:** Any new component that emits logs must write under `$HORIZON_SYSTEM/logs/<subdirectory>/`. The log directory is not created by the repo — bootstrap or the writing script must create it on first run (`mkdir -p`). `maintain_logs.py` must be kept in sync with the taxonomy if new subdirectories are added.
+**Implications:** Any new component that emits logs must write under `$HORIZON_SYSTEM/logs/<subdirectory>/`. The log directory is not created by the repo — bootstrap or the writing script must create it on first run (`mkdir -p`). `horizon_aios_maintain_logs.py` must be kept in sync with the taxonomy if new subdirectories are added.
 
-> **Update (2026-06-21):** The canonical log root moved from `$HORIZON_ROOT/logs/` to `$HORIZON_SYSTEM/logs/` so the audit log lives inside the AIOS layer that `harden_aios.py` locks down (explicit brains-group Deny). All writers and `$HORIZON_LOGS` now resolve to `$HORIZON_SYSTEM/logs/`. The subdirectory taxonomy is unchanged.
+> **Update (2026-06-21):** The canonical log root moved from `$HORIZON_ROOT/logs/` to `$HORIZON_SYSTEM/logs/` so the audit log lives inside the AIOS layer that `horizon_aios_harden.py` locks down (explicit brains-group Deny). All writers and `$HORIZON_LOGS` now resolve to `$HORIZON_SYSTEM/logs/`. The subdirectory taxonomy is unchanged.
 
 ---
 

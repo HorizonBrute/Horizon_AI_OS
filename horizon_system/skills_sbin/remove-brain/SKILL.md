@@ -6,7 +6,7 @@ tools: Bash, Read
 
 # Skill: /remove-brain
 
-Deprovision a brain with `remove_brain.py` — the counterpart to `create_brain.py`. Removes the brain's OS user account, its per-brain group, its workspace folder, its user-profile config, and its stored credential. The shared `brains` group is left intact (other brains use it).
+Deprovision a brain with `horizon_aios_remove_brain.py` — the counterpart to `horizon_aios_create_brain.py`. Removes the brain's OS user account, its per-brain group, its workspace folder, its user-profile config, and its stored credential. The shared `brains` group is left intact (other brains use it).
 
 ---
 
@@ -41,7 +41,7 @@ Without `--yes`, the script prompts interactively and requires the user to **typ
 ### Step 3 — Run
 
 ```
-python "$HORIZON_SYSTEM/sbin/remove_brain.py" <brain-name>
+python "$HORIZON_SYSTEM/sbin/horizon_aios_remove_brain.py" <brain-name>
 ```
 
 Append `--yes` / `--keep-credential` / `--horizon-root` / `--dry-run` as requested.

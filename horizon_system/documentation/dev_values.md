@@ -152,7 +152,7 @@ AIOS security is built around two co-equal threat models:
 
 **Prompt injection** — malicious instructions in data cause a brain to take unintended actions. Mitigations: narrow tool provisioning (brain cannot act outside its capabilities), audit trail (anomalies surface).
 
-**Credential and data containment** — a hallucinating or compromised brain can only cause harm proportional to what credentials and data it holds. A brain with no key for a service cannot authenticate to it. Mitigations: OS-native credential storage (managed by `brain_credential.py` in sbin), zero-default filesystem access, least-privilege key scoping.
+**Credential and data containment** — a hallucinating or compromised brain can only cause harm proportional to what credentials and data it holds. A brain with no key for a service cannot authenticate to it. Mitigations: OS-native credential storage (managed by `horizon_aios_brain_credential.py` in sbin), zero-default filesystem access, least-privilege key scoping.
 
 These are defense-in-depth: both must hold for the model to be secure. When relaxing one (e.g., granting broader tool access), the other must compensate (e.g., tighter credential scoping, more aggressive audit).
 

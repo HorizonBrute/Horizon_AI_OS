@@ -28,9 +28,9 @@
 # What this does NOT remove (requires manual steps — see advisories printed below):
 #   - Shell-profile line sourcing active_env.ps1 (user added this manually)
 #   - Global git include.path pointing to harness_configs/git/gitconfig (user added manually)
-#   - Optional sync schedule created by setup_sync_schedule.py (separate opt-in)
+#   - Optional sync schedule created by horizon_aios_setup_sync_schedule.py (separate opt-in)
 #   - 'brains' OS group (may have brain OS users as members)
-#   - Brain OS user accounts and their data (use create_brain.py's remove flow)
+#   - Brain OS user accounts and their data (use horizon_aios_create_brain.py's remove flow)
 #   - Python packages (watchdog, keyring) installed by the user
 # =============================================================================
 
@@ -160,7 +160,7 @@ Advisory "If you added '. `$HOME\.horizon\active_env.ps1' to your PowerShell `$P
 # =============================================================================
 # SECTION 3: ~/.claude/skills/ junction and user-skill symlinks in skills_sbin/
 # Bootstrap creates a junction from ~/.claude/skills/ → skills_sbin/.
-# register_user_skills.py creates symlinks inside skills_sbin/ pointing to usr_skills/.
+# horizon_aios_register_user_skills.py creates symlinks inside skills_sbin/ pointing to usr_skills/.
 # =============================================================================
 Banner "SECTION 3: Skills junction and user-skill symlinks"
 
@@ -168,7 +168,7 @@ $SkillsDst    = Join-Path $HOME ".claude\skills"
 $SkillsSbin   = Join-Path $HORIZON_SYSTEM "skills_sbin"
 $UsrSkillsDir = Join-Path $HORIZON_ROOT "usrbin\usr_skills"
 
-# Remove user-skill symlinks from skills_sbin/ (created by register_user_skills.py)
+# Remove user-skill symlinks from skills_sbin/ (created by horizon_aios_register_user_skills.py)
 if (Test-Path $SkillsSbin) {
     $staleLinks = Get-ChildItem $SkillsSbin -ErrorAction SilentlyContinue | Where-Object {
         ($_.LinkType -eq "SymbolicLink" -or $_.LinkType -eq "Junction") -and
@@ -237,7 +237,7 @@ foreach ($dirName in @("handoffs", "objectives")) {
 #   ~/.horizon/aios_registry.json
 #   ~/.horizon/active_env.ps1
 #   ~/.horizon/bin/aios-exec.ps1
-#   ~/.horizon/bin/aios-exec.sh  (also written on Windows by aios_switch.py)
+#   ~/.horizon/bin/aios-exec.sh  (also written on Windows by horizon_aios_switch.py)
 # And optionally:
 #   ~/.claude/settings.json (copied from template)
 # =============================================================================
@@ -277,7 +277,7 @@ if (Test-Path $SettingsJson) {
 # =============================================================================
 # SECTION 5b: ~/.claude/projects memory redirect (reverses bootstrap 5c)
 # Bootstrap junctions ~/.claude/projects → $HORIZON_ROOT/memory via
-# redirect_memory.py so the harness's per-project memory lives in the AIOS.
+# horizon_aios_redirect_memory.py so the harness's per-project memory lives in the AIOS.
 # We remove only the JUNCTION — never the memory target's contents (that data
 # lives in $HORIZON_ROOT/memory, part of the repo). Mirrors the Section 3
 # skills-junction removal: link-only delete, not confirm-gated.
@@ -302,7 +302,7 @@ if (Test-Path $ProjectsLink) {
     Skip "~/.claude/projects not found — nothing to remove."
 }
 
-# Advise about any pre-redirect backup redirect_memory.py left behind
+# Advise about any pre-redirect backup horizon_aios_redirect_memory.py left behind
 $ClaudeHome  = Join-Path $HOME ".claude"
 $ProjBackups = @()
 if (Test-Path $ClaudeHome) {
@@ -427,13 +427,13 @@ if (Test-Path $HORIZON_LOGS) {
     Skip "logs/ directory not found — nothing to remove."
 }
 
-Advisory "If you set up a sync schedule with setup_sync_schedule.py, remove the scheduled tasks manually:"
+Advisory "If you set up a sync schedule with horizon_aios_setup_sync_schedule.py, remove the scheduled tasks manually:"
 Advisory "  schtasks /Delete /TN 'HorizonAIOS_Sync' /F"
 Advisory "  schtasks /Delete /TN 'HorizonAIOS_MaintainLogs' /F"
 
 # =============================================================================
 # SECTION 10: Revert brains-group ACEs on $HORIZON_SYSTEM
-# We remove ACEs that harden_aios.py added; we do NOT remove the brains group
+# We remove ACEs that horizon_aios_harden.py added; we do NOT remove the brains group
 # itself because it may have brain OS user members.
 # On Windows this uses icacls to strip the brains group from each directory.
 # =============================================================================
@@ -501,5 +501,5 @@ Write-Host "    1. Remove the active_env.ps1 source line from your PowerShell `$
 Write-Host "    2. Remove the 'include.path' from your global gitconfig (if set)"
 Write-Host "    3. Remove the sync scheduled task (if you set one up)"
 Write-Host "    4. Remove the 'brains' OS group (if no brain accounts remain)"
-Write-Host "    5. Remove any brain OS user accounts (use create_brain.py remove flow)"
+Write-Host "    5. Remove any brain OS user accounts (use horizon_aios_create_brain.py remove flow)"
 Write-Host ""
