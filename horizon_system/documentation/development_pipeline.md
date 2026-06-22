@@ -64,10 +64,6 @@ Items are grouped by status, not priority — priority is implicit from the grou
   maintenance is undocumented. Consider a `setup_log_maintenance.py` or fold into
   `setup_sync_schedule.py`.
 
-- **`context_cost.py` accuracy** — the `~tokens` estimate uses `words × 1.33`, which is
-  a rough proxy. A character-based estimate (`chars / 4`) may be more accurate for code-
-  heavy files. Consider offering both columns or switching the default.
-
 ---
 
 ## Known Gaps — Documentation

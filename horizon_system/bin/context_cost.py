@@ -95,7 +95,8 @@ def collect(target_dir: Path) -> list:
 def _make_row(path: Path, content: str, level: int, imported_by) -> dict:
     byte_count = len(content.encode("utf-8"))
     words = len(content.split())
-    tokens = round(words * 1.33)
+    # chars/4 ≈ a real tokenizer; words×1.33 under-counts path/code/markdown-heavy files.
+    tokens = round(len(content) / 4)
     return {
         "level": level,
         "path": str(path),
