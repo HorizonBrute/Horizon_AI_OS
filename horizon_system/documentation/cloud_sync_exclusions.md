@@ -78,6 +78,7 @@ be synced (they contain secrets or are too large):
 - `logs/` — log content (scaffold is fine, content is not)
 - `handoffs/` — session-local conversation continuity data
 - `.gitignore.user` — machine-local folder patterns
+- `~/.horizon/` — machine-local AIOS switcher state (registry, `active_env.*`, wrappers); lives in `$HOME`, outside the synced AIOS folder, and must never be synced
 - Any file matching patterns in `.gitignore` (secrets, credentials, ML weights)
 
 See `.gitignore` for the full list of excluded patterns.

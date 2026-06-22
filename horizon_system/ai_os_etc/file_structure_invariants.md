@@ -21,8 +21,9 @@ Hardcoded paths are forbidden in committed files. Use these variables exclusivel
 
 Rules:
 - Scripts resolve these variables at startup; never hardcode paths.
-- Templates use placeholder strings (e.g., `HORIZON_BIN_PATH`) substituted at setup time in local, non-committed copies.
+- Templates use placeholder strings (e.g., `AIOS_EXEC_WRAPPER` in the Claude Code settings template) substituted at setup time in local, non-committed copies.
 - $HORIZON_ROOT is the only machine-specific variable; all others derive from it.
+- Machine-local switcher state lives outside `$HORIZON_ROOT` in `~/.horizon/`: the registry `aios_registry.json`, the generated `active_env.{ps1,sh}`, and the `bin/aios-exec.{ps1,sh}` wrappers. Created by `aios_switch.py init`; never committed, never synced — analogous to `~/.claude/`. See `documentation/system/aios_switching.md`.
 
 ---
 
@@ -53,6 +54,7 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   ├── maintain_logs.py            # Log pruning and rotation
 │   │   ├── register_user_skills.py     # (Re)link usr_skills into skills_sbin (see Section 7)
 │   │   ├── setup_sync_schedule.py      # Upstream sync scheduler
+│   │   ├── aios_switch.py              # AIOS named-registry switcher (see documentation/system/aios_switching.md)
 │   │   └── [other privileged scripts]
 │   ├── skills_bin/                     # Group-readable AIOS skills; brains: R+X explicit (see Section 7)
 │   │   └── index.md                    # Skills index — check this first; update when adding a skill
@@ -85,7 +87,8 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   ├── aios_overrides.md           # Template for project-level AIOS config overrides
 │   │   ├── aios_sounds.conf            # Template for per-project sound overrides (see Section 10)
 │   │   ├── aios_statusline.conf        # Template for per-project statusline config (see Section 11)
-│   │   └── aios_monitor.conf.template  # Template for filesystem-monitor config (see security/audit_logging.md)
+│   │   ├── aios_monitor.conf.template  # Template for filesystem-monitor config (see security/audit_logging.md)
+│   │   └── profile_snippet.{ps1,sh}    # One-line profile include sourcing ~/.horizon/active_env.* (AIOS switcher)
 │   ├── harness_configs/                # Harness-specific config (sounds maps, etc.)
 │   ├── logs/                           # $HORIZON_LOGS — canonical audit/operational logs; brains: DENY; scaffold tracked, content gitignored
 │   └── scripts/                        # Admin scripts: create_brain.py / remove_brain.py / brain_credential.py

@@ -53,6 +53,8 @@ export HORIZON_SOUNDS=$HORIZON_SYSTEM/sounds
 export HORIZON_LOGS=$HORIZON_SYSTEM/logs
 ```
 
+> **Note:** These explicit system-profile exports are a deliberate simplification for a server pinned to a single AIOS (so the vars are available to all users and cron jobs). On a desktop or any machine that uses the AIOS switcher, prefer sourcing `~/.horizon/active_env.sh` instead (run `aios_switch.py init` once); `aios switch <name>` then repoints every shell without editing the system profile. See `system/aios_switching.md`.
+
 ### Disabling sounds on server
 
 In `~/.claude/settings.json`, set hook commands to no-ops or remove the `Stop`, `PermissionRequest`, and `StopFailure` sound hooks entirely. The log hook (writing to `$HORIZON_LOGS`) should remain active.

@@ -23,9 +23,9 @@ This section is the authoritative reference for which files have a source-of-tru
 | File / Directory | Source (in repo) | Deployed / Machine-Local | Sync Mechanism | In Git Repo |
 |---|---|---|---|---|
 | CLAUDE.md instructions | `$HORIZON_ROOT/.claude/CLAUDE.md` | `~/.claude/CLAUDE.md` | One-time stub creation (@ redirect, not a copy) | Source only — stub is machine-local |
-| settings.json template | `$HORIZON_SYSTEM/templates/claude_code/settings.json` | `~/.claude/settings.json` | Manual review and hard link / copy at setup time | Template only — local copy is NOT committed |
+| settings.json template | `$HORIZON_SYSTEM/templates/claude_code/settings.json` | `~/.claude/settings.json` | Copy template + substitute `AIOS_EXEC_WRAPPER` (bootstrap §5 / `aios_switch.py init`) | Template only — local copy is NOT committed |
 
-**Note on settings.json:** The deployed `~/.claude/settings.json` is not a simple copy of the template. It contains machine-specific paths (embedded in hook commands and statusLine). The bootstrap script offers to copy the template as a starting point; the user must substitute real paths. See `$HORIZON_DOCS/getting_started/ReadMeToSetupYourSystem.md` Step 8.
+**Note on settings.json:** The deployed `~/.claude/settings.json` is a copy of the template with the single `AIOS_EXEC_WRAPPER` placeholder substituted to the machine-local `aios-exec` wrapper (`~/.horizon/bin/aios-exec.{ps1,sh}`). It is AIOS-independent — the wrapper resolves the active AIOS at run time — so it is not rewritten on `aios switch`. The bootstrap script (Section 5) does the substitution. See `$HORIZON_DOCS/getting_started/ReadMeToSetupYourSystem.md` §6.2 and `$HORIZON_DOCS/system/aios_switching.md`.
 
 **Note on skills:** Skills are no longer synced via copy. `~/.claude/skills/` is a junction (Windows) or symlink (Unix) pointing directly to `$HORIZON_SYSTEM/skills_sbin/` for the primary user, and to `$HORIZON_SYSTEM/skills_bin/` for brain users. Changes to skills in the repo are live immediately — only a Claude Code session restart is needed. See the 2026-06-21 ADR entry for the junction redirect decision.
 
@@ -66,6 +66,16 @@ These files are committed to the OS repo and present on every machine after clon
 ## 3. Architectural Decisions Log
 
 Entries are in reverse-chronological order at the top (newest first). Each entry is immutable once added.
+
+---
+
+### 2026-06-22 — AIOS switcher: machine-local registry + indirection layer
+
+**Decision:** A machine can host multiple Horizon AIOS installs and switch which one its local Claude config points at, via `horizon_system/sbin/aios_switch.py` and a self-healing named registry at `~/.horizon/aios_registry.json`. Two of the five machine-global pointers are decoupled through an indirection layer so a switch is a pointer write, not a re-stamp: env vars are sourced from a generated `~/.horizon/active_env.{ps1,sh}`, and `~/.claude/settings.json` points once at stable `~/.horizon/bin/aios-exec.{ps1,sh}` wrappers that resolve the active AIOS at run time. The CLAUDE.md redirect and skills junction are rewritten per switch; the sync schedule is advisory.
+
+**Rationale:** Previously every pointer hardcoded one `HORIZON_ROOT`, so running a second AIOS meant hand-editing the profile, settings.json, the CLAUDE.md redirect, and the skills junction. Indirecting the two highest-churn pointers (env + settings.json) means they never change on switch — only a generated file does. A named registry (vs. path-based) suits long-lived AIOSs switched often; it self-heals — any command rebuilds it from the current tree if missing — so a fresh machine never hard-fails.
+
+**Implications:** New machine-local state lives in `~/.horizon/` (registry, `active_env`, wrappers), outside `$HORIZON_ROOT`, never committed or synced. `settings.json` gains a single AIOS-independent placeholder `AIOS_EXEC_WRAPPER` (replacing `HORIZON_BIN_PATH`/`HORIZON_SYSTEM_PATH`). The profile now sources `active_env` instead of hardcoding `HORIZON_*`. Bootstrap Section 5 runs `aios_switch.py init`. Switching the operator's config does not touch brain users (pinned per AIOS). A switch requires a Claude restart + new shell (env changes do not reach running sessions). See `documentation/system/aios_switching.md`.
 
 ---
 
@@ -219,7 +229,7 @@ Signs of a problem: a skill change in the repo has no effect after session resta
 
 The template is the reference for what global settings should contain. When the template is updated (new hooks, new sounds, statusline changes), review whether your local `~/.claude/settings.json` needs the same update.
 
-The local file is NOT automatically updated — it is machine-local and may have machine-specific path substitutions. Review the diff manually and merge changes.
+The local file is NOT automatically updated — it is machine-local, with the single `AIOS_EXEC_WRAPPER` placeholder substituted to the home-relative `aios-exec` wrapper path. That substitution is AIOS-independent, so the file does not change on `aios switch`; only template content changes (new hooks/sounds) warrant a manual re-merge. Review the diff manually and merge changes.
 
 Signs of drift: a new sound or hook that works on another machine does not work on yours. Compare your `~/.claude/settings.json` against the template.
 

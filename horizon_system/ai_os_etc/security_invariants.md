@@ -155,7 +155,7 @@ The Horizon AIOS git repository is designed for community release. This means:
 
 - No real usernames, real paths, hostnames, or machine-specific identifiers may appear in committed files.
 - No API keys, tokens, passwords, or credentials of any kind may be committed, even in comments or example values.
-- Templates use placeholder strings (e.g., `HORIZON_BIN_PATH`) in place of real paths. Users substitute real values at setup time in their local, gitignored copies.
+- Templates use placeholder strings (e.g., `AIOS_EXEC_WRAPPER` in the Claude Code settings template) in place of real paths. Users substitute real values at setup time in their local, gitignored copies.
 - `.gitignore` must exclude: local settings overrides, brain folders, credential files, session data, and any file that contains a real path or secret.
 - The `.claude/settings.json` at $HORIZON_ROOT is committed because it contains only devroot-scoped permissions and no personal data. If it ever acquires personal data, it must be moved to a gitignored local override.
 - AI agents operating in this repo must refuse to commit files containing hardcoded personal paths or credentials. If such content is detected, the agent must flag it and halt.

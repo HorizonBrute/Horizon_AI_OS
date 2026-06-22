@@ -46,7 +46,7 @@ P.11 **`$HORIZON_ROOT` must be a stable path**. Every path-sensitive file in the
 
 P.12 **Audio output device** — the sound hooks assume an audio output device is available. If none is present, `Media.SoundPlayer` will throw silently (the hook exits without error and Claude Code is unaffected). Context threshold audio in the statusline script also fails silently via `Test-Path` guard.
 
-P.13 **`~/.claude/` must exist** before bootstrap. Claude Code creates this directory on first launch. If the directory does not exist when the hard link step runs, it will fail. Launch Claude Code once, let it initialize, then proceed with setup.
+P.13 **`~/.claude/` must exist** before bootstrap. Claude Code creates this directory on first launch. If the directory does not exist when bootstrap writes the CLAUDE.md redirect and settings.json into it, the step will fail. Launch Claude Code once, let it initialize, then proceed with setup.
 
 P.14 **`.git/info/exclude` is hook-managed**. The pre-commit hook overwrites this file on every OS repo commit. Do not manually edit `.git/info/exclude` — edit `.gitignore.user` instead and commit to apply changes.
 
@@ -78,12 +78,12 @@ Claude Code hardcodes two global config lookup paths that cannot be changed. The
 
 1.4.1 `~/.claude/CLAUDE.md` is created as a one-line file containing `@$HORIZON_ROOT\.claude\CLAUDE.md`. Claude Code resolves `@` includes, so the actual AI instructions come from the repository.
 
-1.4.2 `~/.claude/settings.json` is created as a hard link to `$HORIZON_ROOT\.claude\settings.json`. Hard links share an inode — they are the same file on disk. No sync step is needed; any edit to either path is immediately reflected in the other. A hard link is used instead of a symlink because Windows symlinks require administrator privileges.
+1.4.2 `~/.claude/settings.json` is created by copying the template `horizon_system\templates\claude_code\settings.json` and substituting the `AIOS_EXEC_WRAPPER` placeholder with the path to the machine-local `aios-exec` wrapper (`~/.horizon\bin\aios-exec.ps1`). It is a **separate file** from `$HORIZON_ROOT\.claude\settings.json` — the two have different owners (the global file owns hooks/statusLine; the devroot file owns devroot-scoped permissions only). Because the deployed file points at the wrapper, which resolves the active AIOS at run time, it is AIOS-independent and is not rewritten when you `aios switch`. (Earlier versions hard-linked the two files; that model is superseded — see `documentation/system/aios_switching.md`.)
 
 1.5 **What is version-controlled**
 
 1.5.1 `$HORIZON_ROOT\.claude\CLAUDE.md` — global AI instructions
-1.5.2 `$HORIZON_ROOT\.claude\settings.json` — Claude Code harness config (hooks, statusline, permissions, theme)
+1.5.2 `$HORIZON_ROOT\.claude\settings.json` — devroot-scoped permissions only (the global hooks/statusLine/theme live in the machine-local `~/.claude/settings.json`, copied from the template and not committed)
 1.5.3 `$HORIZON_ROOT\horizon_system\` — sounds, statusline scripts, harness configs, git hooks, documentation
 1.5.4 `$HORIZON_ROOT\.gitignore` — system ignore patterns
 1.5.5 `$HORIZON_ROOT\.gitignore.user` — user personal ignore patterns
@@ -184,15 +184,9 @@ The hook at `horizon_system/harness_configs/git/hooks/pre-commit` is a bash scri
 
 Every file in the repository that contains a hardcoded path referencing `$HORIZON_ROOT` is listed here. When setting up a new machine, every entry must be updated to the new machine's root path before first use.
 
-3.1 **`$HORIZON_ROOT\.claude\settings.json`**
+3.1 **`$HORIZON_ROOT\.claude\settings.json`** — permissions only; **no `$HORIZON_ROOT` path dependencies** to update per machine.
 
-3.1.1 `statusLine.command` — path to `horizon_system/bin/statusline/statusline.sh` (the cross-platform dispatcher). Controls which script renders the Claude Code statusline.
-
-3.1.2 `hooks.Stop[0].hooks[0].command` — calls `play_sound.sh` with path to `horizon_system/sounds/work_complete.wav`. Sound played when Claude finishes a task successfully.
-
-3.1.3 `hooks.PermissionRequest[0].hooks[0].command` — calls `play_sound.sh` with path to `horizon_system/sounds/claude_event_sounds/InputNeeded.wav`. Sound played when Claude requests a tool permission.
-
-3.1.4 `hooks.StopFailure[0].hooks[0].command` — calls `play_sound.sh` with path to `horizon_system/sounds/api_fail.wav`. Sound played when Claude stops due to error or failure.
+The committed devroot file owns permissions only. The global `~/.claude/settings.json` (copied from the template) references the machine-local `aios-exec` wrapper at `~/.horizon/bin/aios-exec.{ps1,sh}` — a home-relative path, not a `$HORIZON_ROOT` path. The wrapper resolves the active AIOS at run time, so statusLine and the hook sound paths need no per-machine substitution. Only the `AIOS_EXEC_WRAPPER` placeholder is substituted once at setup. See §1.4.2 and `documentation/system/aios_switching.md`.
 
 3.2 **`$HORIZON_ROOT\horizon_system\bin\statusline\statusline-context-alerts.ps1`** (Windows path)
 
@@ -217,7 +211,7 @@ Must be updated on each new machine to use the local `$HORIZON_ROOT` path.
 
 ## 4. `settings.json` Structure
 
-`$HORIZON_ROOT\.claude\settings.json` is the canonical Claude Code configuration file. It is version-controlled in the OS repo and hard-linked to `~/.claude/settings.json`. Because it is hard-linked, Claude Code reads it as its global settings file on every session regardless of the working directory.
+This section describes the **global** Claude Code configuration file at `~/.claude/settings.json`, which is created by copying `horizon_system\templates\claude_code\settings.json` with the `AIOS_EXEC_WRAPPER` placeholder substituted. It is machine-local and not committed. It is a separate file from the committed `$HORIZON_ROOT\.claude\settings.json`, which owns devroot-scoped permissions only (see §1.4.2). statusLine and hooks dispatch through the `aios-exec` wrapper, which resolves the active AIOS at run time, so this file is AIOS-independent.
 
 4.1 **`permissions`** — controls which tool calls Claude Code approves automatically without prompting.
 
@@ -229,15 +223,15 @@ Must be updated on each new machine to use the local `$HORIZON_ROOT` path.
 
 4.2.1 `statusLine.type` — set to `"command"`. An external command produces the statusline string.
 
-4.2.2 `statusLine.command` — invokes PowerShell non-interactively with `statusline-context-alerts.ps1`. Claude Code pipes a JSON object to the script's stdin and displays its stdout as the statusline.
+4.2.2 `statusLine.command` — invokes the `aios-exec` wrapper with the `statusline` action (`powershell.exe -NonInteractive -File '<wrapper>' statusline`). The wrapper sources the active AIOS's `active_env` and runs that AIOS's `statusline-context-alerts.ps1`. Claude Code pipes a JSON object to stdin; the wrapper forwards it and displays the script's stdout as the statusline.
 
 4.3 **`hooks`** — shell commands executed by the Claude Code harness at lifecycle events. Hooks run outside Claude's context and fire regardless of session state.
 
-4.3.1 `hooks.Stop` — fires when Claude finishes a turn successfully. Plays `work_complete.wav` via PowerShell `Media.SoundPlayer` (synchronous).
+4.3.1 `hooks.Stop` — fires when Claude finishes a turn successfully. Invokes `aios-exec … hook-stop`, which logs the event and plays the task-complete sound via `Media.SoundPlayer` (synchronous).
 
-4.3.2 `hooks.PermissionRequest` — fires when Claude Code needs to prompt for a tool permission. Marked `async: true` so it does not block the prompt UI. Plays `InputNeeded.wav`.
+4.3.2 `hooks.PermissionRequest` — fires when Claude Code needs to prompt for a tool permission. Marked `async: true` so it does not block the prompt UI. Invokes `aios-exec … hook-permission`, which logs the event and plays the input-needed sound.
 
-4.3.3 `hooks.StopFailure` — fires when Claude stops due to an API error or unrecoverable failure. Plays `api_fail.wav`.
+4.3.3 `hooks.StopFailure` — fires when Claude stops due to an API error or unrecoverable failure. Invokes `aios-exec … hook-stopfailure`, which logs the event and plays the api-error sound.
 
 4.4 **`effortLevel`** — set to `"medium"`. Controls Claude's default reasoning depth. Valid values: `"low"`, `"medium"`, `"high"`.
 
@@ -275,13 +269,19 @@ Must be updated on each new machine to use the local `$HORIZON_ROOT` path.
 
 6.1.3 `cwd` — current working directory path.
 
-6.2 **Output** — the script writes a single line to stdout. Claude Code displays it as the statusline. Format: `[dirname] git:branch [####------ 42%--]`
+6.1.4 `model.display_name` — the active model's display name, rendered in the statusline.
+
+6.2 **Output** — the script writes a single line to stdout. Claude Code displays it as the statusline. Format: `[dirname] <model> git:branch Context Window: [####--42%--] Estimated % To Compact: N%`
 
 6.2.1 `[dirname]` — leaf name of the current working directory.
 
-6.2.2 `git:branch` — current git branch, omitted if the directory is not a git repo.
+6.2.2 `<model>` — the active model's display name (`model.display_name`).
 
-6.2.3 `[context bar]` — 20-character bar overlaid with the usage percentage. `#` = used context, `-` = available.
+6.2.3 `git:branch` — current git branch, omitted if the directory is not a git repo.
+
+6.2.4 `Context Window: [context bar]` — labeled 20-character bar overlaid with the usage percentage. `#` = used context, `-` = available.
+
+6.2.5 `Estimated % To Compact: N%` — estimated remaining headroom before auto-compact, computed as `compact_threshold - used_percentage` (floored at 0; default `compact_threshold` = 80). The real auto-compact trigger point is not exposed in Claude Code's statusline JSON, so this is intentionally approximate; tune `compact_threshold` in `aios_statusline.conf`.
 
 6.3 **Threshold audio system** — when context usage crosses 30, 40, 50, 60, 70, 80, or 90 percent, the script plays the corresponding `.wav` file from `horizon_system\sounds\claude_event_sounds\`. Each threshold fires at most once per session.
 
@@ -303,7 +303,11 @@ To bring a new machine into Horizon AIOS, follow the full setup in `horizon_syst
 
 ```powershell
 Set-Content -Path "$HOME\.claude\CLAUDE.md" -Value "@$HORIZON_ROOT\.claude\CLAUDE.md"
-New-Item -ItemType HardLink -Path "$HOME\.claude\settings.json" -Target "$HORIZON_ROOT\.claude\settings.json"
+# Global settings.json is a template copy pointed at the aios-exec wrapper (not a hard link):
+python "$HORIZON_SYSTEM\sbin\aios_switch.py" init
+$wrapper = ("$HOME\.horizon\bin\aios-exec.ps1") -replace '\\','/'
+Copy-Item "$HORIZON_SYSTEM\templates\claude_code\settings.json" "$HOME\.claude\settings.json"
+(Get-Content "$HOME\.claude\settings.json") -replace "AIOS_EXEC_WRAPPER", $wrapper | Set-Content "$HOME\.claude\settings.json"
 ```
 
 7.3 Run path substitution on all files listed in section 3 of this document. Replace the committed root path with the new machine's `$HORIZON_ROOT`. PowerShell one-liners for each file are provided in the getting started guide.

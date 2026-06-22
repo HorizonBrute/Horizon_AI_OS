@@ -49,11 +49,12 @@ bash /path/to/horizon_system/sbin/bootstrap.sh    # macOS / Linux
 ```
 
 Bootstrap sets up:
-- Shell / PowerShell env vars (`HORIZON_ROOT`, `HORIZON_SYSTEM`, etc.)
+- The AIOS registry + indirection layer (`~/.horizon/`: `aios_registry.json`, `active_env.{ps1,sh}`, `bin/aios-exec.{ps1,sh}`) via `aios_switch.py init`
+- Generates `~/.horizon/active_env.*` and prints the one-line profile include to add — it sets `HORIZON_ROOT` + derived vars for the active AIOS (see `system/aios_switching.md`)
 - `~/.claude/CLAUDE.md` stub redirect
 - `~/.claude/skills/` junction/symlink → `skills_sbin/`
 - Machine-local user skills (`usrbin/usr_skills/` → `skills_sbin/`) registered via `register_user_skills.py`
-- `~/.claude/settings.json` from template
+- `~/.claude/settings.json` from template, pointed at the `aios-exec` wrapper
 - Git hooks (DCO sign-off enforcement)
 - Handoffs directory
 
