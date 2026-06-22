@@ -185,7 +185,11 @@ fi
 banner "SECTION 5: ~/.claude/settings.json"
 
 SETTINGS_DST="$HOME/.claude/settings.json"
-SETTINGS_TEMPLATE="$HORIZON_SYSTEM/templates/claude_code/settings.json"
+# Select template based on OS: Windows (Git Bash) uses PowerShell hooks; Linux/macOS use bash hooks.
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) SETTINGS_TEMPLATE="$HORIZON_SYSTEM/templates/claude_code/settings.json" ;;
+  *) SETTINGS_TEMPLATE="$HORIZON_SYSTEM/templates/claude_code/settings_unix.json" ;;
+esac
 
 if [ -f "$SETTINGS_DST" ]; then
   info "~/.claude/settings.json already exists."
@@ -314,7 +318,6 @@ else
 fi
 
 mkdir -p "$HORIZON_ROOT/logs"
-mkdir -p "$HORIZON_ROOT/keys"
 
 if [ "${AIOS_DEPLOY_MODE:-}" = "docker" ]; then
     info "Docker mode: skipping sync schedule setup (refresh via image rebuild or pull)."
