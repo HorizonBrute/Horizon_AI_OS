@@ -62,6 +62,17 @@ Items are grouped by status, not priority — priority is implicit from the grou
   maintenance is undocumented. Consider a `setup_log_maintenance.py` or fold into
   `setup_sync_schedule.py`.
 
+- **Brain automation — Linux linger path unverified** — the `scheduled` automation
+  tier (`create_brain.py --automation scheduled`) applies `loginctl enable-linger`
+  on Linux, and `remove_brain.py` runs `loginctl disable-linger` on teardown. Both
+  Windows tiers (`scheduled`/`daemon`, LSA logon rights) are verified end-to-end, but
+  the Linux linger path has only been code-reviewed, not run on a live Linux host.
+  To close: on a real Linux machine, `create_brain.py <name> --automation scheduled`
+  then `loginctl show-user <name> --property=Linger` must report `Linger=yes`;
+  `remove_brain.py <name> --yes` then re-check must report `Linger=no` (or the user
+  gone). Until then the Linux row in `tested_configurations.md` stays **Partial**.
+  See `deployment/brain_automation.md`.
+
 ---
 
 ## Known Gaps — Documentation
