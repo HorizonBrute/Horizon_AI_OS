@@ -25,3 +25,5 @@
 !create-brain/**
 !remove-brain/
 !remove-brain/**
+!pre-flight-tooling-validation/
+!pre-flight-tooling-validation/**

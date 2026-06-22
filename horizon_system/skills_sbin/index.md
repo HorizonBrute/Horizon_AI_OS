@@ -12,6 +12,7 @@ Owner-only privileged skills. Brain users must not have access to this directory
 | create-brain | `/create-brain` | Provision a new brain — OS user, groups, workspace, shell profile, keystore credential (Admin/root) |
 | handoff | `/handoff` | Write a structured session handoff document |
 | harden | `/harden` | Apply the authoritative brains-group ACL model to the AIOS layer (Admin/root) |
+| pre-flight-tooling-validation | `/pre-flight-tooling-validation` | Validate the repo ships full-lifecycle tooling per platform (install/brain/2nd-AIOS/switch/delete), then emit an admin/sudo test-run prompt per platform |
 | objective | `/objective` | Create/list/show/update durable multi-session objectives that handoffs chain back to |
 | remove-brain | `/remove-brain` | Deprovision a brain — remove its OS user, per-brain group, workspace, profile, and credential (Admin/root) |
 | resync-user-skills | `/resync-user-skills` | Rebuild junctions registering machine-local user skills (usrbin/usr_skills) into skills_sbin |
