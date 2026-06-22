@@ -80,7 +80,7 @@ DEFAULT_CONFIG  = HORIZON_ETC / "aios_monitor.conf"
 
 # Provenance stamped on every record so consumers can unambiguously attribute
 # events to this AIOS install (see audit_logging.md → Consuming the logs).
-SOURCE       = "horizon-aios"
+SOURCE       = "Horizon.AIOS"
 
 _TRUE = {"1", "true", "yes", "on"}
 

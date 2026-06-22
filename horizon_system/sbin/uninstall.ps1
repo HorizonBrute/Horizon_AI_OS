@@ -427,8 +427,9 @@ if (Test-Path $HORIZON_LOGS) {
     Skip "logs/ directory not found — nothing to remove."
 }
 
-Advisory "If you set up a sync schedule with setup_sync_schedule.py, remove the scheduled task manually:"
-Advisory "  schtasks /Delete /TN 'Horizon AIOS Auto-Sync' /F"
+Advisory "If you set up a sync schedule with setup_sync_schedule.py, remove the scheduled tasks manually:"
+Advisory "  schtasks /Delete /TN 'HorizonAIOS_Sync' /F"
+Advisory "  schtasks /Delete /TN 'HorizonAIOS_MaintainLogs' /F"
 
 # =============================================================================
 # SECTION 10: Revert brains-group ACEs on $HORIZON_SYSTEM

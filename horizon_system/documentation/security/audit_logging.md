@@ -91,9 +91,9 @@ Each line is a JSON object. Every record carries provenance — `source` and the
 specific AIOS install:
 
 ```json
-{"ts": "2026-06-20T14:32:01.123456+00:00", "source": "horizon-aios", "horizon_root": "C:\\devroot", "event": "monitor_start", "watching": [{"path": "C:\\devroot\\horizon_system", "recursive": true}], "brain_dirs": false, "config": null}
-{"ts": "2026-06-20T14:32:03.123456+00:00", "source": "horizon-aios", "horizon_root": "C:\\devroot", "event": "modified", "src": "C:\\devroot\\horizon_system\\bin\\foo.py"}
-{"ts": "2026-06-20T14:32:05.654321+00:00", "source": "horizon-aios", "horizon_root": "C:\\devroot", "event": "moved", "src": "/old", "dest": "/new"}
+{"ts": "2026-06-20T14:32:01.123456+00:00", "source": "Horizon.AIOS", "horizon_root": "C:\\devroot", "event": "monitor_start", "watching": [{"path": "C:\\devroot\\horizon_system", "recursive": true}], "brain_dirs": false, "config": null}
+{"ts": "2026-06-20T14:32:03.123456+00:00", "source": "Horizon.AIOS", "horizon_root": "C:\\devroot", "event": "modified", "src": "C:\\devroot\\horizon_system\\bin\\foo.py"}
+{"ts": "2026-06-20T14:32:05.654321+00:00", "source": "Horizon.AIOS", "horizon_root": "C:\\devroot", "event": "moved", "src": "/old", "dest": "/new"}
 ```
 
 Events: `created`, `modified`, `deleted`, `moved`, plus lifecycle
@@ -116,7 +116,7 @@ $HORIZON_SYSTEM/logs/aios_monitor/monitor_YYYYMMDD.log
 
 Each line is a complete JSON object (see *Log Format*). There is no database
 and no network listener — the monitor only appends to these files. Every record
-is self-describing: `source` is always `"horizon-aios"` and `horizon_root`
+is self-describing: `source` is always `"Horizon.AIOS"` and `horizon_root`
 identifies the install, so logs from multiple machines or installs can be
 merged and still attributed unambiguously.
 
@@ -133,7 +133,7 @@ to your SIEM with no transformation:
 | **Splunk** Universal Forwarder | monitor stanza on the directory, `sourcetype=_json` |
 
 Point any of them at `$HORIZON_SYSTEM/logs/aios_monitor/`. Filter on
-`source="horizon-aios"` to isolate AIOS integrity events in your SIEM.
+`source="Horizon.AIOS"` to isolate AIOS integrity events in your SIEM.
 
 **Pushing to the OS event log.** If you would rather consume events through the
 native OS log (Windows Event Log / Linux syslog) than tail files, run the

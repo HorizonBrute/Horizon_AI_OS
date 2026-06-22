@@ -86,7 +86,7 @@ def _os_log(message: str, use_syslog: bool):
     """Emit to OS system log if available."""
     if not use_syslog:
         return
-    logger = logging.getLogger("aios.monitor")
+    logger = logging.getLogger("horizon_aios.monitor")
     if not logger.handlers:
         # Linux syslog — no extra deps
         try:
@@ -97,7 +97,7 @@ def _os_log(message: str, use_syslog: bool):
         # Windows Event Log — requires pywin32
         try:
             import win32evtlogutil  # noqa: F401
-            h = logging.handlers.NTEventLogHandler("AIOS Monitor")
+            h = logging.handlers.NTEventLogHandler("Horizon.AIOS Monitor")
             logger.addHandler(h)
         except ImportError:
             pass

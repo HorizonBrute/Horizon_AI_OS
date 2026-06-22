@@ -406,8 +406,8 @@ def _win_create_user_with_password(brain_name, password, dry_run):
     ps_expr = (
         '$pw = ConvertTo-SecureString $env:AIOS_BRAIN_PW -AsPlainText -Force; '
         f'New-LocalUser -Name "{brain_name}" -Password $pw '
-        f'-FullName "{brain_name} (Horizon Brain)" '
-        '-Description "Horizon AIOS brain account" '
+        f'-FullName "{brain_name} (Horizon.AIOS Brain)" '
+        '-Description "Horizon.AIOS brain account" '
         '-PasswordNeverExpires'
     )
     cmd = ['powershell', '-NonInteractive', '-Command', ps_expr]
@@ -433,7 +433,7 @@ def _win_create_group_if_absent(group_name, dry_run):
     info(f'Creating local group: {group_name}')
     run_ps(
         f'New-LocalGroup -Name "{group_name}" '
-        f'-Description "Horizon AIOS group: {group_name}"',
+        f'-Description "Horizon.AIOS group: {group_name}"',
         dry_run=dry_run,
     )
 
@@ -452,7 +452,7 @@ def _phase2_unix(brain_name, invoking_user, os_name, password, dry_run):
             ['useradd',
              '--create-home',
              '--shell', '/bin/bash',
-             '--comment', f'Horizon AIOS brain account',
+             '--comment', 'Horizon.AIOS brain account',
              '--password', _linux_hash_password(password, brain_name),
              brain_name],
             dry_run=dry_run,
@@ -521,7 +521,7 @@ def _macos_create_user(brain_name, password, dry_run):
     cmds = [
         ['dscl', '.', '-create',   base],
         ['dscl', '.', '-create',   base, 'UserShell',    '/bin/bash'],
-        ['dscl', '.', '-create',   base, 'RealName',     f'{brain_name} (Horizon Brain)'],
+        ['dscl', '.', '-create',   base, 'RealName',     f'{brain_name} (Horizon.AIOS Brain)'],
         ['dscl', '.', '-create',   base, 'UniqueID',     str(next_uid)],
         ['dscl', '.', '-create',   base, 'PrimaryGroupID', '20'],
         ['dscl', '.', '-create',   base, 'NFSHomeDirectory', f'/Users/{brain_name}'],

@@ -222,7 +222,7 @@ def ensure_brains_group(os_name, dry_run):
         if os_name == 'Windows':
             run(['powershell', '-NonInteractive', '-Command',
                  f'New-LocalGroup -Name "{BRAINS_GROUP}" '
-                 f'-Description "Horizon AIOS group: {BRAINS_GROUP}"'],
+                 f'-Description "Horizon.AIOS group: {BRAINS_GROUP}"'],
                 dry_run=dry_run)
         elif os_name == 'Linux':
             run(['groupadd', BRAINS_GROUP], dry_run=dry_run)
