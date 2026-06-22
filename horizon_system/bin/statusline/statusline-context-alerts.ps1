@@ -2,6 +2,7 @@ $raw = [Console]::In.ReadToEnd()
 try { $json = $raw | ConvertFrom-Json } catch { Write-Output "ctx:?"; exit 0 }
 
 $used_pct   = if ($json.context_window.used_percentage -ne $null) { [int]($json.context_window.used_percentage) } else { 0 }
+$model      = if ($json.model.display_name -ne $null) { $json.model.display_name } else { "" }
 $session_id = if ($json.session_id -ne $null) { $json.session_id } else { "unknown" }
 $cwd        = if ($json.cwd -ne $null) { $json.cwd } else { (Get-Location).Path }
 $HORIZON_BIN    = Split-Path $PSScriptRoot -Parent          # horizon_system/bin/
@@ -43,6 +44,8 @@ $bar_width        = if ($conf["bar_width"]) { [int]$conf["bar_width"] } else { 2
 $project_name     = $conf["project_name"]
 $raw_thresholds   = if ($conf["context_thresholds"]) { $conf["context_thresholds"] } else { "30,40,50,60,70,80,90" }
 $thresholds       = @($raw_thresholds -split "," | ForEach-Object { [int]$_.Trim() } | Sort-Object)
+# Approximate auto-compact trigger point (not exposed in statusline JSON; defaults to ~80%)
+$compact_threshold = if ($conf["compact_threshold"]) { [int]$conf["compact_threshold"] } else { 80 }
 
 # --- Working directory label ---
 $dirname = if ($project_name) { $project_name } else { Split-Path $cwd -Leaf }
@@ -96,9 +99,14 @@ if ($show_context_bar) {
     }
 }
 
+# --- % To Compact (remaining headroom before approximate auto-compact point) ---
+$to_compact = [Math]::Max(0, $compact_threshold - $used_pct)
+
 # --- Build statusline ---
 $parts = @("[$dirname]")
+if ($model -ne "") { $parts += $model }
 if ($git_branch -ne "") { $parts += "git:$git_branch" }
-if ($show_context_bar) { $parts += "[$bar]" }
+if ($show_context_bar) { $parts += "Context Window: [$bar]" }
+$parts += "% To Compact: $to_compact%"
 
 Write-Output ($parts -join " ")

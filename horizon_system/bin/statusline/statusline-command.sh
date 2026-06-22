@@ -26,6 +26,9 @@ used_pct=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 total_input=$(echo "$input" | jq -r '.context_window.total_input_tokens // 0')
 total_output=$(echo "$input" | jq -r '.context_window.total_output_tokens // 0')
 
+# --- Approximate auto-compact trigger point (not exposed in statusline JSON; defaults to ~80%) ---
+compact_threshold=80
+
 # --- Threshold audio alerts (fires once per threshold per session) ---
 if [ -n "$used_pct" ] && [ -n "$session_id" ]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -41,6 +44,8 @@ if [ -n "$used_pct" ] && [ -n "$session_id" ]; then
       if [ -f "$candidate" ]; then
         raw=$(grep -E '^[[:space:]]*context_thresholds[[:space:]]*=' "$candidate" | tail -1 | sed 's/.*=[[:space:]]*//' | tr -d ' ')
         [ -n "$raw" ] && thresholds=$(echo "$raw" | tr ',' ' ')
+        ct=$(grep -E '^[[:space:]]*compact_threshold[[:space:]]*=' "$candidate" | tail -1 | sed 's/.*=[[:space:]]*//' | tr -d ' ')
+        [ -n "$ct" ] && compact_threshold=$ct
         break
       fi
       parent=$(dirname "$current")
@@ -107,13 +112,17 @@ fi
 
 # Context usage
 if [ -n "$used_pct" ]; then
-  ctx_str=$(printf "ctx: %.0f%%" "$used_pct")
+  ctx_str=$(printf "Context Window: %.0f%%" "$used_pct")
   # Color: green < 50%, yellow 50-80%, red > 80%
   color=32
   pct_int=$(printf "%.0f" "$used_pct")
   [ "$pct_int" -ge 50 ] && color=33
   [ "$pct_int" -ge 80 ] && color=31
   parts+=("$(printf "\033[1;${color}m%s\033[0m" "$ctx_str")")
+
+  # % To Compact (remaining headroom before approximate auto-compact point)
+  to_compact=$(awk -v t="$compact_threshold" -v u="$pct_int" 'BEGIN { d = t - u; if (d < 0) d = 0; print d }')
+  parts+=("$(printf '\033[1;35m%s\033[0m' "% To Compact: ${to_compact}%")")
 fi
 
 # Cost
