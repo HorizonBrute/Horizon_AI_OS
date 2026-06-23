@@ -92,6 +92,15 @@ not throwaway scratch. Each prompt must:
   **register + create a second AIOS in another dir** → **switch back and forth** →
   back up user data to the operator's own remote → **uninstall / delete** (brain
   then AIOS) → verify clean.
+- **Include a dev-environment leakage / hardcoded-path scan** right after install
+  (and re-run it after the switch step). Since the test box installs to an
+  operator-chosen root that is NOT the canonical dev root (`C:\devroot`), any
+  occurrence of a build/dev path or owner identifier in a GENERATED artifact
+  (`~/.horizon` active_env + registry, the harness wrapper in `~/.claude`,
+  generated instance `*.conf`) is a hardcoded-path leak = FAIL. Scope the scan to
+  generated artifacts/instance config, NOT docs (which legitimately cite the
+  canonical dev root). This is a first-class check because the prompt is run by a
+  development tool whose job includes catching dev-env leakage.
 - Use the platform's real commands (PowerShell for Windows; `sudo bash` for
   Unix), `--dry-run` before each destructive step, and reference
   `system/uninstall.md` for the authoritative verification checklist.

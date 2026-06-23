@@ -61,6 +61,28 @@ Work in an ELEVATED PowerShell. Rules:
    python .\horizon_system\sbin\horizon_aios_doctor.py               # PASS = all checks healthy
    aios list ; aios current                              # note the auto-registered name + (*) = $Root1
 
+1A. LEAKAGE / HARDCODED-PATH SCAN (dev-environment leakage)
+   This prompt is run by a development tool, so it must validate that NO path or
+   identifier from the AIOS build/development environment leaked into the install.
+   Because this box installed to $Root1 (NOT C:\devroot), any occurrence of the dev
+   root in a GENERATED artifact is a hardcoded-path leak.
+     $LeakPatterns = @('C:\devroot','C:/devroot')   # extend with any owner dev path/username you know
+   Scan the runtime artifacts bootstrap/switch generate OUTSIDE the repo (highest risk):
+     $Scan = @("$HOME\.horizon", "$HOME\.claude\settings.json")   # active_env.ps1, AIOS registry, harness wrapper
+     foreach ($p in $Scan) { if (Test-Path $p) {
+       Get-ChildItem $p -Recurse -File -ErrorAction SilentlyContinue |
+         Select-String -SimpleMatch -Pattern $LeakPatterns } }
+   Scan generated INSTANCE config under the install (instance .conf is generated, not shipped):
+     Get-ChildItem "$Root1" -Recurse -Include *.conf -ErrorAction SilentlyContinue |
+       Select-String -SimpleMatch -Pattern $LeakPatterns
+   Confirm active_env resolves only to $Root1 (and $Root2 after switch), never a dev path:
+     Get-Content "$HOME\.horizon\active_env.ps1" | Select-String 'HORIZON_'
+   NOTE: documentation that intentionally cites C:\devroot as the canonical dev root is
+   EXPECTED and is not a leak — scope this scan to generated artifacts/instance config, not docs.
+   PASS = ZERO leak hits in generated artifacts/config; active_env points only at $Root1/$Root2.
+   FAIL = any dev-env path/identifier present -> report file + line verbatim; this is a
+          framework hardcoded-path bug to fix, NOT a test-box issue. (Re-run after step 4.)
+
 2. CREATE A BRAIN (capability 2)
    python .\horizon_system\sbin\horizon_aios_create_brain.py $Brain --automation scheduled --dry-run
    python .\horizon_system\sbin\horizon_aios_create_brain.py $Brain --automation scheduled
@@ -83,6 +105,8 @@ Work in an ELEVATED PowerShell. Rules:
    # is UNCHANGED (points at the ~/.horizon\bin\aios-exec.ps1 wrapper — the indirection layer).
    aios switch <name-from-step-1> ; aios current         # back to $Root1
    # PASS = switch repoints active_env + `aios current` both ways; settings.json untouched.
+   # RE-RUN the step 1A leakage scan now: switch regenerated active_env — confirm it
+   # resolves to $Root2/$Root1 only, with ZERO dev-environment (C:\devroot) leakage.
 
 5. BACK UP USER DATA (distribution model)
    python .\horizon_system\sbin\horizon_aios_backup_user_data.py      # to $BackupRemote
@@ -103,8 +127,9 @@ Work in an ELEVATED PowerShell. Rules:
    .\horizon_system\sbin\uninstall.ps1 --yes              # second run: expect all [SKIP], no changes
    # PASS = idempotent reset; the machine is clean and re-usable as a test rig.
 
-Finish with a per-step PASS/FAIL table. Report any residue, surprise, or manual step needed,
-verbatim.
+Finish with a per-step PASS/FAIL table. Call out the step 1A leakage result explicitly
+(PASS = no dev-environment paths/identifiers in any generated artifact or instance config).
+Report any residue, surprise, leak hit, or manual step needed, verbatim.
 ````
 
 ---
