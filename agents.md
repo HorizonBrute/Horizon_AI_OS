@@ -11,8 +11,6 @@ User documentation — constitutional (the canonical user-facing reference):
 
 Never hardcode paths — use $HORIZON_ROOT, $HORIZON_SYSTEM, $HORIZON_BIN, $HORIZON_ETC, $HORIZON_DOCS.
 
-@horizon_system/documentation/index.md
-@horizon_system/documentation/user_guides/using_your_aios.md
 @horizon_system/ai_os_etc/horizon_aios_agents.md
 @horizon_system/ai_os_etc/horizon_aios_model_prefs.md
 @horizon_system/ai_os_etc/horizon_aios_model_prefs.extend.md
