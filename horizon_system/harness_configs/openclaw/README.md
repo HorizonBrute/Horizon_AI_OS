@@ -28,4 +28,4 @@ Key top-level sections:
 
 ## Status
 
-Community contribution welcome. See `$HORIZON_DOCS/CONTRIBUTING.md`.
+Community contribution welcome. See `horizon_system/license/CONTRIBUTING.md`.

@@ -99,7 +99,7 @@ Verify: `gpg --list-secret-keys --keyid-format LONG` — must show at least one 
 
 P.10 Horizon AIOS supports **Windows, Linux, and macOS**. Platform routing is handled automatically:
 
-P.10.1 **Sound playback** uses `$HORIZON_BIN/sounds/play_sound.sh`, which detects the OS at runtime and calls `Media.SoundPlayer` (Windows), `afplay` (macOS), or the first available Linux player from: `paplay` (PulseAudio), `aplay` (ALSA), `ffplay` (ffmpeg), `mpg123`. Hooks fail silently if no player is found.
+P.10.1 **Sound playback** uses `$HORIZON_SOUNDS/play_sound.sh` (`horizon_system/sounds/play_sound.sh`), which detects the OS at runtime and calls `Media.SoundPlayer` (Windows), `afplay` (macOS), or the first available Linux player from: `paplay` (PulseAudio), `aplay` (ALSA), `ffplay` (ffmpeg), `mpg123`. Hooks fail silently if no player is found.
 
 P.10.2 **Statusline** uses `$HORIZON_BIN/statusline/statusline.sh`, a bash dispatcher that calls `statusline-context-alerts.ps1` (PowerShell, Windows) or `statusline-command.sh` (bash, Linux/macOS) depending on OS. Both scripts include threshold audio alerts.
 
@@ -720,7 +720,7 @@ python $HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py <brain-name> --dry-run
 On Windows, open an **Administrator** PowerShell or Command Prompt first:
 
 ```powershell
-python "$env:HORIZON_SYSTEM\scripts\horizon_aios_create_brain.py" <brain-name>
+python "$env:HORIZON_SYSTEM\sbin\horizon_aios_create_brain.py" <brain-name>
 ```
 
 On Unix:

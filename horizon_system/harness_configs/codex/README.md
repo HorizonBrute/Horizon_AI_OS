@@ -16,4 +16,4 @@ in this directory. Use `HORIZON_SYSTEM_PATH` as a placeholder for the absolute p
 
 ## Status
 
-Community contribution welcome. See `$HORIZON_DOCS/CONTRIBUTING.md`.
+Community contribution welcome. See `horizon_system/license/CONTRIBUTING.md`.

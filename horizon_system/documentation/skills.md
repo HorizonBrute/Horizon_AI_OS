@@ -25,12 +25,20 @@ set flat. Brain users' `~/.claude/skills/` points directly at `skills_bin/`.
 | Slash command | Location | What it does |
 |---|---|---|
 | `/context-cost` | `skills_bin/` | Report KB, word count, and token estimates for all files the harness auto-loads above a given path |
+| `/create-brain` | `skills_sbin/` | Provision a new brain OS user, groups, workspace, shell profile, and keystore credential (Admin/root) |
+| `/doctor` | `skills_bin/` | Run the AIOS health check — env vars, skills junction, hooks, registry, and privileged-dir Deny ACLs |
 | `/handoff` | `skills_sbin/` | Write a structured session handoff document for the next session or a human reviewer |
-| `/model-catalog-refresh` | `skills_bin/` | Fetch live model+pricing data from Anthropic, OpenAI, Gemini, and Ollama; diff against the current model-preference config |
-| `/model-prefs` | `skills_sbin/` | Author or inspect model groups, per-session slots, and task-class routing rules in the gitignored extend file |
+| `/harden` | `skills_sbin/` | Apply the authoritative brains-group ACL model to the AIOS layer (Admin/root) |
 | `/horizon_aios_dev_consistency_check` | `skills_sbin/` | Run an iterative docs/implementation consistency validation pass against the AIOS check standard |
 | `/horizon_aios_documentation_index_update` | `skills_sbin/` | Rebuild `documentation/index.md` so every doc is registered with a stable path-based ID |
+| `/model-catalog-refresh` | `skills_bin/` | Fetch live model+pricing data from Anthropic, OpenAI, Gemini, and Ollama; diff against the current model-preference config |
+| `/model-prefs` | `skills_sbin/` | Author or inspect model groups, per-session slots, and task-class routing rules in the gitignored extend file |
+| `/model-prefs-assign` | `skills_sbin/` | Audit skills for model-preference group callouts and assign or refresh them; keep indexes in sync |
+| `/model-prefs-test` | `skills_bin/` | Test how each model group resolves in the current runtime (dry-run or live spawn) |
+| `/monitor` | `skills_bin/` | Start the AIOS filesystem integrity monitor (watches system dirs, logs events as JSON lines; requires elevation) |
 | `/objective` | `skills_sbin/` | Create, list, show, or update durable multi-session objectives that handoffs chain back to |
+| `/pre-flight-tooling-validation` | `skills_sbin/` | Validate the repo ships full-lifecycle tooling per platform, then emit a ready-to-run test prompt per platform |
+| `/remove-brain` | `skills_sbin/` | Deprovision a brain — remove its OS user, per-brain group, workspace, profile, and credential (Admin/root) |
 | `/resync-user-skills` | `skills_sbin/` | Report skill inventory and rebuild junctions so the owner view matches the filesystem |
 | `/skill-creation` | `skills_sbin/` | Scaffold a new AIOS skill with correct structure, frontmatter, and index registration |
 
@@ -219,16 +227,156 @@ documented in `skill-creation/SKILL.md` and both tier index files.
 
 ---
 
+### /create-brain
+
+**Location:** `skills_sbin/` (owner only)
+**Underlying tool:** `$HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py`
+
+Provisions a new brain: creates the OS user account, the shared `brains` group
+and a per-brain group, the workspace folder at `$HORIZON_ROOT/brains/<name>/`,
+a login shell profile, and stores an auto-generated 64-char password in the OS
+native keystore. Requires Administrator/root; delegates to `horizon_aios_create_brain.py`.
+
+**Onboarding:** Provides a single guided entry point for brain provisioning that
+handles all OS-level steps and surfaces the post-provisioning checklist.
+**Offboarding:** Run `horizon_aios_create_brain.py` directly; see the "Adding a Brain"
+section of `getting_started/ReadMeToSetupYourSystem.md`.
+
+---
+
+### /remove-brain
+
+**Location:** `skills_sbin/` (owner only)
+**Underlying tool:** `$HORIZON_SYSTEM/sbin/horizon_aios_remove_brain.py`
+
+Deprovisions a brain by removing its OS user account, per-brain group, workspace
+folder, profile config (including the skills junction), and stored credential.
+The shared `brains` group is left intact. Requires Administrator/root.
+
+**Onboarding:** Provides a safe, guided teardown path that mirrors provisioning.
+**Offboarding:** Run `horizon_aios_remove_brain.py` directly (see `utilities.md`).
+
+---
+
+### /harden
+
+**Location:** `skills_sbin/` (owner only)
+**Underlying tool:** `$HORIZON_SYSTEM/sbin/horizon_aios_harden.py`
+
+Applies the authoritative brains-group ACL model to the AIOS layer: grants the
+`brains` group Read+Execute on `bin/` and `skills_bin/`, applies a no-write Deny
+across `$HORIZON_SYSTEM`, and adds an explicit full Deny on `sbin/`, `skills_sbin/`,
+and `logs/`. Run after `horizon_aios_doctor.py` reports a missing Deny ACE, or after
+structural changes to `$HORIZON_SYSTEM`. Requires Administrator/root.
+
+**Onboarding:** Provides a single command to re-establish the security invariants
+without needing to recall the `icacls`/`chmod` commands manually.
+**Offboarding:** Run `horizon_aios_harden.py` directly (see `utilities.md`).
+
+---
+
+### /doctor
+
+**Location:** `skills_bin/` (available to all users including brains)
+**Underlying tool:** `$HORIZON_SYSTEM/sbin/horizon_aios_doctor.py`
+
+Runs the AIOS health check: verifies env vars, the `~/.claude/skills/` junction,
+git hooks, local config (`aios_local.conf`), the AIOS registry, and that `sbin/`,
+`skills_sbin/`, and `logs/` have an explicit Deny ACE for the `brains` group.
+Reports PASS / WARN / FAIL for each check. Optional `--post-setup` flag adds
+sound, statusline, and GPG signing checks.
+
+**Onboarding:** Provides immediate post-install verification and ongoing health
+checks without needing to know which files to inspect.
+**Offboarding:** Run `horizon_aios_doctor.py` directly (see `utilities.md`).
+
+---
+
+### /monitor
+
+**Location:** `skills_bin/` (available to all users including brains)
+**Underlying tool:** `$HORIZON_SYSTEM/sbin/horizon_aios_monitor.py`
+
+Starts (or explains) the AIOS filesystem integrity monitor, which watches the
+AIOS system directories for create, modify, delete, and move events and appends
+each as a JSON-line audit record to `$HORIZON_SYSTEM/logs/horizon_aios_monitor/`.
+Requires elevation because writing to `logs/` is an admin-only action.
+
+**Onboarding:** Provides a guided entry point for enabling filesystem audit
+logging, including the watch set, log format, and service-registration options.
+**Offboarding:** Run `horizon_aios_monitor.py` directly; see
+`security/audit_logging.md` for full setup and SIEM integration guidance.
+
+---
+
+### /model-prefs-assign
+
+**Location:** `skills_sbin/` (owner only)
+**Underlying tool:** None — Claude reads and edits skill files directly
+
+Audits all skills in `skills_sbin/` and `skills_bin/` for a `Model preference:`
+callout in the body. Adds the callout to skills that lack one (defaulting to
+`#midcost`), updates it where a different group is more appropriate, and keeps
+the `Model group` columns in both tier index files in sync with the actual skill
+bodies.
+
+**Onboarding:** Ensures every skill declares its model group so the
+model-preference layer routes work correctly without per-invocation overrides.
+**Offboarding:** Skills can be audited and updated by hand; the format is
+documented in `system/skill_model_groups.md`.
+
+---
+
+### /model-prefs-test
+
+**Location:** `skills_bin/` (available to all users including brains)
+**Underlying tool:** None — Claude resolves and optionally spawns agents directly
+
+Tests how each model group from the current model-preference config resolves
+in this runtime: dry-run mode reports which member would be selected without
+spawning anything; `--live` mode spawns a small agent per group to confirm the
+harness actually honors the selection and has each agent self-report its model.
+
+**Onboarding:** Provides confidence that the model-preference config is wired
+correctly before relying on it for real work.
+**Offboarding:** Test group resolution manually by reading the extend file and
+checking which members are available in the current runtime.
+
+---
+
+### /pre-flight-tooling-validation
+
+**Location:** `skills_sbin/` (owner only)
+**Underlying tool:** None — Claude inspects repo contents directly
+
+Validates that the AIOS repo ships every tool needed to run the full lifecycle
+(install → create brain → create a second AIOS → switch → backup → delete) on
+each supported platform (Windows, Linux, macOS), then emits a ready-to-run
+admin/sudo test prompt per platform. Intended as a pre-test gate before handing
+off a fresh clone to someone running a lifecycle test on a clean machine.
+
+**Onboarding:** Catches missing or misnamed tooling before a test run so failures
+are a tooling gap, not a test environment issue.
+**Offboarding:** Check the tool list manually against `file_structure_invariants.md`
+and `utilities.md`.
+
+---
+
 ## Onboarding and offboarding summary
 
-When AIOS skills are registered, an owner gains nine slash commands. Two
-(`/context-cost` and `/resync-user-skills`) wrap underlying Python scripts and
-expose them through a guided, harness-aware interface. `/model-catalog-refresh`
-performs live web and CLI fetches at runtime. The remaining six
-(`/handoff`, `/horizon_aios_dev_consistency_check`,
-`/horizon_aios_documentation_index_update`, `/model-prefs`, `/objective`,
-`/skill-creation`) have no separate script — Claude is the engine, and the
-`SKILL.md` is the procedure it follows.
+When AIOS skills are registered, an owner gains 17 slash commands across two
+tiers. **skills_bin/** (available to brains): `/context-cost`, `/doctor`,
+`/model-catalog-refresh`, `/model-prefs-test`, `/monitor`. **skills_sbin/** (owner
+only): `/create-brain`, `/handoff`, `/harden`, `/horizon_aios_dev_consistency_check`,
+`/horizon_aios_documentation_index_update`, `/model-prefs`, `/model-prefs-assign`,
+`/objective`, `/pre-flight-tooling-validation`, `/remove-brain`, `/resync-user-skills`,
+`/skill-creation`.
+
+Skills that wrap underlying scripts: `/context-cost`, `/doctor`, `/create-brain`,
+`/harden`, `/monitor`, `/remove-brain`, `/resync-user-skills` (all delegate to a
+`sbin/` or `bin/` Python script). `/model-catalog-refresh` and `/model-prefs-test`
+perform live fetches or agent spawns at runtime. The remaining skills have no
+separate script — Claude is the engine and the `SKILL.md` is the procedure.
 
 Unregistering the skills (by removing the `~/.claude/skills/` junction or clearing
 the skills directories) does not delete any underlying data or scripts. Handoff
@@ -240,6 +388,6 @@ step-by-step procedure, and the integration with the harness context. A user
 offboarding from AIOS retains all artifacts produced by the skills; they lose only
 the automated workflow that produced them.
 
-Brain accounts see only `skills_bin/` (`/context-cost` and
-`/model-catalog-refresh`) and gain no access to the owner-only skills. This is
-by design and enforced at the ACL level.
+Brain accounts see only `skills_bin/` (`/context-cost`, `/doctor`,
+`/model-catalog-refresh`, `/model-prefs-test`, `/monitor`) and gain no access to
+the owner-only skills. This is by design and enforced at the ACL level.

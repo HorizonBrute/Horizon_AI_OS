@@ -33,7 +33,7 @@ PRs without a sign-off on every commit will be held until the sign-off is added.
 ## What's Welcome
 
 1. **Skills** — new slash commands or harness behaviors useful across machines
-2. **Sounds** — audio files for Claude lifecycle events (see `horizon_bin/sounds/`)
+2. **Sounds** — audio files for Claude lifecycle events (see `horizon_system/sounds/`)
 3. **Harness configs** — settings and hooks for non-Claude backends (Ollama, Codex, etc.)
 4. **Statusline improvements** — enhancements to the cross-platform statusline scripts
 5. **Documentation** — corrections and additions to setup guides and reference docs
@@ -47,16 +47,18 @@ or in separate forks.
 
 ## Path Placeholder Rule
 
-All committed files must use `HORIZON_ROOT_PATH` (or `HORIZON_BIN_PATH`) as a placeholder
-instead of any hardcoded absolute path. The bootstrap and setup process substitutes these
-placeholders with the actual path on each machine. Submitting a file with a hardcoded path
-like `C:\devroot` or `/home/user/devroot` will cause the PR to be rejected.
+All committed files must use the canonical env-var references (`$HORIZON_ROOT`, `$HORIZON_SYSTEM`,
+`$HORIZON_BIN`, `$HORIZON_ETC`, etc.) instead of any hardcoded absolute path. Setup templates
+that cannot reference env vars at copy time use substitution placeholders (e.g.,
+`AIOS_EXEC_WRAPPER` in the Claude Code settings template; `[HORIZON_ROOT_PATH]` and
+`[BRAIN_NAME]` in brain workspace templates). Submitting a file with a hardcoded path like
+`C:\devroot` or `/home/user/devroot` will cause the PR to be rejected.
 
 ## No Personal Data
 
 Do not include real names, email addresses, GPG key fingerprints, hostnames, or
 machine-specific paths in any committed file. This mirrors the security invariants
-documented in `horizon_bin/ai_os_etc/security_invariants.md` (section 6).
+documented in `horizon_system/ai_os_etc/security_invariants.md` (section 6).
 
 ## How to Contribute
 
