@@ -284,3 +284,15 @@ Anyone who clones the Horizon AIOS repo will not have these. They must be create
 **Rationale:** Every token in a context-loaded file costs tokens on every session that loads it. A verbose invariant document read hundreds of times per week accumulates significant token overhead. Documentation that provides background, rationale, and examples is valuable — but it belongs in files that are read by humans on demand, not in files that are injected into every AI context window automatically.
 
 **Implications:** When adding to CLAUDE.md files or invariant documents, write for density: one sentence per concept, no illustrative examples, no repeated caveats. If elaboration is needed, put it in `$HORIZON_DOCS` and link to it. Review context-loaded files periodically and trim any content that is not load-bearing for AI behavior.
+
+---
+
+### 2026-06-23 — Sounds directory moved to `$HORIZON_SYSTEM/sounds/` (supersedes 2026-06-20)
+
+**Supersedes:** "2026-06-20 — Two-tier sounds directory structure" (which referred to `$HORIZON_BIN/sounds/`).
+
+**Decision:** The sounds directory is `$HORIZON_SYSTEM/sounds/` (env var `$HORIZON_SOUNDS`), not `$HORIZON_BIN/sounds/`. The two-tier structure (generic sounds at root, vendor-voiced sounds in `<vendor>_event_sounds/` subdirectories) is unchanged.
+
+**Rationale:** Sounds are AIOS-layer assets, not bin-layer executables. Placing them under `$HORIZON_SYSTEM` co-locates them with the rest of the AIOS layer, is consistent with how other non-executable assets (templates, harness_configs) are organized, and keeps `$HORIZON_BIN` reserved for executable scripts.
+
+**Implications:** Any hook, script, or doc referencing `$HORIZON_BIN/sounds/` must be updated to `$HORIZON_SYSTEM/sounds/` (or `$HORIZON_SOUNDS`). The 2026-06-20 entry's two-tier structure and naming convention remain authoritative; only the root path changes.

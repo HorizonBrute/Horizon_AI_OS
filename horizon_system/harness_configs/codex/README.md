@@ -11,8 +11,8 @@ To customize instructions for a specific project under $HORIZON_ROOT, place an
 ## Configuration
 
 Place any Codex-specific configuration (API settings, model selection, tool permissions)
-in this directory. Use `HORIZON_SYSTEM_PATH` as a placeholder for the absolute path to
-`horizon_system/` — bootstrap substitutes the real path.
+in this directory. Reference `$HORIZON_SYSTEM` (the runtime env var) for the absolute path to
+`horizon_system/` — the harness expands this at runtime, not at bootstrap.
 
 ## Status
 

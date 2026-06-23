@@ -662,7 +662,7 @@ Projects are folders inside `$HORIZON_ROOT`. They automatically inherit the full
 Horizon AIOS supports multiple AI harnesses. To add support for a new harness (e.g., Cursor, Windsurf, Ollama):
 
 1. Create a harness config directory: `$HORIZON_SYSTEM/harness_configs/<harness_name>/` (for runtime config: sounds map, hooks, README) and/or `$HORIZON_SYSTEM/templates/<harness_name>/` (for setup templates copied at bootstrap).
-2. Add a config template using `HORIZON_SYSTEM_PATH` and other placeholders instead of real paths. Document all placeholders in a `README.md` in the same directory.
+2. Add a config template using `$HORIZON_SYSTEM` (and other runtime env vars) instead of hardcoded paths. Document all env vars used in a `README.md` in the same directory.
 3. Wire event hooks to sounds in `$HORIZON_SYSTEM/sounds/`. Use root-level generic sounds for cross-harness compatibility. If the harness has vendor-voiced audio, add it to `$HORIZON_SYSTEM/sounds/<vendor>_event_sounds/`.
 4. Add a statusline script to `$HORIZON_BIN/statusline/` if the harness supports one.
 5. Document the harness in `$HORIZON_DOCS/`.
