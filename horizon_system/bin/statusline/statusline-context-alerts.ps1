@@ -108,7 +108,7 @@ $parts = @("[$dirname]")
 if ($model -ne "") { $parts += $model }
 if ($git_branch -ne "") { $parts += "git:$git_branch" }
 if ($show_context_bar) { $parts += " Ctx Window:[$bar]" }
-$parts += "Est. % To Compact: $to_compact%"
-if ($total_tokens -gt 0) { $parts += "$("{0:N0}" -f $total_tokens) tokens" }
+$parts += "Est. % To Compact: $to_compact% "
+if ($total_tokens -gt 0) { $parts += "  Session: $("{0:N0}" -f $total_tokens) tokens" }
 
 Write-Output ($parts -join " ")
