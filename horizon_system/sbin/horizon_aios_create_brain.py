@@ -50,6 +50,15 @@ import stat
 import subprocess
 import sys
 
+# Make stdout/stderr robust on legacy Windows code pages (e.g. cp1252) so the
+# tool never crashes with UnicodeEncodeError on non-ASCII output. Self-healing
+# regardless of PYTHONIOENCODING; guarded for Pythons without reconfigure().
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 # ---------------------------------------------------------------------------
 # Optional credential store (horizon_aios_brain_credential.py in sbin/)
 # ---------------------------------------------------------------------------

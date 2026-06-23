@@ -67,6 +67,15 @@ import os
 import subprocess
 import sys
 
+# Make stdout/stderr robust on legacy Windows code pages (e.g. cp1252) so the
+# tool never crashes with UnicodeEncodeError on non-ASCII output. Self-healing
+# regardless of PYTHONIOENCODING; guarded for Pythons without reconfigure().
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 # --- This tree (the AIOS the script physically lives in) -----------------------
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))   # horizon_system/sbin
 THIS_SYSTEM = os.path.dirname(SCRIPT_DIR)                   # horizon_system
