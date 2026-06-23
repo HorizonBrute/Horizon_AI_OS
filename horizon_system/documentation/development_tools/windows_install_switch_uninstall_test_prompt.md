@@ -119,13 +119,17 @@ Work in an ELEVATED PowerShell. Rules:
    # Run the post-uninstall VERIFICATION CHECKLIST in
    #   horizon_system\documentation\system\uninstall.md
    # (horizon_aios_doctor.py failures = success; ~/.horizon gone; ~/.claude/projects + skills junctions gone
-   #  with targets intact; horizon_system\bin out of Machine PATH; brains ACEs stripped).
+   #  with targets intact; horizon_system\bin out of Machine PATH; brains ACEs fully stripped —
+   #  no residual grant OR DENY ACE, since uninstall uses icacls /remove not /remove:g).
+   # settings.json: removed ONLY if it byte-matches the bootstrap default; if you customized it,
+   #  PASS = it is preserved with a [MANUAL] advisory (not deleted).
    aios unregister home 2>$null                            # if registry survived; usually removed with ~/.horizon
    # (optional) if you bootstrapped $Root2: cd $Root2 ; .\horizon_system\sbin\uninstall.ps1 --yes
 
 7. IDEMPOTENCY
    .\horizon_system\sbin\uninstall.ps1 --yes              # second run: expect all [SKIP], no changes
    # PASS = idempotent reset; the machine is clean and re-usable as a test rig.
+   # Also confirm: icacls on $HORIZON_SYSTEM subtrees shows NO residual brains-group DENY ACEs.
 
 Finish with a per-step PASS/FAIL table. Call out the step 1A leakage result explicitly
 (PASS = no dev-environment paths/identifiers in any generated artifact or instance config).
