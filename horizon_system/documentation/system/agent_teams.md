@@ -51,6 +51,25 @@ You speak plainly; the acting model maps it onto a team and its SAILL flags
 Each right-hand side is the SAILL the model resolves to; you never have to write it —
 but it is the shareable, standard form behind the plain-English request.
 
+### 1.2 Directing roles in plain language
+
+A team is a scaffold, not a cage. At invocation you can also tell a role **what to do or
+what to focus on**, ad hoc, and the model honors it on top of the team:
+
+> "Send a **full-team** for the export bug; have the **Validator run `/security-review`**,
+> and **Log-reader, scope to just the auth module**."
+
+That works because two different things are in play:
+1. **SAILL flags govern control flow** — *whether / when / how often / concurrently /
+   ask-the-user* a role runs (`if needed`, `ask user`, `parallel`, `Loop`, …).
+2. **A role's *work* is charter prose** — which tools or skills it uses, what to scope to,
+   what it hands on. That lives in the role's charter (in the team definition) and can be
+   set or overridden in plain language at invocation.
+
+So "the Validator runs `/security-review`" or "the Log-reader focuses on auth" are **role
+direction**, not flags — do not encode them as SAILL primitives. Keep SAILL to control
+flow; put the work in the charter or your request. The two compose cleanly.
+
 ---
 
 ## 2. Shipped starter teams
