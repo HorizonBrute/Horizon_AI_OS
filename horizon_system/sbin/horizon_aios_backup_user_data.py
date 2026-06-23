@@ -61,7 +61,8 @@ def git(args, root, capture=True, env=None, check=True):
     r = subprocess.run(["git", "-C", root] + args, capture_output=capture,
                        text=True, env=full)
     if check and r.returncode != 0:
-        raise RuntimeError(f"git {' '.join(args)} failed: {r.stderr.strip()}")
+        stderr_text = r.stderr.strip() if r.stderr else ""
+        raise RuntimeError(f"git {' '.join(args)} failed: {stderr_text}")
     return (r.stdout or "").strip()
 
 
@@ -123,6 +124,7 @@ def main():
     p.add_argument("--paths", nargs="+", help="Paths to back up (default AIOS_BACKUP_PATHS or memory handoffs objectives).")
     p.add_argument("--message", help="Commit message (default: timestamped).")
     p.add_argument("--dry-run", action="store_true", help="Show what would be backed up; do not commit or push.")
+    p.add_argument("--force", action="store_true", help="Force-push the backup branch, overwriting the remote tip.")
     args = p.parse_args()
 
     root = os.environ.get("HORIZON_ROOT") or THIS_ROOT
@@ -177,10 +179,27 @@ def main():
 
         tree = git(["write-tree"], root, env=env)
         parent = None
+        # Prefer the remote branch tip so the push always fast-forwards, even when
+        # the local repo was freshly cloned and has no local copy of the branch.
+        # We fetch into FETCH_HEAD and read it; on failure (branch does not exist
+        # on the remote yet) we fall back to the local ref, then to no parent.
         try:
-            parent = git(["rev-parse", "--verify", f"refs/heads/{branch}"], root)
+            git(["fetch", remote, f"refs/heads/{branch}"], root, check=True)
+            fetch_head_path = os.path.join(root, ".git", "FETCH_HEAD")
+            if os.path.isfile(fetch_head_path):
+                with open(fetch_head_path, encoding="utf-8") as fh:
+                    first_line = fh.readline().split()[0]
+                if len(first_line) == 40 and all(c in "0123456789abcdefABCDEF" for c in first_line):
+                    parent = first_line
         except RuntimeError:
-            pass  # first backup on this branch
+            pass  # remote branch does not exist yet - first backup
+        if parent is None:
+            # Fallback: local branch ref (covers cases where operator runs without
+            # network but a previous local commit was not yet pushed).
+            try:
+                parent = git(["rev-parse", "--verify", f"refs/heads/{branch}"], root)
+            except RuntimeError:
+                pass  # genuinely first backup - orphan commit is correct here
         msg = args.message or f"aios backup {datetime.now(timezone.utc).isoformat()} ({host})"
         commit_args = ["commit-tree", tree, "-m", msg]
         if parent:
@@ -203,7 +222,10 @@ def main():
 
     # --- push to YOUR remote ---
     info(f"Pushing '{branch}' -> {remote} ...")
-    git(["push", remote, f"refs/heads/{branch}:refs/heads/{branch}"], root, capture=False)
+    push_cmd = ["push", remote, f"refs/heads/{branch}:refs/heads/{branch}"]
+    if args.force:
+        push_cmd.append("--force")
+    git(push_cmd, root, capture=False)
     ok(f"Backed up to {remote}/{branch}. Pull it on another machine for cross-machine awareness.")
     return 0
 
