@@ -258,15 +258,40 @@ if (Test-Path $HorizonDir) {
     Skip "~/.horizon/ not found — nothing to remove."
 }
 
+# Only remove settings.json if we can determine bootstrap created it.
+# Bootstrap (Section 5b) copies templates/claude_code/settings.json and substitutes
+# the literal "AIOS_EXEC_WRAPPER" placeholder with the per-machine wrapper path.
+# We reconstruct that freshly-bootstrapped default and compare against what's on disk:
+#   - byte-identical  -> bootstrap-created and untouched; safe to remove (confirm-gated).
+#   - differs/no template -> user-customized or user-authored; PRESERVE it (err toward keeping).
 $SettingsJson = Join-Path $HOME ".claude\settings.json"
 if (Test-Path $SettingsJson) {
-    Warn "~/.claude/settings.json exists."
-    Warn "  Bootstrap may have created this from the template."
-    if ($DryRun) {
-        Dry "remove ~/.claude/settings.json."
-    } elseif (Confirm "Remove ~/.claude/settings.json?") {
+    $SettingsTemplate = Join-Path $HORIZON_SYSTEM "templates\claude_code\settings.json"
+    $AiosExecWrapper  = (Join-Path $HOME ".horizon\bin\aios-exec.ps1") -replace '\\', '/'
+
+    $isBootstrapDefault = $false
+    if (Test-Path $SettingsTemplate) {
+        try {
+            $templateContent = Get-Content $SettingsTemplate -Raw
+            $expected = $templateContent -replace [regex]::Escape("AIOS_EXEC_WRAPPER"), $AiosExecWrapper
+            $onDisk   = Get-Content $SettingsJson -Raw
+            # Normalize trailing whitespace/newlines so encoding-only differences don't block removal.
+            if ($onDisk.TrimEnd() -eq $expected.TrimEnd()) {
+                $isBootstrapDefault = $true
+            }
+        } catch {
+            $isBootstrapDefault = $false
+        }
+    }
+
+    if (-not $isBootstrapDefault) {
+        Skip "~/.claude/settings.json differs from the bootstrap default (user-customized or user-authored) — PRESERVING it."
+        Advisory "If you want it gone, remove ~/.claude/settings.json manually."
+    } elseif ($DryRun) {
+        Dry "remove ~/.claude/settings.json (matches freshly-bootstrapped default)."
+    } elseif (Confirm "~/.claude/settings.json matches the bootstrap default — remove it?") {
         Remove-Item $SettingsJson -Force
-        Ok "Removed ~/.claude/settings.json."
+        Ok "Removed ~/.claude/settings.json (was the unmodified bootstrap default)."
     } else {
         Skip "Keeping ~/.claude/settings.json — remove manually if needed."
     }
@@ -459,10 +484,11 @@ if ($groupExists) {
     foreach ($dir in $DirsToClean) {
         if (Test-Path $dir) {
             if ($DryRun) {
-                Dry "remove brains-group ACEs from: $dir  (icacls /remove:g $BrainsGroup /T)"
+                Dry "remove brains-group ACEs from: $dir  (icacls /remove $BrainsGroup /T)"
             } else {
-                # /remove:g removes all ACEs (grant and deny) for the group
-                $result = icacls $dir /remove:g $BrainsGroup /T /C /Q 2>&1
+                # /remove (no :g) removes BOTH grant and deny ACEs for the group.
+                # /remove:g would strip grants only, leaving harden's deny ACEs behind.
+                $result = icacls $dir /remove $BrainsGroup /T /C /Q 2>&1
                 if ($LASTEXITCODE -eq 0) {
                     Ok "Removed brains-group ACEs from: $dir"
                 } else {

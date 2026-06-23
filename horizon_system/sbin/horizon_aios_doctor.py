@@ -8,6 +8,15 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+# Make stdout/stderr robust on legacy Windows code pages (e.g. cp1252) so the
+# tool never crashes with UnicodeEncodeError on non-ASCII output. Self-healing
+# regardless of PYTHONIOENCODING; guarded for Pythons without reconfigure().
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 OK   = "[OK]  "
 WARN = "[WARN]"
 FAIL = "[FAIL]"
@@ -156,7 +165,7 @@ def check_local_conf(horizon_system):
     conf = horizon_system / "ai_os_etc" / "aios_local.conf"
     template = horizon_system / "templates" / "aios_local.conf.template"
     if not conf.exists():
-        hint = f"copy {template} → {conf} and fill in your values" if template.exists() else "copy the template from $HORIZON_SYSTEM/templates/aios_local.conf.template"
+        hint = f"copy {template} -> {conf} and fill in your values" if template.exists() else "copy the template from $HORIZON_SYSTEM/templates/aios_local.conf.template"
         fail("aios_local.conf", f"not found — {hint}")
     else:
         ok("aios_local.conf")
@@ -169,7 +178,7 @@ def check_gitignore_user(horizon_root):
     f = horizon_root / ".gitignore.user"
     if not f.exists():
         template = horizon_root / ".gitignore.user.template"
-        hint = f"copy {template} → {f}" if template.exists() else "create .gitignore.user at $HORIZON_ROOT"
+        hint = f"copy {template} -> {f}" if template.exists() else "create .gitignore.user at $HORIZON_ROOT"
         fail(".gitignore.user", f"not found — {hint}")
     else:
         ok(".gitignore.user")
