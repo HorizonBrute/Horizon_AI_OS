@@ -6,6 +6,8 @@ tools: Bash, Read, Write, Glob, Grep
 
 # Skill: /handoff
 
+**Model preference:** `#midcost` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
+
 Capture the current session state and write a structured handoff document so a future session (or human reviewer) can orient themselves immediately.
 
 ---

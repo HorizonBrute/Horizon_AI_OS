@@ -6,6 +6,8 @@ tools: Bash, Read
 
 # Skill: /create-brain
 
+**Model preference:** `#highcap` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
+
 Provision a new isolated AI brain with `horizon_aios_create_brain.py`: an OS user account, the shared `brains` group, a per-brain group, the workspace at `$HORIZON_ROOT/brains/<brain-name>/`, a login shell profile, and an auto-generated 64-char password stored in the OS native keystore. The `sbin/skills_sbin/logs` Deny ACEs are re-applied after all grants per the security invariants.
 
 ---

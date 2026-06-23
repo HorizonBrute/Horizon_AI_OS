@@ -6,6 +6,8 @@ tools: Read, Write, Edit
 
 # Skill: /model-prefs
 
+**Model preference:** `#midcost` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
+
 Configuration on-ramp for the in-context model-preference layer. The *mechanism*
 lives in context — `$HORIZON_ETC/horizon_aios_model_prefs.md`, loaded every
 session via `agents.md`, which the acting model reads and honors by direct

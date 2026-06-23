@@ -6,6 +6,8 @@ tools: Read, Grep, Bash, Agent
 
 # Skill: /model-prefs-test
 
+**Model preference:** `#lowcost` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
+
 Reliability harness for the in-context model-preference layer. It answers the
 question the spec flags as untested: *when I reference a group, does the right
 model actually get used?* It has two modes — a cheap dry-run that shows how each
@@ -115,6 +117,12 @@ current runtime.
   skipped — that is correct behavior, not a miss. Flag it as skipped, not failed.
 - A group whose only runnable member is missing should fall through to the
   harness default; note when that happens.
+- **Dry-run cannot detect access-suspension.** It resolves by runtime prefix
+  only, so a `claude:` member that the provider has access-restricted (e.g. a
+  suspended model) still shows as "resolved" in dry-run. Only `--live` reveals it
+  — the spawn fails and resolution must fall through to the next member. Never
+  trust a green dry-run for a model you know may be access-restricted; confirm
+  with `--live`.
 
 ---
 

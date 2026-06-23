@@ -6,6 +6,8 @@ tools: Read, Write, Edit, Glob, Bash
 
 # Skill: /objective
 
+**Model preference:** `#midcost` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
+
 Objectives are durable-but-ephemeral notepads for major goals spanning multiple sessions. They hold long-term context — the goal and why it matters — that a single handoff is too short-lived to carry.
 
 A small set of primitives, **not** a task tracker. No status, no backup, no enforced lifecycle, no completion step. When the user stops referencing an objective it goes stale and is eventually pruned (see Notes). By design.

@@ -6,6 +6,8 @@ tools: Read, Write, Edit, Bash, WebFetch, WebSearch
 
 # Skill: /model-catalog-refresh
 
+**Model preference:** `#investigate` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
+
 Fetch live model data from provider documentation and return a structured catalog
 the user (or the `model-prefs` skill) uses to populate or validate
 `horizon_aios_model_prefs.extend.md`. This is a reference document — you, the
