@@ -21,5 +21,5 @@ Owner-only privileged skills. Brain users must not have access to this directory
 | horizon_aios_dev_consistency_check | `/horizon_aios_dev_consistency_check` | `#midcost` | Run an iterative docs/implementation consistency validation pass against the consistency-check standard |
 | horizon_aios_documentation_index_update | `/horizon_aios_documentation_index_update` | `#lowcost` | Create/rebuild the documentation index so every doc is referenceable by a stable entry |
 | model-prefs-assign | `/model-prefs-assign` | `#lowcost` | Audit AIOS skills for their model-preference group callout and assign/refresh it, keeping both skill indexes' Model-group columns in sync |
-| agent-teams | `/agent-teams` | `#midcost` | Create or edit agent-team definitions in local.agent_teams.md at any scope — define the agent chain, per-role model groups, and loop/retry constructs |
+| agent-teams | `/agent-teams` | `#midcost` | Bare `/agent-teams` lists the loaded agent_teams.md/local.agent_teams.md files and their team names; otherwise create/edit team definitions at any scope (chain, per-role model groups, loop/retry constructs) |
 | horizon_aios_wiki_upkeep | `/horizon_aios_wiki_upkeep` | `#highcap` | Consistency pass between the operational wiki and its source documentation — finds drift, stale paths, outdated examples; fixes unambiguous issues and surfaces judgment calls |
