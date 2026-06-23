@@ -285,6 +285,24 @@ else
       sed "s|AIOS_EXEC_WRAPPER|$AIOS_EXEC_WRAPPER|g" "$SETTINGS_TEMPLATE" > "$SETTINGS_DST"
       ok "Copied template to ~/.claude/settings.json (pointed at aios-exec wrapper)."
       info "settings.json now resolves the active AIOS at run time - switching never rewrites it."
+
+      # Provenance stamp: record the SHA-256 of the EXACT settings.json bytes we just
+      # wrote. uninstall.sh Section 5 reads this to prove bootstrap created settings.json
+      # and the user has not modified it since. We only write the stamp on the branch
+      # where bootstrap actually CREATES settings.json (here); a pre-existing user
+      # settings.json gets no stamp, so uninstall preserves it.
+      # Contract (must match uninstall.sh reader byte-for-byte):
+      #   path   : ~/.claude/.horizon-settings.stamp
+      #   format : one line, lowercase SHA-256 hex of settings.json's on-disk bytes,
+      #            no trailing newline
+      SETTINGS_STAMP="$HOME/.claude/.horizon-settings.stamp"
+      if command -v sha256sum >/dev/null 2>&1; then
+        digest="$(sha256sum "$SETTINGS_DST" | awk '{print $1}')"
+      else
+        digest="$(shasum -a 256 "$SETTINGS_DST" | awk '{print $1}')"
+      fi
+      printf '%s' "$digest" > "$SETTINGS_STAMP"
+      ok "Wrote provenance stamp ~/.claude/.horizon-settings.stamp (SHA-256 of settings.json)."
     else
       info "Skipping settings.json — create it manually from the template."
     fi
@@ -337,6 +355,21 @@ if [ -d "$GIT_DIR" ]; then
   ok "Installed pre-commit hook."
 else
   info "$HORIZON_ROOT is not a git repository — skipping git hooks config."
+fi
+
+# 6b: .gitignore.user — the pre-commit hook syncs this file into
+# .git/info/exclude. Seed it from the template so a fresh install is
+# doctor-clean (horizon_aios_doctor.py checks $HORIZON_ROOT/.gitignore.user).
+# Idempotent: never overwrite an existing file (it holds user-local patterns).
+GITIGNORE_USER="$HORIZON_ROOT/.gitignore.user"
+GITIGNORE_TEMPLATE="$HORIZON_ROOT/.gitignore.user.template"
+if [ -f "$GITIGNORE_USER" ]; then
+  info ".gitignore.user already exists — skipping template copy."
+elif [ -f "$GITIGNORE_TEMPLATE" ]; then
+  cp "$GITIGNORE_TEMPLATE" "$GITIGNORE_USER"
+  ok "Created .gitignore.user from template."
+else
+  warn "Template not found: $GITIGNORE_TEMPLATE — create .gitignore.user manually."
 fi
 
 # -----------------------------------------------------------------------------
