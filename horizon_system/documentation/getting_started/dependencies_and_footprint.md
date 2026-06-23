@@ -17,7 +17,7 @@ installs these for you.
 | Dependency | Required / Optional | Why needed | Windows | macOS | Linux |
 |---|---|---|---|---|---|
 | **Git 2.9+** | Required | `core.hooksPath` (introduced in 2.9) wires the version-controlled pre-commit hook; earlier versions silently ignore it | `winget install Git.Git` | `brew install git` | `apt install git` / `dnf install git` |
-| **Claude Code CLI** | Required | The AI harness AIOS configures; must exist at `~/.claude/` before bootstrap | `npm install -g @anthropic-ai/claude-code` | Same | Same |
+| **Claude Code CLI** | Required | The AI harness AIOS configures; must exist at `~/.claude/` before bootstrap. Installed **per user** — see "Harness installation is a per-user (and per-Brain) responsibility" below | `npm install -g @anthropic-ai/claude-code` | Same | Same |
 | **Python 3.6+** | Required | `bootstrap.ps1`/`bootstrap.sh` call `horizon_aios_switch.py`, `horizon_aios_register_user_skills.py`, and `horizon_aios_harden.py`; `horizon_aios_create_brain.py` uses stdlib only | `winget install Python.Python.3` | `brew install python3` | `apt install python3` |
 | **Bash** | Required | Git hook scripts and the statusline dispatcher (`statusline.sh`) run in bash | Provided by Git for Windows (Git Bash) — no separate install | Built-in | Built-in |
 | **PowerShell 5.1+** | Required on Windows; optional on macOS/Linux | Windows statusline (`statusline-context-alerts.ps1`) and sound playback use PowerShell; Linux/macOS use bash equivalents and do not require `pwsh` | Built-in (Windows PowerShell 5.1); PowerShell 7 optional | `brew install --cask powershell` (optional) | `apt install powershell` (optional) |
@@ -46,6 +46,46 @@ error if not run elevated.
 
 All other bootstrap steps (CLAUDE.md redirect, skills junction, settings.json copy,
 git hooks, directories) are non-destructive and do not require elevation.
+
+### Harness installation is a per-user (and per-Brain) responsibility
+
+**AIOS does not install any harness, and it does not verify that a harness is
+installed or pointed at AIOS.** It assumes a harness is *already* present and works.
+Concretely, the contract AIOS relies on is:
+
+- Each user who will run AIOS — the owner **and every Brain** — already has a harness
+  installed whose executable is on a `PATH` that user can resolve, runnable by that
+  user with valid execute permissions. This holds regardless of *which* harness is in
+  use (Claude Code is the reference harness, but AIOS is bring-your-own-harness).
+
+What AIOS *does* do is **redirect the harness's default configuration folders** —
+`~/.claude/CLAUDE.md`, `~/.claude/settings.json`, `~/.claude/skills/`, and the memory /
+transcript locations — so that prompting, knowledge, and memory are centralized under
+`$HORIZON_ROOT` instead of living in each user's private harness defaults. That
+redirection is the integration; it is not an installation.
+
+**Why this is a per-user concern, and why Brains make it per-Brain.** The default
+Claude Code install (`npm install -g @anthropic-ai/claude-code`) is a **per-user**
+install — its config home is the per-user `~/.claude/`. A Brain is a **separate OS user
+account** (see Section 3). A harness that was installed only for the owner is therefore
+**not guaranteed to be available to a Brain user**: the Brain may need its own
+per-user harness install, or a system-/all-users install whose executable is on a
+`PATH` the Brain account can run with valid permissions. Each Brain that is expected to
+run a harness must independently satisfy the contract above.
+
+**Two setup steps AIOS deliberately does not perform (today).** These are left as
+**operator/user responsibilities** and are out of scope for the current
+release — they may be automated for common harnesses in a future version:
+
+1. **Installing the harness** for each user / Brain that needs one.
+2. **Verifying that each user's / Brain's harness is actually using the AIOS
+   redirection** (i.e. that the harness resolves its config from the
+   AIOS-redirected locations rather than untouched private defaults).
+
+If you provision a Brain that will run a harness, treat both of the above as manual
+prerequisites for that Brain. AIOS provisioning wires the Brain's *config*
+(`brains/<brain-name>/.claude/...`, see Section 3); it does not install the Brain's
+harness or confirm the harness is honoring that config.
 
 ---
 

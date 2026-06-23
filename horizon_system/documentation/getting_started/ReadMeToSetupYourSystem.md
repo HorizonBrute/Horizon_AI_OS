@@ -627,6 +627,19 @@ A brain is an isolated AI persona running under a separate OS user account, scop
 - **Python 3.6 or later** must be installed and on `PATH`. The script uses stdlib only — no third-party packages required.
 - The script **must be run as Administrator** (Windows) or **root** (Unix). It creates OS user accounts and modifies ACLs, both of which require elevated privileges.
 
+> **Harness installation is the Brain's own prerequisite — AIOS does not handle it.**
+> A brain runs under a **separate OS user account**, and the default Claude Code install
+> is **per-user**. A harness installed only for the owner is not guaranteed to be
+> available to the brain user. Before a brain can actually run, that brain user must
+> independently have a harness installed whose executable is on a `PATH` it can run with
+> valid permissions — either its own per-user install or a system-/all-users install.
+> `horizon_aios_create_brain.py` wires the brain's *config* (`.claude/CLAUDE.md`,
+> `settings.json`, skills junction) but does **not** install the brain's harness and does
+> **not** verify the harness is pointed at the AIOS-redirected config. Both of those are
+> deliberately left as operator responsibilities for now and may be automated for common
+> harnesses in a future release. See `getting_started/dependencies_and_footprint.md` →
+> "Harness installation is a per-user (and per-Brain) responsibility."
+
 ### What the script creates
 
 Running `horizon_aios_create_brain.py` for a brain named `<brain-name>` produces:
