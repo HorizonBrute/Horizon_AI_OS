@@ -21,13 +21,14 @@
 #   Section 5b — ~/.claude/projects junction (memory redirect); memory data left intact
 #   Section 6  — .git/hooks/commit-msg, pre-commit; git core.hooksPath config
 #   Section 7  — $HORIZON_BIN entry from Machine-scope PATH
+#   Section 8  — active_env line in PowerShell $PROFILE + the two global git
+#                include.path entries `aios setup` writes (framework gitconfig
+#                and the machine-local git_identity.local.gitconfig)
 #   Section 9  — $HORIZON_ETC/aios_local.conf, $HORIZON_SYSTEM/logs/ (only if empty)
 #   Section 10 — brains-group ACEs removed from $HORIZON_SYSTEM subtrees
 #                Advisory: 'brains' OS group left in place (may have brain members)
 #
 # What this does NOT remove (requires manual steps — see advisories printed below):
-#   - Shell-profile line sourcing active_env.ps1 (user added this manually)
-#   - Global git include.path pointing to harness_configs/git/gitconfig (user added manually)
 #   - Optional sync schedule created by horizon_aios_setup_sync_schedule.py (separate opt-in)
 #   - 'brains' OS group (may have brain OS users as members)
 #   - Brain OS user accounts and their data (use horizon_aios_create_brain.py's remove flow)
@@ -155,7 +156,7 @@ if (Test-Path $ClaudeMd) {
     Skip "~/.claude/CLAUDE.md not found — nothing to remove."
 }
 
-Advisory "If you added '. `$HOME\.horizon\active_env.ps1' to your PowerShell `$PROFILE, remove that line manually."
+Info "The active_env line in your PowerShell `$PROFILE is removed in Section 8 below."
 
 # =============================================================================
 # SECTION 3: ~/.claude/skills/ junction and user-skill symlinks in skills_sbin/
@@ -440,7 +441,7 @@ if (Test-Path $GitDir) {
     Skip "$HORIZON_ROOT is not a git repository — skipping git hooks cleanup."
 }
 
-Advisory "If you set 'include.path' in your global gitconfig to point at harness_configs/git/gitconfig, remove that line manually."
+Info "Global git include.path entries written by 'aios setup' are removed in Section 8 below."
 
 # =============================================================================
 # SECTION 7: Machine-scope PATH — remove HORIZON_BIN entry
@@ -472,6 +473,78 @@ if ($Cleaned.Count -lt $PathEntries.Count) {
     }
 } else {
     Skip "No horizon_system\bin entry found in Machine-scope PATH."
+}
+
+# =============================================================================
+# SECTION 8: Shell profile line + global git include.path entries
+# `aios setup` (horizon_aios_switch.py) actively writes three machine-wide
+# pointers OUTSIDE the repo root that persist after the repo folder is gone and
+# must be reversed here (older bootstrap only PRINTED advisories for these):
+#   (a) the active_env source line in the user's PowerShell $PROFILE
+#   (b) the global git include.path -> harness_configs/git/gitconfig (framework)
+#   (c) the global git include.path -> ai_os_etc/git_identity.local.gitconfig
+# The machine-local identity FILE itself lives under $HORIZON_ROOT and dies with
+# the repo; only its global include.path entry needs removing here.
+# =============================================================================
+Banner "SECTION 8: Shell profile line and global git include.path"
+
+# (a) Strip the active_env source line from the PowerShell profile. Resolve the
+# same profile path `aios setup` targeted (WindowsPowerShell $PROFILE, with the
+# documented fallback). Remove any line referencing active_env.ps1; preserve all
+# other content. Delete the profile only if nothing else remains.
+$ProfilePath = $null
+try { $ProfilePath = (& powershell -NoProfile -Command '$PROFILE') } catch { $ProfilePath = $null }
+if (-not $ProfilePath) {
+    $ProfilePath = Join-Path $HOME "Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
+}
+if (Test-Path $ProfilePath) {
+    $profLines = @(Get-Content $ProfilePath)
+    $kept = @($profLines | Where-Object { $_ -notmatch "active_env\.ps1" })
+    if ($kept.Count -eq $profLines.Count) {
+        Skip "No active_env source line found in $ProfilePath."
+    } elseif ($DryRun) {
+        Dry "strip active_env source line from $ProfilePath."
+    } else {
+        $remaining = @($kept | Where-Object { $_.Trim() -ne "" })
+        if ($remaining.Count -eq 0) {
+            Remove-Item $ProfilePath -Force
+            Ok "Removed $ProfilePath (was only the AIOS active_env line)."
+        } else {
+            Set-Content -Path $ProfilePath -Value ($kept -join "`n") -Encoding UTF8
+            Ok "Stripped active_env source line from $ProfilePath."
+        }
+    }
+} else {
+    Skip "PowerShell profile not found ($ProfilePath) — nothing to strip."
+}
+
+# (b)+(c) Remove ONLY the two global git include.path entries `aios setup` added
+# (framework gitconfig + machine-local identity), matched against the literal
+# stored value so any unrelated include.path entries are left untouched.
+$IncludeTargets = @(
+    (Join-Path $HORIZON_SYSTEM "harness_configs\git\gitconfig"),
+    (Join-Path $HORIZON_ETC "git_identity.local.gitconfig")
+)
+$allIncludes = @(git config --global --get-all include.path 2>$null)
+foreach ($target in $IncludeTargets) {
+    $tnorm = $target.Replace('/', '\').TrimEnd('\')
+    $match = @($allIncludes | Where-Object { $_.Replace('/', '\').TrimEnd('\') -ieq $tnorm })
+    if ($match.Count -eq 0) {
+        Skip "Global include.path not set for $target — nothing to unset."
+        continue
+    }
+    if ($DryRun) {
+        Dry "git config --global --unset-all include.path (value: $target)."
+    } else {
+        # value-regex anchored to the literal stored path (regex-escaped).
+        $rx = [regex]::Escape($match[0])
+        git config --global --unset-all include.path $rx 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            Ok "Removed global include.path -> $target"
+        } else {
+            Warn "Could not unset include.path for $target (git rc=$LASTEXITCODE) — remove manually."
+        }
+    }
 }
 
 # =============================================================================
@@ -583,9 +656,7 @@ Write-Host ""
 Write-Host "  Horizon AIOS bootstrap footprint removed from this machine."
 Write-Host ""
 Write-Host "  Manual steps still required (see [MANUAL] advisories above):"
-Write-Host "    1. Remove the active_env.ps1 source line from your PowerShell `$PROFILE"
-Write-Host "    2. Remove the 'include.path' from your global gitconfig (if set)"
-Write-Host "    3. Remove the sync scheduled task (if you set one up)"
-Write-Host "    4. Remove the 'brains' OS group (if no brain accounts remain)"
-Write-Host "    5. Remove any brain OS user accounts (use horizon_aios_create_brain.py remove flow)"
+Write-Host "    1. Remove the sync scheduled task (if you set one up)"
+Write-Host "    2. Remove the 'brains' OS group (if no brain accounts remain)"
+Write-Host "    3. Remove any brain OS user accounts (use horizon_aios_create_brain.py remove flow)"
 Write-Host ""

@@ -129,7 +129,7 @@ What changes on the machine when `bootstrap.ps1` / `bootstrap.sh` runs.
 | Change | Windows | macOS | Linux |
 |---|---|---|---|
 | **System PATH** | `$HORIZON_BIN` added to Machine-scope PATH via `[System.Environment]::SetEnvironmentVariable("Path", ..., "Machine")`; stale `horizon_system\bin` entries removed first | `$HORIZON_BIN` written to `/etc/paths.d/horizon-aios` (for `zsh` via `path_helper`) and to `/etc/profile.d/horizon_aios.sh` | `$HORIZON_BIN` written to `/etc/profile.d/horizon_aios.sh` (mode 644); stale entries removed first |
-| **Shell profile (per-user, owner only)** | User adds one line to PowerShell `$PROFILE`: `. "$HOME\.horizon\active_env.ps1"` | User adds one line to `~/.bashrc` or `~/.zshrc`: `. "$HOME/.horizon/active_env.sh"` | Same as macOS |
+| **Shell profile (per-user, owner only)** | Written by `aios setup`: one line in PowerShell `$PROFILE` — `if (Test-Path "$HOME\.horizon\active_env.ps1") { . "$HOME\.horizon\active_env.ps1" }` | Written by `aios setup`: one line in `~/.bashrc` — `[ -f "$HOME/.horizon/active_env.sh" ] && . "$HOME/.horizon/active_env.sh"` | Same as macOS |
 | **`/etc/profile.d/horizon_aios.sh`** | N/A | Created/updated (root-owned, 644) — also used alongside `/etc/paths.d/` | Created/updated (root-owned, 644) |
 | **`/etc/paths.d/horizon-aios`** | N/A | Created/updated (644) | N/A |
 | **`brains` OS group** | Created (`New-LocalGroup`) if absent | Created (`dseditgroup -o create`) if absent | Created (`groupadd`) if absent |
@@ -139,9 +139,11 @@ What changes on the machine when `bootstrap.ps1` / `bootstrap.sh` runs.
 | Setting | Scope | Value | Notes |
 |---|---|---|---|
 | `core.hooksPath` | Local (OS repo only) | `./horizon_system/harness_configs/git/hooks` | Set by Section 6 of bootstrap; tells Git to use the version-controlled hooks directory |
-| `include.path` | Global (machine-wide) | `$HORIZON_SYSTEM/harness_configs/git/gitconfig` | Set manually by the user per setup guide Step 9; pulls in `commit.gpgsign`, `user.signingkey`, `excludesfile` |
-| `commit.gpgsign` | Global (via included gitconfig) | `true` | Every commit on the machine is GPG-signed after setup |
-| `user.signingkey` | Global (via included gitconfig) | User's GPG fingerprint | Set during setup Step 8.2 |
+| `include.path` (framework) | Global (machine-wide) | `$HORIZON_SYSTEM/harness_configs/git/gitconfig` | Written automatically by `aios setup` (`git config --global --add include.path`); pulls in `commit.gpgsign`, `signoff`, `excludesfile` |
+| `include.path` (identity) | Global (machine-wide) | `$HORIZON_ETC/git_identity.local.gitconfig` | Written automatically by `aios setup`; pulls in the machine-local `user.name` / `user.email` / `user.signingkey` |
+| `$HORIZON_ETC/git_identity.local.gitconfig` | Machine-local file (gitignored, under repo) | `[user]` name / email / signingkey | Written by `aios setup`; never committed. The FILE dies with the repo folder; its global `include.path` entry (above) is removed by `uninstall.ps1` Section 8 |
+| `commit.gpgsign` | Global (via included framework gitconfig) | `true` | Every commit on the machine is GPG-signed after setup |
+| `user.signingkey` | Global (via included identity gitconfig) | User's GPG fingerprint | Collected by `aios setup` and written into `git_identity.local.gitconfig` |
 
 ### ACLs / permissions set by `horizon_aios_harden.py`
 
