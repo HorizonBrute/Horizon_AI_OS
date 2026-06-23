@@ -12,11 +12,17 @@ Only these definition files are read — never a file merely named `agent_teams.
 elsewhere (e.g. the user-facing doc under `documentation/`). Most-specific scope
 wins on a same-named team; new names are unioned in.
 
+Role flags (inline `(`#group`, if needed)` tokens and `**Loop:**`-style annotations)
+are parsed generically; their vocabulary is the catalog in `$HORIZON_ETC/
+agent_team_flags.md` + `local.agent_team_flags.md`, which this tool reads to label
+flags, list them (`--flags`), and warn on flags not in the registry.
+
 This is the deterministic discovery the `/agent-teams` skill calls so the acting
 model does not hand-glob. Stdlib only.
 
 Usage:
     resolve_agent_teams.py [path] [--root DIR] [--json]
+    resolve_agent_teams.py --flags [--root DIR] [--json]
 
 Exit codes: 0 ok; 2 could not resolve the AIOS root.
 """
@@ -28,9 +34,10 @@ import re
 import sys
 
 TEAM_RE = re.compile(r"^###\s+(.+?)\s*$")
-ROLE_RE = re.compile(
-    r"^\s*\d+\.\s+(.+?)\s*\(`(#?[A-Za-z0-9_-]+)`(?:\s*,\s*(if needed|if asked))?")
-LOOP_RE = re.compile(r"^\s*(?:>\s*)?\*\*Loop:\*\*", re.IGNORECASE)
+# role label, model group, then everything else inside the parenthetical (flags).
+ROLE_RE = re.compile(r"^\s*\d+\.\s+(.+?)\s*\(`(#?[A-Za-z0-9_-]+)`([^)]*)\)")
+# a `**Name:** text` annotation line under a role.
+ANNOT_RE = re.compile(r"^\s*(?:>\s*)?\*\*([A-Za-z][A-Za-z0-9 _-]*):\*\*\s*(.*)$")
 
 
 def find_root(start, override):
@@ -55,9 +62,37 @@ def find_root(start, override):
     return fallback
 
 
+def load_flags(root):
+    """Read the shipped + local flag registries; return an ordered dict
+    {name_lower: {name, form, means}} parsed from each `| flag | form | means |`
+    table row (header/separator rows skipped)."""
+    flags = {}
+    etc = os.path.join(root, "horizon_system", "ai_os_etc")
+    for fn in ("agent_team_flags.md", "local.agent_team_flags.md"):
+        try:
+            with open(os.path.join(etc, fn), encoding="utf-8", errors="replace") as f:
+                lines = f.read().splitlines()
+        except OSError:
+            continue
+        for line in lines:
+            if not line.lstrip().startswith("|"):
+                continue
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            name = cells[0].strip().strip("`").strip()
+            if not name or name.lower() == "flag" or set(name) <= set("-: "):
+                continue
+            flags[name.lower()] = {
+                "name": name,
+                "form": cells[1].strip() if len(cells) > 1 else "",
+                "means": cells[2].strip() if len(cells) > 2 else "",
+            }
+    return flags
+
+
 def parse_teams(path):
-    """Return a list of {name, roles:[{role, group}], loop:bool} for a file, or
-    [] if the file is absent or a stub (no `###` team headings)."""
+    """Return a list of team dicts for a file, or [] if absent/stub. Each team:
+    {name, summary, roles:[{role, group, flags, annotations}], loop, loop_max,
+    loop_target}."""
     try:
         with open(path, encoding="utf-8", errors="replace") as f:
             lines = f.read().splitlines()
@@ -82,8 +117,8 @@ def parse_teams(path):
     teams = []
     for b in blocks:
         blk = b["lines"]
-        # Summary = the descriptive lines after the heading, up to the first blank
-        # line or the first numbered role (joined; handles wrapped sentences).
+        # Summary = descriptive lines after the heading, up to the first blank line
+        # or the first numbered role (joined; handles wrapped sentences).
         i = 0
         while i < len(blk) and not blk[i].strip():
             i += 1
@@ -91,17 +126,51 @@ def parse_teams(path):
         while i < len(blk) and blk[i].strip() and not ROLE_RE.match(blk[i]):
             summ.append(blk[i].strip())
             i += 1
-        roles = [{"role": rm.group(1).strip(), "group": rm.group(2),
-                  "cond": rm.group(3)}
-                 for rm in (ROLE_RE.match(ln) for ln in blk) if rm]
-        loop = any(LOOP_RE.match(ln) for ln in blk)
-        loop_max = None
-        if loop:
-            cap = re.search(r"or\s+(\d+)\s+iteration", " ".join(blk), re.IGNORECASE)
-            if cap:
-                loop_max = int(cap.group(1))
+
+        roles = []
+        cur_role = None
+        for line in blk:
+            rm = ROLE_RE.match(line)
+            if rm:
+                flags = [t.strip() for t in rm.group(3).lstrip(",").split(",")
+                         if t.strip()]
+                cur_role = {"role": rm.group(1).strip(), "group": rm.group(2),
+                            "flags": flags, "annotations": []}
+                roles.append(cur_role)
+                continue
+            am = ANNOT_RE.match(line)
+            if am and cur_role is not None:
+                cur_role["annotations"].append({"name": am.group(1).strip(),
+                                                "text": am.group(2).strip()})
+                continue
+            # continuation of the current annotation (indented wrap, no new marker)
+            if (cur_role is not None and cur_role["annotations"] and line.strip()
+                    and not ROLE_RE.match(line)):
+                cur_role["annotations"][-1]["text"] += " " + line.strip()
+
+        # Loop: a role annotation named 'loop' -> parse cap + return target.
+        loop = loop_max = loop_target = None
+        loop = False
+        for r in roles:
+            for a in r["annotations"]:
+                if a["name"].lower() != "loop":
+                    continue
+                loop = True
+                r["loop"] = True
+                cap = re.search(r"or\s+(\d+)\s+iteration", a["text"], re.IGNORECASE)
+                if cap:
+                    loop_max = int(cap.group(1))
+                tgt = re.search(r'(?:return to|from)\s+["“]([^"”]+)["”]',
+                                a["text"], re.IGNORECASE)
+                if tgt:
+                    loop_target = tgt.group(1).strip()
+                else:
+                    stp = re.search(r"from step\s+(\d+)", a["text"], re.IGNORECASE)
+                    if stp:
+                        loop_target = f"step {stp.group(1)}"
+
         teams.append({"name": b["name"], "summary": " ".join(summ), "roles": roles,
-                      "loop": loop, "loop_max": loop_max})
+                      "loop": loop, "loop_max": loop_max, "loop_target": loop_target})
     return teams
 
 
@@ -153,18 +222,29 @@ def build(path, root):
     return sources, resolved, teams_by_name
 
 
+def used_flags(teams_by_name):
+    """All flag tokens + annotation names used across the resolved teams (lower)."""
+    used = set()
+    for t in teams_by_name.values():
+        for r in t["roles"]:
+            used.update(f.lower() for f in r.get("flags", []))
+            used.update(a["name"].lower() for a in r.get("annotations", []))
+    return used
+
+
 def _prefs(team):
-    """Compact 'Role `#group` (cond) -> ...' chain, with a loop marker."""
+    """Compact 'Role `#group` (flags) -> ...' chain, with a loop marker."""
     parts = []
     for r in team["roles"]:
         s = f"{r['role']} `{r['group']}`"
-        if r.get("cond"):
-            s += f" ({r['cond']})"
+        if r.get("flags"):
+            s += " (" + ", ".join(r["flags"]) + ")"
         parts.append(s)
     chain = " -> ".join(parts) or "(roles not parsed)"
     if team.get("loop"):
         cap = f" <={team['loop_max']}" if team.get("loop_max") else ""
-        chain += f"  [loop{cap}]"
+        tgt = f" -> {team['loop_target']}" if team.get("loop_target") else ""
+        chain += f"  [loop{cap}{tgt}]"
     return chain
 
 
@@ -183,17 +263,29 @@ def human(path, root, sources, resolved, teams_by_name):
         out.append("")
         out.append("| Team | What it does | Model preferences (role -> group) | Source |")
         out.append("|------|--------------|-----------------------------------|--------|")
+
         def cell(s):
             return s.replace("|", "\\|")
         for name in resolved:
             t = teams_by_name[name]
             summary = t.get("summary") or ""
-            r = resolved[name]
-            src = "shipped" if r["label"] == "shipped" else r["source"]
+            src = "shipped" if resolved[name]["label"] == "shipped" else resolved[name]["source"]
             out.append(f"| {cell(name)} | {cell(summary)} | {cell(_prefs(t))} | {src} |")
     else:
         out.append("Resolved teams: (none)")
     return "\n".join(out)
+
+
+def print_flags(registry, as_json):
+    if as_json:
+        print(json.dumps(list(registry.values()), indent=2))
+        return
+    print("Recognized agent-team role flags (agent_team_flags.md + local override):")
+    print("")
+    print("| Flag | Form | Means |")
+    print("|------|------|-------|")
+    for v in registry.values():
+        print(f"| {v['name']} | {v['form']} | {v['means']} |")
 
 
 def main():
@@ -202,6 +294,8 @@ def main():
                     help="Path to resolve the scope cascade for (default: cwd).")
     ap.add_argument("--root", help="Override $HORIZON_ROOT instead of auto-resolving.")
     ap.add_argument("--json", action="store_true", help="Emit structured JSON.")
+    ap.add_argument("--flags", action="store_true",
+                    help="List the recognized role flags from the registry and exit.")
     args = ap.parse_args()
 
     root = find_root(args.path, args.root)
@@ -210,7 +304,13 @@ def main():
                          "(no agent_teams.md found up-tree). Pass --root.\n")
         return 2
 
+    registry = load_flags(root)
+    if args.flags:
+        print_flags(registry, args.json)
+        return 0
+
     sources, resolved, teams_by_name = build(args.path, root)
+    unknown = sorted(u for u in used_flags(teams_by_name) if u not in registry)
     if args.json:
         print(json.dumps({
             "path": os.path.abspath(args.path),
@@ -219,9 +319,16 @@ def main():
                          "teams": s["teams"]} for s in sources],
             "resolved": [{"name": n, **resolved[n], "team": teams_by_name[n]}
                          for n in resolved],
+            "flags_registry": list(registry.values()),
+            "unknown_flags": unknown,
         }, indent=2))
     else:
         print(human(args.path, root, sources, resolved, teams_by_name))
+        if unknown:
+            print("")
+            print("WARNING: flags used in a team but not in the registry: "
+                  + ", ".join(unknown))
+            print("Add them to local.agent_team_flags.md (or fix the typo).")
     return 0
 
 

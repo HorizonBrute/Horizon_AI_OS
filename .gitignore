@@ -608,7 +608,7 @@ horizon_system/ai_os_etc/git_identity.local.gitconfig
 
 # User-local model preferences extension (gitignored; populate from the example
 # in horizon_aios_model_prefs.md and never overwritten by AIOS updates)
-horizon_system/ai_os_etc/horizon_aios_model_prefs.extend.md
+horizon_system/ai_os_etc/horizon_aios_model_prefs.local.md
 
 # Machine-local agent-instruction override. Every agents.md @-imports its sibling
 # local.agents.md; it ships as local.agents.md.template, is materialized by
@@ -625,6 +625,11 @@ local.agents.md
 # (different name); agent_teams.md (no `local.` prefix) stays tracked.
 # Materialized by `aios setup`. See file_structure_invariants §13.
 local.agent_teams.md
+
+# Machine-local agent-team FLAG registry override. agents.md @-imports it alongside
+# the shipped agent_team_flags.md; ships as local.agent_team_flags.md.template,
+# materialized by `aios setup`, never tracked or clobbered. See §13.
+horizon_system/ai_os_etc/local.agent_team_flags.md
 
 # Machine-local personal project ignore list (copy .gitignore.user.template → .gitignore.user)
 .gitignore.user

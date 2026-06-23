@@ -951,8 +951,8 @@ def setup_model_prefs(chosen_root, args):
     """Step 10: OFFER to copy the model-prefs extend template to its active
     .extend.md (SOP §15). Do not run catalog refresh."""
     etc = os.path.join(chosen_root, "horizon_system", "ai_os_etc")
-    template = os.path.join(etc, "horizon_aios_model_prefs.extend.template.md")
-    active = os.path.join(etc, "horizon_aios_model_prefs.extend.md")
+    template = os.path.join(etc, "horizon_aios_model_prefs.local.template.md")
+    active = os.path.join(etc, "horizon_aios_model_prefs.local.md")
     if os.path.isfile(active):
         ok("model-prefs extend file already exists.")
         return
@@ -1031,6 +1031,32 @@ def setup_local_agent_teams(chosen_root):
             warn(f"Could not create {rel}: {exc}")
 
 
+def setup_agent_team_flags(chosen_root):
+    """Step 10d: materialize the OS-level local.agent_team_flags.md from its template
+    if absent (file_structure_invariants §13). The live file is gitignored — never
+    tracked or clobbered — so creating it keeps the `@local.agent_team_flags.md`
+    import from dangling. The shipped agent_team_flags.md is tracked and NOT
+    materialized here."""
+    import shutil
+    etc = os.path.join(chosen_root, "horizon_system", "ai_os_etc")
+    template = os.path.join(etc, "local.agent_team_flags.md.template")
+    active = os.path.join(etc, "local.agent_team_flags.md")
+    if os.path.isfile(active):
+        ok("local.agent_team_flags.md already exists.")
+        return
+    try:
+        if os.path.isfile(template):
+            shutil.copyfile(template, active)
+            ok("Created local.agent_team_flags.md from template — add custom flags or run /agent-teams.")
+        else:
+            with open(active, "w", encoding="utf-8") as f:
+                f.write("# Local Agent Team Flags — machine-local override "
+                        "(gitignored)\n\n## Flags\n\n| Flag | Form | Means |\n|------|------|-------|\n")
+            ok("Created stub local.agent_team_flags.md (no template found).")
+    except OSError as exc:
+        warn(f"Could not create local.agent_team_flags.md: {exc}")
+
+
 def setup_verify_gate(chosen_root):
     """Step 11: run horizon_aios_doctor.py --post-setup as a NON-FATAL gate.
     A muted-sound SKIP must not fail setup; report PASS/FAIL summary."""
@@ -1079,6 +1105,7 @@ def cmd_setup(_reg, args):
     setup_model_prefs(chosen_root, args)
     setup_local_agents(chosen_root)
     setup_local_agent_teams(chosen_root)
+    setup_agent_team_flags(chosen_root)
     setup_verify_gate(chosen_root)
 
     print()

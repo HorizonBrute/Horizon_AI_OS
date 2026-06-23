@@ -16,7 +16,7 @@ them self-report which model ran.
 
 Source of truth for the layer and member grammar:
 `$HORIZON_ETC/horizon_aios_model_prefs.md` (+ the gitignored
-`horizon_aios_model_prefs.extend.md`). Read both before resolving anything.
+`horizon_aios_model_prefs.local.md`). Read both before resolving anything.
 
 ---
 
@@ -58,7 +58,7 @@ current runtime.
 
 ### Step 1 — Load config and identify runtime
 1.1 Read `$HORIZON_ETC/horizon_aios_model_prefs.md` and
-    `$HORIZON_ETC/horizon_aios_model_prefs.extend.md` (if the extend file is
+    `$HORIZON_ETC/horizon_aios_model_prefs.local.md` (if the extend file is
     absent, say so — groups are empty and there is nothing to resolve).
 1.2 Identify the current runtime — the harness you are executing in. For Claude
     Code: `claude:` members are runnable; `ollama:` members are skipped unless an

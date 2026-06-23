@@ -136,7 +136,7 @@ alternatives, and pricing changes. Companion to `/model-prefs`, which writes
 the extend file.
 
 **Onboarding:** Provides an up-to-date model+pricing reference so
-`horizon_aios_model_prefs.extend.md` is populated with valid, current ids
+`horizon_aios_model_prefs.local.md` is populated with valid, current ids
 rather than training-cutoff guesses.
 **Offboarding:** You lose the guided, multi-provider fetch. Provider docs remain
 publicly accessible and can be read directly; the catalog format and fetch
@@ -150,7 +150,7 @@ strategy are documented in the skill's `SKILL.md`.
 **Underlying tool:** None — Claude reads and writes the extend file directly
 
 Authors or inspects the gitignored model-preference extend file
-(`$HORIZON_ETC/horizon_aios_model_prefs.extend.md`): model groups, per-session
+(`$HORIZON_ETC/horizon_aios_model_prefs.local.md`): model groups, per-session
 slot preferences, and task-class routing rules. The mechanism is in-context —
 the acting model reads the file each session and honors it by direct
 instruction; no scripts or env vars are wired. Writes nothing to the OS-tracked

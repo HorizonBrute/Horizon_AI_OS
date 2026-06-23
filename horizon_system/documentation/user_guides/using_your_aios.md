@@ -583,14 +583,14 @@ Run `/model-prefs` to configure interactively, or set up the extend file manuall
 
 ```bash
 # Linux / macOS
-cp "$HORIZON_ETC/horizon_aios_model_prefs.extend.template.md" \
-   "$HORIZON_ETC/horizon_aios_model_prefs.extend.md"
+cp "$HORIZON_ETC/horizon_aios_model_prefs.local.template.md" \
+   "$HORIZON_ETC/horizon_aios_model_prefs.local.md"
 ```
 
 ```powershell
 # Windows
-Copy-Item "$env:HORIZON_ETC\horizon_aios_model_prefs.extend.template.md" `
-          "$env:HORIZON_ETC\horizon_aios_model_prefs.extend.md"
+Copy-Item "$env:HORIZON_ETC\horizon_aios_model_prefs.local.template.md" `
+          "$env:HORIZON_ETC\horizon_aios_model_prefs.local.md"
 ```
 
 All choices go in this gitignored file — never in the OS-tracked base spec, which a sync would overwrite. Run `/model-catalog-refresh` to fetch current model IDs and pricing before filling in group members.
@@ -761,7 +761,7 @@ These files are gitignored and must stay that way:
 |---|---|
 | `local.agents.md` (all instances) | Machine-local agent instructions; overrides shipped content |
 | `settings.local.json` | Machine-specific permission overrides |
-| `horizon_aios_model_prefs.extend.md` | Your private model groups and routing rules |
+| `horizon_aios_model_prefs.local.md` | Your private model groups and routing rules |
 | `memory/` | Harness transcripts and agent memory (never publish) |
 | `handoffs/` | Session handoff documents |
 | `objectives/` | Durable objectives |

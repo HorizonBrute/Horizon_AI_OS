@@ -601,14 +601,14 @@ architecture — without you naming a model every time.
 
 Windows (PowerShell):
 ```powershell
-Copy-Item "$env:HORIZON_ETC\horizon_aios_model_prefs.extend.template.md" `
-          "$env:HORIZON_ETC\horizon_aios_model_prefs.extend.md"
+Copy-Item "$env:HORIZON_ETC\horizon_aios_model_prefs.local.template.md" `
+          "$env:HORIZON_ETC\horizon_aios_model_prefs.local.md"
 ```
 
 Linux / macOS (bash):
 ```bash
-cp "$HORIZON_ETC/horizon_aios_model_prefs.extend.template.md" \
-   "$HORIZON_ETC/horizon_aios_model_prefs.extend.md"
+cp "$HORIZON_ETC/horizon_aios_model_prefs.local.template.md" \
+   "$HORIZON_ETC/horizon_aios_model_prefs.local.md"
 ```
 
 15.2 Run `/model-catalog-refresh` in a Claude Code session to fetch current

@@ -34,7 +34,7 @@ for the grammar (member resolution, runtime-qualified members, fallback order).
 
 1. Base file `horizon_aios_model_prefs.md` is **OS-tracked** — do not put user
    choices there. All user configuration goes in the **extend file**:
-   `$HORIZON_ETC/horizon_aios_model_prefs.extend.md` (gitignored, auto-loaded).
+   `$HORIZON_ETC/horizon_aios_model_prefs.local.md` (gitignored, auto-loaded).
 2. Member grammar: bare `model-id` (any runtime) or `runtime:model-id`
    (e.g. `claude:haiku`, `ollama:llama3.2`). Local/third-party models the AIOS
    does not understand are first-class — list them freely; runtimes that can't
@@ -52,7 +52,7 @@ for the grammar (member resolution, runtime-qualified members, fallback order).
 
 ### Step 1 — Read current state
 1.1 Read `$HORIZON_ETC/horizon_aios_model_prefs.md` (structure + group names).
-1.2 Read `$HORIZON_ETC/horizon_aios_model_prefs.extend.md` if it exists. If it
+1.2 Read `$HORIZON_ETC/horizon_aios_model_prefs.local.md` if it exists. If it
     does not, you will create it in Step 3.
 
 ### Step 2 — Clarify intent
@@ -63,7 +63,7 @@ for the grammar (member resolution, runtime-qualified members, fallback order).
     `llama3.2` meant for Ollama? then write `ollama:llama3.2`).
 
 ### Step 3 — Write the extend file
-3.1 If absent, create `$HORIZON_ETC/horizon_aios_model_prefs.extend.md` with the
+3.1 If absent, create `$HORIZON_ETC/horizon_aios_model_prefs.local.md` with the
     headings from the base file's "Extension File" section.
 3.2 Apply the change with Edit/Write. Use one `-` member per line under a
     `### #group`; one `class -> #group` rule per line under `## Task-Class Routing`.

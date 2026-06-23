@@ -114,7 +114,7 @@ additional fields (charter blocks, conditional roles, etc.).
 
 The `#group` names in team role definitions (`#midcost`, `#highcap`, etc.) are
 resolved through the model-preference layer. Configure which models back each
-group in `$HORIZON_ETC/horizon_aios_model_prefs.extend.md`; see
+group in `$HORIZON_ETC/horizon_aios_model_prefs.local.md`; see
 `$HORIZON_DOCS/system/model_preferences.md` for the full setup workflow.
 
 The `local.agent_teams.md` override file follows the same git-safe, gitignored,

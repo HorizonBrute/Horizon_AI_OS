@@ -6,7 +6,7 @@ is no enforcement engine, env-var wiring, or resolver script -- reliability come
 from the model following context, the same channel it follows any instruction in.
 
 You own the configuration. Define groups, members, and routing in
-`horizon_aios_model_prefs.extend.md` (gitignored, same directory, auto-loaded).
+`horizon_aios_model_prefs.local.md` (gitignored, same directory, auto-loaded).
 This base file ships the structure; the extend file holds your choices.
 
 ---
@@ -112,8 +112,8 @@ Example (define real rules in the extend file):
 
 ## Extension File
 
-`horizon_aios_model_prefs.extend.md` (same directory, gitignored, auto-loaded).
-Copy `horizon_aios_model_prefs.extend.template.md` to start; run `/model-catalog-refresh`
+`horizon_aios_model_prefs.local.md` (same directory, gitignored, auto-loaded).
+Copy `horizon_aios_model_prefs.local.template.md` to start; run `/model-catalog-refresh`
 for a current model + pricing list to fill in. Same headings; group members one
 per line with `-`, routing rules with `->`:
 
@@ -162,7 +162,7 @@ apply, and on conflict the more-specific *scope* wins (then, within a scope, the
 more-specific *class*).
 
 **Override-file convention — anchored on `agents.md`, never `CLAUDE.md`.** A scope
-that wants an override drops a `horizon_aios_model_prefs.extend.md` in its own
+that wants an override drops a `horizon_aios_model_prefs.local.md` in its own
 directory, and that scope's `agents.md` @-imports it. `CLAUDE.md` is only a thin
 Claude-Code shim pointing at the sibling `agents.md`; no override is ever routed
 through it.

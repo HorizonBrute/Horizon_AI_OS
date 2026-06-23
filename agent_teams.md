@@ -23,12 +23,13 @@ it falls back to **Full Team**.
 A role may declare a **Loop** to re-run an earlier role with feedback until a pass
 condition or an iteration cap. Declare it inline on the looping role:
 
-> **Loop:** on `<condition>`, return feedback to `<role>` and re-run from step `<N>`;
-> repeat until `<pass condition>` or `<max>` iterations, then `<action at cap>`.
+> **Loop:** on `<condition>`, return feedback to `<role>` and re-run from `"<role name>"`
+> (or from step `<N>`); repeat until `<pass condition>` or `<max>` iterations, then `<action at cap>`.
 
 1. `<condition>` — what counts as a failure that triggers another pass (e.g. "validation fails").
-2. re-run from step `<N>` — the earlier role the loop feeds back into; that role and every
-   role after it, up to the looping role, re-run each iteration.
+2. re-run from `"<role name>"` (or step `<N>`) — the earlier role the loop feeds back into; that
+   role and every role after it, up to the looping role, re-run each iteration. Prefer the named
+   form so renumbering roles never breaks the target.
 3. `<max>` iterations — a hard cap. Always set one: it bounds cost and prevents infinite loops.
 4. `<action at cap>` — what to do if the cap is hit without passing (typically: stop and
    report the outstanding failures rather than proceeding silently).
@@ -46,6 +47,12 @@ A role may be marked **conditional**, inline in its model-group parenthetical:
 
 Conditions combine with loops: a conditional looping role loops only on the runs where it
 actually executes.
+
+`if needed` and `if asked` are two of the inline **role flags**; `parallel` and `wait` (run
+adjacent roles concurrently, then sync on them) are others. The full vocabulary, with
+meanings, is cataloged in `$HORIZON_ETC/agent_team_flags.md`; add your own in
+`local.agent_team_flags.md` (gitignored) or via `/agent-teams`. List them any time with
+`resolve_agent_teams.py --flags`.
 
 ---
 
@@ -68,7 +75,7 @@ phrase "send an agent team" resolves to.
 3. Planner (`#highcap`) — designs the approach.
 4. Implementer (`#lowcost`) — writes the code.
 5. Validator (`#midcost`, if asked) — verifies the Implementer's work and checks for regressions.
-   **Loop:** on failure, return specific feedback to the Implementer and re-run from step 4;
+   **Loop:** on failure, return specific feedback to the Implementer and re-run from "Implementer";
    repeat until the Validator passes clean or 3 iterations, then stop and report any
    outstanding failures.
 

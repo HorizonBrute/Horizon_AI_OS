@@ -10,7 +10,7 @@ tools: Read, Write, Edit, Bash, WebFetch, WebSearch
 
 Fetch live model data from provider documentation and return a structured catalog
 the user (or the `model-prefs` skill) uses to populate or validate
-`horizon_aios_model_prefs.extend.md`. This is a reference document — you, the
+`horizon_aios_model_prefs.local.md`. This is a reference document — you, the
 agent, perform the fetches and parsing at runtime with your web/bash access. Do
 not rely on training-cutoff knowledge of model ids or prices; the entire point is
 live data.
@@ -125,7 +125,7 @@ config to diff against.
 ## Populating the config
 
 After presenting the catalog, offer to hand the relevant ids to `/model-prefs`
-(or do it directly if the user asks) to update `horizon_aios_model_prefs.extend.md`.
+(or do it directly if the user asks) to update `horizon_aios_model_prefs.local.md`.
 Use runtime-qualified members: `claude:<id|alias>` for Anthropic, `ollama:<tag>`
 for local models. Prefer Anthropic aliases (haiku/sonnet/opus/fable) over pinned
 full ids unless the user wants a specific version. Never write the base

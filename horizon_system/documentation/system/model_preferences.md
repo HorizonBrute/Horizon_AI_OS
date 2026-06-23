@@ -14,7 +14,7 @@ spec, which is loaded into context every session via `agents.md`:
 
 Read it for the rules; read this for the steps. In short: the base spec is
 OS-tracked and ships the structure; all your choices go in the gitignored extend
-file (`$HORIZON_ETC/horizon_aios_model_prefs.extend.md`), auto-loaded alongside
+file (`$HORIZON_ETC/horizon_aios_model_prefs.local.md`), auto-loaded alongside
 it. The two combine — slots: extend wins if set; groups: membership combined.
 
 ---
@@ -44,7 +44,7 @@ Be clear about what this layer does and does not move:
 
 1.4 **Config cascades across scopes — OS-global < project-root < brain-root <
     subfolder, most-specific wins.** Any scope can override prefs by dropping a
-    `horizon_aios_model_prefs.extend.md` in its directory and @-importing it from
+    `horizon_aios_model_prefs.local.md` in its directory and @-importing it from
     that scope's `agents.md` (never via `CLAUDE.md`, which is only a thin shim to
     the sibling `agents.md`). Each scope merges with the same rules as the base ->
     extend cascade: slots — more-specific wins if set; groups — combined; routing —
@@ -59,14 +59,14 @@ Be clear about what this layer does and does not move:
 1.1 Copy the tracked template to the live extend file:
 
 ```bash
-cp "$HORIZON_ETC/horizon_aios_model_prefs.extend.template.md" \
-   "$HORIZON_ETC/horizon_aios_model_prefs.extend.md"
+cp "$HORIZON_ETC/horizon_aios_model_prefs.local.template.md" \
+   "$HORIZON_ETC/horizon_aios_model_prefs.local.md"
 ```
 
 Windows (PowerShell):
 ```powershell
-Copy-Item "$env:HORIZON_ETC\horizon_aios_model_prefs.extend.template.md" `
-          "$env:HORIZON_ETC\horizon_aios_model_prefs.extend.md"
+Copy-Item "$env:HORIZON_ETC\horizon_aios_model_prefs.local.template.md" `
+          "$env:HORIZON_ETC\horizon_aios_model_prefs.local.md"
 ```
 
 1.2 Get a current model+pricing catalog — run `/model-catalog-refresh`. It

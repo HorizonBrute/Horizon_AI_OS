@@ -1,8 +1,8 @@
 # Model Preferences — Extension TEMPLATE (example; copy to remove the .template suffix)
 #
-# This is a tracked EXAMPLE. Your live config is `horizon_aios_model_prefs.extend.md`
+# This is a tracked EXAMPLE. Your live config is `horizon_aios_model_prefs.local.md`
 # (same directory, gitignored, auto-loaded). To use this template:
-#   1. Copy it to `horizon_aios_model_prefs.extend.md`.
+#   1. Copy it to `horizon_aios_model_prefs.local.md`.
 #   2. Replace the example members below with current model ids/tags.
 #   3. Get a current list any time by running the OS skill: /model-catalog-refresh
 #      (fetches live models + pricing from Anthropic, OpenAI, Gemini, Ollama and
