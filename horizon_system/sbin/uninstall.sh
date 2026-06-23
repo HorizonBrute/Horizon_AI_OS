@@ -249,14 +249,40 @@ else
   skip "~/.horizon/ not found — nothing to remove."
 fi
 
+# Only remove settings.json if we can determine bootstrap created it.
+# Bootstrap (Section 5b) copies the OS-appropriate template and substitutes the
+# literal "AIOS_EXEC_WRAPPER" placeholder with the per-machine wrapper path.
+# We reconstruct that freshly-bootstrapped default and compare against what's on disk:
+#   - identical    -> bootstrap-created and untouched; safe to remove (confirm-gated).
+#   - differs/none -> user-customized or user-authored; PRESERVE it (err toward keeping).
 SETTINGS_JSON="$OWNER_HOME/.claude/settings.json"
 if [ -f "$SETTINGS_JSON" ]; then
-  warn "~/.claude/settings.json exists — bootstrap may have created this from the template."
-  if [ "$DRY_RUN" = "true" ]; then
-    dry "remove ~/.claude/settings.json."
-  elif confirm "Remove ~/.claude/settings.json?"; then
+  # Mirror bootstrap.sh Section 5b template + wrapper selection exactly.
+  AIOS_EXEC_WRAPPER="$OWNER_HOME/.horizon/bin/aios-exec.sh"
+  case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*)
+      SETTINGS_TEMPLATE="$HORIZON_SYSTEM/templates/claude_code/settings.json"
+      AIOS_EXEC_WRAPPER="$OWNER_HOME/.horizon/bin/aios-exec.ps1" ;;
+    *) SETTINGS_TEMPLATE="$HORIZON_SYSTEM/templates/claude_code/settings_unix.json" ;;
+  esac
+
+  is_bootstrap_default=false
+  if [ -f "$SETTINGS_TEMPLATE" ]; then
+    expected="$(sed "s|AIOS_EXEC_WRAPPER|$AIOS_EXEC_WRAPPER|g" "$SETTINGS_TEMPLATE")"
+    on_disk="$(cat "$SETTINGS_JSON")"
+    if [ "$on_disk" = "$expected" ]; then
+      is_bootstrap_default=true
+    fi
+  fi
+
+  if [ "$is_bootstrap_default" != "true" ]; then
+    skip "~/.claude/settings.json differs from the bootstrap default (user-customized or user-authored) — PRESERVING it."
+    advisory "If you want it gone, remove ~/.claude/settings.json manually."
+  elif [ "$DRY_RUN" = "true" ]; then
+    dry "remove ~/.claude/settings.json (matches freshly-bootstrapped default)."
+  elif confirm "~/.claude/settings.json matches the bootstrap default — remove it?"; then
     rm -f "$SETTINGS_JSON"
-    ok "Removed ~/.claude/settings.json."
+    ok "Removed ~/.claude/settings.json (was the unmodified bootstrap default)."
   else
     skip "Keeping ~/.claude/settings.json — remove manually if needed."
   fi
@@ -485,7 +511,7 @@ if group_exists "$BRAINS_GROUP"; then
           ;;
         MINGW*|MSYS*|CYGWIN*)
           warn "Running under Git Bash on Windows — use uninstall.ps1 for icacls ACL removal."
-          advisory "Run: icacls '$dir' /remove:g brains /T /C /Q"
+          advisory "Run: icacls '$dir' /remove brains /T /C /Q   (/remove, not /remove:g, so deny ACEs go too)"
           ;;
       esac
       fi

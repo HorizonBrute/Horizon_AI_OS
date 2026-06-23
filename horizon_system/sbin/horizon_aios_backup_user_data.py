@@ -90,6 +90,32 @@ def resolve_remote_url(remote, root):
         return remote  # treat as a literal URL
 
 
+# Deterministic fallback so a backup never hard-fails for lack of a git identity.
+FALLBACK_NAME = "Horizon AIOS"
+FALLBACK_EMAIL = "horizon-aios@localhost"
+
+
+def resolve_identity(root):
+    """Resolve a committer/author identity for the backup commit.
+
+    `commit-tree` is git plumbing: it requires an author/committer identity but,
+    unlike `git commit`, applies no friendly default and is run without a working
+    context that would supply one. Resolution order (first non-empty wins):
+      1. whatever git itself resolves (`git config user.name/user.email`, which
+         spans local -> global -> system),
+      2. a deterministic AIOS fallback so the backup always succeeds.
+    Returns (name, email).
+    """
+    def cfg(key):
+        try:
+            return git(["config", "--get", key], root, check=False) or ""
+        except RuntimeError:
+            return ""
+    name = cfg("user.name").strip() or FALLBACK_NAME
+    email = cfg("user.email").strip() or FALLBACK_EMAIL
+    return name, email
+
+
 def main():
     p = argparse.ArgumentParser(description="Back up AIOS user data to your own remote.")
     p.add_argument("--remote", help="Git remote name or URL to push to (or AIOS_BACKUP_REMOTE).")
@@ -159,7 +185,16 @@ def main():
         commit_args = ["commit-tree", tree, "-m", msg]
         if parent:
             commit_args += ["-p", parent]
-        commit = git(commit_args, root)
+        # commit-tree needs an explicit identity: it is plumbing run outside any
+        # working context, so a repo-local user.* would still apply via `-C root`,
+        # but on a clean machine with no identity at all it would hard-fail.
+        # Supply identity explicitly so the backup is self-sufficient.
+        name, email = resolve_identity(root)
+        ident_env = {
+            "GIT_AUTHOR_NAME": name, "GIT_AUTHOR_EMAIL": email,
+            "GIT_COMMITTER_NAME": name, "GIT_COMMITTER_EMAIL": email,
+        }
+        commit = git(commit_args, root, env=ident_env)
         git(["update-ref", f"refs/heads/{branch}", commit], root)
         ok(f"Committed snapshot {commit[:10]} to local branch '{branch}'.")
     finally:

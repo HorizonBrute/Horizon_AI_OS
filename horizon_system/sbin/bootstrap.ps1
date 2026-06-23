@@ -335,6 +335,21 @@ if (Test-Path $GitDir) {
     Info "$HORIZON_ROOT is not a git repository - skipping git hooks config."
 }
 
+# 6b: .gitignore.user — the pre-commit hook syncs this file into
+# .git/info/exclude. Seed it from the template so a fresh install is
+# doctor-clean (horizon_aios_doctor.py checks $HORIZON_ROOT/.gitignore.user).
+# Idempotent: never overwrite an existing file (it holds user-local patterns).
+$GitignoreUser     = Join-Path $HORIZON_ROOT ".gitignore.user"
+$GitignoreTemplate = Join-Path $HORIZON_ROOT ".gitignore.user.template"
+if (Test-Path $GitignoreUser) {
+    Info ".gitignore.user already exists - skipping template copy."
+} elseif (Test-Path $GitignoreTemplate) {
+    Copy-Item $GitignoreTemplate $GitignoreUser
+    Ok "Created .gitignore.user from template."
+} else {
+    Warn "Template not found: $GitignoreTemplate - create .gitignore.user manually."
+}
+
 # -----------------------------------------------------------------------------
 # SECTION 7: System PATH
 # Adds $HORIZON_SYSTEM\bin to the Machine-scope PATH so brain accounts and new
