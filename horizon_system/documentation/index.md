@@ -12,7 +12,7 @@ at the end of a session to save state. Start with the setup guide in
 ## user_guides
 | ID (path) | Title | Purpose |
 |---|---|---|
-| `horizon_system/documentation/user_guides/using_your_aios.md` | Using Your Horizon AIOS — Operational Wiki | Post-install operational guide: security model, building and configuring brains, projects, handoffs/objectives, case study, BYOH/local.agents.md, context management, gitignore conventions, enterprise deployment, IaC/containerization, and integrated identity/existing infrastructure. Maintained by `/horizon_aios_wiki_update` (arc authoring) and `/horizon_aios_wiki_upkeep` (fact consistency). |
+| `horizon_system/documentation/user_guides/using_your_aios.md` | Using Your Horizon AIOS — Operational Wiki | Post-install operational guide: security model, building and configuring brains, projects, handoffs/objectives, case study, BYOH/local.agents.md, model preferences and agent teams, context management, gitignore conventions, enterprise deployment, IaC/containerization, and integrated identity/existing infrastructure. Maintained by `/horizon_aios_wiki_update` (arc authoring, dev-tool) and `/horizon_aios_wiki_upkeep` (fact consistency). |
 
 ## Skill indexes
 | ID (path) | Title | Purpose |

@@ -12,11 +12,12 @@ This wiki bridges the gap between initial setup and daily operation. It assumes 
 4. [Session Continuity — Handoffs and Objectives](#4-session-continuity--handoffs-and-objectives)
 5. [Case Study — The Developer Brain](#5-case-study--the-developer-brain)
 6. [Bring Your Own Harness and local.agents.md](#6-bring-your-own-harness-and-localagentsmd)
-7. [Understanding and Managing Context](#7-understanding-and-managing-context)
-8. [Gitignore, Local Config, and What Not to Commit](#8-gitignore-local-config-and-what-not-to-commit)
-9. [Enterprise Deployment](#9-enterprise-deployment)
-10. [Containerization, Cloud, and Infrastructure as Code](#10-containerization-cloud-and-infrastructure-as-code)
-11. [Bring Your Own Infrastructure — Integrated Identity and Existing Security](#11-bring-your-own-infrastructure--integrated-identity-and-existing-security)
+7. [Model Preferences and Agent Teams](#7-model-preferences-and-agent-teams)
+8. [Understanding and Managing Context](#8-understanding-and-managing-context)
+9. [Gitignore, Local Config, and What Not to Commit](#9-gitignore-local-config-and-what-not-to-commit)
+10. [Enterprise Deployment](#10-enterprise-deployment)
+11. [Containerization, Cloud, and Infrastructure as Code](#11-containerization-cloud-and-infrastructure-as-code)
+12. [Bring Your Own Infrastructure — Integrated Identity and Existing Security](#12-bring-your-own-infrastructure--integrated-identity-and-existing-security)
 
 ---
 
@@ -311,6 +312,35 @@ Objectives live in `$HORIZON_ROOT/objectives/` (configurable). They are plain Ma
 
 Objectives are point-of-truth documents — not status dashboards. They record the goal and its key constraints. Daily status belongs in handoffs.
 
+### 4.4 Starting a New Session from a Handoff
+
+When you start a session on a topic that has a handoff, pass the handoff filename directly at the start of the conversation:
+
+```
+C:\Users\you\horizon\handoffs\2026-06-22_141500_my-project.md
+```
+
+The agent reads the handoff silently into context — it does not reprint the document, which would bloat context and bury the useful output. Instead, it gives you a 2–4 line orientation: what was being worked on and where to start. You do not need to re-explain context.
+
+If the handoff references an active objective, load it directly:
+
+```
+/objective 3
+```
+
+The objective provides the durable goal; the handoff provides the tactical state. Together they restore full context in seconds.
+
+### 4.5 The Objective-Handoff Chain
+
+For sustained work spanning more than a couple of sessions, use handoffs and objectives together:
+
+1. **Create an objective** at the start of the engagement: `/objective create "Migrate the authentication system to JWT by Q3"`
+2. **Run `/handoff` at the end of each session.** With an active objective in context, the handoff links to it automatically — the handoff's `Objective:` field carries the number, name, and file path.
+3. **Start the next session** by reading the handoff. Its `Objective:` field points to the objective file. Reading the objective restores the durable goal; reading the handoff restores the tactical state.
+4. **Update the objective** when something significant changes: `/objective update 1 "JWT migration: RS256 algorithm confirmed, refresh token scope still open"`
+
+The chain persists as long as you run `/handoff` at the end of each session. The objective link carries forward automatically across as many sessions as the work takes.
+
 ---
 
 ## 5. Case Study — The Developer Brain
@@ -518,15 +548,115 @@ See `$HORIZON_ETC/ai_os_personalizations.md` §3 for the full harness addition p
 
 ---
 
-## 7. Understanding and Managing Context
+## 7. Model Preferences and Agent Teams
 
-### 7.1 What Context Is and Why It Costs
+### 7.1 Model Preferences — Routing Work to the Right Model
+
+The model-preference layer lets you control which model handles different kinds of work — without changing your interactive session model. There is no resolver script, no engine, no env-var wiring. The mechanism is in-context instruction: you write a configuration file, the AIOS loads it each session, and the acting model honors it when spawning agents or delegating tasks.
+
+**Model groups** are the core abstraction: named lists of models that define the capability tier for a class of work. The shipped groups:
+
+| Group | Intended use |
+|---|---|
+| `#lowcost` | Routine, mechanical work — status checks, summaries, formatting |
+| `#midcost` | Standard development and writing tasks |
+| `#highcap` | Complex reasoning, cross-document synthesis, architecture decisions |
+| `#investigate` | Research-heavy tasks requiring deep comprehension |
+| `#debug` | Debugging passes, root cause analysis |
+| `#fast` | Latency-sensitive operations where speed matters more than depth |
+
+The system selects the first runnable member of the group in your current runtime. Members that do not match your runtime (e.g., an Ollama model in a Claude Code session) are silently skipped — so you can define groups that include both Anthropic and local models and the right one is used automatically based on what is available.
+
+**What the preference layer governs.** Your interactive session model is set by the harness at launch and is not changed by this configuration. What it governs — for the first time — is the model used for spawned agents and delegated tasks. Routine delegated work runs on a cheap model; complex delegated work escalates automatically. Cost becomes proportionate to task reasoning requirements, decided by your configuration rather than left to defaults.
+
+**Task-class routing** directs entire categories of work to the right tier automatically:
+
+```
+## Task-Class Routing
+- pr status checks, inbox triage, summaries -> #lowcost
+- full code review, security audit          -> #highcap
+```
+
+**Setting up model preferences:**
+
+Run `/model-prefs` to configure interactively, or set up the extend file manually:
+
+```bash
+# Linux / macOS
+cp "$HORIZON_ETC/horizon_aios_model_prefs.extend.template.md" \
+   "$HORIZON_ETC/horizon_aios_model_prefs.extend.md"
+```
+
+```powershell
+# Windows
+Copy-Item "$env:HORIZON_ETC\horizon_aios_model_prefs.extend.template.md" `
+          "$env:HORIZON_ETC\horizon_aios_model_prefs.extend.md"
+```
+
+All choices go in this gitignored file — never in the OS-tracked base spec, which a sync would overwrite. Run `/model-catalog-refresh` to fetch current model IDs and pricing before filling in group members.
+
+Configuration cascades by scope: OS-global < project root < brain workspace, most-specific wins. A brain or project can override the global config by dropping its own extend file in its directory.
+
+See `$HORIZON_DOCS/system/model_preferences.md` for the full member grammar, scope cascade, and configuration walkthrough.
+
+### 7.2 Agent Teams — Structured Multi-Agent Workflows
+
+Agent teams let you define coordinated multi-agent workflows with specific roles, model assignments, and loop constructs — invoked by name rather than assembled from scratch each time.
+
+A team definition specifies:
+- **Roles** — the participants, their charters, and their model groups
+- **Loop constructs** — loop-back conditions, pass/fail criteria, and iteration caps that govern when agents hand off to each other
+
+Four starter teams ship with the AIOS and are ready to use immediately:
+
+| Team | Purpose |
+|---|---|
+| Research Team | Gather, analyze, and synthesize information on a topic |
+| Review Team | Independent parallel review pass followed by synthesis |
+| Debug Team | Root cause analysis with verification loop |
+| Planning Team | Ideation + critique + decision |
+
+**Using a team:**
+
+Name the team at the start of a task that fits its pattern:
+
+```
+Use the Review Team on the changes in this PR.
+```
+
+```
+Run a Debug Team pass — the auth middleware is rejecting valid tokens intermittently.
+```
+
+**Defining your own team:**
+
+Create or edit `local.agent_teams.md` in any scope. The innermost scope wins. Example:
+
+```markdown
+## Teams
+
+### security-review-team
+**Charter:** Independent security audit of changed code
+**Roles:**
+- Auditor A: injection risks and input validation — model: #investigate
+- Auditor B: credential and secrets handling — model: #investigate
+- Synthesizer: consolidated findings with remediation priority — model: #highcap
+**Loop:** each auditor runs once; synthesizer combines findings; iteration cap 1
+```
+
+Run `/agent-teams` to manage team definitions interactively. See `$HORIZON_DOCS/system/agent_teams.md` for the full invocation pattern, scope cascade, and loop/retry grammar.
+
+---
+
+## 8. Understanding and Managing Context
+
+### 8.1 What Context Is and Why It Costs
 
 Every Claude Code session pays a fixed token cost before you type anything. The harness assembles a system prompt from files on disk. Every byte in those files is billed on every session — whether Claude uses it or not.
 
 The practical implication: the larger your auto-loaded context, the more every session costs. The AIOS baseline is approximately 848 tokens (~4.9 KB) at the AIOS root. This is the fixed cost of running the OS layer. Everything you add on top of this is your cost to manage.
 
-### 7.2 What Gets Loaded in Any Given Directory
+### 8.2 What Gets Loaded in Any Given Directory
 
 Claude Code loads `CLAUDE.md` files from `~/.claude/` down to the current working directory — all of them, stacked. Then it resolves all `@`-imports recursively.
 
@@ -543,7 +673,7 @@ The files loaded in a standard AIOS session starting at `$HORIZON_ROOT`:
 
 If you start a session inside `$HORIZON_ROOT/my-project/`, any `CLAUDE.md` in `my-project/` or `my-project/.claude/` is added on top. If you are running as a brain, the brain's `CLAUDE.md` is the innermost layer.
 
-### 7.3 Measuring Context Overhead
+### 8.3 Measuring Context Overhead
 
 To see exactly what is loaded in any directory and how much it costs:
 
@@ -559,7 +689,7 @@ Output: per-file KB, word count, and estimated token count, plus a total. Thresh
 
 Run `context_cost.py` after adding or modifying any `CLAUDE.md` or `@`-import. Confirm the overhead stayed in budget before committing.
 
-### 7.4 The @-Import Rule — Unconditional Loading
+### 8.4 The @-Import Rule — Unconditional Loading
 
 A critical misconception: `@file` in `CLAUDE.md` does not lazy-load. The harness inlines the file's full content into the system prompt before the session starts, unconditionally. Writing "only load if needed" on the same line as an `@`-import does not help — those words become part of the already-loaded content.
 
@@ -575,7 +705,7 @@ Only `CLAUDE.md` and `CLAUDE.local.md` trigger `@`-import resolution. `agents.md
 
 See `$HORIZON_DOCS/authoring/claude_md_authoring.md` for the full authoring reference and `$HORIZON_DOCS/context_loading.md` for the complete loading mechanics.
 
-### 7.5 Per-Layer Configuration Guide
+### 8.5 Per-Layer Configuration Guide
 
 | Layer | Edit when | Keep |
 |---|---|---|
@@ -586,7 +716,7 @@ See `$HORIZON_DOCS/authoring/claude_md_authoring.md` for the full authoring refe
 | `brains/<name>/.claude/CLAUDE.md` | Brain persona, scope, memory pointers | Short — loads every brain session |
 | `my-project/.claude/CLAUDE.md` | Project-specific context | Only what Claude cannot derive from the code |
 
-### 7.6 Health Check
+### 8.6 Health Check
 
 To verify the full AIOS installation and configuration is correct:
 
@@ -602,9 +732,9 @@ This checks env vars, the skills junction, git hooks, the AIOS registry, and the
 
 ---
 
-## 8. Gitignore, Local Config, and What Not to Commit
+## 9. Gitignore, Local Config, and What Not to Commit
 
-### 8.1 The Two-Gitignore Model
+### 9.1 The Two-Gitignore Model
 
 AIOS uses two gitignore mechanisms that serve different purposes:
 
@@ -623,7 +753,7 @@ RedTeam/
 
 The pattern takes effect on the next commit — no manual sync step. The file is machine-local and does not travel with a clone.
 
-### 8.2 What Is Never Committed
+### 9.2 What Is Never Committed
 
 These files are gitignored and must stay that way:
 
@@ -642,7 +772,7 @@ These files are gitignored and must stay that way:
 | `~/.claude/settings.json` | Global settings (points at machine-specific wrapper paths) |
 | `ai_os_etc/git_identity.local.gitconfig` | Machine-local git identity |
 
-### 8.3 Protecting Configuration Points — The Clobber Hazard
+### 9.3 Protecting Configuration Points — The Clobber Hazard
 
 An upstream sync (`git pull` / `aios sync`) will update the OS layer. The files it can overwrite are tracked files: `agents.md`, `horizon_system/`, the shipped templates.
 
@@ -657,7 +787,7 @@ Never put machine-specific or personal configuration into the tracked files. A s
 
 If you want to ship a configuration change to all users (or to your own other machines), it belongs in the tracked files. If you want it only on this machine, it belongs in the gitignored files.
 
-### 8.4 Checking What a Sync Would Overwrite
+### 9.4 Checking What a Sync Would Overwrite
 
 Before pulling:
 
@@ -674,9 +804,9 @@ See `$HORIZON_DOCS/system/distribution_and_updates.md` for the full framework vs
 
 ---
 
-## 9. Enterprise Deployment
+## 10. Enterprise Deployment
 
-### 9.1 The Model: Organization Fork, Employee Clone
+### 10.1 The Model: Organization Fork, Employee Clone
 
 The Horizon AIOS distribution model is designed for downstream customization without merge conflicts. An enterprise maps directly onto this model:
 
@@ -690,7 +820,7 @@ Employee machine                               ← employee customizations in gi
 
 The organization forks the official upstream repo into their own Git infrastructure (GitHub Enterprise, GitLab, Bitbucket, Azure DevOps). That fork becomes the authoritative source of truth for the organization. Employees clone from the org fork, not from the official upstream. The org controls what ships to every employee; the official upstream controls what the org chooses to pull in.
 
-### 9.2 Where Organization Policy Lives
+### 10.2 Where Organization Policy Lives
 
 The framework/user-space split that protects individual user customizations from being clobbered by syncs works identically at the org level:
 
@@ -714,7 +844,7 @@ The org commits policy directly into the tracked framework files in their fork. 
 - Model-preference routing that reflects the org's approved models and cost policy
 - Hook scripts that write to the org's SIEM or compliance logging infrastructure
 
-### 9.3 Pulling Upstream Updates into the Org Fork
+### 10.3 Pulling Upstream Updates into the Org Fork
 
 The org maintains the fork like any upstream-tracking fork:
 
@@ -730,7 +860,7 @@ git push origin master      # employees sync from here
 
 The org can choose how aggressively to track upstream — immediate, quarterly, or only for specific security patches. The org's changes to tracked files (org policy additions to `agents.md`, etc.) merge with upstream changes normally. As long as the org has not duplicated content that lives in the user-space seam files, merges are clean by construction.
 
-### 9.4 Centralized Deployment and Force Install
+### 10.4 Centralized Deployment and Force Install
 
 For managed machines, the org can distribute and install the AIOS through standard enterprise software deployment mechanisms:
 
@@ -757,7 +887,7 @@ For managed machines, the org can distribute and install the AIOS through standa
 
 After the play runs, the system has a fully configured AIOS installation with org-approved configuration. User-specific customization happens afterward through the gitignored seam files.
 
-### 9.5 Multi-Operator and Team Environments
+### 10.5 Multi-Operator and Team Environments
 
 On a shared server or in a team environment where multiple humans operate the same AIOS installation:
 
@@ -768,7 +898,7 @@ On a shared server or in a team environment where multiple humans operate the sa
 
 See `$HORIZON_DOCS/deployment/server.md` → "Multi-Operator Server Pattern" for the full treatment.
 
-### 9.6 Sync Schedule and Drift Prevention
+### 10.6 Sync Schedule and Drift Prevention
 
 To keep employee machines current with the org fork without requiring manual pulls:
 
@@ -786,9 +916,9 @@ See `$HORIZON_DOCS/system/distribution_and_updates.md` for the complete framewor
 
 ---
 
-## 10. Containerization, Cloud, and Infrastructure as Code
+## 11. Containerization, Cloud, and Infrastructure as Code
 
-### 10.1 Why AIOS Is IaC-Friendly
+### 11.1 Why AIOS Is IaC-Friendly
 
 Horizon AIOS is, at its core, a set of files and filesystem ACL rules. There are no daemons that must be running, no databases to migrate, no external state to synchronize. The entire system state is:
 
@@ -800,7 +930,7 @@ Horizon AIOS is, at its core, a set of files and filesystem ACL rules. There are
 
 This maps directly to standard IaC patterns: declare the desired state, apply it, verify it.
 
-### 10.2 Docker
+### 11.2 Docker
 
 The AIOS ships Docker templates in `$HORIZON_SYSTEM/templates/docker/`:
 - `Dockerfile` — Ubuntu-based image; runs bootstrap as root before switching to the `aios` user; brains are OS users within the container
@@ -822,7 +952,7 @@ docker exec -it horizon-aios claude
 
 See `$HORIZON_DOCS/deployment/docker.md` for the full reference.
 
-### 10.3 Cloud VM Provisioning (Terraform / Pulumi / cloud-init)
+### 11.3 Cloud VM Provisioning (Terraform / Pulumi / cloud-init)
 
 Because AIOS setup is a clone + bootstrap, it maps to any cloud provisioning tool that can run a shell script on a new VM:
 
@@ -878,7 +1008,7 @@ resource "aws_instance" "aios_server" {
           - data_pipeline
 ```
 
-### 10.4 Kubernetes
+### 11.4 Kubernetes
 
 Kubernetes is the right orchestration layer when you need multiple AIOS instances at scale, per-brain pod isolation, or cloud-native autoscaling of brain workloads.
 
@@ -934,7 +1064,7 @@ containers:
 
 This mirrors the OS-level isolation model at the container boundary.
 
-### 10.5 Container Registry and Image Management
+### 11.5 Container Registry and Image Management
 
 The standard image management workflow for an org:
 
@@ -943,7 +1073,7 @@ The standard image management workflow for an org:
 1.3 Mutable state (logs, handoffs, brain workspaces, credentials) lives in volumes — never in the image.
 1.4 An AIOS update = a new image build. Volumes are unaffected. Rollback = pin to the previous image tag.
 
-### 10.6 Secrets Management in Cloud Environments
+### 11.6 Secrets Management in Cloud Environments
 
 The AIOS brain credential system uses OS-native keystores (`horizon_aios_brain_credential.py`). In containerized or cloud environments, the OS keystore is often not available. The operator-owned integration pattern:
 
@@ -955,9 +1085,9 @@ The AIOS does not prescribe a cloud secrets solution. `horizon_aios_brain_creden
 
 ---
 
-## 11. Bring Your Own Infrastructure — Integrated Identity and Existing Security
+## 12. Bring Your Own Infrastructure — Integrated Identity and Existing Security
 
-### 11.1 The Core Principle
+### 12.1 The Core Principle
 
 Horizon AIOS is not a security framework. It does not implement its own identity model, its own access control engine, or its own audit pipeline. It is an AI-focused application layer that runs inside existing OS infrastructure using the same mechanisms IT has always used.
 
@@ -970,7 +1100,7 @@ This means everything your organization already operates for security and identi
 
 The security team's question "how does this work?" has a simple answer: **the same way everything else works**.
 
-### 11.2 Active Directory and Integrated Identity Providers
+### 12.2 Active Directory and Integrated Identity Providers
 
 The AIOS security model is built on OS user accounts and filesystem group memberships. If those accounts and groups are managed by an identity provider — Active Directory, Azure AD/Entra ID, LDAP, FreeIPA — the model works identically. The ACLs reference group names; where those groups come from is the OS's concern, not AIOS's.
 
@@ -1005,7 +1135,7 @@ When a Linux machine is joined to Active Directory via SSSD, domain users and gr
 
 On Intune-managed Windows machines with Azure AD join, local group membership and NTFS ACLs function normally. The `brains` local group and per-brain groups are machine-local (not synced to Azure AD), which is appropriate — they are machine-local security boundaries. Azure AD conditional access policies apply to interactive logons; the brain's non-interactive scheduled-task logon (`SeBatchLogonRight`) is governed by local security policy, not Azure AD, which is the correct separation.
 
-### 11.3 SIEM and Security Monitoring Integration
+### 12.3 SIEM and Security Monitoring Integration
 
 AIOS produces two audit streams:
 
@@ -1031,7 +1161,7 @@ Filter on `source="Horizon.AIOS"` to isolate AIOS integrity events.
 
 AIOS gives you the structure and the log location. The integration with your SIEM is yours — it plugs directly into whatever audit infrastructure you already operate, using the same configuration you use for every other application.
 
-### 11.4 Group Policy and System-Level Controls
+### 12.4 Group Policy and System-Level Controls
 
 Because brain accounts are real OS accounts, every system-level control that applies to service accounts applies to brains:
 
@@ -1050,7 +1180,7 @@ Because brain accounts are real OS accounts, every system-level control that app
 - Brain accounts can be assigned to specific network zones. If the brain only needs to reach the AI API endpoint and a specific internal data source, firewall rules can enforce that precisely — same as any service account.
 - On Windows domain environments, Windows Firewall rules can be scoped per-user via Group Policy.
 
-### 11.5 What AIOS Adds — and What It Doesn't
+### 12.5 What AIOS Adds — and What It Doesn't
 
 | Concern | Who handles it | AIOS's role |
 |---|---|---|

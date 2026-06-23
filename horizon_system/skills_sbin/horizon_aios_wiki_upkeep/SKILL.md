@@ -41,11 +41,12 @@ treat them as needing a source-doc mapping determination (Step 1.3).
 | 4 — Handoffs and Objectives | `$HORIZON_DOCS/skills.md` (/handoff, /objective entries) |
 | 5 — Case Study | `$HORIZON_DOCS/deployment/brain_automation.md`, `$HORIZON_DOCS/deployment/desktop.md` |
 | 6 — BYOH and local.agents.md | `$HORIZON_DOCS/context_loading.md`, `$HORIZON_DOCS/philosophy.md` §7 |
-| 7 — Context Management | `$HORIZON_DOCS/context_loading.md`, `$HORIZON_DOCS/authoring/claude_md_authoring.md` |
-| 8 — Gitignore | `$HORIZON_DOCS/system/distribution_and_updates.md` |
-| 9 — Enterprise Deployment | `$HORIZON_DOCS/system/distribution_and_updates.md`, `$HORIZON_DOCS/deployment/server.md` |
-| 10 — Containerization / IaC | `$HORIZON_DOCS/deployment/docker.md`, `$HORIZON_DOCS/philosophy.md` §5 |
-| 11 — Bring Your Own Infrastructure | `$HORIZON_DOCS/philosophy.md` §§3–4, `$HORIZON_DOCS/security/audit_logging.md` |
+| 7 — Model Preferences and Agent Teams | `$HORIZON_DOCS/system/model_preferences.md`, `$HORIZON_ETC/horizon_aios_model_prefs.md`, `$HORIZON_DOCS/system/agent_teams.md` |
+| 8 — Context Management | `$HORIZON_DOCS/context_loading.md`, `$HORIZON_DOCS/authoring/claude_md_authoring.md` |
+| 9 — Gitignore | `$HORIZON_DOCS/system/distribution_and_updates.md` |
+| 10 — Enterprise Deployment | `$HORIZON_DOCS/system/distribution_and_updates.md`, `$HORIZON_DOCS/deployment/server.md` |
+| 11 — Containerization / IaC | `$HORIZON_DOCS/deployment/docker.md`, `$HORIZON_DOCS/philosophy.md` §5 |
+| 12 — Bring Your Own Infrastructure | `$HORIZON_DOCS/philosophy.md` §§3–4, `$HORIZON_DOCS/security/audit_logging.md` |
 
 **Out of scope:** The wiki's case study section is illustrative, not a mechanical
 reflection of a source doc. Check it only for factual accuracy (commands that work,

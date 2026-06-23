@@ -35,11 +35,12 @@ authoritative at runtime.
 | 4 | Session Continuity — Handoffs and Objectives |
 | 5 | Case Study — The Developer Brain |
 | 6 | Bring Your Own Harness and local.agents.md |
-| 7 | Understanding and Managing Context |
-| 8 | Gitignore, Local Config, and What Not to Commit |
-| 9 | Enterprise Deployment |
-| 10 | Containerization, Cloud, and Infrastructure as Code |
-| 11 | Bring Your Own Infrastructure — Integrated Identity and Existing Security |
+| 7 | Model Preferences and Agent Teams |
+| 8 | Understanding and Managing Context |
+| 9 | Gitignore, Local Config, and What Not to Commit |
+| 10 | Enterprise Deployment |
+| 11 | Containerization, Cloud, and Infrastructure as Code |
+| 12 | Bring Your Own Infrastructure — Integrated Identity and Existing Security |
 
 ---
 
