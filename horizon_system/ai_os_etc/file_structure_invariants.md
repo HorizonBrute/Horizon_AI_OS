@@ -302,10 +302,13 @@ For a given event, `$HORIZON_BIN/resolve_sound.py` checks in order:
 
 First match wins. An empty value (`event_name =`) silences that event.
 
+Before resolution, `resolve_sound.py` honors the `sounds_enabled` flag (see §10.6). If muted, it prints nothing and exits 0 — no event resolves.
+
 ### 10.2 File Locations
 
 | File | Purpose |
 |---|---|
+| `$HORIZON_SOUNDS/aios_sounds.conf` | Master sound settings — the `sounds_enabled` kill switch |
 | `$HORIZON_SOUNDS/sounds.map` | AIOS default event→sound mapping |
 | `$HORIZON_SYSTEM/harness_configs/<harness>/sounds.map` | Harness-specific events and overrides |
 | `$HORIZON_BIN/resolve_sound.py` | Resolver script — call from hooks |
@@ -339,6 +342,17 @@ sound=$(python "$HORIZON_BIN/resolve_sound.py" task_complete --harness claude_co
 Copy `$HORIZON_SYSTEM/templates/aios_sounds.conf` to the project or brain root. Uncomment and set only the events to override. Unset events fall through to the harness and AIOS defaults.
 
 Invariant: `aios_sounds.conf` is project-owned and committed to the project's own repo, not the OS repo. Add it to `$HORIZON_ROOT/.gitignore` if it should stay machine-local.
+
+### 10.6 Master & Per-Project Mute (`sounds_enabled`)
+
+A reserved `sounds_enabled` key (not an event→sound mapping) turns sounds off at two scopes. Accepted values: `true/false`, `1/0`, `yes/no`, `on/off`, `enabled/disabled`.
+
+| Scope | File | Effect |
+|---|---|---|
+| Master | `$HORIZON_SOUNDS/aios_sounds.conf` | `sounds_enabled = false` silences **all** events everywhere |
+| Per-project | nearest `aios_sounds.conf` (walk-up) | `sounds_enabled = false` silences that subtree |
+
+Invariant: **the master switch is absolute.** When the master is `false`, no project-level `aios_sounds.conf` can re-enable sound. A per-project switch only takes effect when the master is enabled, and applies only to its own subtree. An absent or unrecognized value is treated as enabled (fail open).
 
 ---
 

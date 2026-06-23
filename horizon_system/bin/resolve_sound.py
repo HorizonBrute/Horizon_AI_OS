@@ -8,6 +8,14 @@ Usage:
 Prints the absolute path to the sound file, or nothing if unmapped.
 Exit 0 in both cases — a missing sound is not an error.
 
+Master mute:
+    Before resolving, the `sounds_enabled` flag is honored:
+    - Master ($HORIZON_SYSTEM/sounds/aios_sounds.conf): `sounds_enabled = false`
+      silences ALL events everywhere -- absolute, no project can override.
+    - Per-project (nearest aios_sounds.conf): `sounds_enabled = false`
+      silences events for that subtree (only when master is enabled).
+    Muted resolution prints nothing and exits 0.
+
 Resolution order:
     1. aios_sounds.conf at nearest ancestor of cwd (up to $HORIZON_ROOT)
     2. $HORIZON_SYSTEM/harness_configs/<harness>/sounds.map  (if --harness given)
@@ -29,6 +37,11 @@ HORIZON_ROOT   = HORIZON_SYSTEM.parent                    # repo root
 SOUNDS_DIR     = HORIZON_SYSTEM / "sounds"
 DEFAULT_MAP    = SOUNDS_DIR / "sounds.map"
 OVERRIDE_FILE = "aios_sounds.conf"
+MASTER_CONF    = SOUNDS_DIR / OVERRIDE_FILE              # master sound settings
+
+ENABLE_KEY = "sounds_enabled"
+_FALSY = {"0", "false", "no", "off", "disabled"}
+_TRUTHY = {"1", "true", "yes", "on", "enabled"}
 
 
 def _parse(path: Path) -> dict:
@@ -59,6 +72,31 @@ def _abs(sound_val: str, config_dir: Path) -> str | None:
     return None
 
 
+def _enabled_flag(mapping: dict) -> bool | None:
+    """Return the sounds_enabled flag from a parsed config, or None if unset/blank."""
+    raw = mapping.get(ENABLE_KEY)
+    if raw is None:
+        return None
+    val = raw.strip().lower()
+    if val in _FALSY:
+        return False
+    if val in _TRUTHY:
+        return True
+    return None  # unrecognized value -> treat as unset (fail open: sounds play)
+
+
+def _is_muted(cwd: Path) -> bool:
+    """Resolve the sounds_enabled flag. Master is absolute; project mutes its subtree."""
+    # Master kill switch: false silences everything, no project may override.
+    if _enabled_flag(_parse(MASTER_CONF)) is False:
+        return True
+    # Per-project: nearest aios_sounds.conf may mute its own subtree.
+    override = _find_override(cwd)
+    if override and _enabled_flag(_parse(override)) is False:
+        return True
+    return False
+
+
 def _find_override(cwd: Path) -> Path | None:
     current = cwd.resolve()
     root = HORIZON_ROOT.resolve()
@@ -79,6 +117,9 @@ def main():
     args = p.parse_args()
 
     cwd = Path(args.cwd)
+
+    if _is_muted(cwd):
+        return  # print nothing -> hooks play no sound
 
     sources = []
 

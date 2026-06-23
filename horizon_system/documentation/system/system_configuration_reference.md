@@ -34,6 +34,8 @@ P.8.1 **Sound playback** — `horizon_system/sounds/play_sound.sh` detects `unam
 
 P.8.2 **Statusline** — `horizon_system/bin/statusline/statusline.sh` detects `uname -s` and pipes stdin to: `statusline-context-alerts.ps1` via `powershell.exe` (Windows), or `statusline-command.sh` via `bash` (Linux/macOS). Both scripts include context threshold audio alerts.
 
+P.8.4 **Master mute** — set `sounds_enabled = false` in `horizon_system/sounds/aios_sounds.conf` to silence all AIOS event sounds everywhere (absolute kill switch). A per-project `aios_sounds.conf` may set the same key to mute only its own subtree. See file_structure_invariants §10.6.
+
 P.8.3 **Linux audio dependency** — at least one of `paplay` (PulseAudio), `aplay` (ALSA), `ffplay` (ffmpeg), or `mpg123` must be installed for sounds to play on Linux. If none are found, `play_sound.sh` exits silently with no effect on Claude Code.
 
 P.9 **Bootstrap requires elevated privileges**: Administrator on Windows (right-click PowerShell → Run as administrator) and sudo/root on Linux and macOS. This is required for `horizon_aios_harden.py` to apply filesystem ACLs that enforce brain isolation. See the Prerequisites section in ReadMeToSetupYourSystem.md.

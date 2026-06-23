@@ -509,6 +509,11 @@ per-harness `sounds.map`, then the system default `sounds/sounds.map`. Prints th
 path or nothing (a missing sound is not an error — always exit 0). Intended to be
 called from harness hooks, which pipe its output to `sounds/play_sound.sh`.
 
+Honors the `sounds_enabled` mute flag before resolving: `sounds_enabled = false`
+in the master `sounds/aios_sounds.conf` silences every event everywhere (absolute);
+the same key in a per-project `aios_sounds.conf` mutes only that subtree. When
+muted it prints nothing. See file_structure_invariants §10.6.
+
 **When to use it:** From a notification hook to look up which sound to play for an
 event; rarely run by hand.
 
