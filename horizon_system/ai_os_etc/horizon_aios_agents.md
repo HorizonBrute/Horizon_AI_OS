@@ -1,6 +1,5 @@
 # Horizon AIOS — Agent Configuration (OS Layer)
 
-Harness-agnostic — read by Claude Code, Codex, and any harness supporting `agents.md`.
 Harness-specific config: `horizon_system/harness_configs/<harness>/`. Invariants: `horizon_system/ai_os_etc/`.
 
 ---
@@ -12,9 +11,7 @@ Harness-specific config: `horizon_system/harness_configs/<harness>/`. Invariants
 **The main session is an orchestrator, not a worker.** Decompose tasks, spawn agents, synthesize results. Never read files, write code, or run commands inline if the work can be delegated.
 
 **"Send an agent team"** resolves through the Agent Teams framework defined in
-`$HORIZON_ROOT/agent_teams.md`. The generic phrase defaults to the **Full Team** there
-(Orchestrator → Log-reader → Planner → Implementer → Validator). Named variants (e.g.
-"send an investigate-and-fix agent team") select the matching team by name.
+`$HORIZON_ROOT/agent_teams.md`. Named variants select the matching team by name.
 
 When in doubt, delegate.
 

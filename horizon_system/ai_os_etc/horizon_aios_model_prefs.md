@@ -29,13 +29,7 @@ runtime or not currently available; if none are runnable, fall through to the
 next level in Fallback Order. Never surface errors about models you cannot reach.
 
 **Member grammar.** A member is a bare model id/alias (any runtime) or a
-runtime-qualified `runtime:model-id`. Members may name models this layer does not
-understand -- locally hosted or third-party models are first-class. Example:
-
-    - claude:haiku
-    - ollama:llama3.2
-    - ollama:qwen2.5-coder:7b
-    - <any-model-id-your-runtime-can-launch>
+runtime-qualified `runtime:model-id`. See `horizon_aios_model_prefs.local.template.md` for examples.
 
 A Claude Code session skips `ollama:*` and lands on a `claude:` member; an Ollama
 session skips `claude:*` and lands on a local member. One file, every runtime.
@@ -92,12 +86,6 @@ extend file. The acting model: before spawning an agent or starting a sizable
 unit of work, if it matches a routing class, select from that group -- unless the
 prompt named a different group, which always wins.
 
-Example (define real rules in the extend file):
-
-    documentation, formatting, mechanical edits -> #lowcost
-    research, exploration                       -> #investigate
-    architecture, security-sensitive changes    -> #highcap
-
 ---
 
 ## Fallback Order
@@ -115,22 +103,7 @@ Example (define real rules in the extend file):
 `horizon_aios_model_prefs.local.md` (same directory, gitignored, auto-loaded).
 Copy `horizon_aios_model_prefs.local.template.md` to start; run `/model-catalog-refresh`
 for a current model + pricing list to fill in. Same headings; group members one
-per line with `-`, routing rules with `->`:
-
-    ## Per-Session Slot Preferences
-    ### Spawned Agent Model
-    Unset
-
-    ## Model Groups
-    ### #lowcost
-    - claude:haiku
-    - ollama:llama3.2
-    ### #investigate
-    - claude:sonnet
-
-    ## Task-Class Routing
-    - documentation, formatting -> #lowcost
-    - architecture              -> #highcap
+per line with `-`, routing rules with `->`.
 
 When both files load:
 - Slots: extend wins if not "Unset".
@@ -171,6 +144,5 @@ through it.
 project/brain-root files are loaded reliably at session start (memory files walked
 from cwd up to root) — these are first-class, fully-supported override scopes.
 Subfolder/nested overrides are lazy-loaded (pulled in only when the session
-touches files in that subtree) and are therefore best-effort, consistent with this
-layer's "reliability comes from the model following context" framing. Do not
-expect deterministic subfolder behavior.
+touches files in that subtree) and are therefore best-effort. Do not expect
+deterministic subfolder behavior.

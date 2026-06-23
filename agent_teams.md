@@ -1,20 +1,8 @@
 # Agent Teams — Horizon AIOS
 
-Named, reusable multi-agent workflows. This file is loaded as context via `agents.md`;
-the acting model reads it and honors it by direct instruction — no enforcement engine,
-same channel as any instruction. Model groups (`#midcost`, `#lowcost`, `#highcap`,
-`#investigate`, …) are defined in `horizon_aios_model_prefs.md`.
-
 ---
 
-## How the acting model resolves a team
-
-When the user says "send/spawn the '<name>' agent team" (or similar), the acting model
-looks up that team here (local overrides win — see `local.agent_teams.md`), then spawns
-each role in listed order, each on its specified model group (resolved via model-prefs),
-chaining each role's output into the next role's input. If a role is marked "(if needed)"
-the model may skip it. The model picks the team whose name best matches; if none match,
-it falls back to **Full Team**.
+When asked to spawn a named team, look it up below (local overrides win), then spawn each role in order on its model group, chaining output. If no name matches, use **Full Team**.
 
 ---
 
@@ -98,18 +86,10 @@ Fan out across a codebase or question then distill.
 
 Add custom teams in `local.agent_teams.md` (machine-local, gitignored, scope-cascading).
 A same-named team in the local file overrides the shipped definition here; team names not
-present here are unioned in. Agent Teams are a prime area for community-contributed
-workflows — share yours upstream.
+present here are unioned in.
 
 ---
 
 ## Scope Precedence
 
-Teams cascade OS(root) → project-root → brain-root → subfolder; most-specific wins.
-Semantics are identical to `horizon_aios_model_prefs.md` "Scope Precedence" — no new
-rules. On a same-named team, the more-specific scope's definition wins; otherwise team
-sets are unioned.
-
-**Override-file convention — anchored on `agents.md`, never `CLAUDE.md`.** A scope that
-wants an override drops a `local.agent_teams.md` in its own directory, and that scope's
-`agents.md` @-imports it. Mirror of the model-prefs override-file convention.
+Same cascade and override-file rules as `horizon_aios_model_prefs.md § Scope Precedence`. No new semantics.
