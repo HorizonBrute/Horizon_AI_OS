@@ -8,6 +8,11 @@
 > model chooses to act on these instructions when it reads them. All of these are
 > outside the control of the AIOS. Set preferences here and the harness will attempt
 > to apply them in good faith -- treat them as directional signals, not enforcement.
+>
+> **Reliability testing has not yet been performed.** Structured testing of slot
+> preferences and group resolution across harnesses and session models is planned.
+> Until that testing is completed and results are documented, the degree to which
+> these preferences reliably take effect is unknown.
 
 Harnesses read this file at session start (via @-import) and apply preferences
 silently. When a preference cannot be honored, skip it and fall through to the
