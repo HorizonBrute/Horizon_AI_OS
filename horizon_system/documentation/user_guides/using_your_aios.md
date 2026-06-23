@@ -612,21 +612,21 @@ Four starter teams ship with the AIOS and are ready to use immediately:
 
 | Team | Purpose |
 |---|---|
-| Research Team | Gather, analyze, and synthesize information on a topic |
-| Review Team | Independent parallel review pass followed by synthesis |
-| Debug Team | Root cause analysis with verification loop |
-| Planning Team | Ideation + critique + decision |
+| Investigate & Fix | Diagnose a problem then apply the fix |
+| Full Team | Full lifecycle for a sizable or ambiguous task (default for "send an agent team") |
+| Review & Fix | Audit a diff then apply findings |
+| Explore & Summarize | Fan out across a codebase or question then distill |
 
 **Using a team:**
 
 Name the team at the start of a task that fits its pattern:
 
 ```
-Use the Review Team on the changes in this PR.
+Use the Review & Fix team on the changes in this PR.
 ```
 
 ```
-Run a Debug Team pass — the auth middleware is rejecting valid tokens intermittently.
+Send an Investigate & Fix team — the auth middleware is rejecting valid tokens intermittently.
 ```
 
 **Defining your own team:**
@@ -634,15 +634,12 @@ Run a Debug Team pass — the auth middleware is rejecting valid tokens intermit
 Create or edit `local.agent_teams.md` in any scope. The innermost scope wins. Example:
 
 ```markdown
-## Teams
-
 ### security-review-team
-**Charter:** Independent security audit of changed code
-**Roles:**
-- Auditor A: injection risks and input validation — model: #investigate
-- Auditor B: credential and secrets handling — model: #investigate
-- Synthesizer: consolidated findings with remediation priority — model: #highcap
-**Loop:** each auditor runs once; synthesizer combines findings; iteration cap 1
+Independent security audit of changed code.
+
+1. Auditor A (`#investigate`, parallel) — injection risks and input validation
+2. Auditor B (`#investigate`, parallel) — credential and secrets handling
+3. Synthesizer (`#highcap`, wait) — consolidated findings with remediation priority
 ```
 
 Run `/agent-teams` to manage team definitions interactively. See `$HORIZON_DOCS/system/agent_teams.md` for the full invocation pattern, scope cascade, and loop/retry grammar.
@@ -683,6 +680,7 @@ The conditional and loop flags above are part of **SAILL** (Standardized AI Loop
 |---|---|---|
 | `if needed` | inline | Run only if it adds value; else skip |
 | `if asked` | inline | Run only when the user explicitly requests it; else skip |
+| `ask user` | inline | Pause and wait for the user's input, decision, or approval before continuing |
 | `parallel` | inline | Run concurrently with adjacent `parallel` roles |
 | `wait` | inline | Wait for the preceding `parallel` group to finish (sync point) |
 | `Loop` | annotation | Re-run an earlier role with feedback until pass/cap (see §7.3) |
@@ -703,7 +701,7 @@ Do not add new flags to `$HORIZON_ETC/agent_team_flags.md` directly; that file i
 
 Every Claude Code session pays a fixed token cost before you type anything. The harness assembles a system prompt from files on disk. Every byte in those files is billed on every session — whether Claude uses it or not.
 
-The practical implication: the larger your auto-loaded context, the more every session costs. The AIOS baseline is approximately 848 tokens (~4.9 KB) at the AIOS root. This is the fixed cost of running the OS layer. Everything you add on top of this is your cost to manage.
+The practical implication: the larger your auto-loaded context, the more every session costs. The AIOS baseline (excluding user-global `~/.claude/CLAUDE.md`) is approximately 3,660 tokens at the AIOS root. This is the fixed cost of running the OS layer. Everything you add on top of this is your cost to manage. Run `python $HORIZON_BIN/context_cost.py $HORIZON_ROOT` for the current number — it drifts as files are edited.
 
 ### 8.2 What Gets Loaded in Any Given Directory
 
@@ -713,12 +711,17 @@ The files loaded in a standard AIOS session starting at `$HORIZON_ROOT`:
 
 | File | Purpose | ~Tokens |
 |---|---|---|
-| `~/.claude/CLAUDE.md` | User-global; points at the OS repo | 28 |
+| `~/.claude/CLAUDE.md` | User-global; points at the OS repo | varies |
 | `$HORIZON_ROOT/.claude/CLAUDE.md` | Thin entry; imports root CLAUDE.md | 7 |
-| `$HORIZON_ROOT/CLAUDE.md` | AIOS-wide rules; imports agents.md | 47 |
-| `$HORIZON_ROOT/agents.md` | Cross-harness instructions | 7 |
-| `horizon_aios_agents.md` | OS-layer agent config | 606 |
+| `$HORIZON_ROOT/CLAUDE.md` | AIOS-wide rules; imports agents.md | ~7 |
+| `$HORIZON_ROOT/agents.md` | Cross-harness instructions | ~291 |
+| `horizon_aios_agents.md` | OS-layer agent config | ~777 |
+| `horizon_aios_model_prefs.md` | Model preference spec | ~1367 |
+| `agent_teams.md` | Agent team definitions | ~1012 |
+| `agent_team_flags.md` | Role-flag vocabulary | ~198 |
 | `local.agents.md` | Machine-local overrides | varies |
+
+Run `/context-cost` or `python $HORIZON_BIN/context_cost.py $HORIZON_ROOT` for current numbers — counts drift as files are edited. The AIOS baseline (excluding user-global) is approximately 3,660 tokens.
 
 If you start a session inside `$HORIZON_ROOT/my-project/`, any `CLAUDE.md` in `my-project/` or `my-project/.claude/` is added on top. If you are running as a brain, the brain's `CLAUDE.md` is the innermost layer.
 

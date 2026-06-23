@@ -29,6 +29,7 @@ at the end of a session to save state. Start with the setup guide in
 | `horizon_system/documentation/development_pipeline.md` | Horizon AIOS — Development Pipeline | Placeholder backlog tracking known work items, gaps, and research threads before formal issue management is integrated. |
 | `horizon_system/documentation/philosophy.md` | Horizon AIOS — Philosophy and Conceptual Framework | The "why" behind the architecture and the Brain vs. AI-OS vocabulary; highest authority tier. |
 | `horizon_system/documentation/sync_setup.md` | Horizon AIOS — Sync Setup Reference | How auto-sync keeps a local install current via fast-forward-only git fetch/merge, and the `aios_local.conf` keys that configure it. |
+| `horizon_system/documentation/terseness_contract_index.md` | Terseness Contract Index — Horizon AIOS | Canonical list of every file loaded unconditionally at session start, the seven terseness criteria each must satisfy, and advisory guidance for gitignored/user-controlled files. Used by `/terseness-check` and CC-T checks. |
 | `horizon_system/documentation/tested_configurations.md` | Horizon AIOS — Tested Configurations | The verified harness/OS/deployment compatibility matrix and what "tested" means. |
 | `horizon_system/documentation/utilities.md` | Horizon AIOS — Utilities Reference | Quick-lookup catalog of all `sbin/` utility scripts: purpose, flags, and skill cross-references. (Tool catalog — maintained separately.) |
 | `horizon_system/documentation/skills.md` | Horizon AIOS — Skills Reference | Index of all AIOS-native skills with per-skill onboarding/offboarding impact and aggregate summary. |
@@ -49,7 +50,7 @@ at the end of a session to save state. Start with the setup guide in
 | `horizon_system/documentation/system/memory.md` | Harness Memory and Per-Project State | Where harness transcripts and agent memory live (`$HORIZON_ROOT/memory/` via the `~/.claude/projects` junction), how the owner/brain redirects work, why it's centralized, and that uninstalling the AIOS destroys memory unless the user backs it up first. |
 | `horizon_system/documentation/system/system_configuration_reference.md` | Horizon AIOS — System Configuration Reference | Authoritative reference for the full configuration architecture: what each file controls, dependencies, and how components fit together. |
 | `horizon_system/documentation/system/model_preferences.md` | Horizon AIOS — Model Preferences | How-to and reference for the in-context model-preference layer: what it is (BYO, no engine), member grammar (runtime-qualified, skip-unavailable-silently), configuring groups/slots/task-class routing in the gitignored extend file, and how `/model-prefs` and `/model-catalog-refresh` fit together. |
-| `horizon_system/documentation/system/agent_teams.md` | Horizon AIOS — Agent Teams | What Agent Teams are, the in-session invocation pattern, the four shipped starter teams (roles, model groups, charters), how to define/override teams in `local.agent_teams.md`, the scope cascade, loop/retry constructs (loop-back target, pass/fail condition, iteration cap, cap behaviour), and the forthcoming `/agent-teams` management skill. |
+| `horizon_system/documentation/system/agent_teams.md` | Horizon AIOS — Agent Teams | What Agent Teams are, the in-session invocation pattern, the four shipped starter teams (roles, model groups, charters), how to define/override teams in `local.agent_teams.md`, the scope cascade, loop/retry constructs (loop-back target, pass/fail condition, iteration cap, cap behaviour), and the `/agent-teams` management skill. |
 | `horizon_system/documentation/system/skill_model_groups.md` | Horizon AIOS — Skill Model Groups | How AIOS skills declare a model-preference group via a body callout (not frontmatter), how to choose one, how `/skill-creation` populates it (defaulting to `#midcost`), and how `/model-prefs-assign` audits and refreshes assignments across skills. |
 | `horizon_system/documentation/system/uninstall.md` | Uninstalling Horizon AIOS | Authoritative runbook for removing the AIOS footprint: how to run the uninstall, what it removes vs. preserves, a post-uninstall verification checklist, and the full install→uninstall validation cycle for a fresh machine. |
 
@@ -76,7 +77,6 @@ at the end of a session to save state. Start with the setup guide in
 | ID (path) | Title | Purpose |
 |---|---|---|
 | `horizon_system/documentation/development_tools/consistency_checks.md` | Horizon AIOS — Consistency Checks | Machine-readable definition of "consistent" for the project plus the iterative validation-pass protocol and check IDs. |
-| `horizon_system/documentation/terseness_contract_index.md` | Terseness Contract Index — Horizon AIOS | Canonical list of every file loaded unconditionally at session start, the seven terseness criteria each must satisfy, and advisory guidance for gitignored/user-controlled files. Used by `/terseness-check` and CC-T checks. |
 | `horizon_system/documentation/development_tools/windows_install_switch_uninstall_test_prompt.md` | Windows — Install / Switch / Uninstall End-to-End Test Prompt | Ready-to-run admin prompt for a fresh Claude Code on a clean Windows box to dog-food the full lifecycle (install → brain → 2nd AIOS → switch → backup → delete); generated by `/pre-flight-tooling-validation`. |
 
 ## authoring
@@ -87,6 +87,7 @@ at the end of a session to save state. Start with the setup guide in
 ## Authority & invariants
 | ID (path) | Title | Purpose |
 |---|---|---|
+| `horizon_system/ai_os_etc/agent_team_flags.md` | Agent Team Flags — Standardized AI Loop Language (SAILL) | Role primitives (inline tokens and annotations) that compose agent-team loop/skip/parallel behavior; loaded every session, read by `resolve_agent_teams.py`; extend via `local.agent_team_flags.md`. |
 | `horizon_system/ai_os_etc/ai_os_personalizations.md` | AI OS Personalizations — Horizon AIOS | The settings-layer ownership model and personalization rules (which config belongs in global vs. devroot vs. project layers). |
 | `horizon_system/ai_os_etc/file_structure_invariants.md` | File Structure Invariants — Horizon AIOS | Hard constraints on path variables, the directory tree, what the repo tracks vs. ignores, and structural conventions. |
 | `horizon_system/ai_os_etc/horizon_aios_agents.md` | Horizon AIOS — Agent Configuration (OS Layer) | Harness-agnostic agent instructions (orchestration model, agent usage) loaded into every session. |

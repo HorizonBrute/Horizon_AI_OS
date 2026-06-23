@@ -78,16 +78,16 @@ Four teams ship with the OS layer and are defined in `$HORIZON_ROOT/agent_teams.
 
 | Team name | Roles (in order) | Model group | Charter |
 |---|---|---|---|
-| **investigate-and-fix** | Investigator | `#midcost` | Gathers evidence, isolates root cause |
+| **Investigate & Fix** | Investigator | `#midcost` | Gathers evidence, isolates root cause |
 | | Fixer | `#lowcost` | Applies the targeted fix |
-| **full-team** | Orchestrator | `#highcap` | Breaks down task, coordinates the rest |
+| **Full Team** | Orchestrator | `#highcap` | Breaks down task, coordinates the rest |
 | | Log-reader *(if needed)* | `#lowcost` | Gathers runtime evidence before planning |
 | | Planner | `#highcap` | Designs the approach |
 | | Implementer | `#lowcost` | Writes the code |
 | | Validator | `#midcost` | Verifies the fix, checks for regressions |
-| **review-and-fix** | Reviewer | `#highcap` | Audits code for correctness and quality |
+| **Review & Fix** | Reviewer | `#highcap` | Audits code for correctness and quality |
 | | Fixer | `#lowcost` | Applies the reviewer's findings |
-| **explore-and-summarize** | Explorer | `#investigate` | Searches broadly across the target scope |
+| **Explore & Summarize** | Explorer | `#investigate` | Searches broadly across the target scope |
 | | Summarizer | `#lowcost` | Distills findings into a concise report |
 
 `full-team` is the formalized version of the hard-coded "send an agent team"
@@ -236,30 +236,26 @@ pending finalisation).
 
 ---
 
-## 7. The `/agent-teams` management skill (in progress)
+## 7. The `/agent-teams` management skill
 
-An owner/sbin skill — `/agent-teams` — is being introduced to manage agent
-teams without hand-editing markdown. This is the supported, guided way to
-create and override teams; hand-editing `local.agent_teams.md` remains valid
-but `/agent-teams` is the preferred path.
+The `/agent-teams` owner skill (`skills_sbin/`) manages agent teams without hand-editing
+markdown. This is the supported, guided way to create and override teams; hand-editing
+`local.agent_teams.md` remains valid but `/agent-teams` is the preferred path.
 
-**Skill in progress** — exact invocation flags are not yet documented.
+The skill:
 
-When available, the skill will:
+1. **Lists loaded teams** (bare `/agent-teams`) — runs `resolve_agent_teams.py` and
+   presents each source with its team names, then prompts to add or modify.
+2. **Edits or scaffolds** `local.agent_teams.md` at whichever scope the user chooses
+   (OS root, project root, brain root, or subfolder), creating the file from the shipped
+   template if it does not yet exist.
+3. **Guides team composition** — walks through the role chain, model-group preferences,
+   and optional loop/retry constructs.
+4. **Adds custom role flags** to `local.agent_team_flags.md` at the target scope.
 
-1. **Edit or scaffold** `local.agent_teams.md` at whichever scope the user
-   chooses (OS root, project root, brain root, or subfolder), creating the file
-   from the shipped template if it does not yet exist.
-2. **Guide team composition** — walk through defining the role chain, assigning
-   a model-group preference (`#midcost`, `#lowcost`, etc.) to each role, and
-   writing per-role charters.
-3. **Guide loop/retry constructs** — help specify loop-back targets, pass/fail
-   conditions, iteration caps, and cap behaviour without requiring the user to
-   know the exact markup.
-
-The skill operates on the gitignored `local.agent_teams.md` files only; it
-never modifies the tracked `$HORIZON_ROOT/agent_teams.md` directly. It also adds
-custom role flags (Section 8) to `local.agent_team_flags.md`.
+The skill operates on gitignored `local.agent_teams.md` files only; it never modifies
+the tracked `$HORIZON_ROOT/agent_teams.md`. See `$HORIZON_SYSTEM/skills_sbin/agent-teams/SKILL.md`
+for the full invocation reference.
 
 ## 8. Standardized AI Loop Language (SAILL)
 

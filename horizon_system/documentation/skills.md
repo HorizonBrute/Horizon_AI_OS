@@ -29,9 +29,14 @@ set flat. Brain users' `~/.claude/skills/` points directly at `skills_bin/`.
 | `/doctor` | `skills_bin/` | Run the AIOS health check — env vars, skills junction, hooks, registry, and privileged-dir Deny ACLs |
 | `/handoff` | `skills_sbin/` | Write a structured session handoff document for the next session or a human reviewer |
 | `/harden` | `skills_sbin/` | Apply the authoritative brains-group ACL model to the AIOS layer (Admin/root) |
+| `/agent-teams` | `skills_sbin/` | List, create, or edit agent-team definitions in `local.agent_teams.md` at any scope; manage custom role flags |
 | `/horizon_aios_dev_consistency_check` | `skills_sbin/` | Run an iterative docs/implementation consistency validation pass against the AIOS check standard |
 | `/horizon_aios_documentation_index_update` | `skills_sbin/` | Rebuild `documentation/index.md` so every doc is registered with a stable path-based ID |
+| `/horizon_aios_wiki_upkeep` | `skills_sbin/` | Run a consistency pass between the operational wiki and its source documentation; fix unambiguous drift, surface judgment calls |
+| `/terseness-check` | `skills_sbin/` | Evaluate every file in the Terseness Contract Index for context overhead; report FAIL/ADVISORY findings with file:line evidence and cut suggestions |
+| `/test-agent-teams` | `skills_sbin/` | End-to-end self-test of the Agent Teams system — walk every team, spawn each role to echo a nonce + role + model, report PASS/FAIL per team |
 | `/model-catalog-refresh` | `skills_bin/` | Fetch live model+pricing data from Anthropic, OpenAI, Gemini, and Ollama; diff against the current model-preference config |
+| `/userguides` | `skills_bin/` | Browse the operational wiki: no argument summarizes all sections via parallel Haiku agents; `/userguides N` displays section N in full |
 | `/model-prefs` | `skills_sbin/` | Author or inspect model groups, per-session slots, and task-class routing rules in the gitignored extend file |
 | `/model-prefs-assign` | `skills_sbin/` | Audit skills for model-preference group callouts and assign or refresh them; keep indexes in sync |
 | `/model-prefs-test` | `skills_bin/` | Test how each model group resolves in the current runtime (dry-run or live spawn) |
@@ -227,6 +232,66 @@ documented in `skill-creation/SKILL.md` and both tier index files.
 
 ---
 
+### /agent-teams
+
+**Location:** `skills_sbin/` (owner only)
+**Underlying tool:** `$HORIZON_SYSTEM/bin/resolve_agent_teams.py` (for discovery); writes `local.agent_teams.md` and `local.agent_team_flags.md` directly
+
+Bare `/agent-teams` lists all resolved agent teams in effect at the current path by running `resolve_agent_teams.py`. With arguments, creates or edits team definitions and custom role flags in the scope-appropriate `local.agent_teams.md` (gitignored, never clobbered by sync). Never modifies the shipped `$HORIZON_ROOT/agent_teams.md`.
+
+**Onboarding:** Provides a guided entry point for creating and managing multi-agent workflow definitions without hand-editing markdown; discovers teams at the correct scope automatically.
+**Offboarding:** Edit `local.agent_teams.md` at the desired scope directly. See `$HORIZON_ROOT/agent_teams.md` for the team definition format and `$HORIZON_DOCS/system/agent_teams.md` for the full invocation and cascade reference.
+
+---
+
+### /horizon_aios_wiki_upkeep
+
+**Location:** `skills_sbin/` (owner only)
+**Underlying tool:** None — delegates section checks to `#investigate` subagents, then edits the wiki directly
+
+Runs a consistency pass between `$HORIZON_DOCS/user_guides/using_your_aios.md` and its source documents. Spawns one subagent per section to check for factual drift, stale paths, outdated examples, and coverage gaps. Applies unambiguous fixes; surfaces judgment calls for user decision. Re-runs until all sections are CLEAN or remaining issues are explicitly deferred.
+
+**Onboarding:** Keeps the operational wiki accurate after source docs change, without requiring a full manual audit.
+**Offboarding:** Audit sections manually by reading the wiki and source docs side-by-side. The source-doc mapping is in `$HORIZON_SYSTEM/skills_sbin/horizon_aios_wiki_upkeep/SKILL.md`.
+
+---
+
+### /terseness-check
+
+**Location:** `skills_sbin/` (owner only)
+**Underlying tool:** None — Claude reads the Terseness Contract Index and evaluates each tracked file directly
+
+Evaluates every file listed in `$HORIZON_DOCS/terseness_contract_index.md` against the seven terseness criteria defined there. Reports `FAIL` findings with `file:line` evidence and concrete cut suggestions. Gitignored / user-controlled files are evaluated but findings are `ADVISORY` only. Auto-fixes pure-removal `FAIL` findings (no new content written); surfaces everything else for confirmation. Also delegated by CC-T2 in the consistency check.
+
+**Onboarding:** Ensures context-loaded files stay token-efficient; a single command confirms the Terseness Contract is met before pushing changes.
+**Offboarding:** Apply the seven criteria from `$HORIZON_DOCS/terseness_contract_index.md` manually to each tracked file.
+
+---
+
+### /test-agent-teams
+
+**Location:** `skills_sbin/` (owner only)
+**Underlying tool:** `$HORIZON_SYSTEM/bin/resolve_agent_teams.py` (team discovery); spawns real subagents per role
+
+End-to-end integration test of the Agent Teams system. Runs `resolve_agent_teams.py --json` to enumerate all resolved teams, then spawns one real subagent per role across all teams. Each role subagent echoes a nonce, its role name, and the model it actually ran as. Verifies that every role spawned, the `#model-group` routed correctly, and the chain executed. This is a deliberate, potentially costly integration test — run to verify, not routinely.
+
+**Onboarding:** Proves the full agent-team loop works end-to-end (resolution, model routing, nonce proof of execution) before relying on agent teams for real work.
+**Offboarding:** Test teams manually by invoking a team and observing which roles spawn and on which models.
+
+---
+
+### /userguides
+
+**Location:** `skills_bin/` (available to all users including brains)
+**Underlying tool:** None — Claude reads the wiki file and optionally spawns Haiku summarizer agents
+
+Bare `/userguides` reads `$HORIZON_DOCS/user_guides/using_your_aios.md`, discovers all numbered sections dynamically, spawns one `#lowcost` (Haiku) agent per section in parallel to write a 3–5 sentence summary, and presents summaries in section order. `/userguides N` displays the full text of section N. The section map in the SKILL.md is informational; the live file read is authoritative.
+
+**Onboarding:** Provides a one-command overview of the full operational wiki without reading thousands of words; section N access gives targeted reference lookup.
+**Offboarding:** Read `$HORIZON_DOCS/user_guides/using_your_aios.md` directly.
+
+---
+
 ### /create-brain
 
 **Location:** `skills_sbin/` (owner only)
@@ -364,13 +429,15 @@ and `utilities.md`.
 
 ## Onboarding and offboarding summary
 
-When AIOS skills are registered, an owner gains 17 slash commands across two
+When AIOS skills are registered, an owner gains 22 slash commands across two
 tiers. **skills_bin/** (available to brains): `/context-cost`, `/doctor`,
-`/model-catalog-refresh`, `/model-prefs-test`, `/monitor`. **skills_sbin/** (owner
-only): `/create-brain`, `/handoff`, `/harden`, `/horizon_aios_dev_consistency_check`,
-`/horizon_aios_documentation_index_update`, `/model-prefs`, `/model-prefs-assign`,
-`/objective`, `/pre-flight-tooling-validation`, `/remove-brain`, `/resync-user-skills`,
-`/skill-creation`.
+`/model-catalog-refresh`, `/model-prefs-test`, `/monitor`, `/userguides`.
+**skills_sbin/** (owner only): `/agent-teams`, `/create-brain`, `/handoff`,
+`/harden`, `/horizon_aios_dev_consistency_check`,
+`/horizon_aios_documentation_index_update`, `/horizon_aios_wiki_upkeep`,
+`/model-prefs`, `/model-prefs-assign`, `/objective`,
+`/pre-flight-tooling-validation`, `/remove-brain`, `/resync-user-skills`,
+`/skill-creation`, `/terseness-check`, `/test-agent-teams`.
 
 Skills that wrap underlying scripts: `/context-cost`, `/doctor`, `/create-brain`,
 `/harden`, `/monitor`, `/remove-brain`, `/resync-user-skills` (all delegate to a

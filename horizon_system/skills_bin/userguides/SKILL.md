@@ -37,10 +37,11 @@ authoritative at runtime.
 | 6 | Bring Your Own Harness and local.agents.md |
 | 7 | Model Preferences and Agent Teams |
 | 8 | Understanding and Managing Context |
-| 9 | Gitignore, Local Config, and What Not to Commit |
-| 10 | Enterprise Deployment |
-| 11 | Containerization, Cloud, and Infrastructure as Code |
-| 12 | Bring Your Own Infrastructure — Integrated Identity and Existing Security |
+| 9 | The Terseness Contract |
+| 10 | Gitignore, Local Config, and What Not to Commit |
+| 11 | Enterprise Deployment |
+| 12 | Containerization, Cloud, and Infrastructure as Code |
+| 13 | Bring Your Own Infrastructure — Integrated Identity and Existing Security |
 
 ---
 

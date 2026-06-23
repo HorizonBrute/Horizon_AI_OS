@@ -82,11 +82,9 @@ Fan out across a codebase or question then distill.
 
 ---
 
-## Define your own
+## Custom teams
 
-Add custom teams in `local.agent_teams.md` (machine-local, gitignored, scope-cascading).
-A same-named team in the local file overrides the shipped definition here; team names not
-present here are unioned in.
+Use `local.agent_teams.md` (gitignored). Same-name overrides this file; new names are unioned in.
 
 ---
 

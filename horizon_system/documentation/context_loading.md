@@ -48,15 +48,19 @@ The following is the actual load order for a session started at `$HORIZON_ROOT`.
 
 | File | How loaded | ~Tokens |
 |---|---|---|
-| `~/.claude/CLAUDE.md` | Auto (user-global) | 28 |
-| `$HORIZON_ROOT/.claude/CLAUDE.md` | @-import from above | 7 |
-| `$HORIZON_ROOT/CLAUDE.md` | @-import from above | 47 |
-| `$HORIZON_ROOT/agents.md` | @-import from `CLAUDE.md` | 7 |
-| `$HORIZON_SYSTEM/ai_os_etc/horizon_aios_agents.md` | @-import from `agents.md`* | 606 |
-| `$HORIZON_ROOT/.claude/CLAUDE.aios-dev.md` | @-import from `~/.claude/CLAUDE.md` | 153 |
-| **Total** | | **848** |
+| `~/.claude/CLAUDE.md` | Auto (user-global) | varies by machine |
+| `$HORIZON_ROOT/.claude/CLAUDE.md` | Auto (project harness) | 7 |
+| `$HORIZON_ROOT/CLAUDE.md` | @-import from above | ~7 |
+| `$HORIZON_ROOT/agents.md` | @-import from `CLAUDE.md`* | ~291 |
+| `$HORIZON_SYSTEM/ai_os_etc/horizon_aios_agents.md` | @-import from `agents.md` | ~777 |
+| `$HORIZON_SYSTEM/ai_os_etc/horizon_aios_model_prefs.md` | @-import from `agents.md` | ~1367 |
+| `$HORIZON_ROOT/agent_teams.md` | @-import from `agents.md` | ~1012 |
+| `$HORIZON_SYSTEM/ai_os_etc/agent_team_flags.md` | @-import from `agents.md` | ~198 |
+| **AIOS subtotal (excluding user-global)** | | **~3,660** |
 
-*Note: `agents.md` itself does not trigger harness @-import inlining (it is not a `CLAUDE.md`). However, `$HORIZON_ROOT/CLAUDE.md` imports `agents.md`, and because `CLAUDE.md` is the import-resolving file, the harness follows its imports recursively — including `agents.md`'s own `@`-references. The net effect is that `horizon_aios_agents.md` is inlined. `context_cost.py` reflects the same rule: it recurses into files imported by `CLAUDE.md`/`CLAUDE.local.md` but not into files imported by `agents.md` directly.
+Run `python $HORIZON_BIN/context_cost.py $HORIZON_ROOT` to get current per-file counts — the exact values drift as files are edited. The table above reflects a recent run; the script is the source of truth.
+
+*Note: `agents.md` itself does not trigger harness @-import inlining (it is not a `CLAUDE.md`). However, `$HORIZON_ROOT/CLAUDE.md` imports `agents.md`, and because `CLAUDE.md` is the import-resolving file, the harness follows its imports recursively — including all of `agents.md`'s own `@`-references. The net effect is that every file @-imported by `agents.md` is inlined. `context_cost.py` reflects the same rule: it recurses into files imported by `CLAUDE.md`/`CLAUDE.local.md` (following all nested @-imports) but not into files imported by a standalone `agents.md` that is not itself loaded through a `CLAUDE.md`.
 
 `CLAUDE.aios-dev.md` is owner/maintainer-specific. Brains do not load it — their `brain_CLAUDE.md.template` chains only the runtime config.
 
