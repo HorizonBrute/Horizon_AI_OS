@@ -285,6 +285,19 @@ if (Test-Path $SettingsDst) {
             Set-Content -Path $SettingsDst -Value $substituted -Encoding UTF8
             Ok "Copied template to ~/.claude/settings.json (pointed at aios-exec wrapper)."
             Info "settings.json now resolves the active AIOS at run time - switching never rewrites it."
+
+            # Provenance stamp: record the SHA-256 of the EXACT settings.json bytes we
+            # just wrote. uninstall.ps1 Section 5 reads this to prove bootstrap created
+            # settings.json and the user has not modified it since. We only write the
+            # stamp on the branch where bootstrap actually CREATES settings.json (here);
+            # a pre-existing user settings.json gets no stamp, so uninstall preserves it.
+            # Contract (must match uninstall.ps1 reader byte-for-byte):
+            #   path   : ~/.claude/.horizon-settings.stamp
+            #   format : one line, lowercase SHA-256 hex of settings.json's on-disk bytes
+            $SettingsStamp = Join-Path $HOME ".claude\.horizon-settings.stamp"
+            $digest = (Get-FileHash -Path $SettingsDst -Algorithm SHA256).Hash.ToLower()
+            Set-Content -Path $SettingsStamp -Value $digest -NoNewline -Encoding ascii
+            Ok "Wrote provenance stamp ~/.claude/.horizon-settings.stamp (SHA-256 of settings.json)."
         } else {
             Info "Skipping settings.json - create it manually from the template."
         }
