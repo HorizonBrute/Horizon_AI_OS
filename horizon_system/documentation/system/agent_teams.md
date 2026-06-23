@@ -25,6 +25,51 @@ scope the work at invocation time:
 
 No slash command — it is a natural-language invocation pattern, not a skill.
 
+### 1.1 Example flows — natural language in, SAILL out
+
+You speak plainly; the acting model maps it onto a team and its SAILL flags
+(Section 8):
+
+1. "Send an **investigate-and-fix** team at the flaky test in `auth/`."
+   → Investigator (`#midcost`) diagnoses → Fixer (`#lowcost`) patches.
+2. "Send a **full-team** to build the export feature, but **ask me before you start
+   implementing**."
+   → the Planner gates on `ask user` — presents the plan and waits for your approval
+   before the Implementer runs.
+3. "Run a **review-and-fix** over my current diff, but **only fix if I say so**."
+   → Reviewer (`#highcap`) audits → Fixer (`#lowcost`, `if asked`) applies only on your
+   go-ahead.
+4. "**Explore-and-summarize** how sessions persist — fan out **three explorers in
+   parallel** across the API, the DB, and the UI, then summarize."
+   → three Explorers (`#investigate`, `parallel`) → Summarizer (`#lowcost`, `wait`) syncs
+   on them and distills.
+5. "Send a **full-team**, but **skip the log-reader** and **loop the validator up to 3
+   times** until it's clean."
+   → Log-reader (`if needed`) is skipped → Validator loops back to the Implementer until
+   it passes or hits 3 iterations.
+
+Each right-hand side is the SAILL the model resolves to; you never have to write it —
+but it is the shareable, standard form behind the plain-English request.
+
+### 1.2 Directing roles in plain language
+
+A team is a scaffold, not a cage. At invocation you can also tell a role **what to do or
+what to focus on**, ad hoc, and the model honors it on top of the team:
+
+> "Send a **full-team** for the export bug; have the **Validator run `/security-review`**,
+> and **Log-reader, scope to just the auth module**."
+
+That works because two different things are in play:
+1. **SAILL flags govern control flow** — *whether / when / how often / concurrently /
+   ask-the-user* a role runs (`if needed`, `ask user`, `parallel`, `Loop`, …).
+2. **A role's *work* is charter prose** — which tools or skills it uses, what to scope to,
+   what it hands on. That lives in the role's charter (in the team definition) and can be
+   set or overridden in plain language at invocation.
+
+So "the Validator runs `/security-review`" or "the Log-reader focuses on auth" are **role
+direction**, not flags — do not encode them as SAILL primitives. Keep SAILL to control
+flow; put the work in the charter or your request. The two compose cleanly.
+
 ---
 
 ## 2. Shipped starter teams
@@ -238,6 +283,43 @@ Today SAILL covers:
    preceding parallel group).
 3. **Iteration** — `Loop` (re-run an earlier role with feedback `until <pass> or <cap>`,
    looping back to a named role so renumbering never breaks the target).
+4. **Human-in-the-loop** — `ask user` (pause for the user's input, decision, or approval
+   before continuing).
+
+### SAILL primitives
+
+Each flag is a **primitive** — one small, atomic, composable operation, not a recipe.
+Like the closed-class control words of a programming language (`if`, `while`, `parallel`,
+`await`), the set is intentionally small; expressive power comes from **composing**
+primitives in a team definition, not from piling on bespoke flags. A primitive:
+
+1. **Does exactly one thing** — a condition, a concurrency move, a sync point, an
+   iteration. If a flag needs an "and", it is two primitives.
+2. **Is orthogonal** — it combines cleanly with the others (`(`#group`, if asked, parallel)`)
+   with no special cases.
+3. **Has a single registry-defined meaning** — identical everywhere it appears.
+4. **Is context-light** — rich meaning in one or two words, so a whole loop fits in a
+   glance and a small prompt.
+
+Compose existing primitives before inventing a compound flag. Add a new primitive only
+for a genuinely new control-flow idea (a new kind of branch, gate, or synchronization) —
+never to encode one team's specifics, which belong in that role's charter prose.
+
+### Naming a SAILL primitive
+
+Names are the interface; choose them so the notation stays terse and self-translating:
+
+1. **Reads as English in place.** Slotted into a role it should parse naturally —
+   `Validator (`#midcost`, if asked)`, `Crawler (`#investigate`, parallel)`.
+2. **One or two words.** Lowercase for inline conditions/modifiers (`if needed`,
+   `parallel`, `wait`); Capitalized for an annotation primitive that introduces its own
+   clause (`Loop`, and any future `Gate` / `Branch`).
+3. **Names the behavior, not the mechanism** — what happens, never how it is implemented.
+4. **Self-translating** — a human should render it to plain English without opening the
+   registry. If it needs a footnote to be understood, rename it.
+5. **Stable and distinct** — never collide with another primitive or a `#model-group`
+   name, and pick a name you will not have to rename (renames ripple through every team
+   definition that uses it).
 
 The vocabulary lives in `$HORIZON_ETC/agent_team_flags.md` (shipped) plus
 `local.agent_team_flags.md` (your additions) — a deliberately dense, info-heavy block
