@@ -12,7 +12,7 @@ at the end of a session to save state. Start with the setup guide in
 ## user_guides
 | ID (path) | Title | Purpose |
 |---|---|---|
-| `horizon_system/documentation/user_guides/using_your_aios.md` | Using Your Horizon AIOS — Operational Wiki | Post-install operational guide: security model, building and configuring brains, projects, handoffs/objectives, case study, BYOH/local.agents.md, context management, and gitignore conventions. |
+| `horizon_system/documentation/user_guides/using_your_aios.md` | Using Your Horizon AIOS — Operational Wiki | Post-install operational guide: security model, building and configuring brains, projects, handoffs/objectives, case study, BYOH/local.agents.md, context management, gitignore conventions, enterprise deployment, IaC/containerization, and integrated identity/existing infrastructure. Maintained by `/horizon_aios_wiki_update` (arc authoring) and `/horizon_aios_wiki_upkeep` (fact consistency). |
 
 ## Skill indexes
 | ID (path) | Title | Purpose |
@@ -49,6 +49,7 @@ at the end of a session to save state. Start with the setup guide in
 | `horizon_system/documentation/system/memory.md` | Harness Memory and Per-Project State | Where harness transcripts and agent memory live (`$HORIZON_ROOT/memory/` via the `~/.claude/projects` junction), how the owner/brain redirects work, why it's centralized, and that uninstalling the AIOS destroys memory unless the user backs it up first. |
 | `horizon_system/documentation/system/system_configuration_reference.md` | Horizon AIOS — System Configuration Reference | Authoritative reference for the full configuration architecture: what each file controls, dependencies, and how components fit together. |
 | `horizon_system/documentation/system/model_preferences.md` | Horizon AIOS — Model Preferences | How-to and reference for the in-context model-preference layer: what it is (BYO, no engine), member grammar (runtime-qualified, skip-unavailable-silently), configuring groups/slots/task-class routing in the gitignored extend file, and how `/model-prefs` and `/model-catalog-refresh` fit together. |
+| `horizon_system/documentation/system/agent_teams.md` | Horizon AIOS — Agent Teams | What Agent Teams are, the in-session invocation pattern, the four shipped starter teams (roles, model groups, charters), how to define/override teams in `local.agent_teams.md`, the scope cascade, loop/retry constructs (loop-back target, pass/fail condition, iteration cap, cap behaviour), and the forthcoming `/agent-teams` management skill. |
 | `horizon_system/documentation/system/skill_model_groups.md` | Horizon AIOS — Skill Model Groups | How AIOS skills declare a model-preference group via a body callout (not frontmatter), how to choose one, how `/skill-creation` populates it (defaulting to `#midcost`), and how `/model-prefs-assign` audits and refreshes assignments across skills. |
 | `horizon_system/documentation/system/uninstall.md` | Uninstalling Horizon AIOS | Authoritative runbook for removing the AIOS footprint: how to run the uninstall, what it removes vs. preserves, a post-uninstall verification checklist, and the full install→uninstall validation cycle for a fresh machine. |
 

@@ -11,3 +11,4 @@ Group-readable skills available to all brains. Check this file first when lookin
 | monitor | `/monitor` | `#fast` | Start the AIOS filesystem integrity monitor (watches the system dirs, logs create/modify/delete/move events as JSON lines); requires elevation |
 | model-catalog-refresh | `/model-catalog-refresh` | `#investigate` | Fetch current models + pricing from live provider docs (Anthropic, OpenAI, Gemini, Ollama) and return a structured catalog to populate or validate the model-preference config |
 | model-prefs-test | `/model-prefs-test` | `#lowcost` | Test how each model group resolves in the current runtime (dry-run), or spawn small agents by group to confirm the spawn honors the config and self-report the model (--live) |
+| userguides | `/userguides [N]` | `#lowcost` | Browse the operational wiki: no argument spawns one Haiku agent per section and presents all summaries in order; `/userguides N` displays the full text of section N |
