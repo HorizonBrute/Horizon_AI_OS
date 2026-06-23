@@ -13,6 +13,8 @@
 !objective/**
 !skill-creation/
 !skill-creation/**
+!model-prefs/
+!model-prefs/**
 !resync-user-skills/
 !resync-user-skills/**
 !horizon_aios_dev_consistency_check/

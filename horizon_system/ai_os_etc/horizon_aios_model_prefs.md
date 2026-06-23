@@ -1,103 +1,133 @@
 # Model Preferences — Horizon AIOS
 
-> **Reliability notice.** Best-effort infrastructure, not a guarantee. Whether a
-> harness honors these preferences depends on: the session model (which may not
-> follow instructions about its own selection), harness tool support for explicit
-> model selection, named model availability in the current provider session, and
-> whether the session model acts on this file when it reads it. All outside AIOS
-> control -- treat these as directional signals, not enforcement.
->
-> **Reliability testing has not yet been performed.** Testing slot preferences and
-> group resolution across harnesses and session models is planned; until then,
-> actual reliability is unknown.
+In-context, bring-your-own-model override. This file is loaded as context via
+`agents.md`; the acting model reads it and honors it by direct instruction. There
+is no enforcement engine, env-var wiring, or resolver script -- reliability comes
+from the model following context, the same channel it follows any instruction in.
 
-Harnesses apply preferences silently; skip anything unresolvable and fall through
-to the next level or harness default.
+You own the configuration. Define groups, members, and routing in
+`horizon_aios_model_prefs.extend.md` (gitignored, same directory, auto-loaded).
+This base file ships the structure; the extend file holds your choices.
 
-Tracked by the AIOS repo; may change with system updates. Put user customizations
-and group membership in `horizon_aios_model_prefs.extend.md` (gitignored, same
-directory) -- see Extension File below.
+---
+
+## How the acting model applies this
+
+When you reference a group (e.g. "use #lowcost"), or a unit of work matches a
+Task-Class Routing rule, or a per-session slot is set, the acting model selects
+its model accordingly -- including the model it picks when spawning an agent or
+sub-agent.
+
+**Member resolution.** Group members are tried in listed order. Use the first
+member runnable in the current runtime; silently skip members tagged for another
+runtime or not currently available; if none are runnable, fall through to the
+next level in Fallback Order. Never surface errors about models you cannot reach.
+
+**Member grammar.** A member is a bare model id/alias (any runtime) or a
+runtime-qualified `runtime:model-id`. Members may name models this layer does not
+understand -- locally hosted or third-party models are first-class. Example:
+
+    - claude:haiku
+    - ollama:llama3.2
+    - ollama:qwen2.5-coder:7b
+    - <any-model-id-your-runtime-can-launch>
+
+A Claude Code session skips `ollama:*` and lands on a `claude:` member; an Ollama
+session skips `claude:*` and lands on a local member. One file, every runtime.
 
 ---
 
 ## Per-Session Slot Preferences
 
 ### Spawned Agent Model
-
 Unset
 
-Model for any agent or sub-agent this session spawns. When "Unset", the harness
-or provider selects (or a named group applies).
+Model for any agent/sub-agent this session spawns. "Unset" -> harness/provider
+selects, or a named group / routing rule applies.
 
 ### Sub-Agent Override
-
 Unset
 
-Model for sub-agents spawned by an already-running agent. When "Unset", inherits
+Model for sub-agents spawned by an already-running agent. "Unset" -> inherits
 Spawned Agent Model.
 
 ---
 
 ## Model Groups
 
-Named sets of models the user considers equivalent for a purpose. Reference by
-hashtag in prompts (e.g. "use #lowcost", "run on #investigate"). The harness
-tries members in order, uses the first available, and falls through to the
-per-session slots or harness default if none resolve.
-
-The harness must not surface errors about models it cannot access while resolving
-a group -- skip unavailable members silently.
-
-No members are pre-configured; define them in `horizon_aios_model_prefs.extend.md`.
+Named sets of models you consider equivalent for a purpose, referenced by hashtag
+in prompts ("use #lowcost", "run on #investigate"). Members follow the grammar
+above. No members are pre-configured; define them in the extend file.
 
 ### #lowcost
-No members. Minimize token cost.
+Minimize token cost.
 
 ### #midcost
-No members. Balanced cost vs. capability.
+Balanced cost vs. capability.
 
 ### #highcap
-No members. Maximum capability regardless of cost.
+Maximum capability regardless of cost.
 
 ### #investigate
-No members. Research, exploration, open-ended analysis.
+Research, exploration, open-ended analysis.
 
 ### #debug
-No members. Step-by-step debugging.
+Step-by-step debugging.
 
 ### #fast
-No members. Latency over depth.
+Latency over depth.
+
+---
+
+## Task-Class Routing
+
+Optional, user-owned map from a kind of work to a group, so common work gets a
+sensible default model without you naming one each time. Define rules in the
+extend file. The acting model: before spawning an agent or starting a sizable
+unit of work, if it matches a routing class, select from that group -- unless the
+prompt named a different group, which always wins.
+
+Example (define real rules in the extend file):
+
+    documentation, formatting, mechanical edits -> #lowcost
+    research, exploration                       -> #investigate
+    architecture, security-sensitive changes    -> #highcap
 
 ---
 
 ## Fallback Order
 
-1. Named group from the prompt -- first available member.
-2. Sub-Agent Override (sub-agents only, if set).
-3. Spawned Agent Model (if set).
-4. Harness / provider default.
+1. Named group from the prompt -- first runnable member.
+2. Task-Class Routing match -- first runnable member of the mapped group.
+3. Sub-Agent Override (sub-agents only, if set).
+4. Spawned Agent Model (if set).
+5. Harness / provider default.
 
 ---
 
 ## Extension File
 
 `horizon_aios_model_prefs.extend.md` (same directory, gitignored, auto-loaded).
-Same heading format; members one per line with `-`:
+Copy `horizon_aios_model_prefs.extend.template.md` to start; run `/model-catalog-refresh`
+for a current model + pricing list to fill in. Same headings; group members one
+per line with `-`, routing rules with `->`:
 
     ## Per-Session Slot Preferences
-
     ### Spawned Agent Model
     Unset
 
     ## Model Groups
-
     ### #lowcost
-    - <model-id-1>
-    - <model-id-2>
-
+    - claude:haiku
+    - ollama:llama3.2
     ### #investigate
-    - <model-id-1>
+    - claude:sonnet
 
-When both files are loaded:
-- Slot preferences: extend file wins if not "Unset".
-- Group membership: combined.
+    ## Task-Class Routing
+    - documentation, formatting -> #lowcost
+    - architecture              -> #highcap
+
+When both files load:
+- Slots: extend wins if not "Unset".
+- Groups: membership combined.
+- Routing: extend rules apply; on conflict, the more specific class wins.
