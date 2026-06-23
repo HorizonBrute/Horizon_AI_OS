@@ -66,7 +66,7 @@ commit as the feature it describes.**
 
 - Prefer conventions that a first-time contributor can follow without reading
   internal history. Document the "why" not just the "what."
-- Vendor-specific customization lives in `$HORIZON_BIN/harness_configs/<vendor>/`
+- Vendor-specific customization lives in `$HORIZON_SYSTEM/harness_configs/<vendor>/`
   and never pollutes the cross-harness layer.
 - New features should be additive. Avoid changes that break existing brain
   configurations or require coordinated migration.
@@ -96,7 +96,7 @@ remain stable for coordination to be possible.
 
 **Harness independence is a design constraint, not a feature.**
 
-No part of the AIOS core layer may be readable only by one harness or executable only on one model. Cross-harness conventions (`agents.md`, hook taxonomy, log schema, sound naming) are harness-agnostic; the choice of model is a deployment decision. Harness-specific configuration lives in `$HORIZON_BIN/harness_configs/<vendor>/`
+No part of the AIOS core layer may be readable only by one harness or executable only on one model. Cross-harness conventions (`agents.md`, hook taxonomy, log schema, sound naming) are harness-agnostic; the choice of model is a deployment decision. Harness-specific configuration lives in `$HORIZON_SYSTEM/harness_configs/<vendor>/`
 and extends, but never replaces, the cross-harness core. Any feature that
 requires a specific harness to function belongs in that vendor's config
 directory, not in `agents.md` or the invariants.

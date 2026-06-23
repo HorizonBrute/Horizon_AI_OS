@@ -21,6 +21,7 @@ at the end of a session to save state. Start with the setup guide in
 | `horizon_system/documentation/cloud_sync_exclusions.md` | Cloud Sync Exclusions for Horizon AIOS | How to exclude sensitive/large files when running AIOS under OneDrive/Google Drive/Dropbox instead of (or alongside) git. |
 | `horizon_system/documentation/context_loading.md` | Context Loading — Horizon AIOS | How the Claude Code harness assembles its system prompt: loading layers, @-import mechanics, real per-session token numbers, per-layer config guidance, and token-economy rules. |
 | `horizon_system/documentation/dev_values.md` | Horizon AIOS — Development Values | The engineering values guiding AIOS design (agent-first architecture, token economy, security posture); authority tier above architecture decisions. |
+| `horizon_system/documentation/development_pipeline.md` | Horizon AIOS — Development Pipeline | Placeholder backlog tracking known work items, gaps, and research threads before formal issue management is integrated. |
 | `horizon_system/documentation/philosophy.md` | Horizon AIOS — Philosophy and Conceptual Framework | The "why" behind the architecture and the Brain vs. AI-OS vocabulary; highest authority tier. |
 | `horizon_system/documentation/sync_setup.md` | Horizon AIOS — Sync Setup Reference | How auto-sync keeps a local install current via fast-forward-only git fetch/merge, and the `aios_local.conf` keys that configure it. |
 | `horizon_system/documentation/tested_configurations.md` | Horizon AIOS — Tested Configurations | The verified harness/OS/deployment compatibility matrix and what "tested" means. |
@@ -79,5 +80,4 @@ at the end of a session to save state. Start with the setup guide in
 |---|---|---|
 | `horizon_system/ai_os_etc/ai_os_personalizations.md` | AI OS Personalizations — Horizon AIOS | The settings-layer ownership model and personalization rules (which config belongs in global vs. devroot vs. project layers). |
 | `horizon_system/ai_os_etc/file_structure_invariants.md` | File Structure Invariants — Horizon AIOS | Hard constraints on path variables, the directory tree, what the repo tracks vs. ignores, and structural conventions. |
-| `horizon_system/ai_os_etc/horizon_aios_agents.md` | Horizon AIOS — Agent Configuration (OS Layer) | Harness-agnostic agent instructions (orchestration model, agent usage) loaded into every session. |
 | `horizon_system/ai_os_etc/security_invariants.md` | Security Invariants — Horizon AIOS | Hard security constraints for all users, harnesses, and brains, including the three-tier principal model. |

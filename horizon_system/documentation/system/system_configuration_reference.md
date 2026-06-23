@@ -44,7 +44,7 @@ P.10 **Developer Mode not required**.
 
 **Runtime**
 
-P.11 **`$HORIZON_ROOT` must be a stable path**. Every path-sensitive file in the repository contains `$HORIZON_ROOT` as a literal string. Renaming or moving the root directory requires re-running path substitution on all files in the Path Dependencies Catalog (section 3). There is no dynamic path resolution at runtime.
+P.11 **`$HORIZON_ROOT` is written into machine-local config at setup time.** If the repo is moved or renamed, run `horizon_aios_relocate.py` (`$HORIZON_SYSTEM/sbin/`) to update all machine-local instance pointers automatically. See Section 3 (Path Dependencies Catalog) for the files that contain the embedded root. Framework files in the repo use env vars or derive their root from script location — they do not embed the absolute path and need no substitution.
 
 P.12 **Audio output device** — the sound hooks assume an audio output device is available. If none is present, `Media.SoundPlayer` will throw silently (the hook exits without error and Claude Code is unaffected). Context threshold audio in the statusline script also fails silently via `Test-Path` guard.
 
@@ -192,7 +192,7 @@ The committed devroot file owns permissions only. The global `~/.claude/settings
 
 3.2 **`$HORIZON_ROOT\horizon_system\bin\statusline\statusline-context-alerts.ps1`** (Windows path)
 
-3.2.1 Line containing `claude_at_${new_threshold}_statusline.wav` — path to `horizon_system\sounds\claude_event_sounds\`. Controls the audio threshold alert sound files on Windows.
+3.2.1 No hardcoded sound paths — sound resolution is delegated to `resolve_sound.py` via `$HORIZON_BIN`. The script derives `$HORIZON_BIN` from its own location (`$PSScriptRoot`), so no per-machine substitution is needed.
 
 3.3 **`$HORIZON_ROOT/horizon_system/bin/statusline/statusline-command.sh`** (Linux/macOS path)
 
@@ -312,7 +312,7 @@ Copy-Item "$HORIZON_SYSTEM\templates\claude_code\settings.json" "$HOME\.claude\s
 (Get-Content "$HOME\.claude\settings.json") -replace "AIOS_EXEC_WRAPPER", $wrapper | Set-Content "$HOME\.claude\settings.json"
 ```
 
-7.3 Run path substitution on all files listed in section 3 of this document. Replace the committed root path with the new machine's `$HORIZON_ROOT`. PowerShell one-liners for each file are provided in the getting started guide.
+7.3 The machine-local settings.json uses the AIOS-independent `aios-exec` wrapper (set in step 7.2) — no per-machine path substitution is needed for it. Framework files in the repo derive their root from their own location. If you later move the cloned repo to a different path, run `horizon_aios_relocate.py --apply` to update all machine-local instance pointers (registry, active_env, CLAUDE.md redirect, aios_local.conf). The Path Dependencies Catalog (section 3) lists the files the tool updates.
 
 7.4 Update `horizon_system\harness_configs\git\gitconfig` with the new machine's user identity (name, email, GPG key fingerprint) and the correct `excludesfile` path.
 

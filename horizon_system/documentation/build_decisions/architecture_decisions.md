@@ -173,7 +173,7 @@ In the Docker deployment model, brain isolation is container-level rather than O
 
 ### 2026-06-20 — bin/sbin boundary for brain isolation
 
-**Decision:** `$HORIZON_BIN/` (bin) is group-readable — brain user accounts may read and execute scripts and assets there. `$HORIZON_BIN/sbin/` is owner-only — brain user accounts must never have access.
+**Decision:** `$HORIZON_BIN/` (bin) is group-readable — brain user accounts may read and execute scripts and assets there. `$HORIZON_SYSTEM/sbin/` is owner-only — brain user accounts must never have access.
 
 **Rationale:** Mirrors the Unix `/bin` and `/sbin` filesystem convention. Brains need access to shared tooling (sounds, templates, status scripts) without needing elevated authority. Privileged scripts that manage brain accounts or modify OS-level config require primary-user authority. The explicit directory boundary enforces this without needing per-file permission management.
 
