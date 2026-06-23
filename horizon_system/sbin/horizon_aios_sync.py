@@ -266,7 +266,7 @@ def run_sync():
 
     log("OK", f"Synced to {remote}/{branch}: {merge.stdout.strip()}")
 
-    # A sync may have refreshed skills_sbin and dropped the untracked junctions
+    # A sync may have refreshed skills_sbin and dropped the untracked symlinks
     # that register machine-local user skills. Rebuild them from usr_skills (the
     # source of truth). Best-effort: a failure here must not fail the sync.
     reg_script = SCRIPT_DIR / "horizon_aios_register_user_skills.py"
