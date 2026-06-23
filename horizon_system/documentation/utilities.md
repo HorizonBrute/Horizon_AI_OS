@@ -360,6 +360,44 @@ elevation. See `$HORIZON_DOCS/deployment/brain_automation.md`.
 
 ---
 
+## horizon_aios_verify_isolation.py
+
+**Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_verify_isolation.py`
+
+Verifies the central AIOS isolation claim — a brain OS account can read
+`$HORIZON_BIN` but is denied `$HORIZON_SYSTEM/sbin` (verification criterion #5).
+Runs in two modes. **Default (safe)** is non-destructive and needs no elevation:
+it confirms the static ACL posture — an explicit, non-inherited `brains` Deny on
+`sbin`/`skills_sbin`/`logs` (Windows, via `Get-Acl`, the same check
+`horizon_aios_doctor.py` makes) or owner-only mode `0o700` (Unix). **Live mode
+(`--live`)** is the opt-in, elevated, destructive proof: it provisions a throwaway
+brain, logs on *as* that brain to empirically read `bin` (expect OK) and `sbin`
+(expect denied), then removes it. Because live mode adds and deletes an OS user
+and requires Administrator/root, the account-touching behaviour is gated behind
+`--live`; the default does nothing to user accounts. Windows is fully
+implemented and verified; Linux/macOS have the safe check and a live-probe
+framework (`runuser`/`su`/`sudo -u`) not yet validated on real hardware.
+
+**When to use it:** Quick, safe re-confirmation that hardening is intact (default
+mode, any time); or the full empirical isolation proof on a test machine when
+validating a fresh install or change (`--live`, elevated). Useful to contributors
+validating the security model.
+
+**Key flags:**
+
+- *(none)* — default safe ACL check, non-destructive, no elevation
+- `--live` — opt-in: provision a throwaway brain, run the as-the-brain probe,
+  remove it (requires elevation)
+- `--brain-name NAME` — throwaway account name for `--live` (default `aios_isotest`)
+- `--keep` — `--live`: leave the brain provisioned for inspection
+- `--yes` / `-y` — skip the `--live` confirmation prompt
+- `--dry-run` — print what `--live` would do without changing anything
+- `--horizon-root PATH` — explicit root; otherwise derived from script location
+
+**Referenced by a skill?** No. See `$HORIZON_DOCS/security/brain_isolation_test.md`.
+
+---
+
 ## horizon_aios_sync.py
 
 **Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_sync.py`

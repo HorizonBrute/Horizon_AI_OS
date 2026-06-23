@@ -86,6 +86,14 @@ Items are grouped by status, not priority — priority is implicit from the grou
   + verify the `launchd` automation path. The macOS row in
   `tested_configurations.md` stays **Untested** until then.
 
+- **Brain isolation test — Unix live probe unvalidated** — `horizon_aios_verify_isolation.py`
+  (criterion #5) is verified end-to-end on Windows; its safe ACL check works on
+  Unix, but the `--live` run-as-the-brain probe (root → `runuser`/`su`/`sudo -u`)
+  is a framework that has not been run on a live Linux/macOS host. To close: on a
+  real Linux/macOS box, `horizon_aios_verify_isolation.py --live` must report
+  `BIN=READABLE  SBIN=DENIED`. Folds into the Linux/macOS verification passes above.
+  See `security/brain_isolation_test.md`.
+
 ---
 
 ## Known Gaps — Documentation

@@ -51,6 +51,7 @@ change** — run `/horizon_aios_documentation_index_update`. (Enforced by CC-G4 
 | ID (path) | Title | Purpose |
 |---|---|---|
 | `horizon_system/documentation/security/audit_logging.md` | Audit Logging — AIOS Filesystem Monitor | How `horizon_aios_monitor.py` watches AIOS system directories and logs unexpected file changes as JSON-line audit events. |
+| `horizon_system/documentation/security/brain_isolation_test.md` | Horizon AIOS — Brain Isolation Test (Criterion #5) | `horizon_aios_verify_isolation.py`: safe ACL check by default, opt-in `--live` provision/probe/teardown that proves a brain reads `bin` but is denied `sbin`. |
 
 ## development_tools
 | ID (path) | Title | Purpose |
