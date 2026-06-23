@@ -1,11 +1,11 @@
-﻿# =============================================================================
+# =============================================================================
 # Horizon AIOS - Uninstall Script (PowerShell)
 # Undoes everything bootstrap.ps1 does on this machine.
 # Safe to run multiple times (idempotent). Non-destructive on user content.
 #
 # Usage:
 #   .\uninstall.ps1 --dry-run # preview every action; change nothing (no elevation)
-#   .\uninstall.ps1          # interactive — confirms each destructive step
+#   .\uninstall.ps1          # interactive - confirms each destructive step
 #   .\uninstall.ps1 --yes   # non-interactive, accept all removals
 #   .\uninstall.ps1 -y      # same as --yes
 # Unknown arguments are rejected (exit 2) rather than silently ignored.
@@ -14,21 +14,21 @@
 # Must be run as Administrator (same requirement as bootstrap).
 #
 # What this removes (mirrors bootstrap.ps1 section by section):
-#   Section 2  — ~/.claude/CLAUDE.md redirect lines written by bootstrap
-#   Section 3  — ~/.claude/skills/ junction and user-skill symlinks in skills_sbin/
-#   Section 4  — $HORIZON_ROOT/handoffs/ and objectives/ (only if empty)
-#   Section 5  — ~/.horizon/ tree (registry, active_env, wrappers), ~/.claude/settings.json
-#   Section 5b — ~/.claude/projects junction (memory redirect); memory data left intact
-#   Section 6  — .git/hooks/commit-msg, pre-commit; git core.hooksPath config
-#   Section 7  — $HORIZON_BIN entry from Machine-scope PATH
-#   Section 8  — active_env line in PowerShell $PROFILE + the two global git
+#   Section 2  - ~/.claude/CLAUDE.md redirect lines written by bootstrap
+#   Section 3  - ~/.claude/skills/ junction and user-skill symlinks in skills_sbin/
+#   Section 4  - $HORIZON_ROOT/handoffs/ and objectives/ (only if empty)
+#   Section 5  - ~/.horizon/ tree (registry, active_env, wrappers), ~/.claude/settings.json
+#   Section 5b - ~/.claude/projects junction (memory redirect); memory data left intact
+#   Section 6  - .git/hooks/commit-msg, pre-commit; git core.hooksPath config
+#   Section 7  - $HORIZON_BIN entry from Machine-scope PATH
+#   Section 8  - active_env line in PowerShell $PROFILE + the two global git
 #                include.path entries `aios setup` writes (framework gitconfig
 #                and the machine-local git_identity.local.gitconfig)
-#   Section 9  — $HORIZON_ETC/aios_local.conf, $HORIZON_SYSTEM/logs/ (only if empty)
-#   Section 10 — brains-group ACEs removed from $HORIZON_SYSTEM subtrees
+#   Section 9  - $HORIZON_ETC/aios_local.conf, $HORIZON_SYSTEM/logs/ (only if empty)
+#   Section 10 - brains-group ACEs removed from $HORIZON_SYSTEM subtrees
 #                Advisory: 'brains' OS group left in place (may have brain members)
 #
-# What this does NOT remove (requires manual steps — see advisories printed below):
+# What this does NOT remove (requires manual steps - see advisories printed below):
 #   - Optional sync schedule created by horizon_aios_setup_sync_schedule.py (separate opt-in)
 #   - 'brains' OS group (may have brain OS users as members)
 #   - Brain OS user accounts and their data (use horizon_aios_create_brain.py's remove flow)
@@ -40,7 +40,7 @@ $ErrorActionPreference = "Stop"
 # --- Parse arguments (reject unknown flags instead of silently dropping them) ---
 function Show-Usage {
     Write-Host ""
-    Write-Host "  Horizon AIOS uninstall — reverses the bootstrap footprint."
+    Write-Host "  Horizon AIOS uninstall - reverses the bootstrap footprint."
     Write-Host ""
     Write-Host "  Usage: .\uninstall.ps1 [--dry-run] [--yes]"
     Write-Host "    --dry-run        Preview every action; make no changes (no elevation needed)."
@@ -80,7 +80,7 @@ if (-not $isAdmin -and -not $DryRun) {
 }
 if ($DryRun) {
     Write-Host ""
-    Write-Host "  [DRY-RUN] Previewing actions only — no changes will be made." -ForegroundColor Magenta
+    Write-Host "  [DRY-RUN] Previewing actions only - no changes will be made." -ForegroundColor Magenta
     if (-not $isAdmin) {
         Write-Host "  [DRY-RUN] Not elevated; a real uninstall must be run as Administrator." -ForegroundColor Magenta
     }
@@ -116,7 +116,7 @@ function Confirm($prompt) {
 }
 
 # =============================================================================
-# SECTION 2: ~/.claude/CLAUDE.md — remove lines written by bootstrap
+# SECTION 2: ~/.claude/CLAUDE.md - remove lines written by bootstrap
 # Bootstrap writes: the @ redirect line and the @ CLAUDE.aios-dev.md import line.
 # We strip only those lines; any content the user added is preserved.
 # If the file becomes empty (or whitespace-only) after stripping, remove it.
@@ -141,7 +141,7 @@ if (Test-Path $ClaudeMd) {
             Dry "strip bootstrap redirect lines from ~/.claude/CLAUDE.md (user content preserved)."
         }
     } elseif ($trimmed.Count -eq 0) {
-        if (Confirm "~/.claude/CLAUDE.md will be empty after removing bootstrap lines — delete it?") {
+        if (Confirm "~/.claude/CLAUDE.md will be empty after removing bootstrap lines - delete it?") {
             Remove-Item $ClaudeMd -Force
             Ok "Deleted ~/.claude/CLAUDE.md (was only bootstrap content)."
         } else {
@@ -153,14 +153,14 @@ if (Test-Path $ClaudeMd) {
         Ok "Removed bootstrap redirect lines from ~/.claude/CLAUDE.md (user content preserved)."
     }
 } else {
-    Skip "~/.claude/CLAUDE.md not found — nothing to remove."
+    Skip "~/.claude/CLAUDE.md not found - nothing to remove."
 }
 
 Info "The active_env line in your PowerShell `$PROFILE is removed in Section 8 below."
 
 # =============================================================================
 # SECTION 3: ~/.claude/skills/ junction and user-skill symlinks in skills_sbin/
-# Bootstrap creates a junction from ~/.claude/skills/ → skills_sbin/.
+# Bootstrap creates a junction from ~/.claude/skills/ -> skills_sbin/.
 # horizon_aios_register_user_skills.py creates symlinks inside skills_sbin/ pointing to usr_skills/.
 # =============================================================================
 Banner "SECTION 3: Skills junction and user-skill symlinks"
@@ -199,16 +199,16 @@ if (Test-Path $SkillsDst) {
             Ok "Removed ~/.claude/skills/ junction."
         }
     } else {
-        Warn "~/.claude/skills/ is a real directory (not a junction) — skipping removal."
+        Warn "~/.claude/skills/ is a real directory (not a junction) - skipping removal."
         Warn "  If it was not created by bootstrap, manage it manually."
     }
 } else {
-    Skip "~/.claude/skills/ not found — nothing to remove."
+    Skip "~/.claude/skills/ not found - nothing to remove."
 }
 
 # =============================================================================
 # SECTION 4: handoffs/ and objectives/ directories
-# Only removed if empty — they may contain user data.
+# Only removed if empty - they may contain user data.
 # =============================================================================
 Banner "SECTION 4: Handoffs and objectives directories"
 
@@ -224,11 +224,11 @@ foreach ($dirName in @("handoffs", "objectives")) {
                 Ok "Removed empty directory: $dirPath"
             }
         } else {
-            Warn "$dirPath contains $($contents.Count) item(s) — not removed."
+            Warn "$dirPath contains $($contents.Count) item(s) - not removed."
             Advisory "Review and remove $dirPath manually if no longer needed."
         }
     } else {
-        Skip "$dirPath not found — nothing to remove."
+        Skip "$dirPath not found - nothing to remove."
     }
 }
 
@@ -256,7 +256,7 @@ if (Test-Path $HorizonDir) {
         Skip "Skipping ~/.horizon/ removal."
     }
 } else {
-    Skip "~/.horizon/ not found — nothing to remove."
+    Skip "~/.horizon/ not found - nothing to remove."
 }
 
 # Decide whether bootstrap created settings.json (safe to remove) or the user owns
@@ -267,7 +267,7 @@ if (Test-Path $HorizonDir) {
 #       (confirm-gated) and drop the stamp. Differs => user edited it post-bootstrap =>
 #       PRESERVE; drop the now-stale stamp (it no longer describes the file).
 #   (b) NO STAMP (older installs / pre-existing user settings.json): fall back to the
-#       content-equality heuristic — reconstruct template+substitution and compare,
+#       content-equality heuristic - reconstruct template+substitution and compare,
 #       BOM-safe. Match => remove; else => preserve.
 # Stamp contract (must match bootstrap.ps1 writer byte-for-byte):
 #   path   : ~/.claude/.horizon-settings.stamp
@@ -278,15 +278,15 @@ if (Test-Path $SettingsJson) {
     $decision = $null   # "remove" or "preserve"
 
     if (Test-Path $SettingsStamp) {
-        # (a) Stamp present — authoritative provenance check.
+        # (a) Stamp present - authoritative provenance check.
         $stamped = $null
         try { $stamped = (Get-Content $SettingsStamp -Raw).Trim().ToLower() } catch { $stamped = $null }
         $current = (Get-FileHash -Path $SettingsJson -Algorithm SHA256).Hash.ToLower()
         if ($stamped -and $stamped -eq $current) {
-            Info "Provenance stamp matches current settings.json — bootstrap-created, unmodified."
+            Info "Provenance stamp matches current settings.json - bootstrap-created, unmodified."
             $decision = "remove"
         } else {
-            Skip "~/.claude/settings.json was modified after bootstrap (provenance stamp mismatch) — PRESERVING it."
+            Skip "~/.claude/settings.json was modified after bootstrap (provenance stamp mismatch) - PRESERVING it."
             Advisory "If you want it gone, remove ~/.claude/settings.json manually."
             $decision = "preserve"
             # The stamp no longer describes the file; drop it regardless.
@@ -298,7 +298,7 @@ if (Test-Path $SettingsJson) {
             }
         }
     } else {
-        # (b) No stamp — older install or pre-existing user file. Fall back to the
+        # (b) No stamp - older install or pre-existing user file. Fall back to the
         # content-equality heuristic (reconstruct bootstrapped default + compare).
         $SettingsTemplate = Join-Path $HORIZON_SYSTEM "templates\claude_code\settings.json"
         $AiosExecWrapper  = (Join-Path $HOME ".horizon\bin\aios-exec.ps1") -replace '\\', '/'
@@ -326,7 +326,7 @@ if (Test-Path $SettingsJson) {
             Info "No provenance stamp; content matches the freshly-bootstrapped default (fallback heuristic)."
             $decision = "remove"
         } else {
-            Skip "~/.claude/settings.json differs from the bootstrap default (user-customized or user-authored) — PRESERVING it."
+            Skip "~/.claude/settings.json differs from the bootstrap default (user-customized or user-authored) - PRESERVING it."
             Advisory "If you want it gone, remove ~/.claude/settings.json manually."
             $decision = "preserve"
         }
@@ -335,7 +335,7 @@ if (Test-Path $SettingsJson) {
     if ($decision -eq "remove") {
         if ($DryRun) {
             Dry "remove ~/.claude/settings.json (bootstrap-created) and its provenance stamp."
-        } elseif (Confirm "~/.claude/settings.json was created by bootstrap and is unmodified — remove it?") {
+        } elseif (Confirm "~/.claude/settings.json was created by bootstrap and is unmodified - remove it?") {
             Remove-Item $SettingsJson -Force
             Ok "Removed ~/.claude/settings.json (was the unmodified bootstrap default)."
             # Full teardown: drop the stamp so no dangling provenance file remains.
@@ -344,11 +344,11 @@ if (Test-Path $SettingsJson) {
                 Ok "Removed provenance stamp ~/.claude/.horizon-settings.stamp."
             }
         } else {
-            Skip "Keeping ~/.claude/settings.json — remove manually if needed."
+            Skip "Keeping ~/.claude/settings.json - remove manually if needed."
         }
     }
 } else {
-    Skip "~/.claude/settings.json not found — nothing to remove."
+    Skip "~/.claude/settings.json not found - nothing to remove."
     # Guard against a dangling stamp left after the file was removed by other means.
     if (Test-Path $SettingsStamp) {
         if ($DryRun) {
@@ -362,9 +362,9 @@ if (Test-Path $SettingsJson) {
 
 # =============================================================================
 # SECTION 5b: ~/.claude/projects memory redirect (reverses bootstrap 5c)
-# Bootstrap junctions ~/.claude/projects → $HORIZON_ROOT/memory via
+# Bootstrap junctions ~/.claude/projects -> $HORIZON_ROOT/memory via
 # horizon_aios_redirect_memory.py so the harness's per-project memory lives in the AIOS.
-# We remove only the JUNCTION — never the memory target's contents (that data
+# We remove only the JUNCTION - never the memory target's contents (that data
 # lives in $HORIZON_ROOT/memory, part of the repo). Mirrors the Section 3
 # skills-junction removal: link-only delete, not confirm-gated.
 # =============================================================================
@@ -378,14 +378,14 @@ if (Test-Path $ProjectsLink) {
             Dry "remove ~/.claude/projects junction (memory redirect); memory data in `$HORIZON_ROOT/memory left intact."
         } else {
             [System.IO.Directory]::Delete($ProjectsLink, $false)
-            Ok "Removed ~/.claude/projects junction (memory redirect) — memory data left intact."
+            Ok "Removed ~/.claude/projects junction (memory redirect) - memory data left intact."
         }
     } else {
-        Warn "~/.claude/projects is a real directory (not a junction) — leaving as-is."
+        Warn "~/.claude/projects is a real directory (not a junction) - leaving as-is."
         Warn "  If bootstrap created it, manage it manually."
     }
 } else {
-    Skip "~/.claude/projects not found — nothing to remove."
+    Skip "~/.claude/projects not found - nothing to remove."
 }
 
 # Advise about any pre-redirect backup horizon_aios_redirect_memory.py left behind
@@ -435,16 +435,16 @@ if (Test-Path $GitDir) {
             Ok "Unset git config core.hooksPath (was: $currentHooksPath)."
         }
     } else {
-        Skip "git core.hooksPath not set in local config — nothing to unset."
+        Skip "git core.hooksPath not set in local config - nothing to unset."
     }
 } else {
-    Skip "$HORIZON_ROOT is not a git repository — skipping git hooks cleanup."
+    Skip "$HORIZON_ROOT is not a git repository - skipping git hooks cleanup."
 }
 
 Info "Global git include.path entries written by 'aios setup' are removed in Section 8 below."
 
 # =============================================================================
-# SECTION 7: Machine-scope PATH — remove HORIZON_BIN entry
+# SECTION 7: Machine-scope PATH - remove HORIZON_BIN entry
 # Bootstrap adds $HORIZON_BIN to the Machine-scope PATH.
 # =============================================================================
 Banner "SECTION 7: Machine-scope PATH"
@@ -515,7 +515,7 @@ if (Test-Path $ProfilePath) {
         }
     }
 } else {
-    Skip "PowerShell profile not found ($ProfilePath) — nothing to strip."
+    Skip "PowerShell profile not found ($ProfilePath) - nothing to strip."
 }
 
 # (b)+(c) Remove ONLY the two global git include.path entries `aios setup` added
@@ -530,7 +530,7 @@ foreach ($target in $IncludeTargets) {
     $tnorm = $target.Replace('/', '\').TrimEnd('\')
     $match = @($allIncludes | Where-Object { $_.Replace('/', '\').TrimEnd('\') -ieq $tnorm })
     if ($match.Count -eq 0) {
-        Skip "Global include.path not set for $target — nothing to unset."
+        Skip "Global include.path not set for $target - nothing to unset."
         continue
     }
     if ($DryRun) {
@@ -542,7 +542,7 @@ foreach ($target in $IncludeTargets) {
         if ($LASTEXITCODE -eq 0) {
             Ok "Removed global include.path -> $target"
         } else {
-            Warn "Could not unset include.path for $target (git rc=$LASTEXITCODE) — remove manually."
+            Warn "Could not unset include.path for $target (git rc=$LASTEXITCODE) - remove manually."
         }
     }
 }
@@ -562,10 +562,10 @@ if (Test-Path $LocalConf) {
         Remove-Item $LocalConf -Force
         Ok "Removed aios_local.conf."
     } else {
-        Skip "Keeping aios_local.conf — remove manually if needed."
+        Skip "Keeping aios_local.conf - remove manually if needed."
     }
 } else {
-    Skip "aios_local.conf not found — nothing to remove."
+    Skip "aios_local.conf not found - nothing to remove."
 }
 
 if (Test-Path $HORIZON_LOGS) {
@@ -578,11 +578,11 @@ if (Test-Path $HORIZON_LOGS) {
             Ok "Removed empty logs/ directory."
         }
     } else {
-        Warn "logs/ contains $($logContents.Count) item(s) — not removed."
+        Warn "logs/ contains $($logContents.Count) item(s) - not removed."
         Advisory "Review and remove $HORIZON_LOGS manually if logs are no longer needed."
     }
 } else {
-    Skip "logs/ directory not found — nothing to remove."
+    Skip "logs/ directory not found - nothing to remove."
 }
 
 Advisory "If you set up a sync schedule with horizon_aios_setup_sync_schedule.py, remove the scheduled tasks manually:"
@@ -625,26 +625,26 @@ if ($groupExists) {
                 if ($LASTEXITCODE -eq 0) {
                     Ok "Removed brains-group ACEs from: $dir"
                 } else {
-                    Warn "icacls returned non-zero for $dir — some ACEs may remain."
+                    Warn "icacls returned non-zero for $dir - some ACEs may remain."
                     Warn "  $result"
                 }
             }
         } else {
-            Skip "$dir not found — skipping ACE removal."
+            Skip "$dir not found - skipping ACE removal."
         }
     }
-    Advisory "The 'brains' OS group was left in place — it may have brain OS user members."
+    Advisory "The 'brains' OS group was left in place - it may have brain OS user members."
     Advisory "  To remove it: Remove-LocalGroup -Name 'brains'"
     Advisory "  Only do this after removing all brain OS user accounts."
 } else {
-    Skip "brains group does not exist — no ACEs to remove."
+    Skip "brains group does not exist - no ACEs to remove."
 }
 
 # =============================================================================
 # SUMMARY
 # =============================================================================
 if ($DryRun) {
-    Banner "Dry run complete — no changes were made"
+    Banner "Dry run complete - no changes were made"
     Write-Host ""
     Write-Host "  Re-run without --dry-run (as Administrator) to apply these actions."
     Write-Host ""
