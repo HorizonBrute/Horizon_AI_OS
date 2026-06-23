@@ -9,11 +9,11 @@ tools: Read, Bash, Task
 **Model preference:** `#midcost` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
 
 End-to-end verification that Agent Teams actually resolve and spawn each role on its
-intended model and run the natural-language flow. Every spawned role echoes a **nonce**,
-its **role**, and the **model it actually ran as** — a nonce the orchestrator cannot fake,
-so a correct echo proves the role really spawned, the `#model-group` routed, and the chain
-executed. This SPAWNS real agents (one per role across all teams) — a deliberate, possibly
-costly integration test; run it to verify, not routinely.
+intended model. Every spawned role echoes a **nonce**, its **role**, **what it was told to
+do** (its charter, from the resolver), and the **model it actually ran as** — a nonce the
+orchestrator cannot fake, so a correct echo proves the role really spawned, the
+`#model-group` routed, and the chain executed. This SPAWNS real agents (one per role across
+all teams) — a deliberate, possibly costly integration test; run it to verify, not routinely.
 
 ---
 
@@ -51,21 +51,24 @@ Record the model you spawned it as (the **expected** model). Honor flags for the
 3. `ask user` — note it and continue; do not block the test.
 4. `Loop` — spawn the looping role once (note the loop + cap + target); do NOT actually iterate.
 
-3.3 Each role sub-agent gets EXACTLY this prompt (fill in the placeholders):
+3.3 Each role sub-agent gets this prompt (fill in the placeholders; `<CHARTER>` is the
+role's `charter` from the resolver JSON — its real job in the team):
 
 > You are the "<ROLE>" role of the "<TEAM>" agent team (model group `<GROUP>`).
-> Acknowledge and reply with EXACTLY three lines, nothing else:
+> Your job in the team: <CHARTER>.
+> This is a wiring test — do NOT carry the job out. Reply with EXACTLY four lines, nothing else:
 >   nonce: <NONCE>
 >   role: <ROLE>
+>   told: <CHARTER>
 >   model: <the model you are actually running as — your real model id/name>
 
 ---
 
 ## Step 4 — Collect and verify
 
-4.1 Gather each role's three-line reply. Build one report table per team:
+4.1 Gather each role's four-line reply. Build one report table per team:
 
-    | Team | Role | Model group | Expected model | Reported model | Nonce OK |
+    | Team | Role | Told to do (charter) | Model group | Expected model | Reported model | Nonce OK |
 
 4.2 Flag: a missing/incorrect nonce (the role did not really run, or the chain broke); a
 reported model whose tier does not match the group (a routing problem); or a role that
