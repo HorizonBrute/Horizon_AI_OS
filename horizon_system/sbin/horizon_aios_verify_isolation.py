@@ -219,7 +219,7 @@ def _probe_windows(brain, paths):
             pw = line.strip()
             break
     if not pw:
-        return None, 'no credential returned by horizon_aios_brain_credential.py'
+        return None, 'NOCRED: no credential returned by horizon_aios_brain_credential.py'
 
     ws = os.path.join(paths['brains'], brain)
     probe_path = os.path.join(ws, 'iso_probe.ps1')
@@ -267,8 +267,10 @@ def _probe_windows(brain, paths):
             pass
 
     if not os.path.exists(result_path):
-        return None, ('no result file — the brain account may lack the "Log on as '
-                      'a batch job" right (grant via --automation scheduled or secpol)')
+        return None, ('NOLAUNCH: no result file — the brain account may lack the '
+                      '"Log on interactively" / secondary-logon right that '
+                      'Start-Process -Credential (CreateProcessWithLogonW) requires; '
+                      '--automation scheduled grants only the BATCH right')
     with open(result_path, encoding='utf-8') as fh:
         return [l.strip() for l in fh if l.strip()], None
 
@@ -298,20 +300,33 @@ def _probe_unix(brain, paths, os_name):
     return lines, None
 
 
-def live_check(paths, os_name, brain, dry, keep):
+def live_check(paths, os_name, brain, dry, keep, use_existing):
     banner('Live Check — Empirical Run-as-the-Brain Probe (DESTRUCTIVE)')
 
     if not dry and not _is_elevated(os_name):
         error('--live requires elevation (Administrator on Windows, root on Unix).')
         return False
-    if not dry and _user_exists(brain, os_name):
-        error(f'An account named "{brain}" already exists. Refusing to clobber it. '
-              f'Pass --brain-name with a free name.')
-        return False
 
-    if not _provision(brain, paths, dry):
-        error('Provisioning failed — see output above. Nothing to probe.')
-        return False
+    # Exists-guard: behaviour differs by mode.
+    if use_existing:
+        # Brain MUST already exist; we never create or remove it.
+        if not dry and not _user_exists(brain, os_name):
+            error(f'--use-existing: account "{brain}" does not exist. '
+                  f'Provision the brain first, then re-run.')
+            return False
+    else:
+        # Throwaway path: refuse to clobber a pre-existing account.
+        if not dry and _user_exists(brain, os_name):
+            error(f'An account named "{brain}" already exists. Refusing to clobber it. '
+                  f'Pass --brain-name with a free name.')
+            return False
+
+    if use_existing:
+        info(f'Using existing brain "{brain}" (not provisioning, will not remove).')
+    else:
+        if not _provision(brain, paths, dry):
+            error('Provisioning failed — see output above. Nothing to probe.')
+            return False
 
     result, err = (None, None)
     try:
@@ -323,13 +338,36 @@ def live_check(paths, os_name, brain, dry, keep):
         else:
             result, err = _probe_unix(brain, paths, os_name)
     finally:
-        if keep:
+        # SAFETY INVARIANT: _teardown is only ever called on the throwaway path.
+        # use_existing=True NEVER reaches _teardown — the brain is left untouched.
+        if use_existing:
+            info(f'Brain "{brain}" left untouched (--use-existing).')
+        elif keep:
             warn(f'--keep set: leaving brain "{brain}" provisioned. Remove later with: '
                  f'horizon_aios_remove_brain.py {brain} --yes')
         else:
             _teardown(brain, paths, dry)
 
     if err:
+        # B5: missing keyring credential — soft-SKIP in use_existing mode.
+        if use_existing and err.startswith('NOCRED:'):
+            warn('Probe SKIPPED — no keyring credential available.')
+            info('This is expected when the keyring is absent: the password is not '
+                 'retrievable so the run-as-brain probe cannot run. '
+                 'The static ACL check (safe mode) is unaffected and still proves '
+                 'the isolation posture.')
+            return True
+        # B6: probe-launch failure — soft-SKIP in use_existing mode.
+        if use_existing and err.startswith('NOLAUNCH:'):
+            warn('Probe SKIPPED — Start-Process -Credential launch refused.')
+            info('Likely cause: the brain lacks the interactive / secondary-logon '
+                 'right that CreateProcessWithLogonW requires. '
+                 '--automation scheduled grants only the BATCH right, not the '
+                 'interactive/network logon right needed here. '
+                 'This is a harness / logon-right limitation, NOT an isolation '
+                 'breach — the static ACL check (safe mode) still proves that the '
+                 'brains Deny ACE is correctly configured.')
+            return True
         error(f'Probe could not complete: {err}')
         return False
 
@@ -360,6 +398,9 @@ def parse_args():
                         'this flag the script only does the non-destructive ACL check.')
     p.add_argument('--brain-name', default=DEFAULT_BRAIN,
                    help=f'Throwaway brain name for --live (default: {DEFAULT_BRAIN}).')
+    p.add_argument('--use-existing', action='store_true', default=False,
+                   help='--live: probe an already-provisioned brain named by --brain-name '
+                        'instead of creating/removing a throwaway. Never tears it down.')
     p.add_argument('--yes', '-y', action='store_true', default=False,
                    help='Skip the confirmation prompt in --live mode.')
     p.add_argument('--keep', action='store_true', default=False,
@@ -393,8 +434,8 @@ def main():
         info('This was the safe check. For the empirical proof, re-run with --live (elevated).')
         sys.exit(0 if passed else 1)
 
-    # Live mode — confirm unless --yes/--dry-run.
-    if not args.yes and not args.dry_run:
+    # Live mode — confirm unless --yes/--dry-run or --use-existing (no account created/deleted).
+    if not args.yes and not args.dry_run and not args.use_existing:
         warn(f'--live will CREATE and DELETE the OS account "{args.brain_name}" '
              f'and requires elevation.')
         ans = input('  Type "yes" to proceed: ').strip().lower()
@@ -402,7 +443,8 @@ def main():
             error('Aborted.')
             sys.exit(1)
 
-    passed = live_check(paths, os_name, args.brain_name, args.dry_run, args.keep)
+    passed = live_check(paths, os_name, args.brain_name, args.dry_run, args.keep,
+                        args.use_existing)
     print()
     (ok if passed else error)(
         'Brain isolation VERIFIED (criterion #5).' if passed

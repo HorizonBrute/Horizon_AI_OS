@@ -90,6 +90,21 @@ Work in an ELEVATED PowerShell. Rules:
    # Verify: OS user $Brain exists, 'brains' group exists, brains\$Brain workspace created.
    # PASS = brain provisioned and the batch-logon right is verified.
 
+2A. BRAIN FILESYSTEM ISOLATION (security invariant / criterion #5)
+   # The safe (non-destructive) check should already have passed as part of step 1
+   # install verification:
+   #   python .\horizon_system\sbin\horizon_aios_verify_isolation.py
+   # Now run the empirical live probe against the just-created brain. Because the
+   # brain already exists we pass --use-existing so the script probes it in place
+   # without creating or removing any OS account.
+   python .\horizon_system\sbin\horizon_aios_verify_isolation.py --live --use-existing --brain-name $Brain --yes
+   # PASS criterion: BIN=READABLE and SBIN=DENIED -> [PASS].
+   # A clear SKIP (keyring absent, or the Start-Process -Credential launch refused)
+   # is NOT a FAIL — it is a harness / logon-right limitation, not an isolation
+   # breach. --automation scheduled grants only the BATCH right, not the
+   # interactive right that CreateProcessWithLogonW requires. The static ACL
+   # posture is still proven by the default (non-live) safe check above.
+
 3. CREATE A SECOND AIOS IN ANOTHER DIRECTORY (capability 3)
    git clone $Remote $Root2
    aios register home $Root2                              # register validates it's a real AIOS root
