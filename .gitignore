@@ -599,6 +599,10 @@ usrbin/usr_skills/
 horizon_system/ai_os_etc/aios_local.conf
 horizon_system/ai_os_etc/aios_monitor.conf
 
+# User-local model preferences extension (gitignored; populate from the example
+# in horizon_aios_model_prefs.md and never overwritten by AIOS updates)
+horizon_system/ai_os_etc/horizon_aios_model_prefs.extend.md
+
 # Machine-local personal project ignore list (copy .gitignore.user.template → .gitignore.user)
 .gitignore.user
 horizon_system/harness_configs/claude_code/known_marketplaces.json
