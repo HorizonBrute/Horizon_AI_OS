@@ -18,6 +18,11 @@ Task-Class Routing rule, or a per-session slot is set, the acting model selects
 its model accordingly -- including the model it picks when spawning an agent or
 sub-agent.
 
+Mainly this governs the model used for **spawned agents and delegated tasks** --
+your interactive session model is set by the harness/provider at launch, not here.
+Local models (`ollama:` members) are supported for agent work, but which tasks
+they suit is user-tuned, not prescribed.
+
 **Member resolution.** Group members are tried in listed order. Use the first
 member runnable in the current runtime; silently skip members tagged for another
 runtime or not currently available; if none are runnable, fall through to the

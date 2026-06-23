@@ -27,6 +27,9 @@ A skill body carries this line immediately after its `# Skill:` heading:
     `model:` frontmatter field does harness-level selection but takes a concrete
     model, not a group, and is also invisible to the model.)
 1.3 A prompt directive ("use #X") always overrides the callout.
+1.4 It directs the model for **work the skill delegates to agents** — it does not
+    change the session model already running the skill (the harness sets that at
+    launch). A skill that does its work inline gets the session model regardless.
 
 ---
 

@@ -19,6 +19,31 @@ it. The two combine — slots: extend wins if set; groups: membership combined.
 
 ---
 
+## What this governs
+
+Be clear about what this layer does and does not move:
+
+1.1 **Your session model is set by the harness/provider at launch, not here.** The
+    model running your interactive session is whatever the harness loaded (Claude
+    Code, etc.) and what the provider makes available. This layer does not, in
+    general, change the model you are talking to right now.
+
+1.2 **What it governs — for the first time — is the model used for spawned agents
+    and defined tasks.** When the session sends an agent out for a scoped piece of
+    work, the group / slot / task-class config directs which model that agent runs
+    on. That is the framework's primary, first-class effect: cheap models for
+    cheap delegated work, capable models for hard delegated work, decided by your
+    config rather than left to a default — all without changing your session model.
+
+1.3 **Local / smaller models (e.g. Ollama) for agent work are supported but not
+    yet prescribed.** The platform lets you point a group at a small local model
+    and route mechanical agent work to it. But the right mix — which delegated
+    tasks tolerate a small model, and how Ollama agents get launched or bridged —
+    is configuration you need to work out for your own setup. The capability is in
+    place; the recipe is yours to settle, and it will take experimentation.
+
+---
+
 ## Set up the extend file
 
 1.1 Copy the tracked template to the live extend file:
