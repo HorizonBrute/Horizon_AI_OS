@@ -33,8 +33,8 @@ WHAT IT DELIBERATELY DOES NOT TOUCH:
       anchored on ~/.horizon / $HOME, not on the AIOS root, so a relocation does
       not affect them. They are scanned and reported if (unexpectedly) they
       contain the old root, but never auto-rewritten.
-    - The ~/.claude/skills junction. Its TARGET is the old tree; relocation
-      should re-point it, but that is a junction/symlink operation, not a text
+    - The ~/.claude/skills symlink. Its TARGET is the old tree; relocation
+      should re-point it, but that is a symlink operation, not a text
       rewrite. The tool detects and reports it, and prints the exact
       horizon_aios_switch.py command that re-points it correctly.
 
@@ -236,6 +236,56 @@ def _ci_replace(text, old, new):
     return "".join(out)
 
 
+def rewrite_registry_json(path, old_root, new_root, apply):
+    """Show (and, if apply, perform) the registry JSON rewrite.
+
+    JSON files store Windows paths as double-backslash (C:\\\\devroot), so a
+    raw text replace on C:\\devroot would never match. This function reads the
+    JSON structure, patches the 'root' values that normalize to old_root, and
+    writes back with json.dump (indent=2) + trailing newline."""
+    if not os.path.isfile(path):
+        return 0
+    try:
+        with open(path, encoding="utf-8") as f:
+            reg = json.load(f)
+    except (json.JSONDecodeError, OSError) as exc:
+        warn(f"registry unreadable ({exc}) — skipping JSON rewrite")
+        return 0
+
+    aioses = reg.get("aioses") if isinstance(reg, dict) else None
+    if not isinstance(aioses, dict):
+        return 0
+
+    old_n = _norm(old_root)
+    changes = 0
+    for name, entry in aioses.items():
+        if not isinstance(entry, dict):
+            continue
+        root = entry.get("root", "")
+        if root and _norm(root) == old_n:
+            print(f"\n  {path}  (registry entry '{name}')")
+            print(f"      root-  {root}")
+            print(f"      root+  {new_root}")
+            if apply:
+                entry["root"] = new_root
+            changes += 1
+
+    # Log active pointer (name stays correct; just informational).
+    active = reg.get("active")
+    if active and active in aioses:
+        info(f"Registry active entry: '{active}' (name unchanged, root updated above).")
+
+    if changes and apply:
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(reg, f, indent=2)
+                f.write("\n")
+            ok(f"rewrote {changes} registry root(s) in {path}")
+        except OSError as exc:
+            err(f"failed to write registry {path}: {exc}")
+    return changes
+
+
 def rewrite_file(path, old_root, apply):
     """Show (and, if apply, perform) the rewrite for one file. Returns the
     number of changed lines."""
@@ -326,13 +376,16 @@ def main():
     print(f"  new root : {new_root}")
 
     # --- the machine-local instance surface we rewrite ---
+    # Note: registry is handled separately via rewrite_registry_json (JSON-aware).
     rewrite_targets = [
-        registry,
         os.path.join(horizon_home, "active_env.ps1"),
         os.path.join(horizon_home, "active_env.sh"),
         os.path.join(claude_dir, "CLAUDE.md"),
         # gitignored per-machine config lives INSIDE the (new) tree:
         os.path.join(new_root, "horizon_system", "ai_os_etc", "aios_local.conf"),
+        # global gitconfig include.path entries (setup_git_identity writes absolute paths):
+        os.path.join(home, ".gitconfig"),
+        os.path.join(home, ".config", "git", "config"),
     ]
 
     # --- files we only SCAN and report (never auto-rewrite): anchored on
@@ -343,8 +396,11 @@ def main():
         os.path.join(claude_dir, "settings.json"),
     ]
 
-    total_changes = 0
-    total_files = 0
+    # Rewrite the registry JSON (JSON-aware, must precede text-rewrite loop).
+    reg_changes = rewrite_registry_json(registry, old_root, new_root, args.apply)
+    total_changes = reg_changes
+    total_files = 1 if reg_changes else 0
+
     for path in rewrite_targets:
         if not os.path.isfile(path):
             continue
@@ -366,17 +422,36 @@ def main():
         for f in flagged:
             warn(f"  {f}")
 
-    # --- skills junction advisory ---
+    # --- skills symlink + user-skill symlinks ---
     skills_link = os.path.join(claude_dir, "skills")
-    if os.path.exists(skills_link) or os.path.islink(skills_link):
+    if args.apply and (os.path.exists(skills_link) or os.path.islink(skills_link)):
         print()
-        info("~/.claude/skills is a junction/symlink whose target points into "
-             "the OLD tree. This is not a text rewrite. Re-point it (and the "
-             "active_env/PATH pointers) authoritatively with:")
-        switch = os.path.join(new_root, "horizon_system", "sbin",
-                              "horizon_aios_switch.py")
-        active_name = _active_name(registry)
-        print(f"           python \"{switch}\" switch {active_name}")
+        switch_py = os.path.join(new_root, "horizon_system", "sbin",
+                                 "horizon_aios_switch.py")
+        active = _active_name(registry)
+        if os.path.isfile(switch_py) and active and active != "<name>":
+            py = sys.executable or "python"
+            info(f"Re-pointing skills symlink via switch '{active}' ...")
+            r = subprocess.run([py, switch_py, "switch", active, "--yes"],
+                               capture_output=True, text=True)
+            if r.returncode == 0:
+                ok("Skills symlink re-pointed.")
+            else:
+                warn(f"switch exited {r.returncode} — re-point manually: aios switch {active}")
+                if r.stderr.strip():
+                    info(f"  Detail: {r.stderr.strip()[:300]}")
+
+            reg_skills = os.path.join(new_root, "horizon_system", "sbin",
+                                      "horizon_aios_register_user_skills.py")
+            if os.path.isfile(reg_skills):
+                info("Rebuilding user-skill symlinks ...")
+                r2 = subprocess.run([py, reg_skills], capture_output=True, text=True)
+                if r2.returncode == 0:
+                    ok("User-skill symlinks rebuilt.")
+                else:
+                    warn(f"register_user_skills exited {r2.returncode} — rebuild manually.")
+        else:
+            warn("Could not re-point skills symlink automatically — run: aios switch <name>")
 
     # --- summary ---
     print()
@@ -387,8 +462,6 @@ def main():
         ok(f"Applied: rewrote {total_changes} line(s) across {total_files} file(s).")
         warn("Restart Claude Code and open a NEW shell - env changes do not "
              "reach already-running sessions.")
-        info("If a skills junction or system PATH still points at the old tree, "
-             "run the horizon_aios_switch.py command shown above.")
     else:
         ok(f"Dry run: {total_changes} line(s) across {total_files} file(s) "
            "would change. Re-run with --apply to write.")

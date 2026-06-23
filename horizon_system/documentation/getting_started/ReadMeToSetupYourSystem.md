@@ -349,11 +349,11 @@ AIOS skills live in `$HORIZON_SYSTEM/skills_sbin/` (primary user) and `$HORIZON_
 
 7.1 The bootstrap script (Step 5) handles this automatically. To verify or create the redirect manually:
 
-Windows (PowerShell — run as standard user, no admin required):
+Windows (PowerShell — run as administrator; AIOS requires admin installation):
 ```powershell
 # Remove existing directory if empty
 Remove-Item "$HOME\.claude\skills" -ErrorAction SilentlyContinue
-New-Item -ItemType Junction -Path "$HOME\.claude\skills" -Target "$env:HORIZON_SYSTEM\skills_sbin"
+New-Item -ItemType SymbolicLink -Path "$HOME\.claude\skills" -Target "$env:HORIZON_SYSTEM\skills_sbin"
 ```
 
 Linux / macOS (bash):

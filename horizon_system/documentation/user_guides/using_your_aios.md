@@ -224,11 +224,11 @@ $HORIZON_ROOT/
   shared-libs/    # git repo — shared code
 ```
 
-**NTFS junction points and symlinks.** A project folder can be a junction (Windows) or symlink (Unix/macOS) pointing to a directory elsewhere on the machine or on a network share. From the AIOS and the brain's perspective, it looks like a normal folder.
+**NTFS directory symlinks.** A project folder can be a directory symlink (Windows) or symlink (Unix/macOS) pointing to a directory elsewhere on the machine or on a network share. From the AIOS and the brain's perspective, it looks like a normal folder. AIOS requires admin installation, so `mklink /D` (and `New-Item -ItemType SymbolicLink`) are available.
 
 ```powershell
-# Windows — junction to a network share or local path
-New-Item -ItemType Junction -Path "$env:HORIZON_ROOT\my-project" -Target "\\fileserver\share\my-project"
+# Windows — directory symlink to a network share or local path (run as administrator)
+New-Item -ItemType SymbolicLink -Path "$env:HORIZON_ROOT\my-project" -Target "\\fileserver\share\my-project"
 ```
 
 **Cloud-synced storage.** OneDrive, Google Drive, Dropbox, or cloud provider storage (AWS S3 via rclone, GCP Storage via Cloud Drive, Azure Storage via Azure File Sync) can be mounted or synced at a project folder path. The AIOS sees a local folder; the sync is handled by the OS and the cloud provider's tools. For what to exclude from sync, see `$HORIZON_DOCS/cloud_sync_exclusions.md`.
@@ -239,12 +239,12 @@ New-Item -ItemType Junction -Path "$env:HORIZON_ROOT\my-project" -Target "\\file
 # Grant access
 icacls "$HORIZON_ROOT\my-project" /grant <brain-name>:(OI)(CI)RX
 
-# Optionally, link from inside the brain workspace
-New-Item -ItemType Junction -Path "$HORIZON_ROOT\brains\<brain-name>\my-project" `
+# Optionally, link from inside the brain workspace (run as administrator)
+New-Item -ItemType SymbolicLink -Path "$HORIZON_ROOT\brains\<brain-name>\my-project" `
   -Target "$HORIZON_ROOT\my-project"
 ```
 
-The brain navigates to its junction. From its perspective, the project folder is inside its home directory — its harness context starts there, and the AIOS environment applies.
+The brain navigates to its symlink. From its perspective, the project folder is inside its home directory — its harness context starts there, and the AIOS environment applies.
 
 ### 3.4 Project-Level AIOS Overrides
 
@@ -407,10 +407,10 @@ development, your working context is the project the user names at session start
 icacls "$env:HORIZON_ROOT\backend-api" /grant "code_review:(OI)(CI)RX"
 icacls "$env:HORIZON_ROOT\frontend" /grant "code_review:(OI)(CI)RX"
 
-# Create navigation links inside the brain workspace (optional but convenient)
-New-Item -ItemType Junction -Path "$env:HORIZON_ROOT\brains\code_review\backend-api" `
+# Create navigation symlinks inside the brain workspace (optional but convenient; run as administrator)
+New-Item -ItemType SymbolicLink -Path "$env:HORIZON_ROOT\brains\code_review\backend-api" `
   -Target "$env:HORIZON_ROOT\backend-api"
-New-Item -ItemType Junction -Path "$env:HORIZON_ROOT\brains\code_review\frontend" `
+New-Item -ItemType SymbolicLink -Path "$env:HORIZON_ROOT\brains\code_review\frontend" `
   -Target "$env:HORIZON_ROOT\frontend"
 ```
 

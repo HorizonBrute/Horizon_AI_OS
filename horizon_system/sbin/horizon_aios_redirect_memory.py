@@ -13,12 +13,12 @@ This is the OWNER redirect. Brains are handled separately by horizon_aios_create
 whose `~/.claude` → `brains/<name>/.claude/` redirect already places each brain's
 projects/memory inside its own isolated, group-owned brain folder.
 
-Mechanism (mirrors the skills junction):
-    ~/.claude/projects/   ->  $HORIZON_ROOT/memory/      (junction on Windows,
+Mechanism (mirrors the skills symlink):
+    ~/.claude/projects/   ->  $HORIZON_ROOT/memory/      (directory symlink on Windows,
                                                           symlink on Unix)
 
 The migration MOVES existing content from ~/.claude/projects/ into the memory
-root (merging), after taking a backup. It is idempotent: if the junction is
+root (merging), after taking a backup. It is idempotent: if the symlink is
 already in place pointing at the memory root, it does nothing.
 
 IMPORTANT: close Claude Code before running - the active session holds its own
@@ -66,10 +66,10 @@ def link_target(path):
         return None
 
 
-def make_junction(link, target):
-    """Create link -> target (junction on Windows, dir symlink on Unix)."""
+def make_link(link, target):
+    """Create link -> target (directory symlink on Windows, dir symlink on Unix)."""
     if os.name == "nt":
-        subprocess.run(["cmd", "/c", "mklink", "/J", link, target],
+        subprocess.run(["cmd", "/c", "mklink", "/D", link, target],
                        check=True, stdout=subprocess.DEVNULL)
     else:
         os.symlink(target, link, target_is_directory=True)
@@ -137,7 +137,7 @@ def main():
         if not dry:
             os.makedirs(memory_root, exist_ok=True)
             os.makedirs(os.path.dirname(projects), exist_ok=True)
-            make_junction(projects, memory_root)
+            make_link(projects, memory_root)
         ok("Linked ~/.claude/projects -> AIOS memory root.")
         return 0
 
@@ -165,9 +165,9 @@ def main():
              "reconcile them, then re-run to finish linking.")
         return 1
 
-    # projects is now empty - replace it with the junction.
+    # projects is now empty - replace it with the symlink.
     os.rmdir(projects)
-    make_junction(projects, memory_root)
+    make_link(projects, memory_root)
     ok(f"Redirected ~/.claude/projects -> {memory_root}")
     print()
     warn("Restart Claude Code now - it must re-open its project dir through the new link.")

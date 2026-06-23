@@ -15,10 +15,10 @@
 #
 # What this removes (mirrors bootstrap.ps1 section by section):
 #   Section 2  - ~/.claude/CLAUDE.md redirect lines written by bootstrap
-#   Section 3  - ~/.claude/skills/ junction and user-skill symlinks in skills_sbin/
+#   Section 3  - ~/.claude/skills/ symlink and user-skill symlinks in skills_sbin/
 #   Section 4  - $HORIZON_ROOT/handoffs/ and objectives/ (only if empty)
 #   Section 5  - ~/.horizon/ tree (registry, active_env, wrappers), ~/.claude/settings.json
-#   Section 5b - ~/.claude/projects junction (memory redirect); memory data left intact
+#   Section 5b - ~/.claude/projects symlink (memory redirect); memory data left intact
 #   Section 6  - .git/hooks/commit-msg, pre-commit; git core.hooksPath config
 #   Section 7  - $HORIZON_BIN entry from Machine-scope PATH
 #   Section 8  - active_env line in PowerShell $PROFILE + the two global git
@@ -159,11 +159,11 @@ if (Test-Path $ClaudeMd) {
 Info "The active_env line in your PowerShell `$PROFILE is removed in Section 8 below."
 
 # =============================================================================
-# SECTION 3: ~/.claude/skills/ junction and user-skill symlinks in skills_sbin/
-# Bootstrap creates a junction from ~/.claude/skills/ -> skills_sbin/.
+# SECTION 3: ~/.claude/skills/ symlink and user-skill symlinks in skills_sbin/
+# Bootstrap creates a symlink from ~/.claude/skills/ -> skills_sbin/.
 # horizon_aios_register_user_skills.py creates symlinks inside skills_sbin/ pointing to usr_skills/.
 # =============================================================================
-Banner "SECTION 3: Skills junction and user-skill symlinks"
+Banner "SECTION 3: Skills symlink and user-skill symlinks"
 
 $SkillsDst    = Join-Path $HOME ".claude\skills"
 $SkillsSbin   = Join-Path $HORIZON_SYSTEM "skills_sbin"
@@ -188,18 +188,18 @@ if (Test-Path $SkillsSbin) {
     }
 }
 
-# Remove the ~/.claude/skills/ junction itself
+# Remove the ~/.claude/skills/ symlink itself
 if (Test-Path $SkillsDst) {
     $item = Get-Item $SkillsDst -ErrorAction SilentlyContinue
     if ($item.LinkType -eq "Junction" -or $item.LinkType -eq "SymbolicLink") {
         if ($DryRun) {
-            Dry "remove ~/.claude/skills/ junction."
+            Dry "remove ~/.claude/skills/ symlink."
         } else {
             [System.IO.Directory]::Delete($SkillsDst, $false)
-            Ok "Removed ~/.claude/skills/ junction."
+            Ok "Removed ~/.claude/skills/ symlink."
         }
     } else {
-        Warn "~/.claude/skills/ is a real directory (not a junction) - skipping removal."
+        Warn "~/.claude/skills/ is a real directory (not a symlink) - skipping removal."
         Warn "  If it was not created by bootstrap, manage it manually."
     }
 } else {
@@ -362,11 +362,11 @@ if (Test-Path $SettingsJson) {
 
 # =============================================================================
 # SECTION 5b: ~/.claude/projects memory redirect (reverses bootstrap 5c)
-# Bootstrap junctions ~/.claude/projects -> $HORIZON_ROOT/memory via
+# Bootstrap symlinks ~/.claude/projects -> $HORIZON_ROOT/memory via
 # horizon_aios_redirect_memory.py so the harness's per-project memory lives in the AIOS.
 # We remove only the JUNCTION - never the memory target's contents (that data
 # lives in $HORIZON_ROOT/memory, part of the repo). Mirrors the Section 3
-# skills-junction removal: link-only delete, not confirm-gated.
+# skills-symlink removal: link-only delete, not confirm-gated.
 # =============================================================================
 Banner "SECTION 5b: ~/.claude/projects memory redirect"
 
@@ -375,13 +375,13 @@ if (Test-Path $ProjectsLink) {
     $projItem = Get-Item $ProjectsLink -Force -ErrorAction SilentlyContinue
     if ($projItem -and ($projItem.LinkType -eq "Junction" -or $projItem.LinkType -eq "SymbolicLink")) {
         if ($DryRun) {
-            Dry "remove ~/.claude/projects junction (memory redirect); memory data in `$HORIZON_ROOT/memory left intact."
+            Dry "remove ~/.claude/projects symlink (memory redirect); memory data in `$HORIZON_ROOT/memory left intact."
         } else {
             [System.IO.Directory]::Delete($ProjectsLink, $false)
-            Ok "Removed ~/.claude/projects junction (memory redirect) - memory data left intact."
+            Ok "Removed ~/.claude/projects symlink (memory redirect) - memory data left intact."
         }
     } else {
-        Warn "~/.claude/projects is a real directory (not a junction) - leaving as-is."
+        Warn "~/.claude/projects is a real directory (not a symlink) - leaving as-is."
         Warn "  If bootstrap created it, manage it manually."
     }
 } else {
@@ -398,7 +398,7 @@ foreach ($b in $ProjBackups) {
     Advisory "A pre-redirect harness-memory backup remains: $($b.FullName)"
 }
 if ($ProjBackups.Count -gt 0) {
-    Advisory "  To restore it: with the junction removed (above), rename a backup back to ~/.claude/projects."
+    Advisory "  To restore it: with the symlink removed (above), rename a backup back to ~/.claude/projects."
 }
 
 # =============================================================================

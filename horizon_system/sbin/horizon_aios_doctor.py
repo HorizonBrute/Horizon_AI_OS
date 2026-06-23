@@ -85,9 +85,9 @@ def check_env_vars():
 
 
 # ---------------------------------------------------------------------------
-# 2. Skills (junction architecture)
+# 2. Skills (symlink architecture)
 # Primary user skills live in skills_sbin/. ~/.claude/skills/ must be a
-# junction/symlink pointing there — not a real directory copy.
+# directory symlink pointing there — not a real directory copy.
 # ---------------------------------------------------------------------------
 def check_skills(horizon_system):
     skills_sbin = horizon_system / "skills_sbin"
@@ -104,32 +104,32 @@ def check_skills(horizon_system):
             warn("Skills: skills_sbin/", "no skill directories found (each must contain SKILL.md)")
 
     # Sub-check 2 + 3: ~/.claude/skills/ redirects to skills_sbin/
-    # Use resolve() as the authoritative check — works for symlinks, NTFS junctions,
+    # Use resolve() as the authoritative check — works for directory symlinks
     # and any other redirect mechanism. os.path.islink() does not reliably detect
-    # NTFS directory junctions on all Python/Windows configurations.
+    # NTFS reparse points on all Python/Windows configurations.
     if not skills_dst.exists():
-        fail("Skills: ~/.claude/skills/", "does not exist — run bootstrap to create the junction")
+        fail("Skills: ~/.claude/skills/", "does not exist — run bootstrap to create the symlink")
         return
 
     try:
         actual_target = skills_dst.resolve()
         expected_target = skills_sbin.resolve()
         if actual_target == expected_target:
-            ok("Skills: ~/.claude/skills/ junction/symlink points to skills_sbin/")
+            ok("Skills: ~/.claude/skills/ symlink points to skills_sbin/")
         elif actual_target == skills_dst.absolute():
-            fail("Skills: ~/.claude/skills/", "is a real directory, not a junction/symlink — run bootstrap to redirect it")
+            fail("Skills: ~/.claude/skills/", "is a real directory, not a symlink — run bootstrap to redirect it")
         else:
-            fail("Skills: junction target", f"expected {expected_target}, got {actual_target}")
+            fail("Skills: symlink target", f"expected {expected_target}, got {actual_target}")
     except OSError as e:
-        warn("Skills: junction target", f"could not resolve target: {e}")
+        warn("Skills: symlink target", f"could not resolve target: {e}")
 
 
 # ---------------------------------------------------------------------------
 # 2b. Harness memory redirect
 # Claude Code's ~/.claude/projects/ holds per-project memory. horizon_aios_redirect_memory.py
-# replaces it with a junction/symlink into $HORIZON_ROOT/memory/ so harness
+# replaces it with a directory symlink into $HORIZON_ROOT/memory/ so harness
 # memory falls under AIOS governance. Use resolve() as the authoritative check —
-# same rationale as check_skills (NTFS junctions aren't reliably detected by
+# same rationale as check_skills (NTFS reparse points aren't reliably detected by
 # os.path.islink()).
 # ---------------------------------------------------------------------------
 def check_memory_redirect(horizon_root):

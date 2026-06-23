@@ -157,8 +157,8 @@ if ($stubContent -notmatch [regex]::Escape("CLAUDE.aios-dev.md")) {
 # -----------------------------------------------------------------------------
 # SECTION 3: Redirect ~/.claude/skills/ to skills_sbin/
 # Primary user is AIOS root - all skills live in skills_sbin/.
-# We redirect the directory itself (junction) so changes are live immediately.
-# Windows directory junctions do not require administrator rights.
+# We redirect the directory itself (symlink) so changes are live immediately.
+# AIOS requires admin installation, so mklink /D (directory symlink) is valid.
 # -----------------------------------------------------------------------------
 Banner "SECTION 3: Skills redirect"
 
@@ -175,12 +175,12 @@ if (-not (Test-Path $SkillsSrc)) {
             if ($target -eq $SkillsSrc) {
                 Ok "~/.claude/skills/ already redirected to skills_sbin/ - OK."
             } else {
-                Warn "~/.claude/skills/ is a junction but points elsewhere: $target"
-                $answer = if ($YesAll) { "y" } else { Read-Host "  Replace junction? [y/N]" }
+                Warn "~/.claude/skills/ is a symlink but points elsewhere: $target"
+                $answer = if ($YesAll) { "y" } else { Read-Host "  Replace symlink? [y/N]" }
                 if ($answer -eq "y" -or $answer -eq "Y") {
                     [System.IO.Directory]::Delete($SkillsDst, $false)
-                    New-Item -ItemType Junction -Path $SkillsDst -Target $SkillsSrc | Out-Null
-                    Ok "Updated junction: ~/.claude/skills/ -> skills_sbin/"
+                    New-Item -ItemType SymbolicLink -Path $SkillsDst -Target $SkillsSrc | Out-Null
+                    Ok "Updated symlink: ~/.claude/skills/ -> skills_sbin/"
                 } else {
                     Warn "Skipping skills redirect."
                 }
@@ -189,20 +189,20 @@ if (-not (Test-Path $SkillsSrc)) {
             $contents = @(Get-ChildItem $SkillsDst -ErrorAction SilentlyContinue)
             if ($contents.Count -eq 0) {
                 Remove-Item $SkillsDst
-                New-Item -ItemType Junction -Path $SkillsDst -Target $SkillsSrc | Out-Null
-                Ok "Created junction: ~/.claude/skills/ -> skills_sbin/"
+                New-Item -ItemType SymbolicLink -Path $SkillsDst -Target $SkillsSrc | Out-Null
+                Ok "Created symlink: ~/.claude/skills/ -> skills_sbin/"
             } else {
                 Warn "~/.claude/skills/ is a real directory with $($contents.Count) item(s)."
                 Warn "Cannot auto-redirect. Manually empty or remove it, then re-run bootstrap."
             }
         }
     } else {
-        New-Item -ItemType Junction -Path $SkillsDst -Target $SkillsSrc | Out-Null
-        Ok "Created junction: ~/.claude/skills/ -> skills_sbin/"
+        New-Item -ItemType SymbolicLink -Path $SkillsDst -Target $SkillsSrc | Out-Null
+        Ok "Created symlink: ~/.claude/skills/ -> skills_sbin/"
     }
 }
 
-# Register machine-local user skills (usrbin/usr_skills -> skills_sbin junctions).
+# Register machine-local user skills (usrbin/usr_skills -> skills_sbin symlinks).
 # Best-effort: never abort bootstrap if python is missing or no user skills exist.
 $RegScript = Join-Path $HORIZON_SYSTEM "sbin\horizon_aios_register_user_skills.py"
 if (Test-Path $RegScript) {
@@ -309,7 +309,7 @@ if (Test-Path $SettingsDst) {
 
 # 5c: Redirect ~/.claude/projects into $HORIZON_ROOT/memory (owner harness memory).
 # Migrates the Claude harness's per-project state into the AIOS so memory is
-# owned by the OS layer. The script junctions ~/.claude/projects -> $HORIZON_ROOT/
+# owned by the OS layer. The script symlinks ~/.claude/projects -> $HORIZON_ROOT/
 # memory, backing up any existing real directory first. Idempotent: re-running
 # no-ops if already redirected, so it is safe to always call.
 # NOTE: Have Claude Code closed when bootstrap runs - the script moves the live
@@ -414,12 +414,12 @@ if ((Test-Path $claudeMdPath)) {
     FailCheck "~/.claude/CLAUDE.md not found"
 }
 
-# Check 2: ~/.claude/skills/ is a junction/symlink to skills_sbin/
+# Check 2: ~/.claude/skills/ is a symlink to skills_sbin/
 $skillsItem = Get-Item (Join-Path $HOME ".claude\skills") -ErrorAction SilentlyContinue
 if ($skillsItem -and ($skillsItem.LinkType -eq "Junction" -or $skillsItem.LinkType -eq "SymbolicLink")) {
-    PassCheck "~/.claude/skills/ redirected to skills_sbin/ (junction)"
+    PassCheck "~/.claude/skills/ redirected to skills_sbin/ (symlink)"
 } else {
-    FailCheck "~/.claude/skills/ is not a junction - skills redirect not set up"
+    FailCheck "~/.claude/skills/ is not a symlink - skills redirect not set up"
 }
 
 # Check 3: handoffs directory exists

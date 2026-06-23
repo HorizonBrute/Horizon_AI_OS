@@ -317,6 +317,49 @@ Names are the interface; choose them so the notation stays terse and self-transl
    name, and pick a name you will not have to rename (renames ripple through every team
    definition that uses it).
 
+### Sub-teams and nesting — boxes
+
+SAILL composes beyond a flat role list. A **box** `[ … ]` bundles one or more roles (or
+other boxes) into a single node that runs as a unit; the brackets set the order of
+operations. Name a box to declare an inline, **ephemeral sub-team** — `Recon[ … ]`. A
+sub-agent is just a named role inside a box; a named box is a throwaway team of them. Inside
+a box you use the ordinary role syntax and the existing flags — **no new operators**:
+concurrency via `parallel` + `wait`, iteration via a `**Loop:**` annotation, gating via
+`if needed` / `if asked` / `ask user`.
+
+A box is itself a node: sequence it, flag it, and — the point — **nest boxes inside boxes,
+without limit.** Depth is a user choice; turtles all the way down. Order of operations is the
+bracket nesting, so one line carries parallelism, loops, and delegation to named sub-agents
+at once. Examples:
+
+1. Parallel recon, then plan:
+   `Orchestrator (`#highcap`) -> Recon[ APICrawler (`#investigate`, parallel), DBReader (`#investigate`, parallel) ] (wait) -> Planner (`#highcap`)`
+2. Gated build with an implement/validate loop:
+   `Planner (`#highcap`, ask user) -> [ Implementer (`#lowcost`), Validator (`#midcost`) **Loop:** to "Implementer" until pass or 3 ]`
+3. Nested — two sub-teams looping in parallel, then integrate (turtles):
+   `[ Frontend[ Impl (`#lowcost`), Val (`#midcost`) **Loop:** to "Impl" until pass or 3 ] (parallel), Backend[ Impl (`#lowcost`), Val (`#midcost`) **Loop:** to "Impl" until pass or 3 ] (parallel) ] (wait) -> Integrator (`#midcost`)`
+
+**Tooling note.** `resolve_agent_teams.py` lists flat team definitions today; it does not yet
+expand nested boxes — the acting model interprets them from this spec. Box-aware resolution
+is a planned extension.
+
+### Values from context (`-context-`)
+
+Wherever a SAILL parameter would take a literal — a loop's pass condition or cap, a scope, a
+target — you can instead write **`-context-`** to mean *"resolve this from context"*: the
+user's invocation, the conversation, or runtime state. Qualify it for readability —
+`-context-pass` (pass condition), `-context-cap` (iteration cap), `-context-scope` (focus).
+It keeps a team definition generic and reusable: the structure is fixed; the specifics
+arrive at run time. It is the explicit hook for "a team is a scaffold you parameterize in
+plain language" (§1.2) — it marks exactly where context fills in. Examples:
+
+1. Loop until a context-defined pass, capped at a literal 3:
+   `[ Implementer (`#lowcost`), Validator (`#midcost`) **Loop:** to "Implementer" until -context-pass or 3 ]`
+2. Both the pass and the cap from context:
+   `… **Loop:** to "Implementer" until -context-pass or -context-cap`
+3. Scope a role from context:
+   `Investigator (`#midcost`) — focus on -context-scope` (its charter pulls the target from your request)
+
 The vocabulary lives in `$HORIZON_ETC/agent_team_flags.md` (shipped) plus
 `local.agent_team_flags.md` (your additions) — a deliberately dense, info-heavy block
 loaded into context every session, so any agent grasps the flags without consulting a

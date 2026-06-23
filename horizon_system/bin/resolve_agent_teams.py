@@ -134,8 +134,9 @@ def parse_teams(path):
             if rm:
                 flags = [t.strip() for t in rm.group(3).lstrip(",").split(",")
                          if t.strip()]
+                charter = line[rm.end():].lstrip(" \t—–-").strip()
                 cur_role = {"role": rm.group(1).strip(), "group": rm.group(2),
-                            "flags": flags, "annotations": []}
+                            "flags": flags, "charter": charter, "annotations": []}
                 roles.append(cur_role)
                 continue
             am = ANNOT_RE.match(line)

@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Horizon AIOS — aggregate the owner's skill view.
 
-The primary user's ~/.claude/skills junction points at skills_sbin, so skills_sbin
+The primary user's ~/.claude/skills symlink points at skills_sbin, so skills_sbin
 is the owner's skill *view*. The owner should see every tier (like /usr/bin is on
 root's PATH while /usr/sbin is root-only), so this script links the two non-owner
-skill sources into that view via per-skill junction (Windows) / symlink (Unix):
+skill sources into that view via per-skill directory symlink (Windows) / symlink (Unix):
 
   - $HORIZON_SYSTEM/skills_bin/<name>   — brain-tier skills (group-readable; OS,
                                           tracked). Brains see these directly via
-                                          their own junction; the owner sees them
+                                          their own symlink; the owner sees them
                                           through these links.
   - $HORIZON_USRBIN/usr_skills/<name>   — the owner's machine-local skills
                                           (gitignored, never synced).
@@ -61,7 +61,7 @@ def make_link(dst, target):
         print(f"[LINK] {os.path.basename(dst)} -> {target} (dry-run)")
         return
     if os.name == "nt":
-        subprocess.run(["cmd", "/c", "mklink", "/J", dst, target],
+        subprocess.run(["cmd", "/c", "mklink", "/D", dst, target],
                        check=True, stdout=subprocess.DEVNULL)
     else:
         os.symlink(target, dst, target_is_directory=True)

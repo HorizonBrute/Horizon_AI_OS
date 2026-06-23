@@ -44,6 +44,22 @@ meanings, is cataloged in `$HORIZON_ETC/agent_team_flags.md`; add your own in
 
 ---
 
+## Sub-teams (boxes)
+
+`[ … ]` bundles roles (or other boxes) into one **node** that runs as a unit; the brackets
+set the order of operations. Name it for an inline, ephemeral sub-team: `Recon[ Crawler
+(`#investigate`, parallel), DBReader (`#investigate`, parallel) ]`. Sub-agents are just named
+roles inside a box. A box is itself a node — sequence it, flag it (`if asked`, `Loop`, …),
+and **nest boxes inside boxes without limit** (depth is the user's call). No new operators:
+concurrency/iteration/conditions use the role flags above. One line where it fits; the acting
+model executes the nesting. (`resolve_agent_teams.py` lists flat teams; box expansion is a
+planned extension.)
+
+Write `-context-` (e.g. `-context-pass`, `-context-cap`, `-context-scope`) anywhere a value
+comes from context rather than a literal — the explicit hook for run-time parameterization.
+
+---
+
 ## Teams
 
 ### Investigate & Fix

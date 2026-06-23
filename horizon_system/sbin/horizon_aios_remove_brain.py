@@ -194,12 +194,12 @@ def _remove_reparse(path, dry_run):
 
 def remove_windows(brain_name, brain_dir, dry_run):
     profile_dir  = _windows_profile_dir(brain_name)
-    home_claude  = os.path.join(profile_dir, '.claude')                 # junction -> workspace .claude (new topology)
-    home_skills  = os.path.join(profile_dir, '.claude', 'skills')       # junction -> skills_bin (old topology)
+    home_claude  = os.path.join(profile_dir, '.claude')                 # symlink -> workspace .claude (new topology)
+    home_skills  = os.path.join(profile_dir, '.claude', 'skills')       # symlink -> skills_bin (old topology)
     brain_group  = f'{brain_name}_group'                                # per-brain group is <name>_group on Windows
 
     # 1. Remove reparse points FIRST, so no later recursive delete can follow a
-    #    junction into the workspace or into skills_bin. Covers both the new
+    #    symlink into the workspace or into skills_bin. Covers both the new
     #    topology (~/.claude -> workspace) and the old one (~/.claude/skills).
     _remove_reparse(home_claude, dry_run)
     _remove_reparse(home_skills, dry_run)
@@ -229,7 +229,7 @@ def remove_windows(brain_name, brain_dir, dry_run):
     else:
         info(f'Per-brain group does not exist (skipping): {brain_group}')
 
-    # 4. Remove the user profile directory (now junction-free after step 1).
+    # 4. Remove the user profile directory (now symlink-free after step 1).
     if dry_run:
         print(f'  [DRY-RUN] Remove-Item -Recurse -Force {profile_dir}')
     elif os.path.isdir(profile_dir):
@@ -239,7 +239,7 @@ def remove_windows(brain_name, brain_dir, dry_run):
     else:
         info(f'No user profile directory at: {profile_dir}')
 
-    # 5. Remove the workspace folder (its skills junction is cleared first).
+    # 5. Remove the workspace folder (its skills symlink is cleared first).
     _remove_workspace(brain_dir, dry_run)
 
 
@@ -292,7 +292,7 @@ def remove_unix(brain_name, brain_dir, os_name, dry_run):
 def _remove_workspace(brain_dir, dry_run):
     """
     Remove $HORIZON_ROOT/brains/<name>/. The workspace .claude/skills is a
-    junction/symlink to skills_bin, so it is deleted as a reparse point FIRST —
+    directory symlink to skills_bin, so it is deleted as a reparse point FIRST —
     otherwise a recursive delete could follow it and destroy skills_bin.
     """
     _remove_reparse(os.path.join(brain_dir, '.claude', 'skills'), dry_run)

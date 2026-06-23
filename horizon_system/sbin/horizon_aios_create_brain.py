@@ -669,7 +669,7 @@ def _phase3_windows(brain_name, invoking_user,
                 dry_run=dry_run)
 
     # NOTE: the brain's ~/.claude layout (workspace-canonical config + skills
-    # junction, with the home ~/.claude redirecting to it) is set up in Phase 5
+    # symlink, with the home ~/.claude redirecting to it) is set up in Phase 5
     # by _link_brain_claude(), after the workspace .claude/ and its templates
     # exist. Phase 3 only sets ACLs here.
 
@@ -884,11 +884,11 @@ def _link_brain_claude(ctx, dry_run=False):
     ~/.claude redirecting to it, so the brain's CLAUDE.md, settings.json, and
     skills are all surfaced at the user-level ~/.claude regardless of cwd:
 
-        brains/<name>/.claude/skills  ->  $HORIZON_SYSTEM/skills_bin   (junction/symlink)
-        <brain-home>/.claude          ->  brains/<name>/.claude/       (junction/symlink)
+        brains/<name>/.claude/skills  ->  $HORIZON_SYSTEM/skills_bin   (directory symlink)
+        <brain-home>/.claude          ->  brains/<name>/.claude/       (directory symlink)
 
     Always skills_bin (brain tier), never skills_sbin. Idempotent: an existing
-    correct link is replaced safely; junctions/symlinks are deleted as reparse
+    correct link is replaced safely; symlinks are deleted as reparse
     points (rmdir / unlink) so a wrong link never has its TARGET followed.
     """
     os_name            = ctx['os_name']
@@ -903,13 +903,13 @@ def _link_brain_claude(ctx, dry_run=False):
         brain_home   = os.path.join(system_drive + '\\', 'Users', brain_name)
         home_claude  = os.path.join(brain_home, '.claude')
 
-        # 1. workspace skills junction -> skills_bin (brain tier)
+        # 1. workspace skills symlink -> skills_bin (brain tier)
         info(f'Linking workspace skills -> skills_bin: {workspace_skills}')
         if (not dry_run) and (os.path.exists(workspace_skills) or os.path.islink(workspace_skills)):
             run(['cmd', '/c', 'rmdir', workspace_skills], dry_run=False, check=False)
-        run(['cmd', '/c', 'mklink', '/J', workspace_skills, horizon_skills_bin], dry_run=dry_run)
+        run(['cmd', '/c', 'mklink', '/D', workspace_skills, horizon_skills_bin], dry_run=dry_run)
 
-        # 2. home ~/.claude junction -> workspace .claude (profile root may not
+        # 2. home ~/.claude symlink -> workspace .claude (profile root may not
         #    exist before first logon, so create it first)
         info(f'Redirecting brain home ~/.claude -> {brain_claude_dir}')
         if not dry_run:
@@ -917,10 +917,10 @@ def _link_brain_claude(ctx, dry_run=False):
         else:
             print(f'  [DRY-RUN] os.makedirs({brain_home!r}, exist_ok=True)')
         if (not dry_run) and (os.path.exists(home_claude) or os.path.islink(home_claude)):
-            # reparse-point delete: removes a junction (or empty dir) WITHOUT
+            # reparse-point delete: removes a symlink (or empty dir) WITHOUT
             # following it; a real, non-empty ~/.claude makes this fail safely.
             run(['cmd', '/c', 'rmdir', home_claude], dry_run=False, check=False)
-        run(['cmd', '/c', 'mklink', '/J', home_claude, brain_claude_dir], dry_run=dry_run)
+        run(['cmd', '/c', 'mklink', '/D', home_claude, brain_claude_dir], dry_run=dry_run)
 
     else:
         try:
@@ -956,8 +956,8 @@ def phase5_deploy_templates(ctx, dry_run=False):
         brains/<brain_name>/.claude/settings.json   (from brain_settings.json.template)
         brains/<brain_name>/.claude/agents.md       (from brain_agents.md.template)
         brains/<brain_name>/.claude/local.agent_teams.md  (from brain_local.agent_teams.md.template)
-        brains/<brain_name>/.claude/skills          (junction/symlink -> skills_bin)
-        <brain_home>/.claude                        (junction/symlink -> brains/<brain_name>/.claude)
+        brains/<brain_name>/.claude/skills          (directory symlink -> skills_bin)
+        <brain_home>/.claude                        (directory symlink -> brains/<brain_name>/.claude)
         brains/<brain_name>/.aios_provision.json    (provisioning record for auditors)
         <brain_home>/.bashrc (Linux) / .zshrc+.bash_profile (macOS) /
             Documents/WindowsPowerShell/Microsoft.PowerShell_profile.ps1 (Windows)
@@ -1039,7 +1039,7 @@ def phase5_deploy_templates(ctx, dry_run=False):
         },
     )
 
-    # 5.4 Unify the brain's .claude: workspace skills junction + home redirect
+    # 5.4 Unify the brain's .claude: workspace skills symlink + home redirect
     #     (GAP 1 — must run after the workspace .claude/ and its templates exist)
     _link_brain_claude(ctx, dry_run=False)
 

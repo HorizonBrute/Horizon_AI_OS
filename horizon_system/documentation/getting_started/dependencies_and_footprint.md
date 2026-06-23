@@ -226,13 +226,13 @@ All Deny ACEs are applied after all grants — ordering is a security invariant.
 | `$HORIZON_SYSTEM/skills_sbin/` | `brains` group: `(OI)(CI)F` Deny (additive, explicit; applied last) | `chmod 700` (applied last) | Same |
 | `$HORIZON_SYSTEM/logs/` | `brains` group: `(OI)(CI)F` Deny (additive, explicit; applied last) | `chmod 700` (applied last) | Same |
 
-### Skills junction / symlink created
+### Skills symlink created
 
 | Link | Windows | macOS | Linux |
 |---|---|---|---|
-| `<brain-home>/.claude/skills/` | Directory junction → `$HORIZON_SYSTEM/skills_bin/` (via `mklink /J`) | Symlink → `$HORIZON_SYSTEM/skills_bin/` (via `ln -sfn`) | Same as macOS |
+| `<brain-home>/.claude/skills/` | Directory symlink → `$HORIZON_SYSTEM/skills_bin/` (via `mklink /D`) | Symlink → `$HORIZON_SYSTEM/skills_bin/` (via `ln -sfn`) | Same as macOS |
 
-The brain's skills junction points to `skills_bin/` (not `skills_sbin/`) — brains
+The brain's skills symlink points to `skills_bin/` (not `skills_sbin/`) — brains
 access only the group-readable skill tier; `skills_sbin/` is explicitly denied.
 
 ### Credential stored

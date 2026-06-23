@@ -314,7 +314,7 @@ fi
 
 # 5c: Redirect ~/.claude/projects into $HORIZON_ROOT/memory (owner harness memory).
 # Migrates the Claude harness's per-project state into the AIOS so memory is
-# owned by the OS layer. The script junctions ~/.claude/projects → $HORIZON_ROOT/
+# owned by the OS layer. The script symlinks ~/.claude/projects → $HORIZON_ROOT/
 # memory, backing up any existing real directory first. Idempotent: re-running
 # no-ops if already redirected, so it is safe to always call.
 # NOTE: Have Claude Code closed when bootstrap runs — the script moves the live
