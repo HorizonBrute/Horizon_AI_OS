@@ -40,8 +40,8 @@ Parse the user's input after `/objective`:
 
 | Form | Action |
 |---|---|
-| `/objective <description>` | **create** with an auto-generated name |
-| `/objective named "the_name" "description"` | **create** with an explicit name |
+| `/objective <description>` | **create** with an auto-generated title |
+| `/objective named "The Title" "description"` | **create** with an explicit title |
 | `/objective list` | **list** |
 | `/objective show <N\|name>` or `/objective <N>` (bare number) | **show** |
 | `/objective update <N\|name> <note>` | **update** |
@@ -65,26 +65,44 @@ objectives not updated within the retention window are pruned by horizon_aios_ma
 |---|------|---------|-------------|
 ```
 
-C.2 Determine the next number. Read `index.md` for the highest integer in the `#` column; also glob `<objectives_dir>/*.md` for `NNN_*.md` filenames. Next number is `max(all found) + 1`, or `1` if none exist. Zero-pad to three digits (`001`, `002`, ...).
+C.2 Determine the number. Read `index.md` for the highest integer in the `#` column; also glob `<objectives_dir>/*.md` for `NNN_*.md` filenames. Next number is `max(all found) + 1`, or `1` if none exist. Zero-pad to three digits (`001`, `002`, ...).
 
-C.3 Determine the name:
-- **Explicit form** (`named "the_name" "description"`): use the given name verbatim, normalized — lowercase, spaces and hyphens to underscores, strip anything not `[a-z0-9_]`.
-- **Description-only form**: generate a SHORT name — lowercase snake_case, **2 words target, 3 maximum**, drop filler words. E.g. "Build the syncable second-brain layer" → `second_brain`; "Migrate audit logging to structured JSON" → `audit_logging`.
+C.3 Determine the **title** and **slug** — every objective has both:
+
+- **Title** — the human-readable display name, shown in the file heading and the index `Name` column. Title Case, **2–5 words**, specific and readable. E.g. "Getting Horizon.AIOS Shippable", "Second-Brain Layer", "Audit Logging". This is the "nice" name the user reads.
+- **Slug** — the title normalized for the filename only: lowercase, spaces → hyphens, drop anything not `[a-z0-9-]`, collapse repeated hyphens. E.g. "Getting Horizon.AIOS Shippable" → `getting-horizon-aios-shippable`.
+
+Resolve the title by form:
+- **Explicit** (`named "The Title" "description"`): use the given title verbatim as the Title; derive the slug from it.
+- **Description-only**: generate a short, readable Title (Title Case, 2–4 words, drop filler) from the description, then derive the slug. E.g. "Build the syncable second-brain layer" → Title "Second-Brain Layer", slug `second-brain-layer`.
 
 C.4 Get today's date: `date +%Y-%m-%d`.
 
-C.5 Create the objective file at `<objectives_dir>/NNN_<name>.md`:
+C.5 Create the objective file at `<objectives_dir>/NNN_<slug>.md` using this template. Fill the sections you have signal for; leave a one-line placeholder in the rest rather than padding. There is **no status field** — objectives are ephemeral and retire by going stale, never by being closed.
 
 ```markdown
-# Objective NNN — <name>
+# Objective NNN — <Title>
 
 **Created:** YYYY-MM-DD
 **Description:** <one-line description>
 
 ## Goal
-<The durable goal and why it matters — the long-term context that should survive
-across sessions. Write enough that a cold reader understands the destination, not
-just the next step. Expand this with the user if the description is thin.>
+<The durable goal AND why it matters — the long-term context that should survive
+across sessions. Write enough that a cold reader understands the destination and
+the stakes, not just the next step. Expand this with the user if the description
+is thin.>
+
+## Success criteria
+<- [ ] concrete, verifiable outcomes that define "done enough". Use checkboxes so
+progress is visible across sessions. Omit this section if the goal is open-ended.>
+
+## Current state
+<Where things stand now — what is in place, what remains. The living section;
+refreshed on update. One short paragraph or a tight bullet list.>
+
+## Linked handoffs
+<- relative paths to the handoffs that advanced this objective, appended as they
+land. Empty at creation.>
 
 ## Log
 - YYYY-MM-DD — created
@@ -92,10 +110,10 @@ just the next step. Expand this with the user if the description is thin.>
 
 C.6 Append a row to the index table:
 ```markdown
-| N | <name> | YYYY-MM-DD | <one-line description> |
+| N | <Title> | YYYY-MM-DD | <one-line description> |
 ```
 
-C.7 Report the number, name, and absolute file path. Tell the user they can reference it as `/objective show N` and tie handoffs to it.
+C.7 Report the number, title, and absolute file path — three lines, nothing more. Tell the user they can reference it as `/objective show N` and tie handoffs to it. **Do not echo the template or the file body into chat.**
 
 ---
 
@@ -109,7 +127,7 @@ L.1 Read `<objectives_dir>/index.md` and print the table. If the directory or in
 
 S.1 Resolve the target: a bare number or `show N` → `NNN_*.md`; a name → the matching file. Glob `<objectives_dir>/*.md` to find it.
 
-S.2 Read the file and present it into the conversation so its context is loaded. Do not modify it (show is read-only — reading does not refresh the retention clock; only `update` does).
+S.2 Read the file so its content enters your working context. **Do not echo the file body into chat** — reading it is what loads the context; pasting it back is redundant and buries the signal. Instead give the user a tight orientation (≈2–4 lines): the title, the one-line description, where it stands now (from Current state), and any open success criteria. The full text is on disk if they want it verbatim. Do not modify the file (show is read-only — reading does not refresh the retention clock; only `update` does).
 
 S.3 If no match, list available objectives (run List) so the user can pick.
 
@@ -119,16 +137,17 @@ S.3 If no match, list available objectives (run List) so the user can pick.
 
 U.1 Resolve the target file as in Show.
 
-U.2 Append a dated line to the `## Log` section: `- YYYY-MM-DD — <note>`. If the update materially changes the long-term goal, also edit `## Goal` with the user.
+U.2 Append a dated line to the `## Log` section: `- YYYY-MM-DD — <note>`. If the update materially changes the long-term goal or where things stand, also edit `## Goal` / `## Current state` with the user.
 
-U.3 Writing the file refreshes its modification time, keeping it from being pruned. Confirm the appended note to the user.
+U.3 Writing the file refreshes its modification time, keeping it from being pruned. Confirm the appended note to the user in one line — do not reprint the file.
 
 ---
 
 ## Notes for the executing agent
 
-- Keep objective files tight and durable — loaded on demand, but bloat costs tokens every time they are shown or chained. Capture the goal, not a play-by-play.
-- Never invent a status/done/close concept. There is none. The user retires an objective by ceasing to reference it.
-- Retention is age-based, handled externally by `$HORIZON_SYSTEM/sbin/horizon_aios_maintain_logs.py` (`AIOS_OBJECTIVES_MAX_DAYS`). `index.md`, `.gitkeep`, and `README.md` are never pruned. Do not implement pruning here.
+- **Never echo a full objective (or the template) into chat.** Reading the file loads it into your context; a 2–4 line summary is the user-facing deliverable, the file on disk is the source of truth. This mirrors the `/handoff` no-echo rule and exists for the same reason: dumping the body bloats context and buries the useful signal.
+- Title vs. slug vs. number: the **number** is the stable handle (use it to disambiguate). The **title** is the human-readable display name. The **slug** exists only to form the filename. Names can collide loosely across time; numbers do not.
+- Keep objective files tight and durable — loaded on demand, but bloat costs tokens every time they are shown or chained. The richer template is a frame, not a quota: capture the goal and current state, not a play-by-play.
+- There is **no status/done/close concept** — none. Do not add a Status field to files or the index. The user retires an objective by ceasing to reference it; retention is age-based.
+- Retention is handled externally by `$HORIZON_SYSTEM/sbin/horizon_aios_maintain_logs.py` (`AIOS_OBJECTIVES_MAX_DAYS`). `index.md`, `.gitkeep`, and `README.md` are never pruned. Do not implement pruning here.
 - The objectives directory is machine-local and gitignored, like `handoffs/`.
-- Number is the stable handle. Names can collide loosely across time; disambiguate by number when both are available.

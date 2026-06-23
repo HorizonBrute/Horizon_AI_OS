@@ -360,6 +360,44 @@ elevation. See `$HORIZON_DOCS/deployment/brain_automation.md`.
 
 ---
 
+## horizon_aios_verify_isolation.py
+
+**Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_verify_isolation.py`
+
+Verifies the central AIOS isolation claim — a brain OS account can read
+`$HORIZON_BIN` but is denied `$HORIZON_SYSTEM/sbin` (verification criterion #5).
+Runs in two modes. **Default (safe)** is non-destructive and needs no elevation:
+it confirms the static ACL posture — an explicit, non-inherited `brains` Deny on
+`sbin`/`skills_sbin`/`logs` (Windows, via `Get-Acl`, the same check
+`horizon_aios_doctor.py` makes) or owner-only mode `0o700` (Unix). **Live mode
+(`--live`)** is the opt-in, elevated, destructive proof: it provisions a throwaway
+brain, logs on *as* that brain to empirically read `bin` (expect OK) and `sbin`
+(expect denied), then removes it. Because live mode adds and deletes an OS user
+and requires Administrator/root, the account-touching behaviour is gated behind
+`--live`; the default does nothing to user accounts. Windows is fully
+implemented and verified; Linux/macOS have the safe check and a live-probe
+framework (`runuser`/`su`/`sudo -u`) not yet validated on real hardware.
+
+**When to use it:** Quick, safe re-confirmation that hardening is intact (default
+mode, any time); or the full empirical isolation proof on a test machine when
+validating a fresh install or change (`--live`, elevated). Useful to contributors
+validating the security model.
+
+**Key flags:**
+
+- *(none)* — default safe ACL check, non-destructive, no elevation
+- `--live` — opt-in: provision a throwaway brain, run the as-the-brain probe,
+  remove it (requires elevation)
+- `--brain-name NAME` — throwaway account name for `--live` (default `aios_isotest`)
+- `--keep` — `--live`: leave the brain provisioned for inspection
+- `--yes` / `-y` — skip the `--live` confirmation prompt
+- `--dry-run` — print what `--live` would do without changing anything
+- `--horizon-root PATH` — explicit root; otherwise derived from script location
+
+**Referenced by a skill?** No. See `$HORIZON_DOCS/security/brain_isolation_test.md`.
+
+---
+
 ## horizon_aios_sync.py
 
 **Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_sync.py`
@@ -508,6 +546,11 @@ path using the nearest `aios_sounds.conf` ancestor override, then the
 per-harness `sounds.map`, then the system default `sounds/sounds.map`. Prints the
 path or nothing (a missing sound is not an error — always exit 0). Intended to be
 called from harness hooks, which pipe its output to `sounds/play_sound.sh`.
+
+Honors the `sounds_enabled` mute flag before resolving: `sounds_enabled = false`
+in the master `sounds/aios_sounds.conf` silences every event everywhere (absolute);
+the same key in a per-project `aios_sounds.conf` mutes only that subtree. When
+muted it prints nothing. See file_structure_invariants §10.6.
 
 **When to use it:** From a notification hook to look up which sound to play for an
 event; rarely run by hand.

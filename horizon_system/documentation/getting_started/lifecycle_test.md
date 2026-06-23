@@ -63,6 +63,11 @@ aios unregister home                                # (optional) drop the 2nd re
 #   python horizon_system\sbin\horizon_aios_sync.py            # simulate FF upstream update
 #   python horizon_system\sbin\horizon_aios_backup_user_data.py     # to YOUR remote (never public upstream)
 
+# ── 4b. Optional: prove brain isolation (criterion #5) ─────────────
+python horizon_system\sbin\horizon_aios_verify_isolation.py            # safe ACL check, non-destructive
+#   --live opt-in: provisions a throwaway brain, reads as it (bin OK / sbin denied), removes it:
+#   python horizon_system\sbin\horizon_aios_verify_isolation.py --live --yes
+
 # ── 5. Reset to clean ──────────────────────────────────────────────
 #   if you made a brain:  python horizon_system\sbin\horizon_aios_remove_brain.py testbrain --yes
 .\horizon_system\sbin\uninstall.ps1 --dry-run       # preview full reversal

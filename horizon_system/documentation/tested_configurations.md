@@ -26,7 +26,7 @@ A configuration is **Verified** when all of the following have been exercised:
 2. `horizon_aios_doctor.py` reports all checks passed.
 3. A skill (`/handoff` or similar) executes in a live session.
 4. An event hook fires (task complete sound plays).
-5. At least one brain is provisioned via `horizon_aios_create_brain.py` and the brain's OS account can read `$HORIZON_BIN` but cannot read `$HORIZON_SYSTEM/sbin`.
+5. At least one brain is provisioned via `horizon_aios_create_brain.py` and the brain's OS account can read `$HORIZON_BIN` but cannot read `$HORIZON_SYSTEM/sbin`. Prove this with `horizon_aios_verify_isolation.py --live` (see `security/brain_isolation_test.md`).
 6. The audit log captures at least one monitored file event.
 
 **Partial** means steps 1–3 are known to work but steps 4–6 have gaps or have not been run.
