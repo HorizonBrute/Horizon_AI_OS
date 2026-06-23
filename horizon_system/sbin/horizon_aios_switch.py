@@ -6,7 +6,7 @@ otherwise hardcode a single HORIZON_ROOT:
 
   1. Env vars (HORIZON_ROOT + 8 derived) - sourced by the shell profile.
   2. ~/.claude/CLAUDE.md       - an "@<root>/.claude/CLAUDE.md" redirect.
-  3. ~/.claude/skills/         - a junction/symlink into <root>/horizon_system/skills_sbin.
+  3. ~/.claude/skills/         - a directory symlink into <root>/horizon_system/skills_sbin.
   4. ~/.claude/settings.json   - statusline + hook commands.
   5. The upstream sync schedule - a per-AIOS scheduled task (advisory here).
 
@@ -248,9 +248,9 @@ def repoint_claude_md(root, dry):
 
 
 def _remove_link(path):
-    """Remove an existing junction/symlink (not its target's contents)."""
+    """Remove an existing symlink (not its target's contents)."""
     if os.name == "nt":
-        # Junctions and dir symlinks are removed with rmdir; this never recurses
+        # Directory symlinks are removed with rmdir; this never recurses
         # into the target for a reparse point.
         subprocess.run(["cmd", "/c", "rmdir", path], check=True,
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -260,13 +260,13 @@ def _remove_link(path):
 
 def _make_link(dst, target):
     if os.name == "nt":
-        subprocess.run(["cmd", "/c", "mklink", "/J", dst, target],
+        subprocess.run(["cmd", "/c", "mklink", "/D", dst, target],
                        check=True, stdout=subprocess.DEVNULL)
     else:
         os.symlink(target, dst, target_is_directory=True)
 
 
-def repoint_skills_junction(root, dry):
+def repoint_skills_link(root, dry):
     target = os.path.join(root, "horizon_system", "skills_sbin")
     if not os.path.isdir(target):
         warn(f"skills_sbin not found in target ({target}) - skipping skills repoint.")
@@ -466,7 +466,7 @@ def cmd_init(reg, _args):
     """Onboarding entry point (called by bootstrap). Ensures THIS tree is in the
     registry and that active_env + wrappers exist for the ACTIVE AIOS. Unlike
     'switch', it never hijacks an existing active choice and does not touch
-    ~/.claude (bootstrap owns CLAUDE.md and the skills junction)."""
+    ~/.claude (bootstrap owns CLAUDE.md and the skills symlink)."""
     name = _find_name_by_root(reg, THIS_ROOT)
     if not name:
         name = _default_name(THIS_ROOT)
@@ -515,7 +515,7 @@ def cmd_switch(reg, args):
     update_system_path(root, args.dry_run)
     write_wrappers(args.dry_run)
     repoint_claude_md(root, args.dry_run)
-    repoint_skills_junction(root, args.dry_run)
+    repoint_skills_link(root, args.dry_run)
 
     if args.dry_run:
         info("Dry run complete - registry unchanged.")
@@ -800,15 +800,31 @@ def setup_invoke_bootstrap(chosen_root, yes):
         if not os.path.isfile(script):
             err(f"bootstrap.ps1 not found at {script}")
             return 1
-        # Build an elevated relaunch. -Wait so we see it complete; the elevated
-        # window shows progress. Forward --yes when non-interactive.
-        arglist = f"-ExecutionPolicy Bypass -File '{script}'"
+        # Probe elevation: avoid Start-Process -Verb RunAs when already admin —
+        # UAC cannot re-elevate an already-elevated process and returns 0xFFFF0000,
+        # which subprocess.run masks as exit 0 (the PS host exits cleanly).
+        is_admin_ps = (
+            "([Security.Principal.WindowsPrincipal]"
+            "[Security.Principal.WindowsIdentity]::GetCurrent())"
+            ".IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)"
+        )
+        _rc, _out = _run_capture(["powershell", "-NoProfile", "-NonInteractive",
+                                  "-Command", f"if ({is_admin_ps}) {{'yes'}} else {{'no'}}"])
+        already_elevated = _out.strip().lower() == "yes"
+        ps_args = ["-ExecutionPolicy", "Bypass", "-File", script]
         if yes:
-            arglist += " --yes"
-        ps = (f"$p = Start-Process powershell -Verb RunAs -Wait -PassThru "
-              f"-ArgumentList \"{arglist}\"; exit $p.ExitCode")
-        info("Launching elevated bootstrap (UAC prompt expected)...")
-        return subprocess.run(["powershell", "-NoProfile", "-Command", ps]).returncode
+            ps_args.append("--yes")
+        if already_elevated:
+            info("Already running as Administrator — invoking bootstrap directly.")
+            return subprocess.run(["powershell", "-NoProfile"] + ps_args).returncode
+        else:
+            arglist = f"-ExecutionPolicy Bypass -File '{script}'"
+            if yes:
+                arglist += " --yes"
+            ps = (f"$p = Start-Process powershell -Verb RunAs -Wait -PassThru "
+                  f"-ArgumentList \"{arglist}\"; exit $p.ExitCode")
+            info("Launching elevated bootstrap (UAC prompt expected)...")
+            return subprocess.run(["powershell", "-NoProfile", "-Command", ps]).returncode
     else:
         script = os.path.join(sbin, "bootstrap.sh")
         if not os.path.isfile(script):

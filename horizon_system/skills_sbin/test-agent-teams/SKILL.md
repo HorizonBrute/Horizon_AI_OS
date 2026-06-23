@@ -1,6 +1,6 @@
 ---
 name: test-agent-teams
-description: End-to-end self-test of the Agent Teams system — walk every defined team, run an example natural-language flow, and spawn each role so it echoes a nonce, its role, and the model it actually ran as. Use when the user types /test-agent-teams, says "test the agent teams", "run the agent-team self-test", or wants to verify team resolution + model routing works.
+description: End-to-end self-test of the Agent Teams system — walk every defined team (or one named team) and spawn each role so it echoes a self-generated nonce, its role, what it was told to do (its charter), and the model it actually ran as. Use when the user types /test-agent-teams --all-teams (all) or /test-agent-teams <team-name> (one team), says "test the agent teams", "run the agent-team self-test", or wants to verify team resolution + model routing. The skill generates its own nonce.
 tools: Read, Bash, Task
 ---
 
@@ -19,21 +19,31 @@ all teams) — a deliberate, possibly costly integration test; run it to verify,
 
 ## When to invoke
 
-`/test-agent-teams [nonce]`, or the user asks to test / self-test the agent teams.
+`/test-agent-teams --all-teams` (or `all`) tests every defined team; `/test-agent-teams
+<team-name>` tests just that one. Also triggered by "test the agent teams" / "run the
+agent-team self-test". The skill mints its own nonce.
+
+**Dispatch.** `--all-teams` / `all` → every resolved team. A team name (matched against the
+resolved set) → only that team. No argument → list the teams and ask which (or `--all-teams`);
+never default to a large spawn silently.
 
 ---
 
 ## Step 1 — Nonce
 
-1.1 Use the nonce the user supplied. If none, generate a short random one (e.g. 8 hex
-chars) and state it up front. The SAME nonce is passed to every role spawned this run.
+1.1 GENERATE a fresh short random nonce (8 hex chars) and state it up front — the skill
+always mints its own; never ask the user for one. The SAME nonce is passed to every role
+spawned this run.
 
 ---
 
 ## Step 2 — Enumerate the teams (use the tooling, do not hand-list)
 
 2.1 Run `python $HORIZON_BIN/resolve_agent_teams.py --json`. It returns every resolved
-team with its roles, model groups, and flags (and the loop target/cap). Use that.
+team with its roles, model groups, flags, charters, and loop target/cap. Use that.
+
+2.2 Apply scope: `--all-teams`/`all` → keep all teams; a team name → keep only the team
+whose name matches (case-insensitive); otherwise ask which.
 
 ---
 
