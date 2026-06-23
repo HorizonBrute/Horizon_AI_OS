@@ -210,6 +210,10 @@ generate the env snippets and wrapper scripts for the first time.
 - `register <name> <path>` — add or replace a named AIOS in the registry
 - `unregister <name>` — remove a registration (files untouched)
 - `switch <name> [--dry-run]` — repoint all pointers to the named AIOS
+- `setup [--yes]` — one-shot new-machine installer: orchestrates the full setup
+  procedure (preflight, root resolution, profile line, bootstrap, git identity,
+  local settings, model prefs, doctor `--post-setup` gate); unprivileged and
+  idempotent. See `$HORIZON_DOCS/getting_started/ReadMeToSetupYourSystem.md`.
 - `uninstall [--dry-run] [--yes]` — delegate to `uninstall.ps1` / `uninstall.sh`
   to remove the bootstrap footprint (a real removal must be run elevated;
   `--dry-run` previews and needs none)
