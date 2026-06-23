@@ -9,6 +9,31 @@ This document serves two purposes simultaneously:
 
 ---
 
+## Quick Start — `aios setup` (Recommended)
+
+`aios setup` is the one-shot installer. It orchestrates the entire procedure below — it does not replace your understanding of it, but it automates every step. Run it from a clone of the AIOS repo (or standalone, in which case it offers to clone for you):
+
+```bash
+python "$HORIZON_SYSTEM/sbin/horizon_aios_switch.py" setup      # or: aios setup
+```
+
+What it does, idempotently and re-run safe:
+
+1. **Preflight** — probes prerequisites (hard-fails on missing `git`/`claude`; warns on `jq`/`gpg`/`ssh`; gives SSH/GPG guidance — never generates keys).
+2. **Root + clone** — prompts for `$HORIZON_ROOT`; inside an existing tree it skips cloning, standalone it offers to clone to the chosen root.
+3. **Relocate** — if the chosen root differs from the current tree, calls `horizon_aios_relocate.py --apply`.
+4. **Profile line** — idempotently adds the `active_env` source line to your shell profile.
+5. **Bootstrap** — shells out to the **elevated** platform bootstrap (Windows: UAC relaunch; Unix: `sudo`) for sections 2–10 below.
+6. **Git identity** — writes `user.name`/`user.email`/`user.signingkey` to a machine-local, gitignored include file (`ai_os_etc/git_identity.local.gitconfig`) wired via `git config --global include.path` (never edits the tracked gitconfig, never shows in `git status`); also ensures the §9 framework-gitconfig include.
+7. **Git init + first commit**, **settings.local.json** stub, **model-prefs** template copy (offered).
+8. **Verify gate** — runs `horizon_aios_doctor.py --post-setup` (non-fatal summary).
+
+Add `--yes` for a non-interactive run (accepts defaults, mirrors bootstrap's `--yes`).
+
+**The remainder of this document is the authoritative manual procedure** — the fallback when you cannot run `aios setup`, want to understand each step, or need to do one step by hand.
+
+---
+
 ## AGENT SETUP PROTOCOL
 
 > This section is addressed to any agent reading this file to perform setup on behalf of a user.

@@ -52,6 +52,30 @@ If the task or cron entry already exists, the script prompts before overwriting
 
 ---
 
+## Check sync status
+
+To answer "is auto-sync installed, and when did it last succeed?", use the
+read-only status mode instead of manually reading the sync log or the Task
+Scheduler / cron last-result codes:
+
+```
+python $HORIZON_SYSTEM/sbin/horizon_aios_sync.py --status
+```
+
+It reports the platform, whether the schedule is INSTALLED, the last scheduler
+run/result, the log file, and the last recorded sync outcome. It is read-only
+and never triggers a sync.
+
+**Exit-code contract** (stable, usable in monitoring scripts):
+
+| Exit | Meaning |
+|------|---------|
+| `0` | Auto-sync is installed and the last run succeeded — or is installed with no run recorded yet. |
+| `1` | Auto-sync is NOT installed. |
+| `2` | Auto-sync is installed but the LAST RECORDED RUN FAILED. |
+
+---
+
 ## SSH key prerequisites for unattended sync
 
 The sync script runs `git fetch` over SSH. This requires that the SSH key for
