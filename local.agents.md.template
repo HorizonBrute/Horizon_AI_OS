@@ -1,0 +1,14 @@
+# Local Agent Instructions — machine-local override (gitignored; never synced or clobbered)
+
+<!--
+This is the TEMPLATE. `aios setup` materializes it to `local.agents.md` (same
+directory, gitignored) if absent. The sibling `agents.md` @-imports `local.agents.md`
+LAST, so anything here overrides the shipped OS-level config.
+
+Put OWNER/MACHINE-specific agent instructions here — operational preferences and
+local commands you do NOT want shipped to other users or overwritten by an AIOS
+update. Shipped defaults belong in `agents.md`; personal overrides belong here.
+
+Keep it short: this file loads into context every session. See
+file_structure_invariants.md §12 (CLAUDE.md / agents.md / local.agents.md).
+-->

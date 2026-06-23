@@ -107,6 +107,8 @@ What changes on the machine when `bootstrap.ps1` / `bootstrap.sh` runs.
 | `$HORIZON_ETC/aios_local.conf` | Created from template (interactive prompt) | Created from template (interactive prompt) | Created from template (interactive prompt) | Machine-local AIOS config; copied from `$HORIZON_SYSTEM/templates/aios_local.conf.template` |
 | `$HORIZON_ROOT/.git/hooks/pre-commit` | Copied | Copied | Copied | Installed by bootstrap into `.git/hooks/`; syncs `.gitignore.user` to `.git/info/exclude` on commit |
 | `$HORIZON_ROOT/.git/hooks/commit-msg` | Copied | Copied | Copied | DCO sign-off enforcement |
+| `$HORIZON_ROOT/local.agents.md` | Created from template (if absent) | Created from template (if absent) | Created from template (if absent) | Materialized by `aios setup` (`setup_local_agents`) from `local.agents.md.template`; gitignored; machine-local override imported last by `agents.md` (see §12.6) |
+| `$HORIZON_ROOT/.claude/local.agents.md` | Created from template (if absent) | Created from template (if absent) | Created from template (if absent) | Same pattern for the `.claude/` scope |
 
 ### Directories created
 
@@ -141,7 +143,7 @@ What changes on the machine when `bootstrap.ps1` / `bootstrap.sh` runs.
 | `core.hooksPath` | Local (OS repo only) | `./horizon_system/harness_configs/git/hooks` | Set by Section 6 of bootstrap; tells Git to use the version-controlled hooks directory |
 | `include.path` (framework) | Global (machine-wide) | `$HORIZON_SYSTEM/harness_configs/git/gitconfig` | Written automatically by `aios setup` (`git config --global --add include.path`); pulls in `commit.gpgsign`, `signoff`, `excludesfile` |
 | `include.path` (identity) | Global (machine-wide) | `$HORIZON_ETC/git_identity.local.gitconfig` | Written automatically by `aios setup`; pulls in the machine-local `user.name` / `user.email` / `user.signingkey` |
-| `$HORIZON_ETC/git_identity.local.gitconfig` | Machine-local file (gitignored, under repo) | `[user]` name / email / signingkey | Written by `aios setup`; never committed. The FILE dies with the repo folder; its global `include.path` entry (above) is removed by `uninstall.ps1` Section 8 |
+| `$HORIZON_ETC/git_identity.local.gitconfig` | Machine-local file (gitignored, under repo) | `[user]` name / email / signingkey | Written by `aios setup`; never committed. The FILE dies with the repo folder; its global `include.path` entry (above) is removed by `uninstall.ps1` Section 8. **Note:** the first signed commit is decoupled from `--yes` — pass `--first-commit` to create it during setup; omit it (default) to defer until a GPG key is ready. |
 | `commit.gpgsign` | Global (via included framework gitconfig) | `true` | Every commit on the machine is GPG-signed after setup |
 | `user.signingkey` | Global (via included identity gitconfig) | User's GPG fingerprint | Collected by `aios setup` and written into `git_identity.local.gitconfig` |
 

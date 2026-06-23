@@ -16,7 +16,7 @@ P.2 **Claude Code CLI** — the application the AIOS config layer targets. All s
 
 P.3 **PowerShell** — required on Windows only. The Windows statusline script (`statusline-context-alerts.ps1`) and the `play_sound.sh` Windows branch both invoke PowerShell, which is built-in on Windows 5.1+. On Linux and macOS, `play_sound.sh` uses native audio commands and the bash statusline script is dispatched instead — `pwsh` is not required on those platforms.
 
-P.4 **GPG** — commit signing is enabled globally (`commit.gpgsign = true` in `harness_configs/git/gitconfig`). A GPG key must be present in the local keyring before the first commit to any repo on the machine. The key fingerprint is stored in the portable gitconfig and must be updated per-machine during setup.
+P.4 **GPG** — commit signing is enabled globally (`commit.gpgsign = true` in `harness_configs/git/gitconfig`). A GPG key must be present in the local keyring before the first commit to any repo on the machine. The key fingerprint is stored in the portable gitconfig and must be updated per-machine during setup. `aios setup` decouples the first commit from `--yes`: it is off by default; pass `--first-commit` to create it in the same pass (requires a working GPG key), or run `git commit -s` manually later.
 
 P.5 **SSH client** — all remote Git operations use SSH. No HTTPS remote URLs exist in this system. The `gh` CLI is not installed and not used.
 
@@ -101,6 +101,7 @@ Claude Code hardcodes two global config lookup paths that cannot be changed. The
 1.6.7 `$HORIZON_ROOT\objectives\` — machine-local durable `/objective` goals (gitignored)
 1.6.8 `$HORIZON_ROOT\usrbin\usr_skills\` — machine-local user skills, junctioned into `skills_sbin/` at runtime (gitignored)
 1.6.9 `$HORIZON_SYSTEM\ai_os_etc\git_identity.local.gitconfig` — machine-local git identity (`user.name`/`user.email`/`user.signingkey`) written by `aios setup` and wired via global `include.path`; gitignored, never shows in `git status`
+1.6.10 `$HORIZON_ROOT\local.agents.md` and `$HORIZON_ROOT\.claude\local.agents.md` — machine-local agent instruction overrides; gitignored (bare `local.agents.md` pattern); materialized from their `.template` siblings by `aios setup`; `@`-imported last by the sibling `agents.md` so local content wins. See `$HORIZON_ETC/file_structure_invariants.md` §12.6.
 
 1.7 **Pre-commit hook responsibilities**
 

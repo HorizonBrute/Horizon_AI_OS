@@ -8,6 +8,7 @@
 !.claude/CLAUDE.md
 !.claude/CLAUDE.aios-dev.md
 !.claude/agents.md
+!.claude/local.agents.md.template
 !.claude/settings.json
 
 # =============================================================================
@@ -607,6 +608,13 @@ horizon_system/ai_os_etc/git_identity.local.gitconfig
 # User-local model preferences extension (gitignored; populate from the example
 # in horizon_aios_model_prefs.md and never overwritten by AIOS updates)
 horizon_system/ai_os_etc/horizon_aios_model_prefs.extend.md
+
+# Machine-local agent-instruction override. Every agents.md @-imports its sibling
+# local.agents.md; it ships as local.agents.md.template, is materialized by
+# `aios setup`, and is never tracked or clobbered by upstream sync. Bare pattern =
+# ignored in EVERY directory (root, .claude, any nested scope). The .template stays
+# tracked (different name). See file_structure_invariants §12.
+local.agents.md
 
 # Machine-local personal project ignore list (copy .gitignore.user.template → .gitignore.user)
 .gitignore.user

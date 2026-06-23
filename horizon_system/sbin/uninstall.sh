@@ -22,13 +22,14 @@
 #   Section 5b — ~/.claude/projects symlink (memory redirect); memory data left intact
 #   Section 6  — .git/hooks/commit-msg, pre-commit; git core.hooksPath config
 #   Section 7  — /etc/profile.d/horizon_aios.sh and /etc/paths.d/horizon-aios (macOS)
+#   Section 8  — active_env line in the owner shell profile + the two global git
+#                include.path entries `aios setup` writes (framework gitconfig and
+#                the machine-local git_identity.local.gitconfig)
 #   Section 9  — $HORIZON_ETC/aios_local.conf, $HORIZON_SYSTEM/logs/ (only if empty)
 #   Section 10 — brains-group ACEs removed from $HORIZON_SYSTEM subtrees
 #                Advisory: 'brains' OS group left in place (may have brain members)
 #
 # What this does NOT remove:
-#   - Shell-profile line sourcing active_env.sh (user added this manually)
-#   - Global git include.path pointing to harness_configs/git/gitconfig (user added manually)
 #   - Optional sync schedule / cron entries from horizon_aios_setup_sync_schedule.py (separate opt-in)
 #   - 'brains' OS group (may have brain OS users as members)
 #   - Brain OS user accounts and their data (use horizon_aios_create_brain.py remove flow)
@@ -159,7 +160,7 @@ else
   skip "~/.claude/CLAUDE.md not found — nothing to remove."
 fi
 
-advisory "If you added '. \"\$HOME/.horizon/active_env.sh\"' to your shell profile (~/.bashrc / ~/.zshrc), remove that line manually."
+info "The active_env line in your shell profile is removed in Section 8 below."
 
 # =============================================================================
 # SECTION 3: ~/.claude/skills/ symlink and user-skill symlinks in skills_sbin/
@@ -436,7 +437,7 @@ else
   skip "$HORIZON_ROOT is not a git repository — skipping git hooks cleanup."
 fi
 
-advisory "If you set 'include.path' in your global gitconfig to point at harness_configs/git/gitconfig, remove that line manually."
+info "Global git include.path entries written by 'aios setup' are removed in Section 8 below."
 
 # =============================================================================
 # SECTION 7: System PATH — remove /etc/profile.d/horizon_aios.sh and /etc/paths.d/
@@ -491,6 +492,64 @@ case "$(uname -s)" in
     fi
     ;;
 esac
+
+# =============================================================================
+# SECTION 8: Shell profile line + global git include.path entries
+# `aios setup` (horizon_aios_switch.py) actively writes machine-wide pointers that
+# persist after the repo is gone and must be reversed here (older bootstrap only
+# PRINTED advisories): (a) the active_env source line in the owner's shell profile,
+# (b) the global git include.path -> harness_configs/git/gitconfig (framework), and
+# (c) the global git include.path -> ai_os_etc/git_identity.local.gitconfig. The
+# identity FILE lives under $HORIZON_ROOT and dies with the repo; only its global
+# include.path entry is removed here. Git config is the OWNER's, so we act as $OWNER.
+# =============================================================================
+banner "SECTION 8: Shell profile line and global git include.path"
+
+# (a) Strip the active_env source line from the owner's shell profile(s).
+PROFILE_STRIPPED=false
+for prof in "$OWNER_HOME/.bashrc" "$OWNER_HOME/.zshrc"; do
+  [ -f "$prof" ] || continue
+  grep -q "active_env.sh" "$prof" 2>/dev/null || continue
+  if [ "$DRY_RUN" = "true" ]; then
+    dry "strip active_env source line from $prof."
+  else
+    TMPFILE="$(mktemp)"
+    grep -v "active_env.sh" "$prof" > "$TMPFILE" || true
+    cat "$TMPFILE" > "$prof"
+    rm -f "$TMPFILE"
+    ok "Stripped active_env source line from $prof."
+  fi
+  PROFILE_STRIPPED=true
+done
+[ "$PROFILE_STRIPPED" = "false" ] && skip "No active_env source line found in owner shell profiles."
+
+# (b)+(c) Unset ONLY the two global git include.path entries aios setup added,
+# matched against the literal stored value, acting as the owner (ownership-safe).
+owner_git() {
+  if command -v sudo >/dev/null 2>&1 && [ "$OWNER" != "root" ]; then
+    sudo -u "$OWNER" git "$@"
+  else
+    HOME="$OWNER_HOME" git "$@"
+  fi
+}
+FRAMEWORK_GITCONFIG="$HORIZON_SYSTEM/harness_configs/git/gitconfig"
+IDENTITY_GITCONFIG="$HORIZON_ETC/git_identity.local.gitconfig"
+for target in "$FRAMEWORK_GITCONFIG" "$IDENTITY_GITCONFIG"; do
+  if owner_git config --global --get-all include.path 2>/dev/null | grep -qxF "$target"; then
+    if [ "$DRY_RUN" = "true" ]; then
+      dry "git config --global --unset-all include.path (value: $target) for $OWNER."
+    else
+      esc="$(printf '%s' "$target" | sed 's/[^a-zA-Z0-9_/-]/\\&/g')"
+      if owner_git config --global --unset-all include.path "^$esc$" 2>/dev/null; then
+        ok "Removed global include.path -> $target"
+      else
+        warn "Could not unset include.path for $target — remove manually."
+      fi
+    fi
+  else
+    skip "Global include.path not set for $target — nothing to unset."
+  fi
+done
 
 # =============================================================================
 # SECTION 9: aios_local.conf and logs/ directory
@@ -617,9 +676,7 @@ echo ""
 echo "  Horizon AIOS bootstrap footprint removed from this machine."
 echo ""
 echo "  Manual steps still required (see [MANUAL] advisories above):"
-echo "    1. Remove the active_env.sh source line from your shell profile (~/.bashrc / ~/.zshrc)"
-echo "    2. Remove the 'include.path' from your global gitconfig (if set)"
-echo "    3. Remove cron sync entries (if you set them up)"
-echo "    4. Remove the 'brains' OS group (if no brain accounts remain)"
-echo "    5. Remove any brain OS user accounts (use horizon_aios_create_brain.py remove flow)"
+echo "    1. Remove cron sync entries (if you set them up)"
+echo "    2. Remove the 'brains' OS group (if no brain accounts remain)"
+echo "    3. Remove any brain OS user accounts (use horizon_aios_create_brain.py remove flow)"
 echo ""

@@ -10,3 +10,6 @@ Never hardcode paths — use $HORIZON_ROOT, $HORIZON_SYSTEM, $HORIZON_BIN, $HORI
 @horizon_system/ai_os_etc/horizon_aios_agents.md
 @horizon_system/ai_os_etc/horizon_aios_model_prefs.md
 @horizon_system/ai_os_etc/horizon_aios_model_prefs.extend.md
+
+<!-- Machine-local override — last so it wins. Gitignored; never synced or clobbered. See file_structure_invariants §12. -->
+@local.agents.md

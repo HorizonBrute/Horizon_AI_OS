@@ -9,6 +9,11 @@ change** — run `/horizon_aios_documentation_index_update`. (Enforced by CC-G4 
 at the end of a session to save state. Start with the setup guide in
 [getting_started](#getting_started).
 
+## user_guides
+| ID (path) | Title | Purpose |
+|---|---|---|
+| `horizon_system/documentation/user_guides/using_your_aios.md` | Using Your Horizon AIOS — Operational Wiki | Post-install operational guide: security model, building and configuring brains, projects, handoffs/objectives, case study, BYOH/local.agents.md, context management, and gitignore conventions. |
+
 ## Skill indexes
 | ID (path) | Title | Purpose |
 |---|---|---|

@@ -94,6 +94,17 @@ Items are grouped by status, not priority — priority is implicit from the grou
   `BIN=READABLE  SBIN=DENIED`. Folds into the Linux/macOS verification passes above.
   See `security/brain_isolation_test.md`.
 
+- **Uninstall Section 8 (Unix) — implemented, not validated on real hardware** —
+  `uninstall.sh` now has the Section 8 parity of `uninstall.ps1`: it strips the
+  `active_env.sh` line from the owner's `~/.bashrc`/`~/.zshrc` and unsets the two
+  global git `include.path` entries `aios setup` writes (framework gitconfig +
+  `git_identity.local.gitconfig`), acting as `$OWNER` (via `sudo -u`, falling back
+  to `HOME=`). Syntax-checked (`bash -n`) but not yet run on a live Linux/macOS host.
+  To close: on a real Unix box, run `aios setup` then `uninstall.sh` and confirm the
+  profile line is gone and `git config --global --get-all include.path` no longer
+  lists either entry (and unrelated include.path values are untouched). Folds into
+  the Linux/macOS verification passes above.
+
 ---
 
 ## Known Gaps — Documentation

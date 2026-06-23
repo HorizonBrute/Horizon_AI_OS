@@ -25,10 +25,12 @@ What it does, idempotently and re-run safe:
 4. **Profile line** — idempotently adds the `active_env` source line to your shell profile.
 5. **Bootstrap** — shells out to the **elevated** platform bootstrap (Windows: UAC relaunch; Unix: `sudo`) for sections 2–10 below.
 6. **Git identity** — writes `user.name`/`user.email`/`user.signingkey` to a machine-local, gitignored include file (`ai_os_etc/git_identity.local.gitconfig`) wired via `git config --global include.path` (never edits the tracked gitconfig, never shows in `git status`); also ensures the §9 framework-gitconfig include.
-7. **Git init + first commit**, **settings.local.json** stub, **model-prefs** template copy (offered).
+7. **Git init**, **settings.local.json** stub, **model-prefs** and **`local.agents.md`** template materialization. First commit is opt-in (`--first-commit`; off by default so `--yes` completes without a GPG key).
 8. **Verify gate** — runs `horizon_aios_doctor.py --post-setup` (non-fatal summary).
 
 Add `--yes` for a non-interactive run (accepts defaults, mirrors bootstrap's `--yes`).
+
+`aios setup` decouples the first signed commit from `--yes`. By default (and with `--yes`) no commit is created — GPG is not required for an unattended install. To create the first commit in the same pass, add `--first-commit`; to explicitly suppress it, use `--no-first-commit`. Run the commit manually later with `git commit -s` once a signing key is ready.
 
 **The remainder of this document is the authoritative manual procedure** — the fallback when you cannot run `aios setup`, want to understand each step, or need to do one step by hand.
 
@@ -623,6 +625,33 @@ See `$HORIZON_DOCS/system/model_preferences.md` for the full reference
 
 If you are authoring skills, see `$HORIZON_DOCS/system/skill_model_groups.md` for
 how skills declare their preferred model group.
+
+---
+
+## 16. Machine-Local Agent Instructions (`local.agents.md`)
+
+`aios setup` materializes `local.agents.md` alongside every `agents.md` in the repo
+(see `$HORIZON_ETC/file_structure_invariants.md` §12.6). This is the git-safe seam for
+owner/machine-specific instructions that must not ship to other users.
+
+16.1 Two files are created (if absent):
+1. `$HORIZON_ROOT/local.agents.md`
+2. `$HORIZON_ROOT/.claude/local.agents.md`
+
+Each is copied from its sibling `local.agents.md.template` (tracked). The `local.agents.md`
+files are gitignored and never overwritten by a sync.
+
+16.2 **What belongs here:** owner identity, machine-specific rules, development
+directives you do not want on other machines, or anything that applies to this install
+only. Shipped, version-controlled defaults live in `agents.md`; personal overrides live
+in `local.agents.md`. Keep it short — it loads into context every session.
+
+16.3 Each `agents.md` `@`-imports its sibling `local.agents.md` last, so local content
+overrides shipped content. `CLAUDE.md` is unaffected (it imports only its sibling
+`agents.md` per §12 invariant).
+
+16.4 To customize: edit `$HORIZON_ROOT/local.agents.md` or `$HORIZON_ROOT/.claude/local.agents.md`
+directly. Never commit these files; add patterns to `$HORIZON_ROOT/.gitignore.user` if needed.
 
 ---
 

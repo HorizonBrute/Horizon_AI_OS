@@ -69,13 +69,12 @@ The scripts mirror `bootstrap` section by section:
 | 5b | `~/.claude/projects` junction (memory redirect) — **link only; memory data in `$HORIZON_ROOT/memory` is left intact** |
 | 6  | `.git/hooks/commit-msg`, `pre-commit`; git `core.hooksPath` |
 | 7  | `$HORIZON_BIN` entry from system PATH (Machine-scope on Windows; `/etc/profile.d/horizon_aios.sh` + macOS `/etc/paths.d/horizon-aios`) |
+| 8  | Shell profile `active_env` source line + the two global `git include.path` entries `aios setup` writes (framework gitconfig and machine-local identity gitconfig) — stripped automatically from PowerShell `$PROFILE` and global gitconfig |
 | 9  | `$HORIZON_ETC/aios_local.conf`; `$HORIZON_SYSTEM/logs/` — **only if empty** |
 | 10 | `brains`-group ACEs across `$HORIZON_SYSTEM` subtrees — `icacls /remove` (not `/remove:g`) so both grant **and** harden's DENY ACEs are stripped |
 
 ## What it does NOT remove (manual — printed as `[MANUAL]` advisories)
 
-- The shell-profile line that sources `active_env.*` (you added it).
-- The global gitconfig `include.path` for `harness_configs/git/gitconfig`.
 - The optional upstream-sync schedule / cron entries (`horizon_aios_setup_sync_schedule.py`).
 - The `brains` OS group (it may still have brain members).
 - Brain OS user accounts and their data — use `horizon_aios_remove_brain.py` (`/remove-brain`).
@@ -113,6 +112,10 @@ this is where uninstall bugs hide:
    (no stamp → a content-equality fallback decides), it is preserved with a
    `[MANUAL]` advisory. After a real run, neither the stamp nor a bootstrap-owned
    settings.json should remain.
+8. **Shell profile + git includes cleaned (Section 8):** the `active_env` source
+   line is absent from PowerShell `$PROFILE`; `git config --global --get-all include.path`
+   shows no entries referencing `harness_configs/git/gitconfig` or
+   `git_identity.local.gitconfig`.
 
 A second `aios uninstall --yes` should report everything as already-removed
 (`[SKIP]`) and make no changes — confirming idempotency. In particular the

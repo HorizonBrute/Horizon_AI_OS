@@ -961,6 +961,36 @@ def setup_model_prefs(chosen_root, args):
         warn(f"Could not copy model-prefs template: {exc}")
 
 
+def setup_local_agents(chosen_root):
+    """Step 10b: materialize each tracked agents.md's sibling local.agents.md from
+    its local.agents.md.template if absent (file_structure_invariants §12). The live
+    file is gitignored — never tracked, never clobbered by upstream sync — so creating
+    it here guarantees the `@local.agents.md` import never dangles. NOT confirm-gated:
+    its existence is structural (the import contract), not an optional extra."""
+    import shutil
+    # Every directory that ships an agents.md gets a sibling local.agents.md.
+    agents_dirs = [chosen_root, os.path.join(chosen_root, ".claude")]
+    stub = ("# Local Agent Instructions — machine-local override "
+            "(gitignored; never synced or clobbered)\n")
+    for d in agents_dirs:
+        template = os.path.join(d, "local.agents.md.template")
+        active = os.path.join(d, "local.agents.md")
+        rel = os.path.relpath(active, chosen_root)
+        if os.path.isfile(active):
+            ok(f"local.agents.md already exists ({rel}).")
+            continue
+        try:
+            if os.path.isfile(template):
+                shutil.copyfile(template, active)
+                ok(f"Created {rel} from template — edit it for machine-local overrides.")
+            else:
+                with open(active, "w", encoding="utf-8") as f:
+                    f.write(stub)
+                ok(f"Created stub {rel} (no template found).")
+        except OSError as exc:
+            warn(f"Could not create {rel}: {exc}")
+
+
 def setup_verify_gate(chosen_root):
     """Step 11: run horizon_aios_doctor.py --post-setup as a NON-FATAL gate.
     A muted-sound SKIP must not fail setup; report PASS/FAIL summary."""
@@ -1007,6 +1037,7 @@ def cmd_setup(_reg, args):
     setup_git_identity(chosen_root, args)
     setup_settings_local(chosen_root)
     setup_model_prefs(chosen_root, args)
+    setup_local_agents(chosen_root)
     setup_verify_gate(chosen_root)
 
     print()

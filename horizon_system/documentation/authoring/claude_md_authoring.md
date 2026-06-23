@@ -49,6 +49,11 @@ as plain text — the harness does not inline the referenced files. This
 distinction matters if you use the `context_cost.py` tool to measure overhead:
 it follows the same rule.
 
+`agents.md` includes a sibling `local.agents.md` via `@local.agents.md` (imported last so
+it wins). `local.agents.md` is gitignored and machine-local — the git-safe seam for
+owner/machine overrides. `CLAUDE.md` is unaffected: it imports only its sibling `agents.md`,
+never `local.agents.md` directly (see `$HORIZON_ETC/file_structure_invariants.md` §12.5–6).
+
 ---
 
 ## Terseness invariant
