@@ -5,6 +5,16 @@ When you add, move, rename, or remove a doc, update this index in the **same
 change** — run `/horizon_aios_documentation_index_update`. (Enforced by CC-G4 in
 `horizon_system/documentation/development_tools/consistency_checks.md`.)
 
+**New here?** After setup, run `/doctor` to verify the install, and `/handoff`
+at the end of a session to save state. Start with the setup guide in
+[getting_started](#getting_started).
+
+## Skill indexes
+| ID (path) | Title | Purpose |
+|---|---|---|
+| `horizon_system/skills_sbin/index.md` | Skills Index — skills_sbin | Owner-only privileged skills (primary user). Check first when looking for an owner skill. |
+| `horizon_system/skills_bin/index.md` | Skills Index — skills_bin | Group-readable skills available to all brains. Check first when looking for a brain skill. |
+
 ## Documentation root
 | ID (path) | Title | Purpose |
 |---|---|---|
