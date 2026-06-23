@@ -9,6 +9,7 @@
 !.claude/CLAUDE.aios-dev.md
 !.claude/agents.md
 !.claude/local.agents.md.template
+!.claude/local.agent_teams.md.template
 !.claude/settings.json
 
 # =============================================================================
@@ -615,6 +616,15 @@ horizon_system/ai_os_etc/horizon_aios_model_prefs.extend.md
 # ignored in EVERY directory (root, .claude, any nested scope). The .template stays
 # tracked (different name). See file_structure_invariants §12.
 local.agents.md
+
+# Machine-local agent-teams override. Every agents.md @-imports its sibling
+# local.agent_teams.md; it ships as local.agent_teams.md.template, is materialized
+# by `aios setup` (horizon_aios_switch.py -> setup_local_agent_teams), and is never
+# tracked or clobbered by upstream sync. Bare pattern = ignored in EVERY directory
+# (root, .claude, brain scope, any nested scope). The .template stays tracked
+# (different name); agent_teams.md (no `local.` prefix) stays tracked.
+# Materialized by `aios setup`. See file_structure_invariants §13.
+local.agent_teams.md
 
 # Machine-local personal project ignore list (copy .gitignore.user.template → .gitignore.user)
 .gitignore.user

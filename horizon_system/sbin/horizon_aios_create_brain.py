@@ -945,6 +945,8 @@ def phase5_deploy_templates(ctx, dry_run=False):
     Creates:
         brains/<brain_name>/.claude/CLAUDE.md       (from brain_CLAUDE.md.template)
         brains/<brain_name>/.claude/settings.json   (from brain_settings.json.template)
+        brains/<brain_name>/.claude/agents.md       (from brain_agents.md.template)
+        brains/<brain_name>/.claude/local.agent_teams.md  (from brain_local.agent_teams.md.template)
         brains/<brain_name>/.claude/skills          (junction/symlink -> skills_bin)
         <brain_home>/.claude                        (junction/symlink -> brains/<brain_name>/.claude)
         brains/<brain_name>/.aios_provision.json    (provisioning record for auditors)
@@ -969,6 +971,8 @@ def phase5_deploy_templates(ctx, dry_run=False):
         print(f'  [DRY-RUN] Would create {brain_claude_dir}')
         print(f'  [DRY-RUN] Would deploy CLAUDE.md from {aioscommon_dir}/brain_CLAUDE.md.template')
         print(f'  [DRY-RUN] Would deploy settings.json from {aioscommon_dir}/brain_settings.json.template')
+        print(f'  [DRY-RUN] Would deploy agents.md from {aioscommon_dir}/brain_agents.md.template')
+        print(f'  [DRY-RUN] Would deploy local.agent_teams.md from {aioscommon_dir}/brain_local.agent_teams.md.template')
         _link_brain_claude(ctx, dry_run=True)
         print(f'  [DRY-RUN] Would write .aios_provision.json to {brain_dir}')
         print(f'  [DRY-RUN] Would write shell profile for {brain_name}')
@@ -1000,6 +1004,26 @@ def phase5_deploy_templates(ctx, dry_run=False):
     _deploy_template(
         src=os.path.join(aioscommon_dir, 'brain_settings.json.template'),
         dest=os.path.join(brain_claude_dir, 'settings.json'),
+        substitutions={
+            '[BRAIN_NAME]':        brain_name,
+            '[HORIZON_ROOT_PATH]': horizon_root_fwd,
+        },
+    )
+
+    # 5.3b Deploy agents.md
+    _deploy_template(
+        src=os.path.join(aioscommon_dir, 'brain_agents.md.template'),
+        dest=os.path.join(brain_claude_dir, 'agents.md'),
+        substitutions={
+            '[BRAIN_NAME]':        brain_name,
+            '[HORIZON_ROOT_PATH]': horizon_root_fwd,
+        },
+    )
+
+    # 5.3c Deploy local.agent_teams.md (brain-local team override; gitignored in brain scope)
+    _deploy_template(
+        src=os.path.join(aioscommon_dir, 'brain_local.agent_teams.md.template'),
+        dest=os.path.join(brain_claude_dir, 'local.agent_teams.md'),
         substitutions={
             '[BRAIN_NAME]':        brain_name,
             '[HORIZON_ROOT_PATH]': horizon_root_fwd,
