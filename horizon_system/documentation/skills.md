@@ -26,6 +26,8 @@ set flat. Brain users' `~/.claude/skills/` points directly at `skills_bin/`.
 |---|---|---|
 | `/context-cost` | `skills_bin/` | Report KB, word count, and token estimates for all files the harness auto-loads above a given path |
 | `/handoff` | `skills_sbin/` | Write a structured session handoff document for the next session or a human reviewer |
+| `/model-catalog-refresh` | `skills_bin/` | Fetch live model+pricing data from Anthropic, OpenAI, Gemini, and Ollama; diff against the current model-preference config |
+| `/model-prefs` | `skills_sbin/` | Author or inspect model groups, per-session slots, and task-class routing rules in the gitignored extend file |
 | `/horizon_aios_dev_consistency_check` | `skills_sbin/` | Run an iterative docs/implementation consistency validation pass against the AIOS check standard |
 | `/horizon_aios_documentation_index_update` | `skills_sbin/` | Rebuild `documentation/index.md` so every doc is registered with a stable path-based ID |
 | `/objective` | `skills_sbin/` | Create, list, show, or update durable multi-session objectives that handoffs chain back to |
@@ -114,6 +116,47 @@ in the skill and in the index file's own header.
 
 ---
 
+### /model-catalog-refresh
+
+**Location:** `skills_bin/` (available to all users including brains)
+**Underlying tool:** Web/bash access — the agent fetches live data at runtime
+
+Fetches current model ids and pricing from Anthropic, OpenAI, Google Gemini,
+and Ollama. If the current `## Model Groups` block is already in context,
+automatically diffs it against live data and flags stale member ids, newer
+alternatives, and pricing changes. Companion to `/model-prefs`, which writes
+the extend file.
+
+**Onboarding:** Provides an up-to-date model+pricing reference so
+`horizon_aios_model_prefs.extend.md` is populated with valid, current ids
+rather than training-cutoff guesses.
+**Offboarding:** You lose the guided, multi-provider fetch. Provider docs remain
+publicly accessible and can be read directly; the catalog format and fetch
+strategy are documented in the skill's `SKILL.md`.
+
+---
+
+### /model-prefs
+
+**Location:** `skills_sbin/` (owner only)
+**Underlying tool:** None — Claude reads and writes the extend file directly
+
+Authors or inspects the gitignored model-preference extend file
+(`$HORIZON_ETC/horizon_aios_model_prefs.extend.md`): model groups, per-session
+slot preferences, and task-class routing rules. The mechanism is in-context —
+the acting model reads the file each session and honors it by direct
+instruction; no scripts or env vars are wired. Writes nothing to the OS-tracked
+base file.
+
+**Onboarding:** Provides a guided entry point for configuring the model-preference
+layer without needing to know the file grammar or fallback-order rules.
+**Offboarding:** You lose the guided edit and resolution report. The extend file is
+plain Markdown and can be edited directly; the grammar and fallback order are
+documented in `$HORIZON_ETC/horizon_aios_model_prefs.md` and
+`$HORIZON_DOCS/system/model_preferences.md`.
+
+---
+
 ### /objective
 
 **Location:** `skills_sbin/` (owner only)
@@ -178,22 +221,25 @@ documented in `skill-creation/SKILL.md` and both tier index files.
 
 ## Onboarding and offboarding summary
 
-When AIOS skills are registered, an owner gains seven slash commands. Two
+When AIOS skills are registered, an owner gains nine slash commands. Two
 (`/context-cost` and `/resync-user-skills`) wrap underlying Python scripts and
-expose them through a guided, harness-aware interface. The remaining five
+expose them through a guided, harness-aware interface. `/model-catalog-refresh`
+performs live web and CLI fetches at runtime. The remaining six
 (`/handoff`, `/horizon_aios_dev_consistency_check`,
-`/horizon_aios_documentation_index_update`, `/objective`, `/skill-creation`) have
-no separate script — Claude is the engine, and the `SKILL.md` is the procedure it
-follows.
+`/horizon_aios_documentation_index_update`, `/model-prefs`, `/objective`,
+`/skill-creation`) have no separate script — Claude is the engine, and the
+`SKILL.md` is the procedure it follows.
 
 Unregistering the skills (by removing the `~/.claude/skills/` junction or clearing
 the skills directories) does not delete any underlying data or scripts. Handoff
-documents, objective files, and the documentation index remain on disk exactly as
-written. The Python scripts in `$HORIZON_SYSTEM/bin/` and `$HORIZON_SYSTEM/sbin/`
-remain fully functional from any shell. What is lost is convenience: the single
-slash command, the guided step-by-step procedure, and the integration with the
-harness context. A user offboarding from AIOS retains all artifacts produced by
-the skills; they lose only the automated workflow that produced them.
+documents, objective files, the documentation index, and the model-preference
+extend file remain on disk exactly as written. The Python scripts in
+`$HORIZON_SYSTEM/bin/` and `$HORIZON_SYSTEM/sbin/` remain fully functional from
+any shell. What is lost is convenience: the single slash command, the guided
+step-by-step procedure, and the integration with the harness context. A user
+offboarding from AIOS retains all artifacts produced by the skills; they lose only
+the automated workflow that produced them.
 
-Brain accounts see only `skills_bin/` (`/context-cost`) and gain no access to the
-owner-only skills. This is by design and enforced at the ACL level.
+Brain accounts see only `skills_bin/` (`/context-cost` and
+`/model-catalog-refresh`) and gain no access to the owner-only skills. This is
+by design and enforced at the ACL level.

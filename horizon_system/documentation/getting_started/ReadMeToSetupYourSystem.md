@@ -564,6 +564,40 @@ Setup is complete when all verification points pass.
 
 ---
 
+## 15. Configure Model Preferences (post-install)
+
+AIOS ships a BYO-model preference layer that routes agent spawns and task work
+to the right model — cheap models for mechanical edits, capable ones for
+architecture — without you naming a model every time.
+
+15.1 Copy the tracked template to your gitignored extend file:
+
+Windows (PowerShell):
+```powershell
+Copy-Item "$env:HORIZON_ETC\horizon_aios_model_prefs.extend.template.md" `
+          "$env:HORIZON_ETC\horizon_aios_model_prefs.extend.md"
+```
+
+Linux / macOS (bash):
+```bash
+cp "$HORIZON_ETC/horizon_aios_model_prefs.extend.template.md" \
+   "$HORIZON_ETC/horizon_aios_model_prefs.extend.md"
+```
+
+15.2 Run `/model-catalog-refresh` in a Claude Code session to fetch current
+model ids and pricing from Anthropic, OpenAI, Gemini, and Ollama.
+
+15.3 Fill in your group members (e.g. `#lowcost`, `#highcap`) and any
+task-class routing rules using the ids from the catalog. Run `/model-prefs`
+to edit or inspect the extend file interactively.
+
+The extend file is gitignored and machine-local — no commit needed.
+
+See `$HORIZON_DOCS/system/model_preferences.md` for the full reference
+(member grammar, runtime qualification, fallback order, reliability notes).
+
+---
+
 ## Adding a New Project
 
 Projects are folders inside `$HORIZON_ROOT`. They automatically inherit the full AIOS environment — no per-project wiring is needed.
