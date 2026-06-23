@@ -6,6 +6,8 @@ tools: Read, Grep, Glob, Bash, Edit, Write
 
 # Skill: /horizon_aios_documentation_index_update
 
+**Model preference:** `#lowcost` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
+
 Maintain the documentation index at `$HORIZON_DOCS/index.md` so that every
 document is registered and can be referenced by a stable index entry. This is the
 tool that satisfies **CC-G4** in

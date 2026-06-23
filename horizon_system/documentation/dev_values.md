@@ -162,3 +162,23 @@ Operational rules:
 - Every tool and every credential provisioned to a brain must be explainable in one sentence tied to that brain's expert function.
 - Brains must not self-provision tools or escalate permissions. Any such action is a security event.
 - The audit log is stored where the brain cannot modify it.
+
+---
+
+## 11. Bring the Tooling to the Brain
+
+**Tooling does the work; the model coordinates, not computes. Bring established tooling and scoped data access to the brain rather than re-deriving them with an LLM.**
+
+- Push mechanical and deterministic work into scripts/CLI tools; reserve the model
+  for what genuinely needs reasoning. A skill is a coordinator over reliable tooling
+  (e.g. `/create-brain` drives `horizon_aios_create_brain.py`), not a
+  re-implementation of it.
+- Choose a skill's model capacity by how much reasoning it needs, not by the gravity
+  of what its tooling does. Default model groups lean cheap because skills coordinate
+  rather than compute (see `horizon_aios_model_prefs.md`).
+- Data access and credentials are delivered to the brain, zero by default — the
+  enforcement side of this value is §10 (Brain Sandbox Integrity).
+- Because tooling and data are delivered, not baked in, they are swappable without
+  re-engineering the brain — the implementation-flexibility payoff of harness
+  independence (§6).
+- Conceptual framing: `philosophy.md` §8.

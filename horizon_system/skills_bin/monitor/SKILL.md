@@ -6,6 +6,8 @@ tools: Bash, Read
 
 # Skill: /monitor
 
+**Model preference:** `#fast` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
+
 Start the Horizon AIOS filesystem integrity monitor (`horizon_aios_monitor.py`), which watches the AIOS system directories and appends each create/modify/delete/move event as a JSON line to a daily log in `$HORIZON_SYSTEM/logs/horizon_aios_monitor/`.
 
 ---

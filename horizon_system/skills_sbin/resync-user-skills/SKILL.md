@@ -6,6 +6,8 @@ tools: Bash
 
 # Skill: /resync-user-skills
 
+**Model preference:** `#lowcost` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
+
 The owner's `~/.claude/skills` points at `skills_sbin`, so brain-tier skills (`$HORIZON_SYSTEM/skills_bin/`) and machine-local skills (`$HORIZON_USRBIN/usr_skills/`) are surfaced to the owner by a per-skill junction `skills_sbin/<name>` → source, which appears flat through the existing `~/.claude/skills` junction. Brains are unaffected (their view points at `skills_bin` only).
 
 Those junctions are not tracked by git, so an upstream sync that refreshes `skills_sbin` can drop them. This skill rebuilds them from whatever currently exists in the sources — the source of truth. It is idempotent and never shadows a real OS skill.

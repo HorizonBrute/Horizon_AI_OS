@@ -6,6 +6,8 @@ tools: Read, Grep, Glob, Bash, Edit, Write
 
 # Skill: /horizon_aios_dev_consistency_check
 
+**Model preference:** `#midcost` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
+
 Run a consistency validation pass over the Horizon AIOS repo using the standing
 standard at `$HORIZON_DOCS/development_tools/consistency_checks.md`. That file —
 not this one — is the single source of truth for the checks (IDs `CC-*`), the

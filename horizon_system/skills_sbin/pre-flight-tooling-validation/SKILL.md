@@ -6,6 +6,8 @@ tools: Agent, Bash, Read, Glob, Grep, Write
 
 # Skill: /pre-flight-tooling-validation
 
+**Model preference:** `#investigate` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
+
 Coordinate a **fleet of investigation agents — one per major platform** — that each
 verify the AIOS, *as it would arrive from a fresh GitHub clone*, contains all the
 tooling required to run its full lifecycle. If every capability is covered, emit a

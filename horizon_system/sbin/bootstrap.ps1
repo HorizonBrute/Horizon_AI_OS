@@ -1,4 +1,4 @@
-﻿# =============================================================================
+# =============================================================================
 # Horizon AIOS - Bootstrap Script (PowerShell)
 # Sets up a new machine with all required Horizon AIOS configuration.
 # Safe to run multiple times (idempotent). Non-destructive by default.
@@ -17,7 +17,7 @@ $ErrorActionPreference = "Stop"
 $YesAll = $args -contains "--yes" -or $args -contains "-y"
 
 # -----------------------------------------------------------------------------
-# Require Administrator — horizon_aios_harden.py (run below) needs elevated privileges
+# Require Administrator - horizon_aios_harden.py (run below) needs elevated privileges
 # to set filesystem ACLs.  Fail fast rather than let the user discover this
 # mid-run at Section 9.
 # -----------------------------------------------------------------------------
@@ -93,7 +93,7 @@ Write-Host "  HORIZON_LOGS    = $HORIZON_LOGS"
 Write-Host "  HORIZON_SOUNDS  = $HORIZON_SOUNDS"
 
 if ($env:AIOS_DEPLOY_MODE -eq "docker") {
-    Info "Docker mode: HORIZON_* env vars are set in the Dockerfile — no profile changes needed."
+    Info "Docker mode: HORIZON_* env vars are set in the Dockerfile - no profile changes needed."
 } else {
     Write-Host ""
     Write-Host "Add ONE line to your PowerShell profile (`$PROFILE) to load the active AIOS:"
@@ -180,7 +180,7 @@ if (-not (Test-Path $SkillsSrc)) {
                 if ($answer -eq "y" -or $answer -eq "Y") {
                     [System.IO.Directory]::Delete($SkillsDst, $false)
                     New-Item -ItemType Junction -Path $SkillsDst -Target $SkillsSrc | Out-Null
-                    Ok "Updated junction: ~/.claude/skills/ → skills_sbin/"
+                    Ok "Updated junction: ~/.claude/skills/ -> skills_sbin/"
                 } else {
                     Warn "Skipping skills redirect."
                 }
@@ -190,7 +190,7 @@ if (-not (Test-Path $SkillsSrc)) {
             if ($contents.Count -eq 0) {
                 Remove-Item $SkillsDst
                 New-Item -ItemType Junction -Path $SkillsDst -Target $SkillsSrc | Out-Null
-                Ok "Created junction: ~/.claude/skills/ → skills_sbin/"
+                Ok "Created junction: ~/.claude/skills/ -> skills_sbin/"
             } else {
                 Warn "~/.claude/skills/ is a real directory with $($contents.Count) item(s)."
                 Warn "Cannot auto-redirect. Manually empty or remove it, then re-run bootstrap."
@@ -198,7 +198,7 @@ if (-not (Test-Path $SkillsSrc)) {
         }
     } else {
         New-Item -ItemType Junction -Path $SkillsDst -Target $SkillsSrc | Out-Null
-        Ok "Created junction: ~/.claude/skills/ → skills_sbin/"
+        Ok "Created junction: ~/.claude/skills/ -> skills_sbin/"
     }
 }
 
@@ -309,10 +309,10 @@ if (Test-Path $SettingsDst) {
 
 # 5c: Redirect ~/.claude/projects into $HORIZON_ROOT/memory (owner harness memory).
 # Migrates the Claude harness's per-project state into the AIOS so memory is
-# owned by the OS layer. The script junctions ~/.claude/projects → $HORIZON_ROOT/
+# owned by the OS layer. The script junctions ~/.claude/projects -> $HORIZON_ROOT/
 # memory, backing up any existing real directory first. Idempotent: re-running
 # no-ops if already redirected, so it is safe to always call.
-# NOTE: Have Claude Code closed when bootstrap runs — the script moves the live
+# NOTE: Have Claude Code closed when bootstrap runs - the script moves the live
 # projects directory (it leaves a backup if one was present).
 $RedirectMemoryScript = Join-Path $HORIZON_SYSTEM "sbin\horizon_aios_redirect_memory.py"
 if (Test-Path $RedirectMemoryScript) {
@@ -348,7 +348,7 @@ if (Test-Path $GitDir) {
     Info "$HORIZON_ROOT is not a git repository - skipping git hooks config."
 }
 
-# 6b: .gitignore.user — the pre-commit hook syncs this file into
+# 6b: .gitignore.user - the pre-commit hook syncs this file into
 # .git/info/exclude. Seed it from the template so a fresh install is
 # doctor-clean (horizon_aios_doctor.py checks $HORIZON_ROOT/.gitignore.user).
 # Idempotent: never overwrite an existing file (it holds user-local patterns).
@@ -382,7 +382,7 @@ $Cleaned = $PathEntries | Where-Object {
 $BinPath = $HORIZON_BIN.TrimEnd('\')
 
 if ($Cleaned -contains $BinPath) {
-    Ok "System PATH already contains: $BinPath — no change needed."
+    Ok "System PATH already contains: $BinPath - no change needed."
 } else {
     $NewPath = ($Cleaned + @($BinPath)) -join ";"
     [System.Environment]::SetEnvironmentVariable("Path", $NewPath, "Machine")
@@ -442,7 +442,7 @@ if (Test-Path $objectivesPath) {
 $gitUserName  = git config user.name 2>$null
 $gitUserEmail = git config user.email 2>$null
 if (-not $gitUserName -or -not $gitUserEmail) {
-    Warn "git user.name or user.email not set — DCO sign-off lines will be malformed."
+    Warn "git user.name or user.email not set - DCO sign-off lines will be malformed."
     Warn "  Fix: git config --global user.name `"Your Name`""
     Warn "       git config --global user.email `"you@example.com`""
 } else {
@@ -507,9 +507,9 @@ if ($env:AIOS_DEPLOY_MODE -eq "docker") {
 
 # -----------------------------------------------------------------------------
 # SECTION 10: Harden AIOS layer ACLs (brains group)
-# Enforces security_invariants.md §2/§3/§5 — brains denied on sbin/skills_sbin/
+# Enforces security_invariants.md s2/s3/s5 - brains denied on sbin/skills_sbin/
 # logs, granted RX on bin/skills_bin, no write elsewhere in $HORIZON_SYSTEM.
-# FATAL: horizon_aios_harden.py failure exits bootstrap non-zero — ACL hardening is a
+# FATAL: horizon_aios_harden.py failure exits bootstrap non-zero - ACL hardening is a
 # security requirement, not a best-effort step.
 # -----------------------------------------------------------------------------
 Banner "SECTION 10: Harden AIOS layer ACLs"
@@ -520,16 +520,16 @@ if (Test-Path $HardenScript) {
         python $HardenScript
         if ($LASTEXITCODE -eq 0) { Ok "AIOS layer hardened (brains-group ACLs applied)." }
         else {
-            Err "horizon_aios_harden.py exited with code $LASTEXITCODE — ACL hardening FAILED. The system is NOT secured."
+            Err "horizon_aios_harden.py exited with code $LASTEXITCODE - ACL hardening FAILED. The system is NOT secured."
             Err "Re-run bootstrap elevated and review horizon_aios_harden.py output before using this installation."
             exit 1
         }
     } else {
-        Err "python not found — cannot run horizon_aios_harden.py. ACL hardening FAILED. The system is NOT secured."
+        Err "python not found - cannot run horizon_aios_harden.py. ACL hardening FAILED. The system is NOT secured."
         Err "Install Python 3.6+ and re-run bootstrap elevated: python $HardenScript"
         exit 1
     }
 } else {
-    Err "horizon_aios_harden.py not found at $HardenScript — ACL hardening FAILED. The system is NOT secured."
+    Err "horizon_aios_harden.py not found at $HardenScript - ACL hardening FAILED. The system is NOT secured."
     exit 1
 }

@@ -6,6 +6,8 @@ tools: Bash, Read
 
 # Skill: /doctor
 
+**Model preference:** `#lowcost` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
+
 Run the read-only Horizon AIOS health check and surface its results. Use this after bootstrap, after an upstream sync that touches bootstrapping, or whenever something behaves unexpectedly and you need a quick status read.
 
 ---

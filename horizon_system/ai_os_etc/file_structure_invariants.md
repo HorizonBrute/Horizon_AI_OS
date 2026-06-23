@@ -33,9 +33,14 @@ Rules:
 ```
 $HORIZON_ROOT/                          # OS repo root; primary user owns everything
 ├── agents.md                           # Cross-harness canonical agent instructions (Codex, OpenHands, etc.)
+├── local.agents.md                     # Machine-local override (gitignored; @-imported last by agents.md; §12.6)
+├── local.agents.md.template            # Tracked template; materialized to local.agents.md by `aios setup`
 ├── CLAUDE.md                           # Claude Code counterpart to agents.md — imports it explicitly
 ├── .claude/
-│   ├── CLAUDE.md                       # Thin Claude Code entry point; imports $HORIZON_ROOT/CLAUDE.md
+│   ├── agents.md                       # Sibling config for .claude/; @-imports the parent ../agents.md (carries the chain up)
+│   ├── local.agents.md                 # Machine-local override for .claude scope (gitignored; §12.6)
+│   ├── local.agents.md.template        # Tracked template for the .claude-scope override
+│   ├── CLAUDE.md                       # Thin pointer — imports ONLY its sibling ./agents.md (see §12)
 │   ├── CLAUDE.aios-dev.md              # Owner-only AIOS-dev directives; imported by the OWNER stub only, never by brains
 │   └── settings.json                   # Devroot-scoped permissions (no hooks, no statusLine)
 ├── handoffs/                           # Default output directory for /handoff skill (see Section 7)
@@ -151,7 +156,7 @@ Scripts that wire sounds to hooks must reference the appropriate tier. If a hook
 - A project's `CLAUDE.md` adds project-specific instructions on top of the canonical `$HORIZON_ROOT/.claude/CLAUDE.md`.
 - AI harnesses that support hierarchical config (e.g., Claude Code) load configs from innermost to outermost: project → devroot → global (~/.claude).
 
-**Cross-harness instruction file:** `$HORIZON_ROOT/agents.md` is the canonical agent instruction file for harnesses that read `agents.md` (e.g., Codex, OpenHands). `$HORIZON_ROOT/CLAUDE.md` is its Claude Code counterpart — a filesystem neighbor that explicitly imports `agents.md`. `$HORIZON_ROOT/.claude/CLAUDE.md` is a thin entry point that imports `$HORIZON_ROOT/CLAUDE.md`. Harness-specific extensions live in `$HORIZON_SYSTEM/harness_configs/<harness>/` and do not override agents.md — they supplement it.
+**Cross-harness instruction file:** `$HORIZON_ROOT/agents.md` is the canonical agent instruction file for harnesses that read `agents.md` (e.g., Codex, OpenHands). `$HORIZON_ROOT/CLAUDE.md` is its Claude Code counterpart — a filesystem neighbor that explicitly imports `agents.md`. `$HORIZON_ROOT/.claude/CLAUDE.md` is a thin entry point. Harness-specific extensions live in `$HORIZON_SYSTEM/harness_configs/<harness>/` and do not override agents.md — they supplement it. The hard rule governing every `CLAUDE.md`/`agents.md` pair is **§12 (CLAUDE.md Thin-Pointer Invariant)**, which is authoritative.
 
 **Owner-only development context:** `$HORIZON_ROOT/.claude/CLAUDE.aios-dev.md` holds AIOS-*development* directives (e.g., keep `documentation/index.md` current; run `/horizon_aios_dev_consistency_check`). It is imported **only by the owner/maintainer's machine-local `~/.claude/CLAUDE.md`** — bootstrap adds that import. Brains never import it: `brain_CLAUDE.md.template` chains only the runtime config, so development rules stay out of brain/runtime context. This is the seam for any "applies when *building* the AIOS, not when *using* it" instruction — put it here, never in `agents.md`/`CLAUDE.md`, which every brain loads.
 
@@ -384,3 +389,26 @@ Context threshold sounds use `resolve_sound.py` — they resolve through `aios_s
 Copy `$HORIZON_SYSTEM/templates/aios_statusline.conf` to the project or brain root. Uncomment and set only the keys to override.
 
 Invariant: `aios_statusline.conf` is project-owned. Add it to `$HORIZON_ROOT/.gitignore` if it should stay machine-local.
+
+---
+
+## 12. CLAUDE.md Thin-Pointer Invariant
+
+`agents.md` is the cross-harness, open-standard configuration file (read by Claude Code, Codex, and any harness supporting it); `CLAUDE.md` is a Claude-Code-specific shim. The open-source agent ecosystem has converged on `agents.md` as its standard, and AIOS adopts it as the canonical, **vendor-neutral** instruction file. To keep ONE harness-agnostic source of truth — aligning with the BYOH (bring-your-own-harness) philosophy — every `CLAUDE.md` in the AIOS system layer is a thin pointer to its sibling `agents.md`. All real content lives in `agents.md`. Because each `agents.md` is git-tracked and can be overwritten on upstream sync, every one also carries a machine-local sibling `local.agents.md` (clause 6) — the git-safe seam for owner/machine overrides that must survive updates.
+
+1. **Scope.** This invariant governs the AIOS system layer only — every `CLAUDE.md` at or under `$HORIZON_ROOT` that AIOS owns (e.g., `$HORIZON_ROOT/CLAUDE.md`, `$HORIZON_ROOT/.claude/CLAUDE.md`).
+   1.1. Opted-out project folders that are their own git repositories (e.g., `Projects/*`, and external repos such as `GameDev\*`, `Horizon.AI.Apps\*`) are explicitly OUT OF SCOPE — they own their own config.
+2. **Sibling pairing.** Every directory that contains a `CLAUDE.md` MUST also contain a sibling `agents.md` in the same directory.
+3. **CLAUDE.md is a pointer only.** A `CLAUDE.md` MUST contain nothing but:
+   3.1. An optional single title line (a level-1 heading), and
+   3.2. A single @-import of its own sibling `agents.md` (`@./agents.md`, or `@agents.md` — the harness's import syntax for the file in the same directory).
+   3.3. NO other instruction, configuration, or content of any kind. No path lists, no rules, no prose beyond the optional title.
+4. **All real content lives in agents.md.** Instructions, configuration, and imports belong in `agents.md`.
+   4.1. `agents.md` MAY @-import a parent directory's `agents.md` (`@../agents.md`) and/or any other files (sibling `.md` configs, etc.).
+   4.2. The inheritance chain runs through `agents.md` files only. A `CLAUDE.md` MUST never import a parent `CLAUDE.md` or a parent `agents.md` — it imports only its own sibling `agents.md`, and that sibling carries the chain upward.
+5. **Override-file anchoring.** Any scope-level override — the general-purpose `local.agents.md` (clause 6) or a specific one like `horizon_aios_model_prefs.extend.md` — is @-imported by that directory's `agents.md`, never by its `CLAUDE.md`. (See `horizon_aios_model_prefs.md` → "Override-file convention".)
+6. **Machine-local override sibling (`local.agents.md`).** Every `agents.md` MUST have a sibling `local.agents.md` that it @-imports **last** (so local content overrides shipped content). It is the git-safe seam for owner/machine-specific instructions that must NOT ship to other users or be clobbered by an upstream sync.
+   6.1. **Machine-local.** `local.agents.md` is gitignored via a bare `local.agents.md` pattern (so the rule applies in every directory/scope, including nested project folders), never tracked, and never overwritten on sync.
+   6.2. **Ships as a template, materialized on setup.** It ships as `local.agents.md.template` (tracked) and is materialized to `local.agents.md` by `aios setup` (`horizon_aios_switch.py` → `setup_local_agents`) if absent, so the `@local.agents.md` import never dangles. Its existence is structural, not optional.
+   6.3. **Division of content.** Shipped, version-controlled defaults live in `agents.md`; personal/owner overrides live in `local.agents.md`. Keep `local.agents.md` short — it loads into context every session.
+   6.4. **CLAUDE.md is unaffected.** Clause 3 still holds: a `CLAUDE.md` imports ONLY its sibling `agents.md`. The `local.agents.md` import is anchored on `agents.md` (clause 5), never on `CLAUDE.md`.

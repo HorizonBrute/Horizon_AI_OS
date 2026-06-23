@@ -129,7 +129,7 @@ Provisioning methods (in order of preference by isolation strength):
 Every component of Horizon AIOS — scripts, brain users, AI harnesses, hooks — operates with the minimum permissions necessary to do its job.
 
 - **Brain default posture: zero.** A brain account has full access to its own folder and no access to anything else unless explicitly provisioned. This is the starting point, not a goal to work toward.
-- Hooks that play sounds need read access to $HORIZON_BIN/sounds/ only.
+- Hooks that play sounds need read access to $HORIZON_SOUNDS/ only.
 - Status line scripts need read access to session metadata only.
 - No script in $HORIZON_BIN should require or request elevated (admin/root) privileges at runtime. If elevation is needed, it belongs in sbin and must be invoked explicitly by the administrative context.
 

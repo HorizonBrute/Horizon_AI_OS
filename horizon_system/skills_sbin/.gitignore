@@ -29,3 +29,11 @@
 !remove-brain/**
 !pre-flight-tooling-validation/
 !pre-flight-tooling-validation/**
+!model-prefs-assign/
+!model-prefs-assign/**
+!agent-teams/
+!agent-teams/**
+!horizon_aios_wiki_upkeep/
+!horizon_aios_wiki_upkeep/**
+!horizon_aios_wiki_update/
+!horizon_aios_wiki_update/**

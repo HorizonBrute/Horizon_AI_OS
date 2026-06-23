@@ -7,16 +7,20 @@ Owner-only privileged skills. Brain users must not have access to this directory
 
 **When adding a skill to skills_sbin: add an entry here in the same commit.**
 
-| Skill | Trigger | Purpose |
-|---|---|---|
-| create-brain | `/create-brain` | Provision a new brain — OS user, groups, workspace, shell profile, keystore credential (Admin/root) |
-| handoff | `/handoff` | Write a structured session handoff document |
-| harden | `/harden` | Apply the authoritative brains-group ACL model to the AIOS layer (Admin/root) |
-| pre-flight-tooling-validation | `/pre-flight-tooling-validation` | Validate the repo ships full-lifecycle tooling per platform (install/brain/2nd-AIOS/switch/delete), then emit an admin/sudo test-run prompt per platform |
-| objective | `/objective` | Create/list/show/update durable multi-session objectives that handoffs chain back to |
-| remove-brain | `/remove-brain` | Deprovision a brain — remove its OS user, per-brain group, workspace, profile, and credential (Admin/root) |
-| resync-user-skills | `/resync-user-skills` | Rebuild junctions registering machine-local user skills (usrbin/usr_skills) into skills_sbin |
-| skill-creation | `/skill-creation` | Create a new AIOS skill with correct structure and index registration |
-| model-prefs | `/model-prefs` | Configure/inspect the in-context model-preference layer (groups incl. local/BYO models, slots, task-class routing) via the gitignored extend file |
-| horizon_aios_dev_consistency_check | `/horizon_aios_dev_consistency_check` | Run an iterative docs/implementation consistency validation pass against the consistency-check standard |
-| horizon_aios_documentation_index_update | `/horizon_aios_documentation_index_update` | Create/rebuild the documentation index so every doc is referenceable by a stable entry |
+| Skill | Trigger | Model group | Purpose |
+|---|---|---|---|
+| create-brain | `/create-brain` | `#lowcost` | Provision a new brain — OS user, groups, workspace, shell profile, keystore credential (Admin/root) |
+| handoff | `/handoff` | `#midcost` | Write a structured session handoff document |
+| harden | `/harden` | `#highcap` | Apply the authoritative brains-group ACL model to the AIOS layer (Admin/root) |
+| pre-flight-tooling-validation | `/pre-flight-tooling-validation` | `#investigate` | Validate the repo ships full-lifecycle tooling per platform (install/brain/2nd-AIOS/switch/delete), then emit an admin/sudo test-run prompt per platform |
+| objective | `/objective` | `#lowcost` | Bare `/objective` surfaces the conversation's active objective (else lists/creates); create/list/show/update durable multi-session objectives that handoffs chain back to |
+| remove-brain | `/remove-brain` | `#highcap` | Deprovision a brain — remove its OS user, per-brain group, workspace, profile, and credential (Admin/root) |
+| resync-user-skills | `/resync-user-skills` | `#lowcost` | Rebuild junctions registering machine-local user skills (usrbin/usr_skills) into skills_sbin |
+| skill-creation | `/skill-creation` | `#midcost` | Create a new AIOS skill with correct structure and index registration |
+| model-prefs | `/model-prefs` | `#midcost` | Configure/inspect the in-context model-preference layer (groups incl. local/BYO models, slots, task-class routing) via the gitignored extend file |
+| horizon_aios_dev_consistency_check | `/horizon_aios_dev_consistency_check` | `#midcost` | Run an iterative docs/implementation consistency validation pass against the consistency-check standard |
+| horizon_aios_documentation_index_update | `/horizon_aios_documentation_index_update` | `#lowcost` | Create/rebuild the documentation index so every doc is referenceable by a stable entry |
+| model-prefs-assign | `/model-prefs-assign` | `#lowcost` | Audit AIOS skills for their model-preference group callout and assign/refresh it, keeping both skill indexes' Model-group columns in sync |
+| agent-teams | `/agent-teams` | `#midcost` | Create or edit agent-team definitions in local.agent_teams.md at any scope — define the agent chain, per-role model groups, and loop/retry constructs |
+| horizon_aios_wiki_upkeep | `/horizon_aios_wiki_upkeep` | `#highcap` | Consistency pass between the operational wiki and its source documentation — finds drift, stale paths, outdated examples; fixes unambiguous issues and surfaces judgment calls |
+| horizon_aios_wiki_update | `/horizon_aios_wiki_update` | `#highcap` | Author, expand, and re-index the operational wiki following the user story arc; surveys source doc coverage gaps, drafts new sections, and synchronizes all dependent artifacts (TOC, docs index, userguides skill, upkeep scope table) |

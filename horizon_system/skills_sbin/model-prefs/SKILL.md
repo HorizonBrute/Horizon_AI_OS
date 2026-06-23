@@ -6,6 +6,8 @@ tools: Read, Write, Edit
 
 # Skill: /model-prefs
 
+**Model preference:** `#midcost` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
+
 Configuration on-ramp for the in-context model-preference layer. The *mechanism*
 lives in context — `$HORIZON_ETC/horizon_aios_model_prefs.md`, loaded every
 session via `agents.md`, which the acting model reads and honors by direct
@@ -40,6 +42,9 @@ for the grammar (member resolution, runtime-qualified members, fallback order).
 3. Precedence when both files load: slots — extend wins if not "Unset"; groups —
    membership combined; routing — extend rules apply, more specific class wins.
 4. Prompt directive ("use #X") overrides routing; routing overrides slots.
+5. Config cascades by scope (OS-global < project-root < brain-root < subfolder,
+   most-specific wins); a scope overrides via its own `extend.md` @-imported from
+   that scope's `agents.md` — never `CLAUDE.md`. See the spec's Scope Precedence.
 
 ---
 

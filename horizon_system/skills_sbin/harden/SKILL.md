@@ -6,6 +6,8 @@ tools: Bash, Read
 
 # Skill: /harden
 
+**Model preference:** `#highcap` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
+
 Apply the authoritative brains-group ACL model to the AIOS layer (`horizon_aios_harden.py`), enforcing security_invariants.md §2/§3/§5. Run at bootstrap, after adding/removing directories under `$HORIZON_SYSTEM`, or when `horizon_aios_doctor.py` reports a missing brains Deny ACE.
 
 ---

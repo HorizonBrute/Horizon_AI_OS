@@ -1,0 +1,11 @@
+# Local Agent Instructions (.claude scope) — machine-local override (gitignored; never synced or clobbered)
+
+<!--
+TEMPLATE for the `.claude/` scope. `aios setup` materializes it to
+`.claude/local.agents.md` (gitignored) if absent. The sibling `.claude/agents.md`
+@-imports it LAST, so it overrides config for this scope.
+
+Most owner overrides belong in the ROOT `local.agents.md`; use this one only for
+instructions specific to the `.claude/` scope. Keep it short — it loads every
+session. See file_structure_invariants.md §12.
+-->

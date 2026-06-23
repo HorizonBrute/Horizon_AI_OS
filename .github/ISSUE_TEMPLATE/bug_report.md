@@ -14,4 +14,4 @@ labels: bug
 
 **Steps to reproduce:**
 
-**Relevant log output** (from `horizon_bin/logs/`):
+**Relevant log output** (from `$HORIZON_SYSTEM/logs/`):

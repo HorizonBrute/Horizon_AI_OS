@@ -6,6 +6,8 @@ tools: Bash
 
 # Skill: /context-cost
 
+**Model preference:** `#lowcost` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
+
 Report how much context overhead the Claude Code harness will auto-load for a given path — walking up the directory tree and collecting every `CLAUDE.md`, `CLAUDE.local.md`, `agents.md`, and `@`-import file it will pull in at session start.
 
 ---

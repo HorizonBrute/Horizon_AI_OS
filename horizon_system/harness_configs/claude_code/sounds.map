@@ -1,6 +1,6 @@
 # Claude Code Sound Map
-# Extends $HORIZON_BIN/sounds/sounds.map with Claude-specific events.
-# Paths relative to $HORIZON_BIN/sounds/.
+# Extends $HORIZON_SOUNDS/sounds.map with Claude-specific events.
+# Paths relative to $HORIZON_SOUNDS/.
 # Resolution: aios_sounds.conf > this file > sounds/sounds.map
 
 input_needed         = claude_event_sounds/InputNeeded.wav

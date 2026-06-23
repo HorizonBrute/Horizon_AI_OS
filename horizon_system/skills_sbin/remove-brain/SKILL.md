@@ -6,6 +6,8 @@ tools: Bash, Read
 
 # Skill: /remove-brain
 
+**Model preference:** `#highcap` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
+
 Deprovision a brain with `horizon_aios_remove_brain.py` — the counterpart to `horizon_aios_create_brain.py`. Removes the brain's OS user account, its per-brain group, its workspace folder, its user-profile config, and its stored credential. The shared `brains` group is left intact (other brains use it).
 
 ---
