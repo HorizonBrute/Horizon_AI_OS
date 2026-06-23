@@ -210,6 +210,24 @@ skills, hooks, and templates.
   Offboarding documents the reverse (ties to CC-I2). The documented change set
   must match what the tooling actually does.
 
+### T. Terseness Contract
+
+The Terseness Contract governs files that are loaded into every session's context
+unconditionally. Their combined token cost is paid on every interaction by every
+user and every brain. The authoritative file list and all seven terseness criteria
+live in `$HORIZON_DOCS/terseness_contract_index.md`.
+
+- **CC-T1 — Contract index current.** The Terseness Contract Index lists every
+  file that is unconditionally loaded at session start (all `@`-imports in the
+  always-loaded chain, plus the CLAUDE.md shim files the harness auto-loads). No
+  file is missing from the index; no file in the index has been removed from the
+  load chain. Verify by tracing the @-import chain from `~/.claude/CLAUDE.md` and
+  `$HORIZON_ROOT/.claude/CLAUDE.md` and comparing to the index.
+- **CC-T2 — Files in contract are terse.** Every tracked file in the index passes
+  all seven terseness criteria defined there. Delegate this check to the
+  `/terseness-check` skill; do not inline-evaluate. Map each FAIL finding from
+  that skill to `CC-T2 FAIL` in this report.
+
 ---
 
 ## 4. Report format
