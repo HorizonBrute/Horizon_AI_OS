@@ -35,6 +35,20 @@ condition or an iteration cap. Declare it inline on the looping role:
 
 ---
 
+## Conditional roles
+
+A role may be marked **conditional**, inline in its model-group parenthetical:
+
+1. `(`#group`, if needed)` — the acting model runs the role only if it judges the role
+   adds value for the task at hand; otherwise it skips the role and continues.
+2. `(`#group`, if asked)` — the role runs only when the user explicitly asks for it
+   (e.g. "…and validate it"); it is skipped by default.
+
+Conditions combine with loops: a conditional looping role loops only on the runs where it
+actually executes.
+
+---
+
 ## Teams
 
 ### Investigate & Fix
@@ -53,7 +67,7 @@ phrase "send an agent team" resolves to.
 2. Log-reader (`#lowcost`, if needed) — gathers runtime evidence before planning.
 3. Planner (`#highcap`) — designs the approach.
 4. Implementer (`#lowcost`) — writes the code.
-5. Validator (`#midcost`) — verifies the Implementer's work and checks for regressions.
+5. Validator (`#midcost`, if asked) — verifies the Implementer's work and checks for regressions.
    **Loop:** on failure, return specific feedback to the Implementer and re-run from step 4;
    repeat until the Validator passes clean or 3 iterations, then stop and report any
    outstanding failures.

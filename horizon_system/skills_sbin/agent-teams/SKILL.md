@@ -74,7 +74,7 @@ the flow below only if they ask you to.
 
 3.1 Gather, with the user:
 1. **Team name** — the phrase they'll invoke ("Investigate & Fix").
-2. **Roles, in order** — for each: a label, a **model group** (`#midcost`, `#lowcost`, `#highcap`, `#investigate`, … from model-prefs), and a 1–2 line charter (what it does + what it hands to the next role).
+2. **Roles, in order** — for each: a label, a **model group** (`#midcost`, `#lowcost`, `#highcap`, `#investigate`, … from model-prefs), an optional **condition** (`if needed` = model skips it unless it adds value; `if asked` = runs only when the user asks — see `agent_teams.md` → "Conditional roles"), and a 1–2 line charter (what it does + what it hands to the next role).
 3. **Loops (optional)** — see Step 4.
 
 3.2 Verify each referenced model group exists in `horizon_aios_model_prefs.md` (or its extend file). If a group is missing, tell the user and offer to add it via `/model-prefs`.

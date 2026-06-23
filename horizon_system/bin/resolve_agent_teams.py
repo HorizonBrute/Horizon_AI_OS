@@ -28,7 +28,8 @@ import re
 import sys
 
 TEAM_RE = re.compile(r"^###\s+(.+?)\s*$")
-ROLE_RE = re.compile(r"^\s*\d+\.\s+(.+?)\s*\(`(#?[A-Za-z0-9_-]+)`")
+ROLE_RE = re.compile(
+    r"^\s*\d+\.\s+(.+?)\s*\(`(#?[A-Za-z0-9_-]+)`(?:\s*,\s*(if needed|if asked))?")
 LOOP_RE = re.compile(r"^\s*(?:>\s*)?\*\*Loop:\*\*", re.IGNORECASE)
 
 
@@ -90,7 +91,8 @@ def parse_teams(path):
         while i < len(blk) and blk[i].strip() and not ROLE_RE.match(blk[i]):
             summ.append(blk[i].strip())
             i += 1
-        roles = [{"role": rm.group(1).strip(), "group": rm.group(2)}
+        roles = [{"role": rm.group(1).strip(), "group": rm.group(2),
+                  "cond": rm.group(3)}
                  for rm in (ROLE_RE.match(ln) for ln in blk) if rm]
         loop = any(LOOP_RE.match(ln) for ln in blk)
         loop_max = None
@@ -152,10 +154,14 @@ def build(path, root):
 
 
 def _prefs(team):
-    """Compact 'Role `#group` -> Role `#group`' chain, with a loop marker."""
-    chain = " -> ".join(f"{r['role']} `{r['group']}`" for r in team["roles"])
-    if not chain:
-        chain = "(roles not parsed)"
+    """Compact 'Role `#group` (cond) -> ...' chain, with a loop marker."""
+    parts = []
+    for r in team["roles"]:
+        s = f"{r['role']} `{r['group']}`"
+        if r.get("cond"):
+            s += f" ({r['cond']})"
+        parts.append(s)
+    chain = " -> ".join(parts) or "(roles not parsed)"
     if team.get("loop"):
         cap = f" <={team['loop_max']}" if team.get("loop_max") else ""
         chain += f"  [loop{cap}]"
