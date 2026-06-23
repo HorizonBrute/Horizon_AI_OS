@@ -603,6 +603,410 @@ esac
 """
 
 
+# ===========================================================================
+# 'aios setup' — one-shot new-machine installer (orchestrator).
+#
+# Honors three owner decisions:
+#   1. This is a subcommand of horizon_aios_switch.py; it runs UNPRIVILEGED and
+#      shells out to the ELEVATED bootstrap for SOP sections 2-10.
+#   2. Git identity is written to a machine-local, GITIGNORED include file
+#      (ai_os_etc/git_identity.local.gitconfig) pulled in via
+#      `git config --global include.path`. It never appears in `git status`.
+#   3. Clone-awareness: inside a tree -> skip cloning; standalone -> offer to
+#      clone to the chosen root.
+#
+# Every step is idempotent and re-run safe: it ORCHESTRATES existing tools
+# (bootstrap, horizon_aios_relocate.py, horizon_aios_doctor.py) and never
+# reimplements them.
+# ===========================================================================
+
+# Machine-local git identity include file. Lives alongside aios_local.conf in
+# $HORIZON_ETC (the established home for gitignored per-machine config) and is
+# named with the .local. infix + matched by .gitignore so it never shows in
+# `git status`. NOT the tracked harness_configs/git/gitconfig (decision 2).
+GIT_IDENTITY_BASENAME = "git_identity.local.gitconfig"
+
+# settings.local.json stub shape (SOP §12).
+_SETTINGS_LOCAL_STUB = '{\n  "permissions": {\n    "allow": []\n  }\n}\n'
+
+AIOS_REPO_URL = "git@github.com:HorizonBrute/Horizon_AI_OS.git"
+
+
+def _have(cmd):
+    """True if `cmd` resolves on PATH (cross-platform)."""
+    from shutil import which
+    return which(cmd) is not None
+
+
+def _run_capture(cmd):
+    """Run cmd, return (rc, stdout-stripped). Never raises on non-zero/missing."""
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True)
+        return r.returncode, (r.stdout or "").strip()
+    except OSError:
+        return 127, ""
+
+
+def _git_global_get(key):
+    rc, out = _run_capture(["git", "config", "--global", "--get", key])
+    return out if rc == 0 else ""
+
+
+def setup_preflight():
+    """Probe prerequisites. Hard-fail on missing git/claude; WARN on jq/gpg/ssh.
+    Returns False if a hard prerequisite is missing. Reuses no doctor internals
+    here because doctor's env checks assume a fully-installed tree; this probes
+    the bare toolchain SOP section 2 requires."""
+    print("\n--- Preflight: prerequisites ---")
+    hard_ok = True
+    for tool in ("git", "claude"):
+        if _have(tool):
+            ok(f"{tool} found")
+        else:
+            err(f"{tool} not found on PATH — required (SOP §2). Install it and re-run.")
+            hard_ok = False
+    for tool in ("jq", "gpg", "ssh", "python3", "bash"):
+        # python3/bash are advisory on Windows where python/Git Bash cover them.
+        if _have(tool) or (tool == "python3" and _have("python")):
+            ok(f"{tool} found")
+        else:
+            warn(f"{tool} not found — recommended (some steps degrade without it).")
+
+    # SSH / GPG guidance only (never auto-generate keys).
+    if _have("ssh"):
+        rc, out = _run_capture(["ssh", "-T", "-o", "BatchMode=yes",
+                                "-o", "StrictHostKeyChecking=accept-new",
+                                "git@github.com"])
+        # GitHub returns rc 1 with a success banner even on a good auth.
+        if "successfully authenticated" in out.lower():
+            ok("ssh -T git@github.com authenticated")
+        else:
+            warn("ssh to git@github.com did not confirm auth — ensure your key is "
+                 "registered before cloning/pushing (SOP §2.2). Not auto-generating keys.")
+    if _have("gpg"):
+        rc, out = _run_capture(["gpg", "--list-secret-keys"])
+        if rc == 0 and out:
+            ok("gpg secret key present")
+        else:
+            warn("no gpg secret key found — commit signing will fail until you "
+                 "create one (SOP §2.3). Not auto-generating keys.")
+    return hard_ok
+
+
+def _prompt(prompt, default, yes):
+    """Prompt with a default. Under --yes, returns the default unchanged."""
+    if yes:
+        return default
+    try:
+        ans = input(f"  {prompt} [{default}]: ").strip()
+    except EOFError:
+        return default
+    return ans or default
+
+
+def setup_resolve_root(args):
+    """Decision 2 (ROOT) + decision 3 (CLONE-awareness).
+
+    Returns (chosen_root, inside_tree) or (None, _) on a fatal clone failure.
+    """
+    inside_tree = is_valid_aios(THIS_ROOT)
+    default_root = THIS_ROOT if inside_tree else os.path.join(HOME, "devroot")
+    chosen = os.path.abspath(_prompt("Path for $HORIZON_ROOT", default_root, args.yes))
+
+    if inside_tree:
+        info(f"Running inside an existing AIOS tree ({THIS_ROOT}) — clone skipped.")
+        return chosen, True
+
+    # Standalone: offer to clone to the chosen root.
+    if is_valid_aios(chosen):
+        info(f"{chosen} already contains an AIOS — clone skipped.")
+        return chosen, True
+    if not _confirm(f"No AIOS tree here. Clone {AIOS_REPO_URL} into {chosen}?", args.yes):
+        info("Clone declined — set $HORIZON_ROOT to an existing tree and re-run.")
+        return None, False
+    os.makedirs(os.path.dirname(chosen) or ".", exist_ok=True)
+    rc = subprocess.run(["git", "clone", AIOS_REPO_URL, chosen]).returncode
+    if rc != 0 or not is_valid_aios(chosen):
+        err(f"git clone failed (rc={rc}) or result is not a valid AIOS.")
+        return None, False
+    ok(f"Cloned AIOS into {chosen}")
+    return chosen, True
+
+
+def setup_relocate(chosen_root):
+    """Step 4: if the chosen root differs from THIS_ROOT, delegate to
+    horizon_aios_relocate.py --apply. Never reimplement path rewriting."""
+    if os.path.normcase(os.path.normpath(chosen_root)) == \
+       os.path.normcase(os.path.normpath(THIS_ROOT)):
+        return  # same location — nothing to relocate
+    script = os.path.join(chosen_root, "horizon_system", "sbin", "horizon_aios_relocate.py")
+    if not os.path.isfile(script):
+        warn(f"relocate script not found at {script} — skipping relocate.")
+        return
+    info(f"Chosen root differs from this tree — relocating pointers to {chosen_root}.")
+    py = sys.executable or ("python" if os.name == "nt" else "python3")
+    subprocess.run([py, script, "--new-root", chosen_root, "--apply"])
+
+
+def setup_profile_line(yes):
+    """Step 5: idempotently append the active_env source line to the user's shell
+    profile (the line bootstrap currently only PRINTS). Guards against duplicates."""
+    if os.name == "nt":
+        rc, profile = _run_capture(["powershell", "-NoProfile", "-Command", "$PROFILE"])
+        if rc != 0 or not profile:
+            profile = os.path.join(HOME, "Documents", "WindowsPowerShell",
+                                   "Microsoft.PowerShell_profile.ps1")
+        line = 'if (Test-Path "$HOME\\.horizon\\active_env.ps1") { . "$HOME\\.horizon\\active_env.ps1" }'
+        marker = "active_env.ps1"
+    else:
+        profile = os.path.join(HOME, ".bashrc")
+        line = '[ -f "$HOME/.horizon/active_env.sh" ] && . "$HOME/.horizon/active_env.sh"'
+        marker = "active_env.sh"
+
+    try:
+        existing = ""
+        if os.path.isfile(profile):
+            with open(profile, encoding="utf-8", errors="replace") as f:
+                existing = f.read()
+        if marker in existing:
+            ok(f"Profile already sources active_env ({profile}).")
+            return
+        os.makedirs(os.path.dirname(profile) or ".", exist_ok=True)
+        with open(profile, "a", encoding="utf-8") as f:
+            if existing and not existing.endswith("\n"):
+                f.write("\n")
+            f.write(line + "\n")
+        ok(f"Appended active_env source line to {profile}.")
+    except OSError as exc:
+        warn(f"Could not update profile {profile}: {exc} — add manually:\n      {line}")
+
+
+def setup_invoke_bootstrap(chosen_root, yes):
+    """Step 6: shell out to the platform bootstrap (sections 2-10) ELEVATED.
+    Windows: relaunch via an elevated PowerShell (Start-Process -Verb RunAs).
+    Unix: sudo. Pass --yes through when non-interactive."""
+    sbin = os.path.join(chosen_root, "horizon_system", "sbin")
+    if os.name == "nt":
+        script = os.path.join(sbin, "bootstrap.ps1")
+        if not os.path.isfile(script):
+            err(f"bootstrap.ps1 not found at {script}")
+            return 1
+        # Build an elevated relaunch. -Wait so we see it complete; the elevated
+        # window shows progress. Forward --yes when non-interactive.
+        arglist = f"-ExecutionPolicy Bypass -File '{script}'"
+        if yes:
+            arglist += " --yes"
+        ps = (f"$p = Start-Process powershell -Verb RunAs -Wait -PassThru "
+              f"-ArgumentList \"{arglist}\"; exit $p.ExitCode")
+        info("Launching elevated bootstrap (UAC prompt expected)...")
+        return subprocess.run(["powershell", "-NoProfile", "-Command", ps]).returncode
+    else:
+        script = os.path.join(sbin, "bootstrap.sh")
+        if not os.path.isfile(script):
+            err(f"bootstrap.sh not found at {script}")
+            return 1
+        cmd = ["sudo", "bash", script]
+        if yes:
+            cmd.append("--yes")
+        info("Launching bootstrap via sudo (password prompt expected)...")
+        return subprocess.run(cmd).returncode
+
+
+def setup_git_identity(chosen_root, args):
+    """Step 7 (decision 2): write git identity to a machine-local, GITIGNORED
+    include file and wire `git config --global include.path` to it (idempotent).
+    Also ensures the SOP §9 include for the framework gitconfig is present."""
+    etc = os.path.join(chosen_root, "horizon_system", "ai_os_etc")
+    identity_file = os.path.join(etc, GIT_IDENTITY_BASENAME)
+
+    cur_name = _git_global_get("user.name")
+    cur_email = _git_global_get("user.email")
+    cur_key = _git_global_get("user.signingkey")
+
+    name = _prompt("git user.name", cur_name or "", args.yes)
+    email = _prompt("git user.email", cur_email or "", args.yes)
+    key = _prompt("git user.signingkey (GPG fingerprint)", cur_key or "", args.yes)
+
+    body = "# Horizon AIOS machine-local git identity. GITIGNORED — never committed.\n"
+    body += "# Pulled in via: git config --global include.path <this file>\n"
+    body += "[user]\n"
+    if name:
+        body += f"\tname = {name}\n"
+    if email:
+        body += f"\temail = {email}\n"
+    if key:
+        body += f"\tsigningkey = {key}\n"
+    try:
+        os.makedirs(etc, exist_ok=True)
+        with open(identity_file, "w", encoding="utf-8") as f:
+            f.write(body)
+        ok(f"Wrote machine-local git identity -> {identity_file}")
+    except OSError as exc:
+        err(f"Failed to write identity file {identity_file}: {exc}")
+        return
+
+    # Wire include.path entries idempotently (git stores multivar include.path).
+    rc, existing = _run_capture(["git", "config", "--global", "--get-all", "include.path"])
+    existing_paths = set(existing.splitlines()) if rc == 0 else set()
+
+    def _ensure_include(path):
+        # Compare on normalized basis; git stores the literal string we add.
+        if any(os.path.normcase(os.path.normpath(p)) ==
+               os.path.normcase(os.path.normpath(path)) for p in existing_paths):
+            ok(f"include.path already set: {path}")
+            return
+        rc2 = subprocess.run(["git", "config", "--global", "--add",
+                              "include.path", path]).returncode
+        if rc2 == 0:
+            existing_paths.add(path)
+            ok(f"Added include.path -> {path}")
+        else:
+            warn(f"Failed to add include.path {path} (rc={rc2}).")
+
+    _ensure_include(identity_file)
+    # SOP §9: framework gitconfig include (gpgsign/signoff/etc.).
+    framework_gitconfig = os.path.join(chosen_root, "horizon_system",
+                                       "harness_configs", "git", "gitconfig")
+    if os.path.isfile(framework_gitconfig):
+        _ensure_include(framework_gitconfig)
+
+    # Prove the identity file is gitignored (must not show in `git status`).
+    rc, out = _run_capture(["git", "-C", chosen_root, "status", "--porcelain",
+                            "--", identity_file])
+    rel = os.path.relpath(identity_file, chosen_root)
+    rc2, ign = _run_capture(["git", "-C", chosen_root, "check-ignore", rel])
+    if rc2 == 0 and ign:
+        ok(f"Identity file is gitignored ({rel}) — will not appear in git status.")
+    elif not out:
+        ok(f"Identity file does not appear in git status ({rel}).")
+    else:
+        warn(f"Identity file MAY be visible to git: {out!r} — add '{rel}' to .gitignore.")
+
+
+def setup_git_init(chosen_root, args):
+    """Step 8: git init if absent (so bootstrap §6 wires hooks). Bootstrap §6
+    only wires hooks when .git already exists, so we init BEFORE bootstrap runs.
+    Offer the first signed commit (default N interactive / Y under --yes)."""
+    git_dir = os.path.join(chosen_root, ".git")
+    if os.path.isdir(git_dir):
+        ok(".git already present — skipping git init.")
+    else:
+        rc = subprocess.run(["git", "-C", chosen_root, "init"]).returncode
+        if rc == 0:
+            ok("Ran git init (bootstrap will wire hooks in §6).")
+        else:
+            warn(f"git init failed (rc={rc}).")
+            return
+
+    # Offer first signed commit. Default N unless --yes.
+    do_commit = args.yes or _confirm("Make the first signed commit now?", False)
+    if not do_commit:
+        info("Skipped first commit — run `git commit -s` later.")
+        return
+    subprocess.run(["git", "-C", chosen_root, "add",
+                    ".claude/CLAUDE.md", ".claude/settings.json",
+                    "horizon_system", ".gitignore", ".gitignore.user.template"])
+    rc = subprocess.run(["git", "-C", chosen_root, "commit", "-s", "-m",
+                         "Initial Horizon AIOS OS layer commit"]).returncode
+    if rc == 0:
+        ok("Created initial signed commit.")
+    else:
+        warn(f"Initial commit did not complete (rc={rc}) — commit manually.")
+
+
+def setup_settings_local(chosen_root):
+    """Step 9: create the {\"permissions\":{\"allow\":[]}} stub if absent (SOP §12)."""
+    path = os.path.join(chosen_root, ".claude", "settings.local.json")
+    if os.path.isfile(path):
+        ok("settings.local.json already exists.")
+        return
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(_SETTINGS_LOCAL_STUB)
+        ok(f"Created settings.local.json stub -> {path}")
+    except OSError as exc:
+        warn(f"Could not create settings.local.json: {exc}")
+
+
+def setup_model_prefs(chosen_root, args):
+    """Step 10: OFFER to copy the model-prefs extend template to its active
+    .extend.md (SOP §15). Do not run catalog refresh."""
+    etc = os.path.join(chosen_root, "horizon_system", "ai_os_etc")
+    template = os.path.join(etc, "horizon_aios_model_prefs.extend.template.md")
+    active = os.path.join(etc, "horizon_aios_model_prefs.extend.md")
+    if os.path.isfile(active):
+        ok("model-prefs extend file already exists.")
+        return
+    if not os.path.isfile(template):
+        warn("model-prefs extend template not found — skipping.")
+        return
+    if not _confirm("Copy the model-prefs extend template to its active file?", args.yes):
+        info("Skipped model-prefs — run /model-prefs later.")
+        return
+    try:
+        import shutil
+        shutil.copyfile(template, active)
+        ok(f"Created {os.path.basename(active)} — edit it or run /model-prefs.")
+    except OSError as exc:
+        warn(f"Could not copy model-prefs template: {exc}")
+
+
+def setup_verify_gate(chosen_root):
+    """Step 11: run horizon_aios_doctor.py --post-setup as a NON-FATAL gate.
+    A muted-sound SKIP must not fail setup; report PASS/FAIL summary."""
+    script = os.path.join(chosen_root, "horizon_system", "sbin", "horizon_aios_doctor.py")
+    if not os.path.isfile(script):
+        warn(f"doctor not found at {script} — skipping verify gate.")
+        return
+    py = sys.executable or ("python" if os.name == "nt" else "python3")
+    print("\n--- Verify gate: horizon_aios_doctor.py --post-setup ---")
+    rc = subprocess.run([py, script, "--post-setup"]).returncode
+    if rc == 0:
+        ok("Doctor gate PASSED.")
+    else:
+        warn("Doctor gate reported FAILURES (non-fatal for setup). Review the "
+             "output above and revisit the indicated step, then re-run `aios setup`.")
+
+
+def cmd_setup(_reg, args):
+    """One-shot new-machine installer. Orchestrates existing tools end to end.
+    Every step is idempotent and re-run safe."""
+    print("\n=== Horizon AIOS — one-shot setup ===")
+    if args.yes:
+        info("Non-interactive (--yes): accepting defaults for every prompt.")
+
+    if not setup_preflight():
+        err("Preflight failed on a hard prerequisite. Resolve the above and re-run.")
+        return 1
+
+    chosen_root, ok_tree = setup_resolve_root(args)
+    if not chosen_root:
+        return 1
+
+    setup_relocate(chosen_root)
+    setup_profile_line(args.yes)
+
+    # git init BEFORE bootstrap so bootstrap §6 wires the hooks on this repo.
+    setup_git_init(chosen_root, args)
+
+    rc = setup_invoke_bootstrap(chosen_root, args.yes)
+    if rc != 0:
+        warn(f"Bootstrap exited non-zero (rc={rc}). Continuing with local steps; "
+             "review bootstrap output and re-run if needed.")
+
+    setup_git_identity(chosen_root, args)
+    setup_settings_local(chosen_root)
+    setup_model_prefs(chosen_root, args)
+    setup_verify_gate(chosen_root)
+
+    print()
+    ok("Setup complete. Open a NEW shell so the profile env line takes effect, "
+       "then run `aios setup` again any time — it is idempotent.")
+    info("Point your harness at /model-prefs to finish model configuration.")
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="aios", description="Switch which Horizon AIOS this machine points at.")
@@ -626,6 +1030,17 @@ def main():
     p_sw.add_argument("--dry-run", action="store_true", help="Show actions, change nothing.")
     p_sw.add_argument("--yes", "-y", action="store_true", help="Skip confirmations.")
 
+    p_setup = sub.add_parser("setup",
+                             help="One-shot new-machine install: orchestrate the full setup "
+                                  "(preflight, clone/relocate, profile, elevated bootstrap, "
+                                  "git identity, doctor gate). Idempotent and re-run safe.")
+    p_setup.add_argument("--yes", "-y", action="store_true",
+                         help="Non-interactive: accept defaults for every prompt "
+                              "(mirrors bootstrap's --yes).")
+    # Reserved for a future declarative install (not implemented yet).
+    p_setup.add_argument("--config", metavar="FILE",
+                         help="(reserved) declarative setup config — not yet implemented.")
+
     p_un = sub.add_parser("uninstall",
                           help="Remove the Horizon AIOS bootstrap footprint from this machine.")
     p_un.add_argument("--dry-run", action="store_true",
@@ -639,7 +1054,7 @@ def main():
     handlers = {
         "list": cmd_list, "current": cmd_current, "init": cmd_init,
         "register": cmd_register, "unregister": cmd_unregister, "switch": cmd_switch,
-        "uninstall": cmd_uninstall,
+        "setup": cmd_setup, "uninstall": cmd_uninstall,
     }
     return handlers[args.command](reg, args)
 

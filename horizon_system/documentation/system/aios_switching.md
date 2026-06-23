@@ -60,6 +60,7 @@ aios unregister <name>         # remove a registration (files untouched)
 aios switch <name>             # point local config at <name>
 aios switch <name> --dry-run   # show what would change, change nothing
 aios init                      # onboarding: registry + env + wrappers
+aios setup                     # one-shot new-machine install (orchestrates full setup; --yes)
 aios uninstall                 # remove the bootstrap footprint (elevated)
 aios uninstall --dry-run       # preview the removal; change nothing
 ```

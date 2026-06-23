@@ -599,6 +599,10 @@ usrbin/usr_skills/
 horizon_system/ai_os_etc/aios_local.conf
 horizon_system/ai_os_etc/aios_monitor.conf
 
+# Machine-local git identity written by `aios setup` (user.name/email/signingkey);
+# pulled in via `git config --global include.path`. Never committed (decision 2).
+horizon_system/ai_os_etc/git_identity.local.gitconfig
+
 # User-local model preferences extension (gitignored; populate from the example
 # in horizon_aios_model_prefs.md and never overwritten by AIOS updates)
 horizon_system/ai_os_etc/horizon_aios_model_prefs.extend.md
