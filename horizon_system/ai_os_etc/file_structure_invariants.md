@@ -57,6 +57,7 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   ├── resolve_sound.py            # Resolver: event name → absolute sound path (see Section 10)
 │   │   ├── monitor_status.py           # One-word monitor status check (see agents.md Session Start)
 │   │   ├── context_cost.py             # Harness context-overhead measurement (see documentation/context_loading.md)
+│   │   ├── resolve_agent_teams.py      # Resolve Agent Teams in effect for a path (backs bare /agent-teams; see §13)
 │   │   └── statusline/                 # Status line scripts for harness UI (see Section 11)
 │   ├── sbin/                           # Owner-only privileged scripts; brains: DENY
 │   │   ├── bootstrap.ps1               # Windows bootstrap (PowerShell)

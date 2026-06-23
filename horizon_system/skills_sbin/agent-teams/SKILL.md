@@ -24,13 +24,25 @@ The user types `/agent-teams ...`, or asks to add/define/edit an agent team, or 
 
 ## Default (bare `/agent-teams`, no arguments) — list loaded team sources
 
-D.1 Enumerate the team-DEFINITION files in effect — exactly: the single shipped `$HORIZON_ROOT/agent_teams.md`, plus every `local.agent_teams.md` `@`-imported through the `agents.md` chain in scope (OS root, `.claude/`, and any active project/brain/subfolder scope). Discover the overrides by globbing for `local.agent_teams.md` from the OS root and from cwd upward, and read each — do not rely on memory of what is "in context". **Only the root `agent_teams.md` is a definition source**: do NOT include any other file named `agent_teams.md` (e.g. the user-facing doc `$HORIZON_DOCS/system/agent_teams.md` is documentation, not loaded — exclude it).
+D.1 Run the resolver utility — it does the discovery; do NOT hand-glob or rely on
+memory of what is "in context":
 
-D.2 For each file found, print its path and the team names it defines (the `### <Team Name>` headings). If a `local.agent_teams.md` is only the empty template stub, list it as "no custom teams".
+    python $HORIZON_BIN/resolve_agent_teams.py <cwd>          # human-readable
+    python $HORIZON_BIN/resolve_agent_teams.py <cwd> --json   # structured
 
-D.3 Flag relationships across the loaded files: a local team whose name matches a shipped team **overrides** it; a local team with a new name is **added** (unioned). Most-specific scope wins.
+It walks the scope cascade from the path up to the OS root, reads the shipped
+`$HORIZON_ROOT/agent_teams.md` plus every `local.agent_teams.md` override (excluding
+any file merely named `agent_teams.md`, e.g. the doc under `documentation/`), and
+reports each source with its team names — and, in `--json`, each team's roles, model
+groups, and loop flag — plus the resolved set (most-specific scope wins; same-name
+overrides shipped, new names unioned in).
 
-D.4 Keep the output to a tight list (file path → team names). Then briefly offer the next actions (create / override / set up a scope) without performing them.
+D.2 Present its output to the user: the sources (path → team names, stubs noted as
+"no custom teams") and the resolved teams in effect. Keep it tight.
+
+D.3 Then ask whether they want to **add a custom team**, **modify/override** an
+existing one, or **set up a project/brain scope** — and stop. Proceed to Step 1 and
+the flow below only if they ask you to.
 
 ---
 

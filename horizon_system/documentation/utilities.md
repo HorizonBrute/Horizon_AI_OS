@@ -591,6 +591,31 @@ monitor health without requiring elevation.
 
 ---
 
+## resolve_agent_teams.py
+
+**Path:** `$HORIZON_SYSTEM/bin/resolve_agent_teams.py`
+
+Resolves the Agent Teams in effect for a given path. Walks the scope cascade from
+the path up to `$HORIZON_ROOT`, reads the shipped `agent_teams.md` plus every
+machine-local `local.agent_teams.md` override (root, `.claude/`, and any
+project/brain/subfolder scope), and reports each source with its team names — in
+`--json`, also each team's roles, model groups, and loop flag — plus the resolved
+set (most-specific scope wins; same-name overrides shipped, new names unioned).
+Only definition files are read; a file merely named `agent_teams.md` elsewhere
+(e.g. the doc under `documentation/`) is excluded.
+
+**When to use it:** The deterministic discovery behind a bare `/agent-teams` — the
+skill calls it so the model does not hand-glob. Run by hand to see which teams
+apply in a directory.
+
+**Key flags:**
+
+- `[path]` — directory (or file) to resolve the cascade for (default: cwd)
+- `--root DIR` — override `$HORIZON_ROOT` instead of auto-resolving
+- `--json` — emit structured JSON (sources + resolved set, with roles/groups/loop)
+
+---
+
 ## resolve_sound.py
 
 **Path:** `$HORIZON_SYSTEM/bin/resolve_sound.py`
