@@ -25,6 +25,32 @@ scope the work at invocation time:
 
 No slash command — it is a natural-language invocation pattern, not a skill.
 
+### 1.1 Example flows — natural language in, SAILL out
+
+You speak plainly; the acting model maps it onto a team and its SAILL flags
+(Section 8):
+
+1. "Send an **investigate-and-fix** team at the flaky test in `auth/`."
+   → Investigator (`#midcost`) diagnoses → Fixer (`#lowcost`) patches.
+2. "Send a **full-team** to build the export feature, but **ask me before you start
+   implementing**."
+   → the Planner gates on `ask user` — presents the plan and waits for your approval
+   before the Implementer runs.
+3. "Run a **review-and-fix** over my current diff, but **only fix if I say so**."
+   → Reviewer (`#highcap`) audits → Fixer (`#lowcost`, `if asked`) applies only on your
+   go-ahead.
+4. "**Explore-and-summarize** how sessions persist — fan out **three explorers in
+   parallel** across the API, the DB, and the UI, then summarize."
+   → three Explorers (`#investigate`, `parallel`) → Summarizer (`#lowcost`, `wait`) syncs
+   on them and distills.
+5. "Send a **full-team**, but **skip the log-reader** and **loop the validator up to 3
+   times** until it's clean."
+   → Log-reader (`if needed`) is skipped → Validator loops back to the Implementer until
+   it passes or hits 3 iterations.
+
+Each right-hand side is the SAILL the model resolves to; you never have to write it —
+but it is the shareable, standard form behind the plain-English request.
+
 ---
 
 ## 2. Shipped starter teams
@@ -238,6 +264,8 @@ Today SAILL covers:
    preceding parallel group).
 3. **Iteration** — `Loop` (re-run an earlier role with feedback `until <pass> or <cap>`,
    looping back to a named role so renumbering never breaks the target).
+4. **Human-in-the-loop** — `ask user` (pause for the user's input, decision, or approval
+   before continuing).
 
 ### SAILL primitives
 

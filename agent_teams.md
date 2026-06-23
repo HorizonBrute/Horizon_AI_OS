@@ -48,8 +48,8 @@ A role may be marked **conditional**, inline in its model-group parenthetical:
 Conditions combine with loops: a conditional looping role loops only on the runs where it
 actually executes.
 
-`if needed` and `if asked` are two of the inline **role flags**; `parallel` and `wait` (run
-adjacent roles concurrently, then sync on them) are others. The full vocabulary, with
+`if needed`, `if asked`, and `ask user` (pause for the user's input/decision) are inline
+**role flags**; `parallel` and `wait` (run adjacent roles concurrently, then sync) are others. The full vocabulary, with
 meanings, is cataloged in `$HORIZON_ETC/agent_team_flags.md`; add your own in
 `local.agent_team_flags.md` (gitignored) or via `/agent-teams`. List them any time with
 `resolve_agent_teams.py --flags`.
