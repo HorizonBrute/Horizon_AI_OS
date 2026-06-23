@@ -59,7 +59,7 @@ and you need a quick status read.
 **Key flags:** None — it runs all checks unconditionally and prints a summary.
 Exit code is 1 if any check failed, 0 if only warnings or clean.
 
-**Referenced by a skill?** No.
+**Referenced by a skill?** Yes — `/doctor`.
 
 ---
 
@@ -90,7 +90,7 @@ and log consumption guidance see `$HORIZON_DOCS/security/audit_logging.md`.
 - `--config PATH` — config file (default: `$HORIZON_ETC/aios_monitor.conf`)
 - `--log-dir PATH` — log directory (default: `$HORIZON_SYSTEM/logs/horizon_aios_monitor/`)
 
-**Referenced by a skill?** No.
+**Referenced by a skill?** Yes — `/monitor`.
 
 ---
 

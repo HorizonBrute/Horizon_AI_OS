@@ -198,15 +198,15 @@ The committed devroot file owns permissions only. The global `~/.claude/settings
 
 3.3.1 Threshold audio section references `play_sound.sh` and `horizon_system/sounds/claude_event_sounds/` via relative path from `$SCRIPT_DIR`. No absolute path — resolves correctly on any machine without substitution.
 
-3.3 **`$HORIZON_ROOT\horizon_system\harness_configs\git\gitconfig`**
+3.4 **`$HORIZON_ROOT\horizon_system\harness_configs\git\gitconfig`**
 
-3.3.1 `[core] excludesfile` — path to `.gitignore_global` at the repository root. Controls machine-global git ignore patterns.
+3.4.1 `[core] excludesfile` — path to `.gitignore_global` at the repository root. Controls machine-global git ignore patterns.
 
-3.3.2 `[user]` block — name, email, and GPG signing key fingerprint. Must be updated to the new user's identity on each machine.
+3.4.2 `[user]` block — name, email, and GPG signing key fingerprint. Must be updated to the new user's identity on each machine.
 
-3.4 **`$HORIZON_ROOT/.claude/CLAUDE.md`**
+3.5 **`$HORIZON_ROOT/.claude/CLAUDE.md`**
 
-3.4.1 `$HORIZON_ROOT/.claude/CLAUDE.md` — contains absolute `@` import paths to invariant docs.
+3.5.1 `$HORIZON_ROOT/.claude/CLAUDE.md` — contains absolute `@` import paths to invariant docs.
 Must be updated on each new machine to use the local `$HORIZON_ROOT` path.
 
 ---
