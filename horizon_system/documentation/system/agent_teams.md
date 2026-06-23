@@ -239,6 +239,41 @@ Today SAILL covers:
 3. **Iteration** — `Loop` (re-run an earlier role with feedback `until <pass> or <cap>`,
    looping back to a named role so renumbering never breaks the target).
 
+### SAILL primitives
+
+Each flag is a **primitive** — one small, atomic, composable operation, not a recipe.
+Like the closed-class control words of a programming language (`if`, `while`, `parallel`,
+`await`), the set is intentionally small; expressive power comes from **composing**
+primitives in a team definition, not from piling on bespoke flags. A primitive:
+
+1. **Does exactly one thing** — a condition, a concurrency move, a sync point, an
+   iteration. If a flag needs an "and", it is two primitives.
+2. **Is orthogonal** — it combines cleanly with the others (`(`#group`, if asked, parallel)`)
+   with no special cases.
+3. **Has a single registry-defined meaning** — identical everywhere it appears.
+4. **Is context-light** — rich meaning in one or two words, so a whole loop fits in a
+   glance and a small prompt.
+
+Compose existing primitives before inventing a compound flag. Add a new primitive only
+for a genuinely new control-flow idea (a new kind of branch, gate, or synchronization) —
+never to encode one team's specifics, which belong in that role's charter prose.
+
+### Naming a SAILL primitive
+
+Names are the interface; choose them so the notation stays terse and self-translating:
+
+1. **Reads as English in place.** Slotted into a role it should parse naturally —
+   `Validator (`#midcost`, if asked)`, `Crawler (`#investigate`, parallel)`.
+2. **One or two words.** Lowercase for inline conditions/modifiers (`if needed`,
+   `parallel`, `wait`); Capitalized for an annotation primitive that introduces its own
+   clause (`Loop`, and any future `Gate` / `Branch`).
+3. **Names the behavior, not the mechanism** — what happens, never how it is implemented.
+4. **Self-translating** — a human should render it to plain English without opening the
+   registry. If it needs a footnote to be understood, rename it.
+5. **Stable and distinct** — never collide with another primitive or a `#model-group`
+   name, and pick a name you will not have to rename (renames ripple through every team
+   definition that uses it).
+
 The vocabulary lives in `$HORIZON_ETC/agent_team_flags.md` (shipped) plus
 `local.agent_team_flags.md` (your additions) — a deliberately dense, info-heavy block
 loaded into context every session, so any agent grasps the flags without consulting a

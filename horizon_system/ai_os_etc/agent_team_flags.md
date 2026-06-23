@@ -1,6 +1,6 @@
 # Agent Team Flags — Standardized AI Loop Language (SAILL)
 
-Role markers beyond label + model group. Loaded every session (keep terse); read by
+Role primitives beyond label + model group (small, composable; compose, don't pile on). Loaded every session (keep terse); read by
 `resolve_agent_teams.py`; extend in `local.agent_team_flags.md`. Forms: **inline** = token
 in `(`#group`, <flag>)`; **annot** = `**Name:** …` line under the role.
 
