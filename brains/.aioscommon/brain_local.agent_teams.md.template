@@ -1,0 +1,14 @@
+# Local Agent Teams ([BRAIN_NAME] brain) — brain-local override (gitignored; never synced or clobbered)
+
+<!--
+Brain-local team overrides for [BRAIN_NAME]. This file is deployed by
+`horizon_aios_create_brain.py` Phase 5 to `brains/[BRAIN_NAME]/.claude/local.agent_teams.md`
+and is @-imported by the brain's sibling `agents.md`.
+
+This brain inherits base team definitions from the OS chain (via the root `agent_teams.md`
+loaded by the root `agents.md`). Define brain-specific team overrides here using the same
+`###`-heading-per-team format as `agent_teams.md`. A same-named team here overrides the
+inherited definition; new team names are unioned in.
+
+Keep it short — this file loads into context every session. See file_structure_invariants.md §13.
+-->

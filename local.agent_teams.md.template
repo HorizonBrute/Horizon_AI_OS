@@ -1,0 +1,13 @@
+# Local Agent Teams — machine-local override (gitignored; never synced or clobbered)
+
+<!--
+This is the TEMPLATE. `aios setup` materializes it to `local.agent_teams.md` (same
+directory, gitignored) if absent. The sibling `agents.md` @-imports `local.agent_teams.md`
+so anything here overrides or extends the shipped team definitions in `agent_teams.md`.
+
+Define your own teams here using the same `###`-heading-per-team format as `agent_teams.md`.
+A team with the same name as a shipped team overrides it; teams with new names are added
+to the union. Keep it short — this file loads into context every session.
+
+See file_structure_invariants.md §13.
+-->

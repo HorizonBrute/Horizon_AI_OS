@@ -11,12 +11,10 @@ Harness-specific config: `horizon_system/harness_configs/<harness>/`. Invariants
 
 **The main session is an orchestrator, not a worker.** Decompose tasks, spawn agents, synthesize results. Never read files, write code, or run commands inline if the work can be delegated.
 
-**"Send an agent team"** means spawn in this order:
-1. **Orchestration agent** — breaks down the task and coordinates the rest
-2. **Log reader agent** *(if needed)* — gathers runtime evidence before planning
-3. **Planner agent** — designs the approach
-4. **Implementer agent** — writes the code
-5. **Validator agent** — verifies the fix and checks for regressions
+**"Send an agent team"** resolves through the Agent Teams framework defined in
+`$HORIZON_ROOT/agent_teams.md`. The generic phrase defaults to the **Full Team** there
+(Orchestrator → Log-reader → Planner → Implementer → Validator). Named variants (e.g.
+"send an investigate-and-fix agent team") select the matching team by name.
 
 When in doubt, delegate.
 
