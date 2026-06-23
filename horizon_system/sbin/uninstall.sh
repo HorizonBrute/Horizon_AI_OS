@@ -249,45 +249,117 @@ else
   skip "~/.horizon/ not found — nothing to remove."
 fi
 
-# Only remove settings.json if we can determine bootstrap created it.
-# Bootstrap (Section 5b) copies the OS-appropriate template and substitutes the
-# literal "AIOS_EXEC_WRAPPER" placeholder with the per-machine wrapper path.
-# We reconstruct that freshly-bootstrapped default and compare against what's on disk:
-#   - identical    -> bootstrap-created and untouched; safe to remove (confirm-gated).
-#   - differs/none -> user-customized or user-authored; PRESERVE it (err toward keeping).
+# Decide whether bootstrap created settings.json (safe to remove) or the user owns
+# it (must preserve). Precedence:
+#   (a) PROVENANCE STAMP (authoritative): bootstrap writes ~/.claude/.horizon-settings.stamp
+#       containing the lowercase SHA-256 hex of the settings.json bytes it wrote.
+#       Re-hash the current file; equal => bootstrap-created and untouched => REMOVE
+#       (confirm-gated) and drop the stamp. Differs => user edited it post-bootstrap =>
+#       PRESERVE; drop the now-stale stamp (it no longer describes the file).
+#   (b) NO STAMP (older installs / pre-existing user settings.json): fall back to the
+#       content-equality heuristic — reconstruct template+substitution and compare,
+#       BOM-safe. Match => remove; else => preserve.
+# Stamp contract (must match bootstrap.sh writer byte-for-byte):
+#   path   : ~/.claude/.horizon-settings.stamp
+#   format : one line, lowercase SHA-256 hex of settings.json's on-disk bytes,
+#            no trailing newline
 SETTINGS_JSON="$OWNER_HOME/.claude/settings.json"
-if [ -f "$SETTINGS_JSON" ]; then
-  # Mirror bootstrap.sh Section 5b template + wrapper selection exactly.
-  AIOS_EXEC_WRAPPER="$OWNER_HOME/.horizon/bin/aios-exec.sh"
-  case "$(uname -s)" in
-    MINGW*|MSYS*|CYGWIN*)
-      SETTINGS_TEMPLATE="$HORIZON_SYSTEM/templates/claude_code/settings.json"
-      AIOS_EXEC_WRAPPER="$OWNER_HOME/.horizon/bin/aios-exec.ps1" ;;
-    *) SETTINGS_TEMPLATE="$HORIZON_SYSTEM/templates/claude_code/settings_unix.json" ;;
-  esac
+SETTINGS_STAMP="$OWNER_HOME/.claude/.horizon-settings.stamp"
 
-  is_bootstrap_default=false
-  if [ -f "$SETTINGS_TEMPLATE" ]; then
-    expected="$(sed "s|AIOS_EXEC_WRAPPER|$AIOS_EXEC_WRAPPER|g" "$SETTINGS_TEMPLATE")"
-    on_disk="$(cat "$SETTINGS_JSON")"
-    if [ "$on_disk" = "$expected" ]; then
-      is_bootstrap_default=true
+# hash_file <path> -> prints lowercase SHA-256 hex (sha256sum on Linux, shasum on macOS)
+hash_file() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{print $1}'
+  else
+    shasum -a 256 "$1" | awk '{print $1}'
+  fi
+}
+
+if [ -f "$SETTINGS_JSON" ]; then
+  decision=""   # "remove" or "preserve"
+
+  if [ -f "$SETTINGS_STAMP" ]; then
+    # (a) Stamp present — authoritative provenance check.
+    stamped="$(tr -d '[:space:]' < "$SETTINGS_STAMP" | tr '[:upper:]' '[:lower:]')"
+    current="$(hash_file "$SETTINGS_JSON")"
+    if [ -n "$stamped" ] && [ "$stamped" = "$current" ]; then
+      info "Provenance stamp matches current settings.json — bootstrap-created, unmodified."
+      decision="remove"
+    else
+      skip "~/.claude/settings.json was modified after bootstrap (provenance stamp mismatch) — PRESERVING it."
+      advisory "If you want it gone, remove ~/.claude/settings.json manually."
+      decision="preserve"
+      # The stamp no longer describes the file; drop it regardless.
+      if [ "$DRY_RUN" = "true" ]; then
+        dry "remove stale provenance stamp ~/.claude/.horizon-settings.stamp."
+      else
+        rm -f "$SETTINGS_STAMP"
+        ok "Removed stale provenance stamp ~/.claude/.horizon-settings.stamp."
+      fi
+    fi
+  else
+    # (b) No stamp — older install or pre-existing user file. Fall back to the
+    # content-equality heuristic. Mirror bootstrap.sh Section 5b template + wrapper
+    # selection exactly.
+    AIOS_EXEC_WRAPPER="$OWNER_HOME/.horizon/bin/aios-exec.sh"
+    case "$(uname -s)" in
+      MINGW*|MSYS*|CYGWIN*)
+        SETTINGS_TEMPLATE="$HORIZON_SYSTEM/templates/claude_code/settings.json"
+        AIOS_EXEC_WRAPPER="$OWNER_HOME/.horizon/bin/aios-exec.ps1" ;;
+      *) SETTINGS_TEMPLATE="$HORIZON_SYSTEM/templates/claude_code/settings_unix.json" ;;
+    esac
+
+    is_bootstrap_default=false
+    if [ -f "$SETTINGS_TEMPLATE" ]; then
+      expected="$(sed "s|AIOS_EXEC_WRAPPER|$AIOS_EXEC_WRAPPER|g" "$SETTINGS_TEMPLATE")"
+      # Strip a leading UTF-8 BOM (bytes EF BB BF) from the on-disk content so a
+      # BOM-only difference doesn't block removal. Use a literal BOM (built via
+      # printf) rather than sed \x escapes, which are GNU-only and silently no-op
+      # under BSD/macOS sed. $(...) already strips trailing newlines.
+      bom="$(printf '\357\273\277')"
+      on_disk="$(cat "$SETTINGS_JSON")"
+      on_disk="${on_disk#"$bom"}"
+      if [ "$on_disk" = "$expected" ]; then
+        is_bootstrap_default=true
+      fi
+    fi
+
+    if [ "$is_bootstrap_default" = "true" ]; then
+      info "No provenance stamp; content matches the freshly-bootstrapped default (fallback heuristic)."
+      decision="remove"
+    else
+      skip "~/.claude/settings.json differs from the bootstrap default (user-customized or user-authored) — PRESERVING it."
+      advisory "If you want it gone, remove ~/.claude/settings.json manually."
+      decision="preserve"
     fi
   fi
 
-  if [ "$is_bootstrap_default" != "true" ]; then
-    skip "~/.claude/settings.json differs from the bootstrap default (user-customized or user-authored) — PRESERVING it."
-    advisory "If you want it gone, remove ~/.claude/settings.json manually."
-  elif [ "$DRY_RUN" = "true" ]; then
-    dry "remove ~/.claude/settings.json (matches freshly-bootstrapped default)."
-  elif confirm "~/.claude/settings.json matches the bootstrap default — remove it?"; then
-    rm -f "$SETTINGS_JSON"
-    ok "Removed ~/.claude/settings.json (was the unmodified bootstrap default)."
-  else
-    skip "Keeping ~/.claude/settings.json — remove manually if needed."
+  if [ "$decision" = "remove" ]; then
+    if [ "$DRY_RUN" = "true" ]; then
+      dry "remove ~/.claude/settings.json (bootstrap-created) and its provenance stamp."
+    elif confirm "~/.claude/settings.json was created by bootstrap and is unmodified — remove it?"; then
+      rm -f "$SETTINGS_JSON"
+      ok "Removed ~/.claude/settings.json (was the unmodified bootstrap default)."
+      # Full teardown: drop the stamp so no dangling provenance file remains.
+      if [ -f "$SETTINGS_STAMP" ]; then
+        rm -f "$SETTINGS_STAMP"
+        ok "Removed provenance stamp ~/.claude/.horizon-settings.stamp."
+      fi
+    else
+      skip "Keeping ~/.claude/settings.json — remove manually if needed."
+    fi
   fi
 else
   skip "~/.claude/settings.json not found — nothing to remove."
+  # Guard against a dangling stamp left after the file was removed by other means.
+  if [ -f "$SETTINGS_STAMP" ]; then
+    if [ "$DRY_RUN" = "true" ]; then
+      dry "remove orphaned provenance stamp ~/.claude/.horizon-settings.stamp (settings.json already gone)."
+    else
+      rm -f "$SETTINGS_STAMP"
+      ok "Removed orphaned provenance stamp ~/.claude/.horizon-settings.stamp."
+    fi
+  fi
 fi
 
 # =============================================================================
