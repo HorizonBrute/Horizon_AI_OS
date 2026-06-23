@@ -1,6 +1,6 @@
 ---
 name: objective
-description: Create and maintain durable, multi-session objectives that hold long-term context across sessions. Use when the user types /objective, asks to "create an objective", "make a new objective", "list objectives", "show objective N", or "update objective N". Complementary to /handoff — handoffs are point-in-time, objectives are the durable goal they chain back to.
+description: Create and maintain durable, multi-session objectives that hold long-term context across sessions. Use when the user types /objective, asks to "create an objective", "make a new objective", "list objectives", "show objective N", or "update objective N". A bare /objective (no args) surfaces the conversation's active objective (from a handoff or an earlier mention), else lists existing ones, else offers to create one. Complementary to /handoff — handoffs are point-in-time, objectives are the durable goal they chain back to.
 tools: Read, Write, Edit, Glob, Bash
 ---
 
@@ -42,13 +42,48 @@ Parse the user's input after `/objective`:
 
 | Form | Action |
 |---|---|
+| `/objective` (no arguments) | **default** — surface the conversation's active objective, else list, else offer to create (see Default) |
 | `/objective <description>` | **create** with an auto-generated title |
 | `/objective named "The Title" "description"` | **create** with an explicit title |
 | `/objective list` | **list** |
 | `/objective show <N\|name>` or `/objective <N>` (bare number) | **show** |
 | `/objective update <N\|name> <note>` | **update** |
 
-If ambiguous, ask the user which they meant. Then follow the matching section below.
+Check the **no-arguments** case first: empty input is the Default, not a create with an empty description. If ambiguous beyond that, ask the user which they meant. Then follow the matching section below.
+
+---
+
+## Default (bare `/objective`, no arguments)
+
+A raw `/objective` orients the user on what they are working toward: surface the
+**active objective** if this conversation has one, otherwise list, otherwise offer
+to create. It never silently creates an empty objective.
+
+D.1 **Identify the objective associated with this conversation**, in priority order:
+   1. A handoff read into this session that names an objective — the handoff's
+      `Objective:` field carries the number, name, and/or file path. If it points
+      to a real objective (not "none"/empty), that is the active one.
+   2. An objective the user referenced earlier in this conversation — one they
+      created, showed, updated, or named explicitly.
+   If exactly one is identified, treat it as the **active objective**. If two or
+   more compete, list those and ask which to focus.
+
+D.2 **Resolve and read the index** (Step 1), and glob `<objectives_dir>/*.md` to
+   know what exists on disk.
+
+D.3 Branch:
+   - **Active objective found** → run **Show** on it (load it, give the 2–4 line
+     orientation). If other objectives also exist, add a one-line
+     `other open objectives: N, M` pointer so they are discoverable.
+   - **No active objective, but objectives exist** → run **List**, then ask whether
+     to continue one (`/objective show N` / `/objective update N <note>`) or start a
+     new one.
+   - **No objectives at all** → there is nothing to show; **seek to create one**.
+     Ask the user for the goal in one line — what they are working toward and why it
+     matters — then follow **Create**. Do not invent the goal: if the user has not
+     stated one and the conversation has no clear durable goal, ask first.
+
+D.4 The no-echo rule applies — never paste objective bodies into chat (see Notes).
 
 ---
 
