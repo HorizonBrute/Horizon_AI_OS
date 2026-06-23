@@ -75,6 +75,10 @@ What it does:
   `git fetch` + read that branch for cross-machine awareness.
 - **Refuses** to push to the public Horizon upstream — that would publish your
   private transcripts. You must configure your own remote.
+- **Self-supplies a commit identity** when none is configured — no global
+  `git config user.name/user.email` is required; it falls back to
+  `Horizon AIOS <horizon-aios@localhost>`. The only hard prerequisite is
+  `AIOS_BACKUP_REMOTE` pointing at your own (non-upstream) remote.
 
 It never edits the framework `.gitignore`, so upstream updates stay
 conflict-free. Run it manually, or on a schedule (cron / Task Scheduler).

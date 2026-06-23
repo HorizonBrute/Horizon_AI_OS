@@ -65,12 +65,12 @@ The scripts mirror `bootstrap` section by section:
 | 2  | `~/.claude/CLAUDE.md` redirect lines (your own content is preserved; file deleted only if it becomes empty) |
 | 3  | `~/.claude/skills/` junction + user-skill symlinks in `skills_sbin/` (link-only — never the targets) |
 | 4  | `$HORIZON_ROOT/handoffs/` and `objectives/` — **only if empty** |
-| 5  | `~/.horizon/` tree (registry, `active_env.*`, `aios-exec` wrappers); offers to remove `~/.claude/settings.json` |
+| 5  | `~/.horizon/` tree (registry, `active_env.*`, `aios-exec` wrappers); removes `~/.claude/settings.json` **only if it byte-matches the freshly-bootstrapped default** — a user-customized or user-authored file is preserved with a `[MANUAL]` advisory |
 | 5b | `~/.claude/projects` junction (memory redirect) — **link only; memory data in `$HORIZON_ROOT/memory` is left intact** |
 | 6  | `.git/hooks/commit-msg`, `pre-commit`; git `core.hooksPath` |
 | 7  | `$HORIZON_BIN` entry from system PATH (Machine-scope on Windows; `/etc/profile.d/horizon_aios.sh` + macOS `/etc/paths.d/horizon-aios`) |
 | 9  | `$HORIZON_ETC/aios_local.conf`; `$HORIZON_SYSTEM/logs/` — **only if empty** |
-| 10 | `brains`-group ACEs across `$HORIZON_SYSTEM` subtrees |
+| 10 | `brains`-group ACEs across `$HORIZON_SYSTEM` subtrees — `icacls /remove` (not `/remove:g`) so both grant **and** harden's DENY ACEs are stripped |
 
 ## What it does NOT remove (manual — printed as `[MANUAL]` advisories)
 
@@ -103,10 +103,16 @@ this is where uninstall bugs hide:
 5. **System PATH cleaned:** no `…\horizon_system\bin` entry remains
    (`[System.Environment]::GetEnvironmentVariable("Path","Machine")` on Windows).
 6. **Git hooks + ACEs:** `.git/hooks/commit-msg` is gone;
-   `icacls horizon_system\sbin` shows no `brains` ACEs (Windows).
+   `icacls horizon_system\sbin` shows no residual `brains`-group ACEs — neither
+   grant nor DENY (Windows). `/remove` strips both; a leftover DENY would mean
+   the old `/remove:g` was still in effect.
+7. **settings.json preserved when customized:** if `~/.claude/settings.json`
+   differed from the bootstrap default, it is still present (uninstall prints a
+   `[MANUAL]` advisory rather than deleting it).
 
 A second `aios uninstall --yes` should report everything as already-removed
-(`[SKIP]`) and make no changes — confirming idempotency.
+(`[SKIP]`) and make no changes — confirming idempotency. In particular the
+re-run must leave **no residual `brains`-group DENY ACEs** behind.
 
 ---
 

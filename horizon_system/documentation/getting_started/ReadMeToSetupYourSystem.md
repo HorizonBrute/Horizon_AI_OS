@@ -449,10 +449,10 @@ git config --local core.hooksPath ./horizon_system/harness_configs/git/hooks
 10.3 Stage the OS layer files:
 
 ```bash
-git add .claude/CLAUDE.md .claude/settings.json horizon_system/ handoffs/ .gitignore .gitignore.user
+git add .claude/CLAUDE.md .claude/settings.json horizon_system/ handoffs/ .gitignore .gitignore.user.template
 ```
 
-Do not stage `settings.local.json` — it is machine-local and excluded by `.gitignore`.
+Do not stage `settings.local.json` or `.gitignore.user` — both are machine-local and excluded by `.gitignore` (only the tracked `.gitignore.user.template` is committed).
 
 10.4 Create the initial commit. GPG signing fires automatically because `commit.gpgsign = true` is set in the global gitconfig:
 
@@ -472,7 +472,7 @@ The output should include a `gpg: Good signature` line.
 
 ## 11. Personal Ignore Layer — `.gitignore.user`
 
-`$HORIZON_ROOT/.gitignore.user` is a tracked file for user-personal ignore patterns. It is separate from the system `.gitignore` so personal exclusions do not intermingle with OS-managed patterns.
+`$HORIZON_ROOT/.gitignore.user` is a machine-local file for user-personal ignore patterns. It is itself git-ignored (only `.gitignore.user.template` is tracked) and is separate from the system `.gitignore` so personal exclusions do not intermingle with OS-managed patterns. Bootstrap auto-creates it from the template on a fresh install (idempotent — never overwriting an existing file), so no manual copy is needed.
 
 11.1 The pre-commit hook automatically syncs `.gitignore.user` to `.git/info/exclude` on every commit, so Git always respects the current contents. Changes made to `.gitignore.user` take effect at the next commit — there is no manual sync step.
 
@@ -483,16 +483,15 @@ MyPersonalNotes/
 scratch/
 ```
 
-Then commit:
+The pre-commit hook picks the changes up on the next commit — no `git add` is needed (the file is git-ignored and intentionally never committed):
 
 ```bash
-git add .gitignore.user
-git commit -m "Add personal ignore patterns"
+git commit -m "Some OS-layer change"   # any commit re-syncs .gitignore.user
 ```
 
 Git will respect the new patterns from that commit forward.
 
-11.3 `.gitignore.user` is version-controlled and therefore portable. On a new machine it is cloned with the rest of the repository and activated automatically on the first commit.
+11.3 `.gitignore.user` is **not** version-controlled — it is git-ignored and machine-local, so it does not travel with a clone. On a new machine, bootstrap recreates it from `.gitignore.user.template` automatically (only `.gitignore.user.template` is cloned with the repository). The pre-commit hook then activates its patterns on the first commit.
 
 ---
 
