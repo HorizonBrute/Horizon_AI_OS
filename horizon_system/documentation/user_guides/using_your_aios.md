@@ -14,10 +14,11 @@ This wiki bridges the gap between initial setup and daily operation. It assumes 
 6. [Bring Your Own Harness and local.agents.md](#6-bring-your-own-harness-and-localagentsmd)
 7. [Model Preferences and Agent Teams](#7-model-preferences-and-agent-teams)
 8. [Understanding and Managing Context](#8-understanding-and-managing-context)
-9. [Gitignore, Local Config, and What Not to Commit](#9-gitignore-local-config-and-what-not-to-commit)
-10. [Enterprise Deployment](#10-enterprise-deployment)
-11. [Containerization, Cloud, and Infrastructure as Code](#11-containerization-cloud-and-infrastructure-as-code)
-12. [Bring Your Own Infrastructure — Integrated Identity and Existing Security](#12-bring-your-own-infrastructure--integrated-identity-and-existing-security)
+9. [The Terseness Contract](#9-the-terseness-contract)
+10. [Gitignore, Local Config, and What Not to Commit](#10-gitignore-local-config-and-what-not-to-commit)
+11. [Enterprise Deployment](#11-enterprise-deployment)
+12. [Containerization, Cloud, and Infrastructure as Code](#12-containerization-cloud-and-infrastructure-as-code)
+13. [Bring Your Own Infrastructure — Integrated Identity and Existing Security](#13-bring-your-own-infrastructure--integrated-identity-and-existing-security)
 
 ---
 
@@ -646,6 +647,54 @@ Create or edit `local.agent_teams.md` in any scope. The innermost scope wins. Ex
 
 Run `/agent-teams` to manage team definitions interactively. See `$HORIZON_DOCS/system/agent_teams.md` for the full invocation pattern, scope cascade, and loop/retry grammar.
 
+### 7.3 Loop / Retry Constructs
+
+A role in an agent team can declare a **Loop** to re-run an earlier role with feedback until a pass condition is met or an iteration cap is reached. Declare it inline below the role:
+
+> **Loop:** on `<condition>`, return feedback to `"<role name>"` and re-run from there; repeat until `<pass condition>` or `<max>` iterations, then `<action at cap>`.
+
+Four things a looping role must specify:
+
+1. **Condition** — what counts as a failure and triggers another pass (e.g., "validation fails").
+2. **Loop-back target** — the earlier role to re-run, by name (preferred over step number so renumbering never breaks the target).
+3. **Max iterations** — a hard cap that bounds cost and guarantees termination.
+4. **Cap action** — what to do if the cap is hit without passing: `report-failure` (stop and surface outstanding failures) or `proceed` (continue with a caveat). Prefer `report-failure`.
+
+The `full-team` Validator is the canonical example: if it fails, it returns specific feedback to the Implementer and re-runs from there — up to 3 iterations, then stops and reports rather than proceeding with broken output.
+
+### 7.4 Conditional Roles
+
+A role may be marked conditional by appending a flag inside its model-group parenthetical:
+
+- `(#group, if needed)` — the acting model runs the role only when it judges the role adds value for the task; otherwise it skips to the next.
+- `(#group, if asked)` — the role runs only when the user explicitly requests it (e.g., "…and validate it"); skipped by default.
+
+Conditions combine with loops: a conditional looping role loops only on runs where it actually executes.
+
+The `full-team` Log-reader is an example: `(#lowcost, if needed)` — skipped for tasks that need no runtime evidence.
+
+### 7.5 SAILL — Standardized AI Loop Language
+
+The conditional and loop flags above are part of **SAILL** (Standardized AI Loop Language) — a small, vendor-neutral vocabulary for expressing *how* a team runs, not just who is in it. A SAILL-annotated team definition is portable: the same notation is readable by a human, the acting model, and the `resolve_agent_teams.py` tooling.
+
+**The full flag vocabulary** is cataloged in `$HORIZON_ETC/agent_team_flags.md`, loaded every session. Current flags:
+
+| Flag | Form | Meaning |
+|---|---|---|
+| `if needed` | inline | Run only if it adds value; else skip |
+| `if asked` | inline | Run only when the user explicitly requests it; else skip |
+| `parallel` | inline | Run concurrently with adjacent `parallel` roles |
+| `wait` | inline | Wait for the preceding `parallel` group to finish (sync point) |
+| `Loop` | annotation | Re-run an earlier role with feedback until pass/cap (see §7.3) |
+
+**Extending the flag vocabulary:** add your own flags in `local.agent_team_flags.md` (gitignored, any scope) or via `/agent-teams`. The resolver parses flags generically — a new term works as soon as it appears in the file. List the current vocabulary at any time:
+
+```bash
+resolve_agent_teams.py --flags
+```
+
+Do not add new flags to `$HORIZON_ETC/agent_team_flags.md` directly; that file is synced from upstream. Use `local.agent_team_flags.md` for machine- or project-local extensions and propose community-useful terms upstream.
+
 ---
 
 ## 8. Understanding and Managing Context
@@ -732,9 +781,53 @@ This checks env vars, the skills junction, git hooks, the AIOS registry, and the
 
 ---
 
-## 9. Gitignore, Local Config, and What Not to Commit
+## 9. The Terseness Contract
 
-### 9.1 The Two-Gitignore Model
+### 9.1 What It Is
+
+The **Terseness Contract** is a set of authoring rules that governs every file loaded unconditionally into every AIOS session — the always-loaded chain. Because each byte in those files is billed on every session for every user and every brain, verbosity in them is a cost imposed on all interactions the AIOS will ever have.
+
+The always-loaded files include `agents.md`, `horizon_aios_agents.md`, `horizon_aios_model_prefs.md`, `agent_teams.md`, `agent_team_flags.md`, and the @-import chain that wires them together. The authoritative index of which files are in-scope is `$HORIZON_DOCS/terseness_contract_index.md`.
+
+### 9.2 The Seven Criteria
+
+A file in the always-loaded chain passes the Terseness Contract if, and only if:
+
+1. **Every line earns its keep.** Removing it would break the file's function or leave a required instruction unspecified.
+2. **Instructions are imperative, not discursive.** Tell the model what to do. Rationale belongs in `dev_values.md` or `philosophy.md`.
+3. **No rationale that belongs elsewhere.** If the "why" is in a higher-authority doc, cut the prose and use a pointer.
+4. **No inline examples when a pointer suffices.** "See `$HORIZON_DOCS/X.md`" is cheaper than an inline example.
+5. **No redundancy with sibling always-loaded files.** If another indexed file already says it, one copy is the defect.
+6. **No commented-out content.** Dead lines and `# TODO` prose still cost tokens.
+7. **@-imports only for always-needed files.** @-importing a large reference doc "for convenience" is a fail. Use a prose pointer instead.
+
+### 9.3 Checking Compliance
+
+Run the terseness check from any owner session:
+
+```
+/terseness-check
+```
+
+The skill evaluates each tracked file in the index against the seven criteria and reports `PASS` or `FAIL` per criterion per file. Files in the gitignored / user-controlled section of the index are checked and reported as `ADVISORY` — the user bears the cost of their own verbosity, so fixes are not applied without prompting.
+
+Run `/terseness-check` after adding or modifying any always-loaded file or @-import. Confirm all tracked files pass before committing.
+
+### 9.4 The Terseness Contract Index
+
+The authoritative file list with loading paths and per-file constraints is:
+
+```
+$HORIZON_DOCS/terseness_contract_index.md
+```
+
+Update it whenever a file is added to or removed from the always-loaded chain (a new @-import in any indexed file, or a new CLAUDE.md layer inserted into the harness loading path). The index is the contract's scope boundary — if a file is not listed, it is not subject to the strict contract (though always-loaded files added without updating the index will be caught on the next `/terseness-check` pass as a gap finding).
+
+---
+
+## 10. Gitignore, Local Config, and What Not to Commit
+
+### 10.1 The Two-Gitignore Model
 
 AIOS uses two gitignore mechanisms that serve different purposes:
 
@@ -753,7 +846,7 @@ RedTeam/
 
 The pattern takes effect on the next commit — no manual sync step. The file is machine-local and does not travel with a clone.
 
-### 9.2 What Is Never Committed
+### 10.2 What Is Never Committed
 
 These files are gitignored and must stay that way:
 
@@ -772,7 +865,7 @@ These files are gitignored and must stay that way:
 | `~/.claude/settings.json` | Global settings (points at machine-specific wrapper paths) |
 | `ai_os_etc/git_identity.local.gitconfig` | Machine-local git identity |
 
-### 9.3 Protecting Configuration Points — The Clobber Hazard
+### 10.3 Protecting Configuration Points — The Clobber Hazard
 
 An upstream sync (`git pull` / `aios sync`) will update the OS layer. The files it can overwrite are tracked files: `agents.md`, `horizon_system/`, the shipped templates.
 
@@ -787,7 +880,7 @@ Never put machine-specific or personal configuration into the tracked files. A s
 
 If you want to ship a configuration change to all users (or to your own other machines), it belongs in the tracked files. If you want it only on this machine, it belongs in the gitignored files.
 
-### 9.4 Checking What a Sync Would Overwrite
+### 10.4 Checking What a Sync Would Overwrite
 
 Before pulling:
 
@@ -804,9 +897,9 @@ See `$HORIZON_DOCS/system/distribution_and_updates.md` for the full framework vs
 
 ---
 
-## 10. Enterprise Deployment
+## 11. Enterprise Deployment
 
-### 10.1 The Model: Organization Fork, Employee Clone
+### 11.1 The Model: Organization Fork, Employee Clone
 
 The Horizon AIOS distribution model is designed for downstream customization without merge conflicts. An enterprise maps directly onto this model:
 
@@ -820,7 +913,7 @@ Employee machine                               ← employee customizations in gi
 
 The organization forks the official upstream repo into their own Git infrastructure (GitHub Enterprise, GitLab, Bitbucket, Azure DevOps). That fork becomes the authoritative source of truth for the organization. Employees clone from the org fork, not from the official upstream. The org controls what ships to every employee; the official upstream controls what the org chooses to pull in.
 
-### 10.2 Where Organization Policy Lives
+### 11.2 Where Organization Policy Lives
 
 The framework/user-space split that protects individual user customizations from being clobbered by syncs works identically at the org level:
 
@@ -844,7 +937,7 @@ The org commits policy directly into the tracked framework files in their fork. 
 - Model-preference routing that reflects the org's approved models and cost policy
 - Hook scripts that write to the org's SIEM or compliance logging infrastructure
 
-### 10.3 Pulling Upstream Updates into the Org Fork
+### 11.3 Pulling Upstream Updates into the Org Fork
 
 The org maintains the fork like any upstream-tracking fork:
 
@@ -860,7 +953,7 @@ git push origin master      # employees sync from here
 
 The org can choose how aggressively to track upstream — immediate, quarterly, or only for specific security patches. The org's changes to tracked files (org policy additions to `agents.md`, etc.) merge with upstream changes normally. As long as the org has not duplicated content that lives in the user-space seam files, merges are clean by construction.
 
-### 10.4 Centralized Deployment and Force Install
+### 11.4 Centralized Deployment and Force Install
 
 For managed machines, the org can distribute and install the AIOS through standard enterprise software deployment mechanisms:
 
@@ -887,7 +980,7 @@ For managed machines, the org can distribute and install the AIOS through standa
 
 After the play runs, the system has a fully configured AIOS installation with org-approved configuration. User-specific customization happens afterward through the gitignored seam files.
 
-### 10.5 Multi-Operator and Team Environments
+### 11.5 Multi-Operator and Team Environments
 
 On a shared server or in a team environment where multiple humans operate the same AIOS installation:
 
@@ -898,7 +991,7 @@ On a shared server or in a team environment where multiple humans operate the sa
 
 See `$HORIZON_DOCS/deployment/server.md` → "Multi-Operator Server Pattern" for the full treatment.
 
-### 10.6 Sync Schedule and Drift Prevention
+### 11.6 Sync Schedule and Drift Prevention
 
 To keep employee machines current with the org fork without requiring manual pulls:
 
@@ -916,9 +1009,9 @@ See `$HORIZON_DOCS/system/distribution_and_updates.md` for the complete framewor
 
 ---
 
-## 11. Containerization, Cloud, and Infrastructure as Code
+## 12. Containerization, Cloud, and Infrastructure as Code
 
-### 11.1 Why AIOS Is IaC-Friendly
+### 12.1 Why AIOS Is IaC-Friendly
 
 Horizon AIOS is, at its core, a set of files and filesystem ACL rules. There are no daemons that must be running, no databases to migrate, no external state to synchronize. The entire system state is:
 
@@ -930,7 +1023,7 @@ Horizon AIOS is, at its core, a set of files and filesystem ACL rules. There are
 
 This maps directly to standard IaC patterns: declare the desired state, apply it, verify it.
 
-### 11.2 Docker
+### 12.2 Docker
 
 The AIOS ships Docker templates in `$HORIZON_SYSTEM/templates/docker/`:
 - `Dockerfile` — Ubuntu-based image; runs bootstrap as root before switching to the `aios` user; brains are OS users within the container
@@ -952,7 +1045,7 @@ docker exec -it horizon-aios claude
 
 See `$HORIZON_DOCS/deployment/docker.md` for the full reference.
 
-### 11.3 Cloud VM Provisioning (Terraform / Pulumi / cloud-init)
+### 12.3 Cloud VM Provisioning (Terraform / Pulumi / cloud-init)
 
 Because AIOS setup is a clone + bootstrap, it maps to any cloud provisioning tool that can run a shell script on a new VM:
 
@@ -1008,7 +1101,7 @@ resource "aws_instance" "aios_server" {
           - data_pipeline
 ```
 
-### 11.4 Kubernetes
+### 12.4 Kubernetes
 
 Kubernetes is the right orchestration layer when you need multiple AIOS instances at scale, per-brain pod isolation, or cloud-native autoscaling of brain workloads.
 
@@ -1064,7 +1157,7 @@ containers:
 
 This mirrors the OS-level isolation model at the container boundary.
 
-### 11.5 Container Registry and Image Management
+### 12.5 Container Registry and Image Management
 
 The standard image management workflow for an org:
 
@@ -1073,7 +1166,7 @@ The standard image management workflow for an org:
 1.3 Mutable state (logs, handoffs, brain workspaces, credentials) lives in volumes — never in the image.
 1.4 An AIOS update = a new image build. Volumes are unaffected. Rollback = pin to the previous image tag.
 
-### 11.6 Secrets Management in Cloud Environments
+### 12.6 Secrets Management in Cloud Environments
 
 The AIOS brain credential system uses OS-native keystores (`horizon_aios_brain_credential.py`). In containerized or cloud environments, the OS keystore is often not available. The operator-owned integration pattern:
 
@@ -1085,9 +1178,9 @@ The AIOS does not prescribe a cloud secrets solution. `horizon_aios_brain_creden
 
 ---
 
-## 12. Bring Your Own Infrastructure — Integrated Identity and Existing Security
+## 13. Bring Your Own Infrastructure — Integrated Identity and Existing Security
 
-### 12.1 The Core Principle
+### 13.1 The Core Principle
 
 Horizon AIOS is not a security framework. It does not implement its own identity model, its own access control engine, or its own audit pipeline. It is an AI-focused application layer that runs inside existing OS infrastructure using the same mechanisms IT has always used.
 
@@ -1100,7 +1193,7 @@ This means everything your organization already operates for security and identi
 
 The security team's question "how does this work?" has a simple answer: **the same way everything else works**.
 
-### 12.2 Active Directory and Integrated Identity Providers
+### 13.2 Active Directory and Integrated Identity Providers
 
 The AIOS security model is built on OS user accounts and filesystem group memberships. If those accounts and groups are managed by an identity provider — Active Directory, Azure AD/Entra ID, LDAP, FreeIPA — the model works identically. The ACLs reference group names; where those groups come from is the OS's concern, not AIOS's.
 
@@ -1135,7 +1228,7 @@ When a Linux machine is joined to Active Directory via SSSD, domain users and gr
 
 On Intune-managed Windows machines with Azure AD join, local group membership and NTFS ACLs function normally. The `brains` local group and per-brain groups are machine-local (not synced to Azure AD), which is appropriate — they are machine-local security boundaries. Azure AD conditional access policies apply to interactive logons; the brain's non-interactive scheduled-task logon (`SeBatchLogonRight`) is governed by local security policy, not Azure AD, which is the correct separation.
 
-### 12.3 SIEM and Security Monitoring Integration
+### 13.3 SIEM and Security Monitoring Integration
 
 AIOS produces two audit streams:
 
@@ -1161,7 +1254,7 @@ Filter on `source="Horizon.AIOS"` to isolate AIOS integrity events.
 
 AIOS gives you the structure and the log location. The integration with your SIEM is yours — it plugs directly into whatever audit infrastructure you already operate, using the same configuration you use for every other application.
 
-### 12.4 Group Policy and System-Level Controls
+### 13.4 Group Policy and System-Level Controls
 
 Because brain accounts are real OS accounts, every system-level control that applies to service accounts applies to brains:
 
@@ -1180,7 +1273,7 @@ Because brain accounts are real OS accounts, every system-level control that app
 - Brain accounts can be assigned to specific network zones. If the brain only needs to reach the AI API endpoint and a specific internal data source, firewall rules can enforce that precisely — same as any service account.
 - On Windows domain environments, Windows Firewall rules can be scoped per-user via Group Policy.
 
-### 12.5 What AIOS Adds — and What It Doesn't
+### 13.5 What AIOS Adds — and What It Doesn't
 
 | Concern | Who handles it | AIOS's role |
 |---|---|---|
@@ -1221,3 +1314,5 @@ AIOS is the AI-focused application. Everything else — identity, access governa
 | File structure invariants (authoritative) | `$HORIZON_ETC/file_structure_invariants.md` |
 | Updating AIOS | `$HORIZON_DOCS/getting_started/updating.md` |
 | Cloud sync exclusions | `$HORIZON_DOCS/cloud_sync_exclusions.md` |
+| Terseness Contract (authoritative index) | `$HORIZON_DOCS/terseness_contract_index.md` |
+| Agent team flags / SAILL vocabulary | `$HORIZON_ETC/agent_team_flags.md` |

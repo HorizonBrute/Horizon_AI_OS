@@ -4,6 +4,7 @@ Invariant documents — authoritative:
 - Security invariants: `$HORIZON_ETC/security_invariants.md`
 - File structure invariants: `$HORIZON_ETC/file_structure_invariants.md`
 - Personalization model: `$HORIZON_ETC/ai_os_personalizations.md`
+- Terseness contract: `$HORIZON_DOCS/terseness_contract_index.md`
 
 User documentation — constitutional (the canonical user-facing reference):
 - Documentation index: `$HORIZON_DOCS/index.md`

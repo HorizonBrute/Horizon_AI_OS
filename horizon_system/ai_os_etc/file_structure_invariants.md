@@ -102,6 +102,7 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   ├── getting_started/            # Setup guide
 │   │   ├── security/                   # Security and audit-logging docs
 │   │   ├── system/                     # System config reference, AIOS switching
+│   │   ├── terseness_contract_index.md # Authoring invariant: always-loaded file contract (CC-T, /terseness-check)
 │   │   └── *.md                        # Root docs: philosophy, dev_values, utilities, context_loading, etc.
 │   ├── sounds/                         # Audio assets for event hooks
 │   │   ├── sounds.map                  # AIOS default event→sound mapping (see Section 10)
