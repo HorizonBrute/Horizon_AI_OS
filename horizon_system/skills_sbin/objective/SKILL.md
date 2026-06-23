@@ -6,7 +6,7 @@ tools: Read, Write, Edit, Glob, Bash
 
 # Skill: /objective
 
-**Model preference:** `#midcost` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
+**Model preference:** `#lowcost` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
 
 Objectives are durable-but-ephemeral notepads for major goals spanning multiple sessions. They hold long-term context — the goal and why it matters — that a single handoff is too short-lived to carry.
 

@@ -6,7 +6,7 @@ tools: Read, Grep, Glob, Edit, Bash
 
 # Skill: /model-prefs-assign
 
-**Model preference:** `#midcost` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
+**Model preference:** `#lowcost` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
 
 Maintenance tool for the per-skill model-preference callouts. Every AIOS skill
 should declare, as a one-line BODY callout, which model group (`#lowcost`,

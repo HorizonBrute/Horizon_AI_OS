@@ -6,7 +6,7 @@ tools: Read, Grep, Glob, Bash, Edit, Write
 
 # Skill: /horizon_aios_dev_consistency_check
 
-**Model preference:** `#highcap` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
+**Model preference:** `#midcost` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
 
 Run a consistency validation pass over the Horizon AIOS repo using the standing
 standard at `$HORIZON_DOCS/development_tools/consistency_checks.md`. That file —

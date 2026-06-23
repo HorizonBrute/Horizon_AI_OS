@@ -621,6 +621,9 @@ The extend file is gitignored and machine-local — no commit needed.
 See `$HORIZON_DOCS/system/model_preferences.md` for the full reference
 (member grammar, runtime qualification, fallback order, reliability notes).
 
+If you are authoring skills, see `$HORIZON_DOCS/system/skill_model_groups.md` for
+how skills declare their preferred model group.
+
 ---
 
 ## Adding a New Project
