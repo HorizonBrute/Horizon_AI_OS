@@ -56,8 +56,17 @@ include an explicit Deny for the `brains` group. Also checks monitor status
 that touches the bootstrap sequence, or whenever something behaves unexpectedly
 and you need a quick status read.
 
-**Key flags:** None — it runs all checks unconditionally and prints a summary.
-Exit code is 1 if any check failed, 0 if only warnings or clean.
+**Key flags:**
+
+- `--post-setup` — after the standard checks, run three post-install
+  verifications: a test sound through the canonical sound chokepoint
+  (`resolve_sound.py`), statusline command resolution, and git
+  `commit.gpgsign`. A muted sound config (`sounds_enabled` off) reports a
+  clean `[SKIP]` rather than a failure; the summary then reports a skipped
+  count alongside passed/warnings/failures.
+
+Exit semantics are unchanged by `--post-setup`: exit 1 if any check FAILs, 0
+otherwise (SKIP and WARN never fail the run).
 
 **Referenced by a skill?** Yes — `/doctor`.
 
@@ -446,7 +455,15 @@ scheduled task; run it manually to sync on demand.
 **When to use it:** To pull the latest AIOS layer manually, or as the body of the
 scheduled sync job installed by `horizon_aios_setup_sync_schedule.py`.
 
-**Key flags:** None — all behaviour comes from `aios_local.conf`.
+**Key flags:**
+
+- `--status` — read-only health check: reports whether auto-sync is installed
+  and when it last ran/succeeded. Never triggers a sync. (See `sync_setup.md`
+  for the exit-code contract.)
+- `--help` — usage.
+
+Default (no flags) performs the fast-forward sync; all sync behaviour comes
+from `aios_local.conf`.
 
 **Referenced by a skill?** No.
 

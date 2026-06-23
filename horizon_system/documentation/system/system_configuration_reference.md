@@ -344,4 +344,4 @@ git commit -m "Initial Horizon AIOS OS layer commit"
 
 7.8 Add any personal ignore patterns to `.gitignore.user` and commit. The pre-commit hook syncs them to `.git/info/exclude` automatically.
 
-7.9 Verify: launch Claude Code, confirm the statusline renders, confirm sounds fire on stop and permission request, and confirm `git log --show-signature -1` shows a valid GPG signature.
+7.9 Verify: launch Claude Code, confirm the statusline renders, confirm sounds fire on stop and permission request, and confirm `git log --show-signature -1` shows a valid GPG signature. Or run `horizon_aios_doctor.py --post-setup` to automate these post-install checks: it validates `commit.gpgsign` (the signed-commit / DCO requirement, P.4), checks the statusline dispatcher `statusline.sh` (P.8.2) rather than the `settings.json` wiring, and plays a test sound while respecting the `sounds_enabled` master/project mute switch in `aios_sounds.conf` (P.8.4) — a muted config is reported as a clean SKIP.
