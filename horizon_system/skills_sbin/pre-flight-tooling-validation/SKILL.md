@@ -83,6 +83,11 @@ can run end-to-end. **Write it to the canonical path**
 shared lifecycle-test artifacts — useful to the owner and any future contributors —
 not throwaway scratch. Each prompt must:
 - State it requires elevation and a clean machine; never run on the dev box.
+- **Not prescribe install locations.** Open with a CONFIGURE step that ASKS the
+  operator which directory to use for AIOS install #1 and #2 (and the clone URL +
+  backup remote), waits for answers, and validates them (the two roots must differ,
+  must not be an existing AIOS root or owner checkout, parents writable). Never
+  default or hardcode a root path (e.g. `C:\devroot`).
 - Walk the full lifecycle in order: clone → bootstrap → **create a brain** →
   **register + create a second AIOS in another dir** → **switch back and forth** →
   back up user data to the operator's own remote → **uninstall / delete** (brain

@@ -33,12 +33,26 @@ Work in an ELEVATED PowerShell. Rules:
 - This must NOT be run on a primary/owner machine — bootstrap rewrites ~/.claude and local
   security policy.
 
-Set these variables first:
-  $Remote       = "<your-clone-URL>"
-  $Root1        = "C:\devroot"
-  $Root2        = "C:\horizon-home"
-  $Brain        = "testbrain"
-  $BackupRemote = "<your-own-scratch-remote>"
+0. CONFIGURE — ASK THE OPERATOR FIRST (do not assume any paths)
+   Before setting variables or running anything, ASK the operator these questions and
+   wait for answers. Do NOT prescribe or default the install locations:
+     - Which directory should hold AIOS install #1 (the primary AIOS)?      -> $Root1
+     - Which directory should hold AIOS install #2 (the second AIOS)?       -> $Root2
+     - What clone URL should be used?                                       -> $Remote
+     - What scratch remote should user-data backup push to?                 -> $BackupRemote
+   Validate the two install directories before proceeding:
+     - $Root1 and $Root2 MUST be different paths.
+     - Neither may be an existing Horizon AIOS root or a primary/owner checkout
+       (refuse C:\devroot or any directory that already contains horizon_system\).
+     - Their parent directories must exist and be writable; the leaf dirs should not
+       already exist (git clone will create them).
+   Then set the variables from the operator's answers:
+     $Remote       = "<operator-provided clone URL>"
+     $Root1        = "<operator-provided dir for AIOS #1>"
+     $Root2        = "<operator-provided dir for AIOS #2>"
+     $Brain        = "testbrain"
+     $BackupRemote = "<operator-provided scratch remote>"
+   Echo the final values back and get the operator's confirmation before step 1.
 
 1. INSTALL (capability 1)
    git clone $Remote $Root1 ; cd $Root1
