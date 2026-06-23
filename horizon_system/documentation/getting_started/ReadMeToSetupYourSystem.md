@@ -66,7 +66,7 @@ P.8 An **SSH key pair** must exist (default: `~/.ssh/id_ed25519`) and the public
 
 Verify: `ssh -T git@github.com` — should return an authentication acknowledgement (not a permission denied error).
 
-P.9 A **GPG key** must be generated and available in the local keyring. The key fingerprint must be entered in `$HORIZON_BIN/harness_configs/git/gitconfig` during setup.
+P.9 A **GPG key** must be generated and available in the local keyring. The key fingerprint must be entered in `$HORIZON_SYSTEM/harness_configs/git/gitconfig` during setup.
 
 Verify: `gpg --list-secret-keys --keyid-format LONG` — must show at least one secret key.
 
@@ -86,7 +86,7 @@ P.12 **Developer Mode is not required**.
 
 **Runtime**
 
-P.13 **`$HORIZON_ROOT` must be a stable, permanent path.** All config files inside the repository embed this path as a literal string. If the root directory is moved or renamed after setup, path substitution must be re-run on every file listed in the Path Dependencies Catalog (see `$HORIZON_DOCS/system/system_configuration_reference.md`).
+P.13 **`$HORIZON_ROOT` is written into the machine-local config on first setup.** If you later need to move the repo to a new location, run `horizon_aios_relocate.py` to update all machine-local instance pointers automatically (see `$HORIZON_DOCS/system/system_configuration_reference.md` Section 3). Choose the path before bootstrap to avoid this step.
 
 P.14 An **audio output device** must be present for sound hooks to play. If no device is available, the hooks fail silently — Claude Code operation is unaffected.
 
@@ -157,7 +157,7 @@ Complete all prerequisites before beginning setup. Each must be true before proc
 
 ## 3. Clone the Repository
 
-3.1 Decide the absolute path where Horizon AIOS will live on this machine. This is `$HORIZON_ROOT`. Example: `C:\devroot` on Windows, `/home/username/devroot` on Linux/macOS. This path must be stable — moving it later requires re-running path substitution on multiple files.
+3.1 Decide the absolute path where Horizon AIOS will live on this machine. This is `$HORIZON_ROOT`. Example: `C:\devroot` on Windows, `/home/username/devroot` on Linux/macOS. If you later move the repo, run `horizon_aios_relocate.py` to update machine-local pointers.
 
 3.2 Create the parent directory if it does not already exist:
 
@@ -365,34 +365,26 @@ It is idempotent, prunes stale links, and refuses to shadow an OS skill of the s
 
 ## 8. Update Path-Sensitive Strings in the Repository
 
-Several files inside the repository contain hardcoded paths that must reference `$HORIZON_ROOT` on this machine. Run each substitution below.
+Some files require per-machine values (user identity, GPG key). The global `~/.claude/settings.json` uses the AIOS-independent `aios-exec` wrapper and needs no path substitution. Update the items below.
 
-8.1 **`$HORIZON_ROOT/.claude/settings.json`** — contains four path references:
+8.1 **`$HORIZON_ROOT/.claude/settings.json`** — no per-machine path substitution required.
 
-8.1.1 `statusLine.command` — path to `statusline-context-alerts.ps1`
+The committed devroot file (`$HORIZON_ROOT/.claude/settings.json`) contains only devroot-scoped
+permissions with no hardcoded paths. The machine-local global file (`~/.claude/settings.json`,
+copied from the template during bootstrap) routes hooks and statusline through the stable
+`~/.horizon/bin/aios-exec.{ps1,sh}` wrapper — a home-relative path that does not embed
+`$HORIZON_ROOT`. No manual substitution is needed for either file.
 
-8.1.2 `hooks.Stop[0].hooks[0].command` — path to `work_complete.wav`
-
-8.1.3 `hooks.PermissionRequest[0].hooks[0].command` — path to `InputNeeded.wav`
-
-8.1.4 `hooks.StopFailure[0].hooks[0].command` — path to `api_fail.wav`
-
-Open `settings.json` in an editor and replace every occurrence of the previous machine's root path with `$HORIZON_ROOT`. PowerShell one-liner:
+If you are copying this AIOS install to a new root location after initial setup, use
+`horizon_aios_relocate.py` to update the machine-local instance pointers automatically:
 
 ```powershell
-# Replace <OLD_HORIZON_ROOT> with whatever root path is currently embedded in the file
-# (e.g. C:\devroot or /home/user/devroot — check with: Select-String -Path "$HORIZON_ROOT\.claude\settings.json" -Pattern "devroot|horizon")
-(Get-Content "$HORIZON_ROOT\.claude\settings.json") -replace [regex]::Escape("<OLD_HORIZON_ROOT>"), "$HORIZON_ROOT" | Set-Content "$HORIZON_ROOT\.claude\settings.json"
+python "$HORIZON_SYSTEM\sbin\horizon_aios_relocate.py" --new-root "C:\new\path" --apply
 ```
 
-Linux / macOS (bash):
-```bash
-sed -i "s|/old/path/to/devroot|$HORIZON_ROOT|g" "$HORIZON_ROOT/.claude/settings.json"
-```
+Run without `--apply` first to preview what would change.
 
-Replace the old path with whatever root path is currently embedded in the file (check with `grep -n "devroot\|horizon" "$HORIZON_ROOT/.claude/settings.json" | head -20`).
-
-8.2 **`$HORIZON_BIN/harness_configs/git/gitconfig`** — the `excludesfile` field and user identity:
+8.2 **`$HORIZON_SYSTEM/harness_configs/git/gitconfig`** — the `excludesfile` field and user identity:
 
 Open the file and set:
 
@@ -415,7 +407,7 @@ Open the file and set:
 9.1 Include the repository's gitconfig from your global git config:
 
 ```bash
-git config --global include.path "$HORIZON_BIN/harness_configs/git/gitconfig"
+git config --global include.path "$HORIZON_SYSTEM/harness_configs/git/gitconfig"
 ```
 
 9.2 Verify git picks up the settings:
@@ -607,7 +599,7 @@ Projects are folders inside `$HORIZON_ROOT`. They automatically inherit the full
 
 Horizon AIOS supports multiple AI harnesses. To add support for a new harness (e.g., Cursor, Windsurf, Ollama):
 
-1. Create a template directory: `$HORIZON_SYSTEM/templates/<harness_name>/`
+1. Create a harness config directory: `$HORIZON_SYSTEM/harness_configs/<harness_name>/` (for runtime config: sounds map, hooks, README) and/or `$HORIZON_SYSTEM/templates/<harness_name>/` (for setup templates copied at bootstrap).
 2. Add a config template using `HORIZON_SYSTEM_PATH` and other placeholders instead of real paths. Document all placeholders in a `README.md` in the same directory.
 3. Wire event hooks to sounds in `$HORIZON_SYSTEM/sounds/`. Use root-level generic sounds for cross-harness compatibility. If the harness has vendor-voiced audio, add it to `$HORIZON_SYSTEM/sounds/<vendor>_event_sounds/`.
 4. Add a statusline script to `$HORIZON_BIN/statusline/` if the harness supports one.

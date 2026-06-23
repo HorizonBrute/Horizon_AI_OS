@@ -50,8 +50,8 @@ Project-specific context: tech stack, conventions, anything the agent needs for 
 
 ## 3. How to Add a New AI Harness
 
-1. Create a template directory at `$HORIZON_SYSTEM/templates/<harness_name>/`.
-2. Add a `settings.json` (or equivalent config file) template using `HORIZON_SYSTEM_PATH` and other placeholders instead of real paths. Document all placeholders in a `README.md` in the same directory.
+1. Create a harness config directory at `$HORIZON_SYSTEM/harness_configs/<harness_name>/` (for runtime config: hooks, sounds map, harness-specific settings) and/or a template directory at `$HORIZON_SYSTEM/templates/<harness_name>/` (for setup templates copied at bootstrap).
+2. Add a `settings.json` (or equivalent config file) template using placeholder strings (e.g., `AIOS_EXEC_WRAPPER`) instead of real paths. Document all placeholders in a `README.md` in the same directory.
 3. If the harness supports event hooks (audio, alerts), wire them to sounds in `$HORIZON_SOUNDS/`. Use root-level generic sounds unless you have vendor-voiced audio, in which case create `$HORIZON_SOUNDS/<vendor>_event_sounds/`.
 4. If the harness supports a status line or equivalent, add a status script to `$HORIZON_BIN/statusline/`.
 5. Document the harness in `$HORIZON_DOCS/`.
@@ -109,7 +109,7 @@ Contributions must not:
 - Add files to `$HORIZON_SYSTEM/sbin/` — sbin is owner-managed and not community-contributed.
 - Modify `$HORIZON_ROOT/.claude/CLAUDE.md` in ways that make it non-portable (no personal preferences, no project-specific instructions).
 
-All contributed templates must use the `HORIZON_SYSTEM_PATH` placeholder pattern and document substitution steps in their `README.md`.
+All contributed templates must use placeholder strings instead of real paths and document those placeholders in their `README.md`.
 
 ---
 

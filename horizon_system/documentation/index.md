@@ -5,12 +5,23 @@ When you add, move, rename, or remove a doc, update this index in the **same
 change** — run `/horizon_aios_documentation_index_update`. (Enforced by CC-G4 in
 `horizon_system/documentation/development_tools/consistency_checks.md`.)
 
+**New here?** After setup, run `/doctor` to verify the install, and `/handoff`
+at the end of a session to save state. Start with the setup guide in
+[getting_started](#getting_started).
+
+## Skill indexes
+| ID (path) | Title | Purpose |
+|---|---|---|
+| `horizon_system/skills_sbin/index.md` | Skills Index — skills_sbin | Owner-only privileged skills (primary user). Check first when looking for an owner skill. |
+| `horizon_system/skills_bin/index.md` | Skills Index — skills_bin | Group-readable skills available to all brains. Check first when looking for a brain skill. |
+
 ## Documentation root
 | ID (path) | Title | Purpose |
 |---|---|---|
 | `horizon_system/documentation/cloud_sync_exclusions.md` | Cloud Sync Exclusions for Horizon AIOS | How to exclude sensitive/large files when running AIOS under OneDrive/Google Drive/Dropbox instead of (or alongside) git. |
 | `horizon_system/documentation/context_loading.md` | Context Loading — Horizon AIOS | How the Claude Code harness assembles its system prompt: loading layers, @-import mechanics, real per-session token numbers, per-layer config guidance, and token-economy rules. |
 | `horizon_system/documentation/dev_values.md` | Horizon AIOS — Development Values | The engineering values guiding AIOS design (agent-first architecture, token economy, security posture); authority tier above architecture decisions. |
+| `horizon_system/documentation/development_pipeline.md` | Horizon AIOS — Development Pipeline | Placeholder backlog tracking known work items, gaps, and research threads before formal issue management is integrated. |
 | `horizon_system/documentation/philosophy.md` | Horizon AIOS — Philosophy and Conceptual Framework | The "why" behind the architecture and the Brain vs. AI-OS vocabulary; highest authority tier. |
 | `horizon_system/documentation/sync_setup.md` | Horizon AIOS — Sync Setup Reference | How auto-sync keeps a local install current via fast-forward-only git fetch/merge, and the `aios_local.conf` keys that configure it. |
 | `horizon_system/documentation/tested_configurations.md` | Horizon AIOS — Tested Configurations | The verified harness/OS/deployment compatibility matrix and what "tested" means. |
