@@ -42,6 +42,16 @@ Be clear about what this layer does and does not move:
     is configuration you need to work out for your own setup. The capability is in
     place; the recipe is yours to settle, and it will take experimentation.
 
+1.4 **Config cascades across scopes — OS-global < project-root < brain-root <
+    subfolder, most-specific wins.** Any scope can override prefs by dropping a
+    `horizon_aios_model_prefs.extend.md` in its directory and @-importing it from
+    that scope's `agents.md` (never via `CLAUDE.md`, which is only a thin shim to
+    the sibling `agents.md`). Each scope merges with the same rules as the base ->
+    extend cascade: slots — more-specific wins if set; groups — combined; routing —
+    more-specific scope wins on conflict. OS-global and project/brain-root files
+    load reliably at session start; subfolder overrides are lazy-loaded and
+    best-effort. See the spec's **Scope Precedence** section for the full rules.
+
 ---
 
 ## Set up the extend file

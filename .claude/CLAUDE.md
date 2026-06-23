@@ -1,2 +1,2 @@
 # Horizon AIOS Session
-@../CLAUDE.md
+@./agents.md

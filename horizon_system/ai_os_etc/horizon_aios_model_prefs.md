@@ -136,3 +136,41 @@ When both files load:
 - Slots: extend wins if not "Unset".
 - Groups: membership combined.
 - Routing: extend rules apply; on conflict, the more specific class wins.
+
+---
+
+## Scope Precedence
+
+The base -> extend cascade above generalizes to an N-scope cascade, so config can
+be overridden from the OS layer all the way down to a single subfolder. Most
+specific scope wins:
+
+1. OS-global (this spec + its extend, `$HORIZON_ETC`)
+2. project-root
+3. brain-root
+4. subfolder
+
+A brain runs as an isolated OS user scoped to its own folder, so a brain's root
+*is* its project root; (2) and (3) are the same loading tier, listed separately
+only for clarity.
+
+**Merge across scopes reuses the per-file rules above — no new semantics.** Walk
+scopes least- to most-specific and merge each as if it were an extend file over
+what is already resolved: slots — a more-specific scope wins if not "Unset";
+groups — membership combined across scopes; routing — more-specific scope's rules
+apply, and on conflict the more-specific *scope* wins (then, within a scope, the
+more-specific *class*).
+
+**Override-file convention — anchored on `agents.md`, never `CLAUDE.md`.** A scope
+that wants an override drops a `horizon_aios_model_prefs.extend.md` in its own
+directory, and that scope's `agents.md` @-imports it. `CLAUDE.md` is only a thin
+Claude-Code shim pointing at the sibling `agents.md`; no override is ever routed
+through it.
+
+**Loading-tier reality (be honest about reliability).** OS-global and
+project/brain-root files are loaded reliably at session start (memory files walked
+from cwd up to root) — these are first-class, fully-supported override scopes.
+Subfolder/nested overrides are lazy-loaded (pulled in only when the session
+touches files in that subtree) and are therefore best-effort, consistent with this
+layer's "reliability comes from the model following context" framing. Do not
+expect deterministic subfolder behavior.

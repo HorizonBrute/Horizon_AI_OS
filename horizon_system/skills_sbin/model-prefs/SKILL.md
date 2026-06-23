@@ -42,6 +42,9 @@ for the grammar (member resolution, runtime-qualified members, fallback order).
 3. Precedence when both files load: slots — extend wins if not "Unset"; groups —
    membership combined; routing — extend rules apply, more specific class wins.
 4. Prompt directive ("use #X") overrides routing; routing overrides slots.
+5. Config cascades by scope (OS-global < project-root < brain-root < subfolder,
+   most-specific wins); a scope overrides via its own `extend.md` @-imported from
+   that scope's `agents.md` — never `CLAUDE.md`. See the spec's Scope Precedence.
 
 ---
 
