@@ -16,9 +16,9 @@ Shipped OS defaults live in `$HORIZON_ROOT/agent_teams.md` (tracked — do NOT e
 
 ## When to invoke
 
-The user types `/agent-teams ...`, or asks to add/define/edit an agent team, or to set up team definitions for a specific project/brain/subfolder scope.
+The user types `/agent-teams ...`, or asks to add/define/edit an agent team, to set up team definitions for a specific project/brain/subfolder scope, or to add/define a custom **role flag**.
 
-**Dispatch.** A bare `/agent-teams` with NO arguments → run **Default (list loaded teams)** below, then stop — do not start creating or editing anything unless the user asks. Any request to add/define/edit/override/scope a team → go to Step 1 and the flow that follows.
+**Dispatch.** A bare `/agent-teams` with NO arguments → run **Default (list loaded teams)** below, then stop — do not start creating or editing anything unless the user asks. A request to add/define a custom role flag → go to **Step 5 — Adding a custom flag**. Any request to add/define/edit/override/scope a team → go to Step 1 and the flow that follows.
 
 ---
 
@@ -92,6 +92,35 @@ the flow below only if they ask you to.
 > **Loop:** on `<condition>`, return feedback to `<role>` and re-run from step `<N>`; repeat until `<pass condition>` or `<max>` iterations, then `<action at cap>`.
 
 4.2 Always set an iteration cap (bounds cost, prevents infinite loops) and a cap action (typically: stop and report outstanding failures). Example (Full Team): "Validator → on fail, feedback to Implementer, re-run from step 4; repeat until clean or 3 iterations, then report."
+
+---
+
+## Step 5 — Adding a custom flag
+
+Role flags (the markers beyond a role's label + model group) are cataloged in
+`$HORIZON_ETC/agent_team_flags.md` (shipped) and `local.agent_team_flags.md`
+(machine-local, gitignored). The resolver parses flags **generically**, so a new flag
+works as soon as it is used — the registry just gives it meaning, validation, and a
+`--flags` listing entry. To add one:
+
+5.1 Confirm the shipped catalog first: `python $HORIZON_BIN/resolve_agent_teams.py --flags`.
+If the flag already exists, there is nothing to add.
+
+5.2 Gather: the **flag name** (the literal token, e.g. `if blocked`, or an annotation
+name like `Gate`), its **form** (`inline` = a token in the role's `(`#group`, …)`
+parenthetical; `annotation` = a `**Name:** …` line under the role), and a one-line
+**meaning** (what the acting model should do when it sees it).
+
+5.3 Append a row to the table in `$HORIZON_ETC/local.agent_team_flags.md` (NOT the
+shipped `agent_team_flags.md`):
+
+    | <flag> | inline\|annotation | <meaning> |
+
+If the file does not exist, materialize it from `local.agent_team_flags.md.template`
+first. It is gitignored — never commit it.
+
+5.4 Verify: re-run `--flags`; the new flag should appear. Using it in a team will no
+longer raise the resolver's "not in the registry" warning.
 
 ---
 

@@ -1,0 +1,8 @@
+# Local Agent Team Flags — machine-local (gitignored; never synced)
+
+<!-- TEMPLATE → materialized to local.agent_team_flags.md by `aios setup`. @-imported
+     with the shipped agent_team_flags.md; read by resolve_agent_teams.py. Add custom
+     flags as rows below (same columns). Keep terse — loads every session. §13. -->
+
+| Flag | Form | Means |
+|------|------|-------|

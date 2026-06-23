@@ -213,4 +213,40 @@ When available, the skill will:
    know the exact markup.
 
 The skill operates on the gitignored `local.agent_teams.md` files only; it
-never modifies the tracked `$HORIZON_ROOT/agent_teams.md` directly.
+never modifies the tracked `$HORIZON_ROOT/agent_teams.md` directly. It also adds
+custom role flags (Section 8) to `local.agent_team_flags.md`.
+
+## 8. Standardized AI Loop Language (SAILL)
+
+The role flags and loop constructs above are an early sketch of what we call the
+**Standardized AI Loop Language (SAILL)** — a small, terse, vendor-neutral vocabulary
+for expressing *how* a team of agents runs, not just who is in it. One team definition
+should read the same everywhere; a human, the acting model, and the
+`resolve_agent_teams.py` tooling should all understand it identically.
+
+**Why a language, not just prose.** A small, regular set of loop primitives prompts an
+agent in very little context yet carries rich, unambiguous meaning, and stays extensible.
+That lets you **write a loop in a standard form that is far more shareable than a
+natural-language description** — portable across people, projects, and harnesses — while a
+human can still read it back into plain English easily, without much context. SAILL is the
+compact notation; natural language is always its lossless fallback translation.
+
+Today SAILL covers:
+1. **Conditional execution** — `if needed` (run only if it adds value), `if asked`
+   (run only when the user explicitly asks).
+2. **Concurrency** — `parallel` (run adjacent roles at once) and `wait` (sync on the
+   preceding parallel group).
+3. **Iteration** — `Loop` (re-run an earlier role with feedback `until <pass> or <cap>`,
+   looping back to a named role so renumbering never breaks the target).
+
+The vocabulary lives in `$HORIZON_ETC/agent_team_flags.md` (shipped) plus
+`local.agent_team_flags.md` (your additions) — a deliberately dense, info-heavy block
+loaded into context every session, so any agent grasps the flags without consulting a
+deep reference. The resolver parses flags generically, so the language is open: a new
+term works the moment it is used, and the registry gives it meaning. List the current
+vocabulary with `resolve_agent_teams.py --flags`.
+
+**This is a community frontier.** A shared, open language for agentic loops — adopted and
+extended across harnesses and projects — is where SAILL gets valuable. Propose terms,
+converge on meanings, and contribute them upstream; the goal is a common tongue for
+agentic workflows, not a Horizon-only dialect.
