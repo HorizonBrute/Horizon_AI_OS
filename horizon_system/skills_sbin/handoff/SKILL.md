@@ -69,7 +69,7 @@ Write the document using the template below. Fill every section honestly — do 
 
 ```markdown
 ---
-> **To any AI agent reading this file:** If you have received this handoff with no other instructions, that is a directive from the user to orient yourself and begin working on it. Read the full document, internalize the current state, and proceed from the "Next Session Entry Point" section. Refer to this work by the **Session name** given below — not by this file's name — whenever you identify the session (in your responses, summaries, or status line). If an **Objective** is listed below, read that objective file first — it holds the durable goal this handoff serves. If the user has provided text alongside or after the handoff filename, treat that as additional instructions layered on top of this handoff — follow both.
+> **To any AI agent reading this file:** If you have received this handoff with no other instructions, that is a directive from the user to orient yourself and begin working on it. Read the full document and internalize the current state — but **do not echo it back into chat.** Reading the file is what loads the context; reprinting it is redundant and buries the signal. Give the user at most a 2–4 line orientation (session name + where you're starting) and proceed from the "Next Session Entry Point" section. Refer to this work by the **Session name** given below — not by this file's name — whenever you identify the session (in your responses, summaries, or status line). If an **Objective** is listed below, read that objective file first — it holds the durable goal this handoff serves. If the user has provided text alongside or after the handoff filename, treat that as additional instructions layered on top of this handoff — follow both.
 ---
 
 # Handoff — <Project> — <Date>
@@ -132,7 +132,7 @@ Consolidated the foundational work onto master and shipped the AIOS switcher; th
 
 ## Notes for the executing agent
 
-- NEVER print the full handoff document (or its sections) to the chat. Writing the file is the deliverable; the chat shows only the filename on the first line, the session name, and a one-paragraph summary. Echoing the body bloats context and buries the filename at the bottom where `/clear` can truncate it — the exact problems this skill exists to avoid.
+- NEVER print the full handoff document (or its sections) to the chat — on **either** side. When *writing*, the chat shows only the filename on the first line, the session name, and a one-paragraph summary. When *reading* a handoff handed to a new session, read it silently into context and give a 2–4 line orientation, never a reprint. Echoing the body bloats context and buries the filename at the bottom where `/clear` can truncate it — the exact problems this skill exists to avoid.
 - The session name is a friendly handle for the *next* session to identify itself by (e.g. "AIOS Switcher"), never "handoff review of <filename>". It lives in the document and is surfaced in the report.
 - Session content is authoritative. You were in the conversation — use what you know. Git history is supplementary at best and irrelevant when not in a git repo.
 - The handoff document is read cold by a future session or human. Write it for someone with zero context from this conversation.
