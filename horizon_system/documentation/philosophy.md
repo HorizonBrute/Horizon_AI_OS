@@ -154,7 +154,23 @@ Any workflow or knowledge base set up in AIOS-standard format is portable across
 
 ---
 
-## 8. Current Scope: Claude Code Only
+## 8. Bring the Tooling — and the Data Access — to the Brain
+
+A brain is not a general-purpose system that reaches out for whatever it needs. Tooling and data access are **brought to the brain** — delivered into its scoped boundary, externally provisioned — rather than assumed or discovered by it. This is one principle with two faces.
+
+**Tooling.** Lean on established, deterministic tooling to do the work that does not need machine-learning processing. A skill or workflow should push mechanical and deterministic work into scripts and CLI tools (e.g. `horizon_aios_create_brain.py` performs provisioning; the model only coordinates it) and reserve the model for what genuinely requires reasoning. This keeps the brain's context window — the scarce resource — free for the application that actually matters, and it means the model is *coordinating, not computing*. A coordinator over reliable tooling can run on a lean, inexpensive model; the gravity of what the tooling does is not the gravity of the reasoning required to drive it.
+
+**Data access.** The same posture governs data. A brain reaches data only through access provisioned to it, within its own boundary — zero by default, explicit grants, OS-enforced (see §3, §4). Data is brought to the brain; the brain does not range across the system to find it. This is least privilege expressed as data locality: the brain holds exactly the data access delivered to it and no more, answerable per-brain from the provisioning record.
+
+**Why it is a security concept.** Bringing tooling and data access to the brain is the enforcement side of blue-team answerability (§3). Because capability and reach are *delivered*, not inherent, every one is explainable, auditable, and revocable: "what tooling and data does this brain have?" is answered by what was brought to it. A brain cannot misuse a tool it was never given or leak data it cannot reach.
+
+**Why it is implementation flexibility.** Because tooling and data access are delivered rather than baked in, they are swappable without re-engineering the brain. Change the helper script, the data source, the credential, or the model the coordinator runs on — the brain's expertise (its memory, §6) is untouched. This is BYOH (§7) applied one level in: the AIOS brings tooling and data to the brain; the brain author chooses what flows through.
+
+**A concrete expression — the model-preference layer.** AIOS skills coordinate deterministic tooling, so they default to lean model groups (`$HORIZON_ETC/horizon_aios_model_prefs.md`): a skill's model group reflects how much genuine reasoning it needs, not how consequential its tooling is. `/create-brain` runs on a cheap group because it coordinates a deterministic provisioning script — the privileged work is done by the script, reliably and auditably, not re-derived by an expensive model on every run.
+
+---
+
+## 9. Current Scope: Claude Code Only
 
 Section 7 frames AIOS as harness-agnostic, and that is the intended architecture. The current implementation is not there yet. Every concrete artifact — hook scripts, `settings.json` templates, the bootstrap paths, the statusline integration, the skill directory conventions — is implemented against Claude Code specifically. No other harness has a working integration.
 
@@ -170,7 +186,7 @@ For each of these, "adding harness support" would require at minimum: a parallel
 
 ---
 
-## 9. Evaluation: Current Implementation Against These Values
+## 10. Evaluation: Current Implementation Against These Values
 
 ### Aligned
 
@@ -184,6 +200,7 @@ For each of these, "adding harness support" would require at minimum: a parallel
 | IaC-ready paths | All paths are env vars; no hardcoded values in committed files |
 | Reproducible bootstrap | `bootstrap.ps1` / `bootstrap.sh` cover setup end-to-end |
 | Brain isolation | Separate OS user accounts; own folder only by default; blast radius limited |
+| Tooling & data brought to the brain | Deterministic helper scripts do the heavy lifting (`horizon_aios_create_brain.py`, etc.); zero-default data access via provisioning record; the model-preference layer (`horizon_aios_model_prefs.md`) routes skill/delegated work to lean model groups so the model coordinates rather than computes |
 
 ### Gaps
 
