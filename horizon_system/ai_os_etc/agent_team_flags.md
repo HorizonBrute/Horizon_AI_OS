@@ -3,6 +3,8 @@
 Role primitives beyond label + model group (small, composable; compose, don't pile on). Loaded every session (keep terse); read by
 `resolve_agent_teams.py`; extend in `local.agent_team_flags.md`. Forms: **inline** = token
 in `(`#group`, <flag>)`; **annot** = `**Name:** …` line under the role.
+Structure: `[ … ]` boxes roles into one node; `Name[ … ]` = inline ephemeral sub-team; nest freely — no new operators (concurrency/iteration use the flags below).
+Values: `-context-` (or `-context-<name>`, e.g. `-context-pass`, `-context-cap`, `-context-scope`) = resolve from context wherever a literal would go.
 
 | Flag | Form | Means |
 |------|------|-------|
