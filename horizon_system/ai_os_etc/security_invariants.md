@@ -74,7 +74,7 @@ Each "brain" is an isolated AI persona running as a separate OS user account, sc
 | `$HORIZON_SYSTEM/logs/` | **DENY** (explicit — audit log must not be writable by brains) |
 | `$HORIZON_PROJECTS/` | No default convention — per-project decision |
 | `$HORIZON_ROOT/` | None |
-| `$HORIZON_SYSTEM/` (everything else: `ai_os_etc`, `scripts`, `templates`, `documentation`, …) | No write anywhere (read permitted) |
+| `$HORIZON_SYSTEM/` (everything else: `ai_os_etc`, `templates`, `harness_configs`, `documentation`, …) | No write anywhere (read permitted) |
 | `brains/<brain-name>/` | That brain's account: full. All others: none. |
 
 **Provisioning model.** AIOS hardening is an administrative/root action — hence bootstrap and `horizon_aios_harden.py` require elevation. The model is expressed entirely through two kinds of principal: the **owner + SYSTEM + Administrators**, who must always retain Full control (they are never stripped, and are re-granted by SID so this is locale-independent on Windows), and the **`brains` group**, which is restricted as above. *Human* operators are never granted access by AIOS — they are owners or members of Administrators, whatever the OS/infra already made them. On a single-user home workstation the operator is simultaneously owner and Administrator, so the model applies unchanged.

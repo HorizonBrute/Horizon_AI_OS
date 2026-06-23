@@ -151,7 +151,7 @@ Scripts that wire sounds to hooks must reference the appropriate tier. If a hook
 - A project's `CLAUDE.md` adds project-specific instructions on top of the canonical `$HORIZON_ROOT/.claude/CLAUDE.md`.
 - AI harnesses that support hierarchical config (e.g., Claude Code) load configs from innermost to outermost: project → devroot → global (~/.claude).
 
-**Cross-harness instruction file:** `$HORIZON_ROOT/agents.md` is the canonical agent instruction file for harnesses that read `agents.md` (e.g., Codex, OpenHands). `$HORIZON_ROOT/CLAUDE.md` is its Claude Code counterpart — a filesystem neighbor that explicitly imports `agents.md`. `$HORIZON_ROOT/.claude/CLAUDE.md` is a thin entry point that imports `$HORIZON_ROOT/CLAUDE.md`. Harness-specific extensions live in `$HORIZON_BIN/harness_configs/<harness>/` and do not override agents.md — they supplement it.
+**Cross-harness instruction file:** `$HORIZON_ROOT/agents.md` is the canonical agent instruction file for harnesses that read `agents.md` (e.g., Codex, OpenHands). `$HORIZON_ROOT/CLAUDE.md` is its Claude Code counterpart — a filesystem neighbor that explicitly imports `agents.md`. `$HORIZON_ROOT/.claude/CLAUDE.md` is a thin entry point that imports `$HORIZON_ROOT/CLAUDE.md`. Harness-specific extensions live in `$HORIZON_SYSTEM/harness_configs/<harness>/` and do not override agents.md — they supplement it.
 
 **Owner-only development context:** `$HORIZON_ROOT/.claude/CLAUDE.aios-dev.md` holds AIOS-*development* directives (e.g., keep `documentation/index.md` current; run `/horizon_aios_dev_consistency_check`). It is imported **only by the owner/maintainer's machine-local `~/.claude/CLAUDE.md`** — bootstrap adds that import. Brains never import it: `brain_CLAUDE.md.template` chains only the runtime config, so development rules stay out of brain/runtime context. This is the seam for any "applies when *building* the AIOS, not when *using* it" instruction — put it here, never in `agents.md`/`CLAUDE.md`, which every brain loads.
 
@@ -163,7 +163,7 @@ Invariant: project-level config may restrict or extend permissions but must not 
 
 Tracks:
 
-- All files under `$HORIZON_BIN/` (scripts, sounds, templates, docs, invariants).
+- All files under `$HORIZON_SYSTEM/` (bin, sbin, sounds, templates, harness_configs, documentation, ai_os_etc, skills_bin, skills_sbin, logs scaffold).
 - `$HORIZON_ROOT/.claude/CLAUDE.md` and `$HORIZON_ROOT/.claude/settings.json`.
 - `.gitignore` itself.
 

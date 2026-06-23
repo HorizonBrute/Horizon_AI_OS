@@ -258,20 +258,105 @@ if (Test-Path $HorizonDir) {
     Skip "~/.horizon/ not found — nothing to remove."
 }
 
-$SettingsJson = Join-Path $HOME ".claude\settings.json"
+# Decide whether bootstrap created settings.json (safe to remove) or the user owns
+# it (must preserve). Precedence:
+#   (a) PROVENANCE STAMP (authoritative): bootstrap writes ~/.claude/.horizon-settings.stamp
+#       containing the lowercase SHA-256 hex of the settings.json bytes it wrote.
+#       Re-hash the current file; equal => bootstrap-created and untouched => REMOVE
+#       (confirm-gated) and drop the stamp. Differs => user edited it post-bootstrap =>
+#       PRESERVE; drop the now-stale stamp (it no longer describes the file).
+#   (b) NO STAMP (older installs / pre-existing user settings.json): fall back to the
+#       content-equality heuristic — reconstruct template+substitution and compare,
+#       BOM-safe. Match => remove; else => preserve.
+# Stamp contract (must match bootstrap.ps1 writer byte-for-byte):
+#   path   : ~/.claude/.horizon-settings.stamp
+#   format : one line, lowercase SHA-256 hex of settings.json's on-disk bytes
+$SettingsJson  = Join-Path $HOME ".claude\settings.json"
+$SettingsStamp = Join-Path $HOME ".claude\.horizon-settings.stamp"
 if (Test-Path $SettingsJson) {
-    Warn "~/.claude/settings.json exists."
-    Warn "  Bootstrap may have created this from the template."
-    if ($DryRun) {
-        Dry "remove ~/.claude/settings.json."
-    } elseif (Confirm "Remove ~/.claude/settings.json?") {
-        Remove-Item $SettingsJson -Force
-        Ok "Removed ~/.claude/settings.json."
+    $decision = $null   # "remove" or "preserve"
+
+    if (Test-Path $SettingsStamp) {
+        # (a) Stamp present — authoritative provenance check.
+        $stamped = $null
+        try { $stamped = (Get-Content $SettingsStamp -Raw).Trim().ToLower() } catch { $stamped = $null }
+        $current = (Get-FileHash -Path $SettingsJson -Algorithm SHA256).Hash.ToLower()
+        if ($stamped -and $stamped -eq $current) {
+            Info "Provenance stamp matches current settings.json — bootstrap-created, unmodified."
+            $decision = "remove"
+        } else {
+            Skip "~/.claude/settings.json was modified after bootstrap (provenance stamp mismatch) — PRESERVING it."
+            Advisory "If you want it gone, remove ~/.claude/settings.json manually."
+            $decision = "preserve"
+            # The stamp no longer describes the file; drop it regardless.
+            if ($DryRun) {
+                Dry "remove stale provenance stamp ~/.claude/.horizon-settings.stamp."
+            } else {
+                Remove-Item $SettingsStamp -Force
+                Ok "Removed stale provenance stamp ~/.claude/.horizon-settings.stamp."
+            }
+        }
     } else {
-        Skip "Keeping ~/.claude/settings.json — remove manually if needed."
+        # (b) No stamp — older install or pre-existing user file. Fall back to the
+        # content-equality heuristic (reconstruct bootstrapped default + compare).
+        $SettingsTemplate = Join-Path $HORIZON_SYSTEM "templates\claude_code\settings.json"
+        $AiosExecWrapper  = (Join-Path $HOME ".horizon\bin\aios-exec.ps1") -replace '\\', '/'
+
+        $isBootstrapDefault = $false
+        if (Test-Path $SettingsTemplate) {
+            try {
+                $templateContent = Get-Content $SettingsTemplate -Raw
+                $expected = $templateContent -replace [regex]::Escape("AIOS_EXEC_WRAPPER"), $AiosExecWrapper
+                $onDisk   = Get-Content $SettingsJson -Raw
+                # Strip a leading UTF-8 BOM (U+FEFF) that WinPS `Set-Content -Encoding UTF8`
+                # writes, so a BOM-only difference doesn't block removal. Then normalize
+                # trailing whitespace/newlines.
+                if ($onDisk.Length -gt 0 -and $onDisk[0] -eq [char]0xFEFF) { $onDisk = $onDisk.Substring(1) }
+                if ($expected.Length -gt 0 -and $expected[0] -eq [char]0xFEFF) { $expected = $expected.Substring(1) }
+                if ($onDisk.TrimEnd() -eq $expected.TrimEnd()) {
+                    $isBootstrapDefault = $true
+                }
+            } catch {
+                $isBootstrapDefault = $false
+            }
+        }
+
+        if ($isBootstrapDefault) {
+            Info "No provenance stamp; content matches the freshly-bootstrapped default (fallback heuristic)."
+            $decision = "remove"
+        } else {
+            Skip "~/.claude/settings.json differs from the bootstrap default (user-customized or user-authored) — PRESERVING it."
+            Advisory "If you want it gone, remove ~/.claude/settings.json manually."
+            $decision = "preserve"
+        }
+    }
+
+    if ($decision -eq "remove") {
+        if ($DryRun) {
+            Dry "remove ~/.claude/settings.json (bootstrap-created) and its provenance stamp."
+        } elseif (Confirm "~/.claude/settings.json was created by bootstrap and is unmodified — remove it?") {
+            Remove-Item $SettingsJson -Force
+            Ok "Removed ~/.claude/settings.json (was the unmodified bootstrap default)."
+            # Full teardown: drop the stamp so no dangling provenance file remains.
+            if (Test-Path $SettingsStamp) {
+                Remove-Item $SettingsStamp -Force
+                Ok "Removed provenance stamp ~/.claude/.horizon-settings.stamp."
+            }
+        } else {
+            Skip "Keeping ~/.claude/settings.json — remove manually if needed."
+        }
     }
 } else {
     Skip "~/.claude/settings.json not found — nothing to remove."
+    # Guard against a dangling stamp left after the file was removed by other means.
+    if (Test-Path $SettingsStamp) {
+        if ($DryRun) {
+            Dry "remove orphaned provenance stamp ~/.claude/.horizon-settings.stamp (settings.json already gone)."
+        } else {
+            Remove-Item $SettingsStamp -Force
+            Ok "Removed orphaned provenance stamp ~/.claude/.horizon-settings.stamp."
+        }
+    }
 }
 
 # =============================================================================
@@ -459,10 +544,11 @@ if ($groupExists) {
     foreach ($dir in $DirsToClean) {
         if (Test-Path $dir) {
             if ($DryRun) {
-                Dry "remove brains-group ACEs from: $dir  (icacls /remove:g $BrainsGroup /T)"
+                Dry "remove brains-group ACEs from: $dir  (icacls /remove $BrainsGroup /T)"
             } else {
-                # /remove:g removes all ACEs (grant and deny) for the group
-                $result = icacls $dir /remove:g $BrainsGroup /T /C /Q 2>&1
+                # /remove (no :g) removes BOTH grant and deny ACEs for the group.
+                # /remove:g would strip grants only, leaving harden's deny ACEs behind.
+                $result = icacls $dir /remove $BrainsGroup /T /C /Q 2>&1
                 if ($LASTEXITCODE -eq 0) {
                     Ok "Removed brains-group ACEs from: $dir"
                 } else {

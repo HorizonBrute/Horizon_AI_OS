@@ -150,7 +150,7 @@ The AIOS provides:
 - The configuration management layer (env vars, bootstrap, overrides)
 - The hook taxonomy and log schema
 
-Any workflow or knowledge base set up in AIOS-standard format is portable across harnesses. The same brain configuration should work whether the harness is Claude Code today or something else tomorrow. Harness-specific configuration lives in `$HORIZON_BIN/harness_configs/<vendor>/` and extends — but never replaces — the cross-harness core.
+Any workflow or knowledge base set up in AIOS-standard format is portable across harnesses. The same brain configuration should work whether the harness is Claude Code today or something else tomorrow. Harness-specific configuration lives in `$HORIZON_SYSTEM/harness_configs/<vendor>/` and extends — but never replaces — the cross-harness core.
 
 ---
 

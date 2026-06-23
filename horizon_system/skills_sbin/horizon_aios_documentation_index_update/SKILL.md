@@ -47,7 +47,8 @@ session merge their entries into a single `index.md`.
   `documentation/philosophy.md`, `documentation/dev_values.md`,
   `documentation/build_decisions/architecture_decisions.md`, and the invariant
   docs under `horizon_system/ai_os_etc/` (`security_invariants.md`,
-  `file_structure_invariants.md`, `ai_os_personalizations.md`).
+  `file_structure_invariants.md`, `ai_os_personalizations.md`,
+  `horizon_aios_agents.md` — the OS-layer agent config loaded into every session).
 - **Exclude:** the index file itself, skills' own `index.md` files, and any
   non-documentation file.
 

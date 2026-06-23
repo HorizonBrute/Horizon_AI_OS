@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
-"""Horizon AIOS health-check. Run as the primary OS user."""
+"""Horizon AIOS health-check. Run as the primary OS user.
 
+Run with --post-setup to additionally run post-install verifications
+(test sound, statusline command, git commit.gpgsign).
+"""
+
+import argparse
 import json
 import os
 import subprocess
@@ -8,11 +13,21 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+# Make stdout/stderr robust on legacy Windows code pages (e.g. cp1252) so the
+# tool never crashes with UnicodeEncodeError on non-ASCII output. Self-healing
+# regardless of PYTHONIOENCODING; guarded for Pythons without reconfigure().
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 OK   = "[OK]  "
 WARN = "[WARN]"
 FAIL = "[FAIL]"
+SKIP = "[SKIP]"
 
-passed = warnings = failures = 0
+passed = warnings = failures = skipped = 0
 
 
 def ok(name):
@@ -31,6 +46,13 @@ def fail(name, reason):
     global failures
     failures += 1
     print(f"  {FAIL} {name}: {reason}")
+
+
+def skip(name, reason):
+    """A clean, non-failing skip (e.g. a feature deliberately disabled)."""
+    global skipped
+    skipped += 1
+    print(f"  {SKIP} {name}: {reason}")
 
 
 # ---------------------------------------------------------------------------
@@ -156,7 +178,7 @@ def check_local_conf(horizon_system):
     conf = horizon_system / "ai_os_etc" / "aios_local.conf"
     template = horizon_system / "templates" / "aios_local.conf.template"
     if not conf.exists():
-        hint = f"copy {template} → {conf} and fill in your values" if template.exists() else "copy the template from $HORIZON_SYSTEM/templates/aios_local.conf.template"
+        hint = f"copy {template} -> {conf} and fill in your values" if template.exists() else "copy the template from $HORIZON_SYSTEM/templates/aios_local.conf.template"
         fail("aios_local.conf", f"not found — {hint}")
     else:
         ok("aios_local.conf")
@@ -169,7 +191,7 @@ def check_gitignore_user(horizon_root):
     f = horizon_root / ".gitignore.user"
     if not f.exists():
         template = horizon_root / ".gitignore.user.template"
-        hint = f"copy {template} → {f}" if template.exists() else "create .gitignore.user at $HORIZON_ROOT"
+        hint = f"copy {template} -> {f}" if template.exists() else "create .gitignore.user at $HORIZON_ROOT"
         fail(".gitignore.user", f"not found — {hint}")
     else:
         ok(".gitignore.user")
@@ -390,10 +412,194 @@ def check_aios_registry():
         warn("AIOS exec wrapper", f"{wrapper} missing — run horizon_aios_switch.py init/switch")
 
 
+# ===========================================================================
+# Post-setup verifications (--post-setup only)
+# Run AFTER an install to confirm the user-facing plumbing actually works.
+# ===========================================================================
+
+# Mirror resolve_sound.py's mute vocabulary so a muted install is reported as a
+# clean SKIP rather than being indistinguishable from an unmapped/missing sound.
+_SOUND_ENABLE_KEY = "sounds_enabled"
+_SOUND_FALSY = {"0", "false", "no", "off", "disabled"}
+
+
+def _conf_sounds_disabled(conf_path):
+    """True only if conf_path exists and sets sounds_enabled to a falsy value."""
+    try:
+        with conf_path.open(encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, _, v = line.partition("=")
+                if k.strip() == _SOUND_ENABLE_KEY:
+                    return v.strip().lower() in _SOUND_FALSY
+    except OSError:
+        pass
+    return False
+
+
+def _sounds_muted(horizon_system, horizon_root, cwd):
+    """Replicate resolve_sound.py mute logic: master kill switch, then nearest
+    per-project aios_sounds.conf walking up from cwd to $HORIZON_ROOT."""
+    master = horizon_system / "sounds" / "aios_sounds.conf"
+    if _conf_sounds_disabled(master):
+        return True, f"master kill switch ({master})"
+    try:
+        current = cwd.resolve()
+        root = horizon_root.resolve()
+    except OSError:
+        return False, ""
+    while True:
+        candidate = current / "aios_sounds.conf"
+        if candidate.exists() and _conf_sounds_disabled(candidate):
+            return True, f"project mute ({candidate})"
+        if current == root or current.parent == current:
+            break
+        current = current.parent
+    return False, ""
+
+
+# ---------------------------------------------------------------------------
+# P1. Test sound through the canonical sound chokepoint
+# Resolves (and plays) a test event via $HORIZON_BIN/resolve_sound.py. Honors
+# the sounds_enabled mute switch: a muted install is a clean SKIP, not a FAIL.
+# ---------------------------------------------------------------------------
+def check_test_sound(horizon_system, horizon_bin, horizon_root):
+    name = "Sound: test event via resolve_sound.py"
+    resolve_script = horizon_bin / "resolve_sound.py"
+    if not resolve_script.exists():
+        fail(name, f"{resolve_script} not found — sound chokepoint missing")
+        return
+
+    muted, why = _sounds_muted(horizon_system, horizon_root, Path.cwd())
+    if muted:
+        skip(name, f"sounds disabled — {why}")
+        return
+
+    # Resolve a canonical test event through the chokepoint.
+    try:
+        result = subprocess.run(
+            [sys.executable, str(resolve_script), "task_complete",
+             "--harness", "claude_code"],
+            capture_output=True, text=True, timeout=15,
+        )
+    except Exception as e:  # noqa: BLE001 — surface any failure
+        fail(name, f"resolve_sound.py failed to run: {e}")
+        return
+
+    sound_path = result.stdout.strip()
+    if not sound_path:
+        # Not muted but nothing resolved — the test event is unmapped.
+        warn(name, "no sound mapped for 'task_complete' — nothing to play")
+        return
+    if not Path(sound_path).exists():
+        fail(name, f"resolved to '{sound_path}' but file does not exist")
+        return
+
+    # Fire it through the canonical player so the user hears install succeeded.
+    player = horizon_system / "sounds" / "play_sound.sh"
+    played = ""
+    if player.exists():
+        try:
+            subprocess.run(["bash", str(player), sound_path],
+                           capture_output=True, text=True, timeout=15)
+            played = " (played)"
+        except Exception:  # noqa: BLE001 — playback is best-effort
+            played = " (resolved; playback unavailable)"
+    else:
+        played = " (resolved; play_sound.sh not found)"
+    ok(f"{name} — {Path(sound_path).name}{played}")
+
+
+# ---------------------------------------------------------------------------
+# P2. Statusline command resolves
+# Verifies the configured statusline command exists and is invocable. Does NOT
+# require it to be wired into settings.json — only that the command resolves.
+# ---------------------------------------------------------------------------
+def check_statusline(horizon_bin):
+    name = "Statusline: command resolves"
+    statusline_dir = horizon_bin / "statusline"
+    # statusline.sh is the cross-platform dispatcher; it routes to the
+    # platform-appropriate script.
+    dispatcher = statusline_dir / "statusline.sh"
+    if not dispatcher.exists():
+        fail(name, f"{dispatcher} not found — statusline command does not resolve")
+        return
+
+    # The dispatcher delegates to a platform-appropriate target; confirm it exists.
+    target = (statusline_dir / "statusline-context-alerts.ps1"
+              if sys.platform == "win32"
+              else statusline_dir / "statusline-command.sh")
+    if not target.exists():
+        fail(name, f"dispatcher present but target {target.name} missing")
+        return
+
+    ok(f"{name} — {dispatcher.name} -> {target.name}")
+
+
+# ---------------------------------------------------------------------------
+# P3. git commit.gpgsign enabled
+# The repo enforces signed commits / DCO, so commit.gpgsign must be on.
+# ---------------------------------------------------------------------------
+def check_gpgsign(horizon_root):
+    name = "Git: commit.gpgsign enabled"
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(horizon_root), "config", "--get", "commit.gpgsign"],
+            capture_output=True, text=True, timeout=10,
+        )
+    except Exception as e:  # noqa: BLE001 — surface any failure
+        warn(name, f"could not run git: {e}")
+        return
+
+    val = result.stdout.strip().lower()
+    if val in ("true", "1", "yes", "on"):
+        ok(name)
+    elif not val:
+        fail(name, "commit.gpgsign is not set — run 'git config commit.gpgsign true' "
+                   "(repo enforces signed commits / DCO)")
+    else:
+        fail(name, f"commit.gpgsign is '{val}', expected true — "
+                   "run 'git config commit.gpgsign true'")
+
+
+def run_post_setup(env):
+    print("Post-setup verifications:")
+    horizon_system = env.get("HORIZON_SYSTEM")
+    horizon_bin    = env.get("HORIZON_BIN")
+    horizon_root   = env.get("HORIZON_ROOT")
+
+    if horizon_system and horizon_bin and horizon_root:
+        check_test_sound(horizon_system, horizon_bin, horizon_root)
+    else:
+        warn("Sound: test event", "skipped — $HORIZON_SYSTEM/$HORIZON_BIN/$HORIZON_ROOT not available")
+
+    if horizon_bin:
+        check_statusline(horizon_bin)
+    else:
+        warn("Statusline: command resolves", "skipped — $HORIZON_BIN not available")
+
+    if horizon_root:
+        check_gpgsign(horizon_root)
+    else:
+        warn("Git: commit.gpgsign enabled", "skipped — $HORIZON_ROOT not available")
+    print()
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 def main():
+    parser = argparse.ArgumentParser(
+        description="Horizon AIOS health-check. Run as the primary OS user.")
+    parser.add_argument(
+        "--post-setup", action="store_true",
+        help="additionally run post-install verifications: a test sound through "
+             "the canonical sound chokepoint, the statusline command, and "
+             "git commit.gpgsign.")
+    args = parser.parse_args()
+
     print(f"Horizon AIOS Doctor — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print()
 
@@ -433,7 +639,14 @@ def main():
     check_aios_registry()
 
     print()
-    print(f"  {passed} checks passed, {warnings} warnings, {failures} failures")
+
+    if args.post_setup:
+        run_post_setup(env)
+
+    summary = f"  {passed} checks passed, {warnings} warnings, {failures} failures"
+    if skipped:
+        summary += f", {skipped} skipped"
+    print(summary)
     sys.exit(1 if failures else 0)
 
 

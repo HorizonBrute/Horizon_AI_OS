@@ -25,7 +25,7 @@ installs these for you.
 | **GPG** | Required | `commit.gpgsign = true` is set globally — every commit on the machine will be signed; a key must exist before the first commit | `winget install GnuPG.GnuPG` | `brew install gnupg` | `apt install gnupg` |
 | **SSH client** | Required | All remote Git operations use SSH; no HTTPS and no `gh` CLI is used anywhere | Built-in (OpenSSH, Windows 10+) | Built-in | Built-in (`openssh-client`) |
 | **SSH key pair** | Required | Public key must be registered with the Git host (`~/.ssh/id_ed25519` or similar) | `ssh-keygen -t ed25519` | Same | Same |
-| **GPG key in local keyring** | Required | Fingerprint is written to `$HORIZON_BIN/harness_configs/git/gitconfig` during setup | `gpg --full-generate-key` | Same | Same |
+| **GPG key in local keyring** | Required | Fingerprint is written to `$HORIZON_SYSTEM/harness_configs/git/gitconfig` during setup | `gpg --full-generate-key` | Same | Same |
 | **`watchdog` Python library** | Optional | Required only by `sbin/horizon_aios_monitor.py` (filesystem audit monitor); the monitor is opt-in and not auto-started | `pip install watchdog` | `pip3 install watchdog` | `pip3 install watchdog` |
 | **`keyring` Python library** | Optional | Used by `sbin/horizon_aios_brain_credential.py` to store brain account passwords in the OS native keystore; brain provisioning continues (with a warning) if absent | `pip install keyring` | `pip3 install keyring` | `pip3 install keyring` |
 | **Audio player** | Optional | Required for event hook sounds to play; hooks fail silently if no player is found | Built-in (`Media.SoundPlayer` via PowerShell) | Built-in (`afplay`) | One of: `paplay` (PulseAudio), `aplay` (ALSA), `ffplay` (ffmpeg), `mpg123` |
@@ -139,7 +139,7 @@ What changes on the machine when `bootstrap.ps1` / `bootstrap.sh` runs.
 | Setting | Scope | Value | Notes |
 |---|---|---|---|
 | `core.hooksPath` | Local (OS repo only) | `./horizon_system/harness_configs/git/hooks` | Set by Section 6 of bootstrap; tells Git to use the version-controlled hooks directory |
-| `include.path` | Global (machine-wide) | `$HORIZON_BIN/harness_configs/git/gitconfig` | Set manually by the user per setup guide Step 9; pulls in `commit.gpgsign`, `user.signingkey`, `excludesfile` |
+| `include.path` | Global (machine-wide) | `$HORIZON_SYSTEM/harness_configs/git/gitconfig` | Set manually by the user per setup guide Step 9; pulls in `commit.gpgsign`, `user.signingkey`, `excludesfile` |
 | `commit.gpgsign` | Global (via included gitconfig) | `true` | Every commit on the machine is GPG-signed after setup |
 | `user.signingkey` | Global (via included gitconfig) | User's GPG fingerprint | Set during setup Step 8.2 |
 

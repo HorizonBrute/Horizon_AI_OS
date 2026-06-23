@@ -1,6 +1,6 @@
 # Horizon AIOS — Utilities Reference
 
-Most utilities here live in `$HORIZON_SYSTEM/sbin/` (and `scripts/`) and are
+Most utilities here live in `$HORIZON_SYSTEM/sbin/` and are
 administrative: they operate on the AIOS layer itself — hardening its
 permissions, monitoring its integrity, maintaining its logs, provisioning brain
 accounts and credentials, syncing upstream, and wiring its configuration. They
@@ -59,7 +59,7 @@ and you need a quick status read.
 **Key flags:** None — it runs all checks unconditionally and prints a summary.
 Exit code is 1 if any check failed, 0 if only warnings or clean.
 
-**Referenced by a skill?** No.
+**Referenced by a skill?** Yes — `/doctor`.
 
 ---
 
@@ -90,7 +90,7 @@ and log consumption guidance see `$HORIZON_DOCS/security/audit_logging.md`.
 - `--config PATH` — config file (default: `$HORIZON_ETC/aios_monitor.conf`)
 - `--log-dir PATH` — log directory (default: `$HORIZON_SYSTEM/logs/horizon_aios_monitor/`)
 
-**Referenced by a skill?** No.
+**Referenced by a skill?** Yes — `/monitor`.
 
 ---
 
@@ -212,6 +212,39 @@ derive their path from their own location, so they work from any AIOS root.
 
 **Referenced by a skill?** No. See `$HORIZON_DOCS/system/aios_switching.md`
 for the full switching guide.
+
+---
+
+## horizon_aios_relocate.py
+
+**Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_relocate.py`
+
+Updates the machine-local instance pointers when an AIOS install is moved to a
+new root path (e.g., `C:\devroot` → `D:\aios`). Auto-detects the old root from
+`~/.horizon/aios_registry.json` and rewrites it in: the registry, `active_env.{ps1,sh}`,
+`~/.claude/CLAUDE.md`, and (if present) `aios_local.conf`. Framework source
+files are deliberately left alone — they derive `HORIZON_*` from their own
+location, not from hardcoded paths. Also detects if the `~/.claude/skills`
+junction needs re-pointing and prints the exact `horizon_aios_switch.py` command
+to fix it.
+
+**Safety:** dry-run is the **default**. Run without `--apply` first to preview
+every change. Pass `--apply` only when the output looks correct.
+
+**When to use it:** After physically moving or renaming the AIOS root directory,
+to update all machine-local pointers in one step instead of manually editing
+each file.
+
+**Key flags:**
+
+- `--new-root PATH` — target root the install now lives at (default: the root
+  derived from the script's own location, so running it from the new location
+  auto-detects the target)
+- `--old-root PATH` — override old root detection (default: read from registry)
+- `--apply` — write changes; without this flag the tool runs in dry-run mode
+- `--home PATH` — override home directory for locating `~/.horizon/` and `~/.claude/`
+
+**Referenced by a skill?** No.
 
 ---
 
