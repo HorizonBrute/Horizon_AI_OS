@@ -80,7 +80,8 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   ├── security_invariants.md
 │   │   ├── file_structure_invariants.md
 │   │   ├── ai_os_personalizations.md
-│   │   └── horizon_aios_agents.md      # Agent instructions (harness-agnostic)
+│   │   ├── horizon_aios_agents.md      # Agent instructions (harness-agnostic)
+│   │   └── horizon_aios_model_prefs.md # User-editable agent model preferences
 │   ├── documentation/                  # $HORIZON_DOCS — user-facing docs (full catalog: documentation/index.md)
 │   │   ├── index.md                    # Documentation index — every doc, referenceable by path (CC-G4)
 │   │   ├── authoring/                  # Authoring guides (e.g. CLAUDE.md authoring)
