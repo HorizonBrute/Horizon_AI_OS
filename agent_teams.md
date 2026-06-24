@@ -55,8 +55,10 @@ concurrency/iteration/conditions use the role flags above. One line where it fit
 model executes the nesting. (`resolve_agent_teams.py` lists flat teams; box expansion is a
 planned extension.)
 
-Write `-context-` (e.g. `-context-pass`, `-context-cap`, `-context-scope`) anywhere a value
-comes from context rather than a literal — the explicit hook for run-time parameterization.
+Write `-context-` (or `-context:<name>-`, multi-word ok — e.g. `-context:pass criteria-`,
+`-context:cap-`) anywhere a value comes from context, not a literal. A role/box may carry
+`if fail <action>` (run an action on failure, often a skill: `if fail /triage`), a charter may
+invoke a named `/skill`, and a loop may exit on `<pass>`, `ask user`, or a cap.
 
 ---
 
