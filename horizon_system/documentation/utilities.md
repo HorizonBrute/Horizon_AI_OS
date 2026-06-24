@@ -612,7 +612,8 @@ apply in a directory.
 
 - `[path]` — directory (or file) to resolve the cascade for (default: cwd)
 - `--root DIR` — override `$HORIZON_ROOT` instead of auto-resolving
-- `--json` — emit structured JSON (sources + resolved set, with roles/groups/loop)
+- `--flags` — print the full SAILL flag vocabulary (from `agent_team_flags.md` and any in-scope `local.agent_team_flags.md`); does not resolve teams
+- `--json` — emit structured JSON (sources + resolved set, with roles/groups/loop/flags)
 
 ---
 
