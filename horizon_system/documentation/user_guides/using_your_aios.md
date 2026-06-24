@@ -693,6 +693,20 @@ resolve_agent_teams.py --flags
 
 Do not add new flags to `$HORIZON_ETC/agent_team_flags.md` directly; that file is synced from upstream. Use `local.agent_team_flags.md` for machine- or project-local extensions and propose community-useful terms upstream.
 
+### 7.6 Agent Team Skills
+
+Three owner skills support the agent-team and SAILL workflow end-to-end:
+
+| Skill | What it does |
+|---|---|
+| `/agent-teams` | Lists teams in effect for the current path; creates or edits team definitions at any scope (OS, project, brain, subfolder); adds custom SAILL flags |
+| `/test-agent-teams` | End-to-end self-test: spawns each role of every defined team, each echoes a nonce + role name + charter + actual model; reports per-team PASS/FAIL for resolution and model routing |
+| `/convert-prompt-to-saill` | Converts a natural-language prompt into a SAILL agent-team flow (roles, model groups, flags, sub-team boxes, loops, `-context-` values); outputs the SAILL block with a gloss, then offers to save or run it |
+
+Use `/test-agent-teams` after defining or modifying a team to confirm that roles resolve to the expected models before you invoke the team on real work. Use `/convert-prompt-to-saill` as a starting point when you want a new team but don't know the SAILL syntax.
+
+See `$HORIZON_DOCS/system/agent_teams.md` for the full SAILL spec, scope cascade, and team-definition grammar.
+
 ---
 
 ## 8. Understanding and Managing Context
@@ -1311,6 +1325,7 @@ AIOS is the AI-focused application. Everything else — identity, access governa
 | Context loading mechanics | `$HORIZON_DOCS/context_loading.md` |
 | CLAUDE.md authoring rules | `$HORIZON_DOCS/authoring/claude_md_authoring.md` |
 | Model preferences | `$HORIZON_DOCS/system/model_preferences.md` |
+| Agent teams and SAILL (full spec) | `$HORIZON_DOCS/system/agent_teams.md` |
 | Memory and transcript redirect | `$HORIZON_DOCS/system/memory.md` |
 | Skills reference | `$HORIZON_DOCS/skills.md` |
 | System configuration reference | `$HORIZON_DOCS/system/system_configuration_reference.md` |

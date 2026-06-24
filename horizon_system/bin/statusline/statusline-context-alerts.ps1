@@ -1,10 +1,11 @@
 $raw = [Console]::In.ReadToEnd()
 try { $json = $raw | ConvertFrom-Json } catch { Write-Output "ctx:?"; exit 0 }
 
-$used_pct   = if ($json.context_window.used_percentage -ne $null) { [int]($json.context_window.used_percentage) } else { 0 }
-$model      = if ($json.model.display_name -ne $null) { $json.model.display_name } else { "" }
-$session_id = if ($json.session_id -ne $null) { $json.session_id } else { "unknown" }
-$cwd        = if ($json.cwd -ne $null) { $json.cwd } else { (Get-Location).Path }
+$used_pct      = if ($json.context_window.used_percentage -ne $null) { [int]($json.context_window.used_percentage) } else { 0 }
+$total_tokens  = if ($json.context_window.total_input_tokens -ne $null) { [int]($json.context_window.total_input_tokens) } else { 0 }
+$model         = if ($json.model.display_name -ne $null) { $json.model.display_name } else { "" }
+$session_id    = if ($json.session_id -ne $null) { $json.session_id } else { "unknown" }
+$cwd           = if ($json.cwd -ne $null) { $json.cwd } else { (Get-Location).Path }
 $HORIZON_BIN    = Split-Path $PSScriptRoot -Parent          # horizon_system/bin/
 $HORIZON_SYSTEM = Split-Path $HORIZON_BIN -Parent           # horizon_system/
 $HORIZON_ROOT   = Split-Path $HORIZON_SYSTEM -Parent        # repo root
@@ -106,7 +107,8 @@ $to_compact = [Math]::Max(0, $compact_threshold - $used_pct)
 $parts = @("[$dirname]")
 if ($model -ne "") { $parts += $model }
 if ($git_branch -ne "") { $parts += "git:$git_branch" }
-if ($show_context_bar) { $parts += "Context Window: [$bar]" }
-$parts += "Estimated % To Compact: $to_compact%"
+if ($show_context_bar) { $parts += " Ctx Window:[$bar]" }
+$parts += "Est. % To Compact: $to_compact% "
+if ($total_tokens -gt 0) { $parts += "  Session: $("{0:N0}" -f $total_tokens) tokens" }
 
 Write-Output ($parts -join " ")

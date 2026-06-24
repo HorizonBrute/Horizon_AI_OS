@@ -41,3 +41,5 @@
 !terseness-check/**
 !test-agent-teams/
 !test-agent-teams/**
+!convert-prompt-to-saill/
+!convert-prompt-to-saill/**
