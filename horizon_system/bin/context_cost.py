@@ -163,17 +163,23 @@ def main():
 
     rows = collect(target)
 
+    total_tokens = sum(r["tokens"] for r in rows)
+
     if args.json:
         out = {
             "path": str(target),
             "files": rows,
             "total_kb": round(sum(r["kb"] for r in rows), 1),
             "total_words": sum(r["words"] for r in rows),
-            "total_tokens": sum(r["tokens"] for r in rows),
+            "total_tokens": total_tokens,
         }
         print(json.dumps(out))
     else:
         _print_table(target, rows)
+        if total_tokens >= 25_000:
+            print(f" WARN   ~{total_tokens // 1000}K tokens  ~{round(total_tokens/200_000*100)}% of window; starting to crowd working context on long sessions")
+        elif total_tokens >= 8_000:
+            print(f" NOTE   ~{total_tokens // 1000}K tokens  ~{round(total_tokens/200_000*100)}% of window; worth a periodic glance, not urgent")
 
 
 if __name__ == "__main__":
