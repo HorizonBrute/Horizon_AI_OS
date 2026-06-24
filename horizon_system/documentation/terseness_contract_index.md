@@ -25,7 +25,9 @@ A file in this index PASSES the terseness check if, and only if:
 4. **No inline examples when a pointer suffices.** "See `$HORIZON_DOCS/X.md`" is
    cheaper than pasting the example inline.
 5. **No redundancy with sibling always-loaded files.** If another file in this
-   index already says it, one copy is the defect.
+   index already says it, one copy is the defect. Overlap declared **C5-exempt**
+   in the Special constraints column is load-bearing by design and is not a
+   violation — classify it as `NOTED`, not `FAIL`.
 6. **No commented-out content.** Dead code and `# TODO` prose still cost tokens.
 7. **@-imports only for always-needed files.** An @-import of a large reference doc
    "for convenience" is a FAIL. Use a prose pointer instead.
@@ -45,8 +47,8 @@ The `/terseness-check` skill evaluates each one on every pass.
 | `agents.md` | @-import from `.claude/agents.md` and `CLAUDE.md` | Cross-harness instruction root | Every line taxes every session; any prose must be strictly operative |
 | `horizon_system/ai_os_etc/horizon_aios_agents.md` | @-import from `agents.md` | OS-layer agent config | Imperative directives only; no tutorials; no rationale beyond a one-phrase label |
 | `horizon_system/ai_os_etc/horizon_aios_model_prefs.md` | @-import from `agents.md` | Model preference spec | Structural headings + mechanism description; examples in the extend template, not here |
-| `agent_teams.md` | @-import from `agents.md` | Agent team definitions | Team blocks + loop/flag grammar only; no narrative onboarding prose |
-| `horizon_system/ai_os_etc/agent_team_flags.md` | @-import from `agents.md` | Role-flag catalog | Table only + one-line header; no prose examples |
+| `agent_teams.md` | @-import from `agents.md` | Agent team definitions | Team blocks + loop/flag grammar only; no narrative onboarding prose. **C5-exempt** vs `agent_team_flags.md` — SAILL flags used in-context here and defined there; co-load is intentional OS overhead. |
+| `horizon_system/ai_os_etc/agent_team_flags.md` | @-import from `agents.md` | Role-flag catalog | Table only + one-line header; no prose examples. **C5-exempt** vs `agent_teams.md` — flag definitions co-located with usage; co-load is intentional OS overhead. |
 
 ---
 

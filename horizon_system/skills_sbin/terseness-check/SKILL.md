@@ -35,7 +35,12 @@ For each tracked file:
    - State which criterion it violates (1–7).
    - Propose a concrete fix: cut, move to an on-demand doc with a pointer, or
      collapse to one line.
+   - **Criterion 5 exception:** before flagging cross-file overlap, check the
+     file's Special constraints column in the index for a **C5-exempt**
+     annotation naming the other file. If the overlap is declared C5-exempt,
+     classify it as `NOTED` (not `FAIL`) — it is load-bearing by design.
 3. Classify: `PASS` (no violations) or `FAIL` (one or more violations with evidence).
+   A file with only `NOTED` findings and no other violations classifies as `PASS`.
 
 For each gitignored / user-controlled file (if it exists on disk):
 
@@ -59,6 +64,9 @@ Summary: <P> PASS · <F> FAIL · <A> ADVISORY · <NA> N/A
 
 ## ADVISORY findings (gitignored / user-controlled)
 - [<file>:<line>] Criterion <N> — <description>. Fix: <suggestion>.
+
+## NOTED (C5-exempt intentional overlaps)
+- [<file>] C5-exempt vs <other file> — <one-line description of overlap>.
 
 ## PASS
 <file list>
