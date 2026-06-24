@@ -1,38 +1,14 @@
 # Model Preferences — Horizon AIOS
 
-In-context, bring-your-own-model override. This file is loaded as context via
-`agents.md`; the acting model reads it and honors it by direct instruction. There
-is no enforcement engine, env-var wiring, or resolver script -- reliability comes
-from the model following context, the same channel it follows any instruction in.
+Governs the model used for spawned agents and delegated tasks. Apply in this order:
 
-You own the configuration. Define groups, members, and routing in
-`horizon_aios_model_prefs.local.md` (gitignored, same directory, auto-loaded).
-This base file ships the structure; the extend file holds your choices.
+1. Named group from the prompt — first runnable member.
+2. Task-Class Routing match — first runnable member of the mapped group.
+3. Sub-Agent Override (sub-agents only, if set).
+4. Spawned Agent Model (if set).
+5. Harness / provider default.
 
----
-
-## How the acting model applies this
-
-When you reference a group (e.g. "use #lowcost"), or a unit of work matches a
-Task-Class Routing rule, or a per-session slot is set, the acting model selects
-its model accordingly -- including the model it picks when spawning an agent or
-sub-agent.
-
-Mainly this governs the model used for **spawned agents and delegated tasks** --
-your interactive session model is set by the harness/provider at launch, not here.
-Local models (`ollama:` members) are supported for agent work, but which tasks
-they suit is user-tuned, not prescribed.
-
-**Member resolution.** Group members are tried in listed order. Use the first
-member runnable in the current runtime; silently skip members tagged for another
-runtime or not currently available; if none are runnable, fall through to the
-next level in Fallback Order. Never surface errors about models you cannot reach.
-
-**Member grammar.** A member is a bare model id/alias (any runtime) or a
-runtime-qualified `runtime:model-id`. See `horizon_aios_model_prefs.local.template.md` for examples.
-
-A Claude Code session skips `ollama:*` and lands on a `claude:` member; an Ollama
-session skips `claude:*` and lands on a local member. One file, every runtime.
+Member resolution: try members in listed order; skip any not runnable in the current runtime; never surface errors about unreachable models.
 
 ---
 
@@ -41,108 +17,36 @@ session skips `claude:*` and lands on a local member. One file, every runtime.
 ### Spawned Agent Model
 Unset
 
-Model for any agent/sub-agent this session spawns. "Unset" -> harness/provider
-selects, or a named group / routing rule applies.
-
 ### Sub-Agent Override
 Unset
-
-Model for sub-agents spawned by an already-running agent. "Unset" -> inherits
-Spawned Agent Model.
 
 ---
 
 ## Model Groups
 
-Named sets of models you consider equivalent for a purpose, referenced by hashtag
-in prompts ("use #lowcost", "run on #investigate"). Members follow the grammar
-above. No members are pre-configured; define them in the extend file.
+Members defined in `horizon_aios_model_prefs.local.md`.
 
 ### #lowcost
-Minimize token cost.
-
 ### #midcost
-Balanced cost vs. capability.
-
 ### #highcap
-Maximum capability regardless of cost.
-
 ### #investigate
-Research, exploration, open-ended analysis.
-
 ### #debug
-Step-by-step debugging.
-
 ### #fast
-Latency over depth.
 
 ---
 
 ## Task-Class Routing
 
-Optional, user-owned map from a kind of work to a group, so common work gets a
-sensible default model without you naming one each time. Define rules in the
-extend file. The acting model: before spawning an agent or starting a sizable
-unit of work, if it matches a routing class, select from that group -- unless the
-prompt named a different group, which always wins.
+Defined in `horizon_aios_model_prefs.local.md`.
 
 ---
 
-## Fallback Order
+## Merge Rules
 
-1. Named group from the prompt -- first runnable member.
-2. Task-Class Routing match -- first runnable member of the mapped group.
-3. Sub-Agent Override (sub-agents only, if set).
-4. Spawned Agent Model (if set).
-5. Harness / provider default.
-
----
-
-## Extension File
-
-`horizon_aios_model_prefs.local.md` (same directory, gitignored, auto-loaded).
-Copy `horizon_aios_model_prefs.local.template.md` to start; run `/model-catalog-refresh`
-for a current model + pricing list to fill in. Same headings; group members one
-per line with `-`, routing rules with `->`.
-
-When both files load:
-- Slots: extend wins if not "Unset".
+When local and base files both load:
+- Slots: local wins if not "Unset".
 - Groups: membership combined.
-- Routing: extend rules apply; on conflict, the more specific class wins.
+- Routing: local rules apply; more specific class wins on conflict.
 
----
-
-## Scope Precedence
-
-The base -> extend cascade above generalizes to an N-scope cascade, so config can
-be overridden from the OS layer all the way down to a single subfolder. Most
-specific scope wins:
-
-1. OS-global (this spec + its extend, `$HORIZON_ETC`)
-2. project-root
-3. brain-root
-4. subfolder
-
-A brain runs as an isolated OS user scoped to its own folder, so a brain's root
-*is* its project root; (2) and (3) are the same loading tier, listed separately
-only for clarity.
-
-**Merge across scopes reuses the per-file rules above — no new semantics.** Walk
-scopes least- to most-specific and merge each as if it were an extend file over
-what is already resolved: slots — a more-specific scope wins if not "Unset";
-groups — membership combined across scopes; routing — more-specific scope's rules
-apply, and on conflict the more-specific *scope* wins (then, within a scope, the
-more-specific *class*).
-
-**Override-file convention — anchored on `agents.md`, never `CLAUDE.md`.** A scope
-that wants an override drops a `horizon_aios_model_prefs.local.md` in its own
-directory, and that scope's `agents.md` @-imports it. `CLAUDE.md` is only a thin
-Claude-Code shim pointing at the sibling `agents.md`; no override is ever routed
-through it.
-
-**Loading-tier reality (be honest about reliability).** OS-global and
-project/brain-root files are loaded reliably at session start (memory files walked
-from cwd up to root) — these are first-class, fully-supported override scopes.
-Subfolder/nested overrides are lazy-loaded (pulled in only when the session
-touches files in that subtree) and are therefore best-effort. Do not expect
-deterministic subfolder behavior.
+Scope cascade (OS-global < project < brain < subfolder): same merge rules, most specific scope wins.
+Override files @-imported from `agents.md`; never routed through `CLAUDE.md`.

@@ -6,16 +6,17 @@ wiring, or enforcement engine — the mechanism is in-context instruction, the
 same channel that governs every other AIOS behavior.
 
 This doc is the **practical workflow**: how to set up and maintain your config.
-The **authoritative definition of the mechanism** — model groups, per-session
-slots, task-class routing, member grammar, and fallback order — lives in the
-spec, which is loaded into context every session via `agents.md`:
+The **full reference** — member grammar, slot descriptions, group purposes,
+task-class routing format, scope precedence, and reliability framing — lives in:
 
-> `$HORIZON_ETC/horizon_aios_model_prefs.md`
+> `horizon_system/documentation/model_prefs_details.md`
 
-Read it for the rules; read this for the steps. In short: the base spec is
-OS-tracked and ships the structure; all your choices go in the gitignored extend
-file (`$HORIZON_ETC/horizon_aios_model_prefs.local.md`), auto-loaded alongside
-it. The two combine — slots: extend wins if set; groups: membership combined.
+The **directive spec** (what the acting model follows each session) is the
+context-loaded file at `$HORIZON_ETC/horizon_aios_model_prefs.md`. In short:
+the base spec ships structure and defaults; all your choices go in the gitignored
+extend file (`$HORIZON_ETC/horizon_aios_model_prefs.local.md`), auto-loaded
+alongside it. The two combine — slots: extend wins if set; groups: membership
+combined.
 
 ---
 
