@@ -1026,6 +1026,7 @@ def phase5_deploy_templates(ctx, dry_run=False):
         substitutions={
             '[BRAIN_NAME]':        brain_name,
             '[HORIZON_ROOT_PATH]': horizon_root_fwd,
+            '[BRAIN_DESCRIPTION]': ctx.get('description', ''),
         },
     )
 
@@ -1403,6 +1404,13 @@ def parse_args():
         ),
     )
     parser.add_argument(
+        '--description',
+        metavar='TEXT',
+        default=None,
+        help="One or two sentences describing this brain's purpose and role. "
+             "If omitted, you will be prompted interactively.",
+    )
+    parser.add_argument(
         '--dry-run',
         action='store_true',
         default=False,
@@ -1417,6 +1425,15 @@ def main():
     if args.dry_run:
         print('\n  *** DRY-RUN MODE — no changes will be made ***\n')
 
+    description = args.description
+    if not description:
+        try:
+            description = input(f'  Brain purpose/role for "{args.brain_name}" (1-2 sentences): ').strip()
+        except (EOFError, KeyboardInterrupt):
+            description = ''
+    if not description:
+        description = f'Brain: {args.brain_name}'
+
     try:
         ctx = phase1_preflight(args)
     except SystemExit:
@@ -1427,6 +1444,7 @@ def main():
 
     # Carry the chosen automation tier through to the rights step and manifest.
     ctx['automation'] = args.automation
+    ctx['description'] = description
 
     try:
         phase2_create_user_and_groups(ctx, dry_run=args.dry_run)

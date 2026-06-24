@@ -42,6 +42,7 @@ Env:
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -74,6 +75,9 @@ CLAUDE_MD = os.path.join(CLAUDE_DIR, "CLAUDE.md")
 SKILLS_LINK = os.path.join(CLAUDE_DIR, "skills")
 
 REGISTRY_VERSION = 1
+
+_DIRECT_AIOS_RE = re.compile(r'[A-Za-z]:[/\\][^\'"]*[/\\]horizon_system[/\\]', re.IGNORECASE)
+_WRAPPER_MARKER = "aios-exec"
 
 
 # --- small output helpers ------------------------------------------------------
@@ -389,6 +393,96 @@ def advise_sync(root):
         print(f"           python \"{sched}\"")
 
 
+def _repoint_memory(root, dry):
+    """Repoint ~/.claude/projects to the new AIOS memory root after a switch."""
+    script = os.path.join(root, "horizon_system", "sbin", "horizon_aios_redirect_memory.py")
+    if not os.path.isfile(script):
+        warn("horizon_aios_redirect_memory.py not found in target AIOS — skipping memory repoint.")
+        return
+    py = sys.executable or "python"
+    cmd = [py, script, "--horizon-root", root, "--repoint"]
+    if dry:
+        cmd.append("--dry-run")
+    subprocess.run(cmd)
+
+
+def _migrate_settings_json(settings_path, data):
+    """Replace direct AIOS paths in settings.json with aios-exec wrapper calls."""
+    import copy
+    data = copy.deepcopy(data)
+    wrapper = WRAPPER_PS1
+
+    if "statusLine" in data and "command" in data["statusLine"]:
+        cmd = data["statusLine"]["command"]
+        if _DIRECT_AIOS_RE.search(cmd) and _WRAPPER_MARKER not in cmd:
+            data["statusLine"]["command"] = f"powershell.exe -NonInteractive -File '{wrapper}' statusline"
+
+    for event, event_data in data.get("hooks", {}).items():
+        if isinstance(event_data, list):
+            for hook_group in event_data:
+                for hook in hook_group.get("hooks", []):
+                    cmd = hook.get("command", "")
+                    if _DIRECT_AIOS_RE.search(cmd) and _WRAPPER_MARKER not in cmd:
+                        e = event.lower()
+                        if "stopfailure" in e or ("stop" in e and "failure" in e):
+                            hook["command"] = f"& '{wrapper}' hook-stopfailure"
+                        elif "stop" in e:
+                            hook["command"] = f"& '{wrapper}' hook-stop"
+                        elif "permission" in e:
+                            hook["command"] = f"& '{wrapper}' hook-permission"
+
+    tmp = settings_path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+    os.replace(tmp, settings_path)
+    ok("settings.json migrated to aios-exec wrapper calls.")
+
+
+def _audit_settings_json(dry, yes):
+    """Detect and migrate direct AIOS paths in ~/.claude/settings.json to aios-exec wrapper calls."""
+    settings_path = os.path.join(CLAUDE_DIR, "settings.json")
+    if not os.path.exists(settings_path):
+        return
+    try:
+        with open(settings_path, encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception:
+        return
+
+    hits = []
+    status_cmd = data.get("statusLine", {}).get("command", "")
+    if _DIRECT_AIOS_RE.search(status_cmd) and _WRAPPER_MARKER not in status_cmd:
+        hits.append("statusLine.command")
+    for event, event_data in data.get("hooks", {}).items():
+        if isinstance(event_data, list):
+            for hook_group in event_data:
+                for hook in hook_group.get("hooks", []):
+                    cmd = hook.get("command", "")
+                    if _DIRECT_AIOS_RE.search(cmd) and _WRAPPER_MARKER not in cmd:
+                        hits.append(f"hooks.{event}")
+
+    if not hits:
+        return
+
+    warn(f"settings.json contains {len(hits)} direct AIOS path(s): {', '.join(hits)}")
+    warn("These should use the aios-exec wrapper instead of hardcoded paths.")
+
+    if dry:
+        info("(dry-run) Would offer to migrate settings.json to aios-exec wrapper calls.")
+        return
+
+    if not yes:
+        try:
+            answer = input("  Migrate settings.json to aios-exec wrapper now? [y/N] ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            answer = ""
+        if answer != "y":
+            info("Skipped settings.json migration. Re-run with --yes to auto-migrate.")
+            return
+
+    _migrate_settings_json(settings_path, data)
+
+
 # --- commands ------------------------------------------------------------------
 def cmd_list(reg, _args):
     active = reg.get("active")
@@ -516,6 +610,8 @@ def cmd_switch(reg, args):
     write_wrappers(args.dry_run)
     repoint_claude_md(root, args.dry_run)
     repoint_skills_link(root, args.dry_run)
+    _repoint_memory(root, args.dry_run)
+    _audit_settings_json(args.dry_run, args.yes)
 
     if args.dry_run:
         info("Dry run complete - registry unchanged.")

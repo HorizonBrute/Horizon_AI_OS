@@ -1,6 +1,11 @@
-# Brain — [BRAIN_NAME] agent overrides
+# Brain: [BRAIN_NAME]
 
-Base AIOS agent config (including Agent Teams) is inherited via the root chain
-(@[HORIZON_ROOT_PATH]/.claude/CLAUDE.md → agents.md → agent_teams.md).
+@[HORIZON_ROOT_PATH]/.claude/CLAUDE.md
+
+## Role
+
+[BRAIN_DESCRIPTION]
+
+@[HORIZON_ROOT_PATH]/horizon_system/ai_os_etc/security_invariants.md
 
 @./local.agent_teams.md
