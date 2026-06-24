@@ -18,7 +18,7 @@ deleting the clone — and that **does** destroy them. Back up first if you are
 removing the repo afterward:
 
 - `$HORIZON_ROOT/memory/` — harness transcripts + agent memory (see
-  `system/memory.md`; the `~/.claude/projects` junction points here).
+  `system/memory.md`; the `~/.claude/projects` symlink points here).
 - `$HORIZON_ROOT/handoffs/` and `$HORIZON_ROOT/objectives/`.
 
 Push them to your own remote, or copy them off the machine. None of this is
@@ -63,10 +63,10 @@ The scripts mirror `bootstrap` section by section:
 | Section | Removed |
 |---|---|
 | 2  | `~/.claude/CLAUDE.md` redirect lines (your own content is preserved; file deleted only if it becomes empty) |
-| 3  | `~/.claude/skills/` junction + user-skill symlinks in `skills_sbin/` (link-only — never the targets) |
+| 3  | `~/.claude/skills/` symlink + user-skill symlinks in `skills_sbin/` (link-only — never the targets) |
 | 4  | `$HORIZON_ROOT/handoffs/` and `objectives/` — **only if empty** |
 | 5  | `~/.horizon/` tree (registry, `active_env.*`, `aios-exec` wrappers); removes `~/.claude/settings.json` **only when a provenance stamp proves bootstrap wrote it and it is unmodified** — else preserved with a `[MANUAL]` advisory. Also removes the stamp `~/.claude/.horizon-settings.stamp` |
-| 5b | `~/.claude/projects` junction (memory redirect) — **link only; memory data in `$HORIZON_ROOT/memory` is left intact** |
+| 5b | `~/.claude/projects` symlink (memory redirect) — **link only; memory data in `$HORIZON_ROOT/memory` is left intact** |
 | 6  | `.git/hooks/commit-msg`, `pre-commit`; git `core.hooksPath` |
 | 7  | `$HORIZON_BIN` entry from system PATH (Machine-scope on Windows; `/etc/profile.d/horizon_aios.sh` + macOS `/etc/paths.d/horizon-aios`) |
 | 8  | Shell profile `active_env` source line + the two global `git include.path` entries `aios setup` writes (framework gitconfig and machine-local identity gitconfig) — stripped automatically from PowerShell `$PROFILE` and global gitconfig |
@@ -79,7 +79,7 @@ The scripts mirror `bootstrap` section by section:
 - The `brains` OS group (it may still have brain members).
 - Brain OS user accounts and their data — use `horizon_aios_remove_brain.py` (`/remove-brain`).
 - A `~/.claude/projects.backup-*` left by `horizon_aios_redirect_memory.py` (restore by
-  renaming it back once the junction is gone).
+  renaming it back once the symlink is gone).
 - The repo itself and Python packages (`watchdog`, `keyring`).
 
 ---
@@ -91,13 +91,13 @@ but it cannot exercise the mutations. After a real `--yes` run, confirm by hand 
 this is where uninstall bugs hide:
 
 1. **Registry/env gone:** `python horizon_system/sbin/horizon_aios_doctor.py` now reports
-   **failures** — here, failures = success (the registry, junction, and env it
+   **failures** — here, failures = success (the registry, symlink, and env it
    checks for are intentionally removed).
 2. **`~/.horizon/` is gone.**
-3. **Skills junction removed, target intact:** `~/.claude/skills` no longer
-   exists, but `horizon_system/skills_sbin/` still has its contents (a bad
-   junction-delete can recurse into the target — verify it did not).
-4. **Memory junction removed, data intact:** `~/.claude/projects` is gone, but
+3. **Skills symlink removed, target intact:** `~/.claude/skills` no longer
+   exists, but `horizon_system/skills_sbin/` still has its contents (symlink
+   removal only removes the link, not the target — verify `skills_sbin/` is intact).
+4. **Memory symlink removed, data intact:** `~/.claude/projects` is gone, but
    `$HORIZON_ROOT/memory/` still holds your data.
 5. **System PATH cleaned:** no `…\horizon_system\bin` entry remains
    (`[System.Environment]::GetEnvironmentVariable("Path","Machine")` on Windows).
@@ -140,7 +140,7 @@ C:\devroot\horizon_system\sbin\bootstrap.ps1
 python C:\devroot\horizon_system\sbin\horizon_aios_doctor.py        # expect: all checks pass
 
 # 4. (optional) Open a NEW shell; confirm `aios current`, env vars,
-#    ~/.claude/CLAUDE.md redirect, and the skills junction are present.
+#    ~/.claude/CLAUDE.md redirect, and the skills symlink are present.
 
 # 5. Preview the uninstall plan
 python C:\devroot\horizon_system\sbin\horizon_aios_switch.py uninstall --dry-run

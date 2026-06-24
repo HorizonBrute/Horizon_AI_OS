@@ -45,7 +45,7 @@ files or `@`-imports to confirm the overhead stayed in budget (see
 **Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_doctor.py`
 
 System health check. Verifies that the AIOS install is correctly bootstrapped:
-environment variables are set and point to real directories, the skills junction
+environment variables are set and point to real directories, the skills symlink
 (`~/.claude/skills/`) resolves to `skills_sbin/`, git hooks are installed, the
 local config file exists, the AIOS registry is valid and its active entry
 points to a real AIOS root, and ACLs on `sbin/`, `skills_sbin/`, and `logs/`
@@ -190,9 +190,9 @@ caution).
 Switches the local machine's Claude Code harness configuration to point at a
 different named Horizon AIOS install. A machine is normally bound to one AIOS
 by five pointers (environment variables, `~/.claude/CLAUDE.md`, the skills
-junction, `settings.json` hooks, and the sync schedule). This tool rewrites the
+symlink, `settings.json` hooks, and the sync schedule). This tool rewrites the
 volatile three — env snippet (`~/.horizon/active_env.{ps1,sh}`),
-`~/.claude/CLAUDE.md`, and the `~/.claude/skills/` junction — while leaving
+`~/.claude/CLAUDE.md`, and the `~/.claude/skills/` symlink — while leaving
 `settings.json` stable by routing it through AIOS-independent wrapper scripts
 in `~/.horizon/bin/`. The registry at `~/.horizon/aios_registry.json` records
 all known AIOS installs and the active one; it self-heals if missing.
@@ -238,7 +238,7 @@ new root path (e.g., `C:\devroot` → `D:\aios`). Auto-detects the old root from
 `~/.claude/CLAUDE.md`, and (if present) `aios_local.conf`. Framework source
 files are deliberately left alone — they derive `HORIZON_*` from their own
 location, not from hardcoded paths. Also detects if the `~/.claude/skills`
-junction needs re-pointing and prints the exact `horizon_aios_switch.py` command
+symlink needs re-pointing and prints the exact `horizon_aios_switch.py` command
 to fix it.
 
 **Safety:** dry-run is the **default**. Run without `--apply` first to preview
@@ -269,7 +269,7 @@ Section-by-section mirror of `bootstrap.ps1` / `bootstrap.sh` — reverses every
 configuration bootstrap wrote. Requires Administrator (Windows) or root (Linux/macOS)
 because ACL reversal needs elevation.
 
-Removes: skills junction (`~/.claude/skills/`), CLAUDE.md redirect, active-env
+Removes: skills symlink (`~/.claude/skills/`), CLAUDE.md redirect, active-env
 snippets, aios-exec wrappers, AIOS registry, `aios_local.conf`, `.git/hooks/commit-msg`
 and `pre-commit`, `core.hooksPath` git config, system PATH entry
 (`$HORIZON_BIN` from Machine-scope PATH on Windows; `/etc/profile.d/horizon_aios.sh`
@@ -305,7 +305,7 @@ Unknown arguments are rejected (exit code 2) rather than silently ignored.
 **Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_register_user_skills.py`
 
 Aggregates the owner's complete skill view into `skills_sbin/` by creating
-per-skill junctions (Windows) or symlinks (Unix) for skills from two sources:
+per-skill symlinks for skills from two sources:
 `$HORIZON_SYSTEM/skills_bin/` (brain-tier skills tracked in the OS repo) and
 `$HORIZON_USRBIN/usr_skills/` (machine-local owner skills, gitignored). Skills
 from both sources appear flat alongside the native `skills_sbin/` skills that
@@ -360,8 +360,8 @@ Requires Administrator/root; stdlib only (Python 3.6+).
 Deprovisioning counterpart to `horizon_aios_create_brain.py`. Removes a brain's OS user
 account, its per-brain group (`<brain-name>_group` on Windows, `<brain-name>` on
 Linux/macOS), its workspace folder, its user-profile config
-(including the `~/.claude/skills` junction, deleted with a reparse-point `rmdir`
-so the `skills_bin` target is never followed), and its stored credential. The
+(including the `~/.claude/skills` symlink, deleted as a reparse point so the
+`skills_bin` target is never followed), and its stored credential. The
 shared `brains` group is left intact. Validates the name and refuses reserved
 names (brains, root/administrator, the invoking user, etc.). Requires
 Administrator/root.
@@ -499,8 +499,8 @@ in `aios_local.conf` and wanting the schedule re-registered.
 **Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_redirect_memory.py`
 
 Redirects the owner's harness per-project state — conversation transcripts and
-agent memory — into the AIOS by replacing `~/.claude/projects/` with a junction
-(Windows) / symlink (Unix) to `$HORIZON_ROOT/memory/`, so the state is governed
+agent memory — into the AIOS by replacing `~/.claude/projects/` with a symlink
+to `$HORIZON_ROOT/memory/`, so the state is governed
 by the AIOS gitignore, sync-exclusion, and monitor rules. Backup-first and
 idempotent: it copies existing content to `~/.claude/projects.backup-<timestamp>`,
 *moves* it into the memory root (skipping name collisions), then links. Run with

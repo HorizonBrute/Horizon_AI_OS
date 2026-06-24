@@ -27,7 +27,7 @@ This section is the authoritative reference for which files have a source-of-tru
 
 **Note on settings.json:** The deployed `~/.claude/settings.json` is a copy of the template with the single `AIOS_EXEC_WRAPPER` placeholder substituted to the machine-local `aios-exec` wrapper (`~/.horizon/bin/aios-exec.{ps1,sh}`). It is AIOS-independent — the wrapper resolves the active AIOS at run time — so it is not rewritten on `aios switch`. The bootstrap script (Section 5) does the substitution. See `$HORIZON_DOCS/getting_started/ReadMeToSetupYourSystem.md` §6.2 and `$HORIZON_DOCS/system/aios_switching.md`.
 
-**Note on skills:** Skills are no longer synced via copy. `~/.claude/skills/` is a junction (Windows) or symlink (Unix) pointing directly to `$HORIZON_SYSTEM/skills_sbin/` for the primary user, and to `$HORIZON_SYSTEM/skills_bin/` for brain users. Changes to skills in the repo are live immediately — only a Claude Code session restart is needed. See the 2026-06-21 ADR entry for the junction redirect decision.
+**Note on skills:** Skills are no longer synced via copy. `~/.claude/skills/` is a symlink pointing directly to `$HORIZON_SYSTEM/skills_sbin/` for the primary user, and to `$HORIZON_SYSTEM/skills_bin/` for brain users. Changes to skills in the repo are live immediately — only a Claude Code session restart is needed. See the 2026-06-21 ADR entry for the skills redirect decision.
 
 ### 2.2 Local-Only Files (not in repo, not synced)
 
@@ -49,8 +49,8 @@ These files are committed to the OS repo and present on every machine after clon
 |---|---|---|
 | Canonical AI instructions | `$HORIZON_ROOT/.claude/CLAUDE.md` | System-level instructions for all Claude sessions |
 | Devroot permissions | `$HORIZON_ROOT/.claude/settings.json` | Devroot-scoped tool permissions only (no hooks, no statusLine) |
-| Skills (primary user) | `$HORIZON_SYSTEM/skills_sbin/` | Live via junction at `~/.claude/skills/` → no copy needed |
-| Skills (brain users) | `$HORIZON_SYSTEM/skills_bin/` | Live via junction at brain `~/.claude/skills/` → no copy needed |
+| Skills (primary user) | `$HORIZON_SYSTEM/skills_sbin/` | Live via symlink at `~/.claude/skills/` → no copy needed |
+| Skills (brain users) | `$HORIZON_SYSTEM/skills_bin/` | Live via symlink at brain `~/.claude/skills/` → no copy needed |
 | Sounds (generic) | `$HORIZON_SYSTEM/sounds/*.wav` | Vendor-agnostic event audio |
 | Sounds (vendor-voiced) | `$HORIZON_SYSTEM/sounds/<vendor>_event_sounds/` | Vendor-specific voiced audio |
 | Statusline scripts | `$HORIZON_BIN/statusline/` | Terminal statusline scripts for Claude Code |
@@ -66,6 +66,16 @@ These files are committed to the OS repo and present on every machine after clon
 ## 3. Architectural Decisions Log
 
 Entries are in reverse-chronological order at the top (newest first). Each entry is immutable once added.
+
+---
+
+### 2026-06-23 — Standardized on symlinks across all platforms; junction terminology retired
+
+**Decision:** The AIOS now uses symbolic links (symlinks) exclusively across all platforms — Windows, macOS, and Linux — for skills discovery (`~/.claude/skills/`), memory redirect (`~/.claude/projects/`), and brain `.claude` home wiring (`<brain-home>/.claude`). The previous Windows-specific NTFS directory junction approach is retired. All documentation terminology updated from "junction" (or "junction/symlink") to "symlink."
+
+**Rationale:** NTFS directory junctions are a Windows-only construct; using junction terminology alongside symlink terminology created per-platform documentation branches and reader confusion. Windows supports symbolic links natively (via `mklink /D` or `New-Item -ItemType SymbolicLink`); they are functionally equivalent to junctions for directory redirection and do not require administrator rights when Developer Mode is enabled. Standardizing on symlinks unifies the vocabulary, eliminates the dual-terminology burden in documentation, and makes the implementation description accurate across all platforms.
+
+**Implications:** Any script or tool that previously created NTFS junctions (`New-Item -ItemType Junction`) should be updated to create directory symlinks (`New-Item -ItemType SymbolicLink`). Existing junctions on already-deployed machines are functionally equivalent and do not need to be recreated. All documentation (KB, AIOS working copy) updated to use "symlink" uniformly.
 
 ---
 
@@ -227,13 +237,13 @@ In the Docker deployment model, brain isolation is container-level rather than O
 
 These pairs are the most likely to drift and require attention after any update.
 
-### 4.1 Skills: `$HORIZON_SYSTEM/skills_sbin/` (live via junction)
+### 4.1 Skills: `$HORIZON_SYSTEM/skills_sbin/` (live via symlink)
 
-Skills no longer require a copy/sync step. `~/.claude/skills/` is a junction (Windows) or symlink (Unix/macOS) pointing directly to `$HORIZON_SYSTEM/skills_sbin/`. Changes to skill files in the repo are live on disk immediately.
+Skills no longer require a copy/sync step. `~/.claude/skills/` is a symlink pointing directly to `$HORIZON_SYSTEM/skills_sbin/`. Changes to skill files in the repo are live on disk immediately.
 
 The only action needed after adding or editing a skill: **restart the Claude Code session** so it re-reads `~/.claude/skills/`.
 
-Signs of a problem: a skill change in the repo has no effect after session restart. Verify that `~/.claude/skills/` is a junction/symlink (not a real directory) and that its target is `$HORIZON_SYSTEM/skills_sbin/`. Re-run bootstrap if the junction is missing.
+Signs of a problem: a skill change in the repo has no effect after session restart. Verify that `~/.claude/skills/` is a symlink (not a real directory) and that its target is `$HORIZON_SYSTEM/skills_sbin/`. Re-run bootstrap if the symlink is missing.
 
 ### 4.2 Template-derived settings: `$HORIZON_SYSTEM/templates/claude_code/settings.json` → `~/.claude/settings.json`
 
@@ -253,7 +263,7 @@ Anyone who clones the Horizon AIOS repo will not have these. They must be create
 
 2. `~/.claude/CLAUDE.md` — Machine-local stub containing a single `@` redirect to the repo's CLAUDE.md. Created during bootstrap (one line, never changes).
 
-3. `~/.claude/skills/` — A junction (Windows) or symlink (Unix/macOS) created by bootstrap pointing to `$HORIZON_SYSTEM/skills_sbin/`. Not a deployed copy — skills are live on disk. The junction itself is machine-local; the skills it points to are in the repo.
+3. `~/.claude/skills/` — A symlink created by bootstrap pointing to `$HORIZON_SYSTEM/skills_sbin/`. Not a deployed copy — skills are live on disk. The symlink itself is machine-local; the skills it points to are in the repo.
 
 4. `$HORIZON_ROOT/.git/config` — Local git configuration, including `core.hooksPath` which wires the pre-commit hook. Set by bootstrap via `git config core.hooksPath`.
 

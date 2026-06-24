@@ -133,7 +133,7 @@ Work in an ELEVATED PowerShell. Rules:
    .\horizon_system\sbin\uninstall.ps1 --yes
    # Run the post-uninstall VERIFICATION CHECKLIST in
    #   horizon_system\documentation\system\uninstall.md
-   # (horizon_aios_doctor.py failures = success; ~/.horizon gone; ~/.claude/projects + skills junctions gone
+   # (horizon_aios_doctor.py failures = success; ~/.horizon gone; ~/.claude/projects + skills symlinks gone
    #  with targets intact; horizon_system\bin out of Machine PATH; brains ACEs fully stripped —
    #  no residual grant OR DENY ACE, since uninstall uses icacls /remove not /remove:g).
    # settings.json: removed ONLY if it byte-matches the bootstrap default; if you customized it,

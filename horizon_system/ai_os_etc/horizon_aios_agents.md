@@ -47,7 +47,7 @@ Do not start the monitor yourself.
 
 ## Skills
 
-`~/.claude/skills/` is a junction/symlink — not a copy. Primary user → `skills_sbin/`. Brain users → `skills_bin/`. Skills are live on disk immediately; only a session restart is needed.
+`~/.claude/skills/` is a symlink — not a copy. Primary user → `skills_sbin/`. Brain users → `skills_bin/`. Skills are live on disk immediately; only a session restart is needed.
 
 Check the index before searching individual skill files:
 - `$HORIZON_SYSTEM/skills_sbin/index.md` — owner-only privileged skills (primary user)

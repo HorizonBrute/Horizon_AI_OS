@@ -1,6 +1,6 @@
 ---
 name: doctor
-description: Run the Horizon AIOS health check — verifies env vars, the skills junction, git hooks, local config, the AIOS registry, and privileged-dir Deny ACLs, then reports passed/warnings/failures. Use when the user types /doctor, asks to "run the doctor", "health check the AIOS", "check the install", or diagnoses why the AIOS is misbehaving.
+description: Run the Horizon AIOS health check — verifies env vars, the skills symlink, git hooks, local config, the AIOS registry, and privileged-dir Deny ACLs, then reports passed/warnings/failures. Use when the user types /doctor, asks to "run the doctor", "health check the AIOS", "check the install", or diagnoses why the AIOS is misbehaving.
 tools: Bash, Read
 ---
 

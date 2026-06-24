@@ -12,7 +12,7 @@ Five machine-global pointers otherwise hardcode a single `HORIZON_ROOT`:
 |---|---------|----------|
 | 1 | Env vars (`HORIZON_ROOT` + 8 derived) | your shell profile |
 | 2 | CLAUDE.md redirect | `~/.claude/CLAUDE.md` |
-| 3 | Skills junction/symlink | `~/.claude/skills/` |
+| 3 | Skills symlink | `~/.claude/skills/` |
 | 4 | statusline + hooks | `~/.claude/settings.json` |
 | 5 | Upstream sync schedule | OS scheduler (advisory) |
 
@@ -161,7 +161,7 @@ Both scripts reject unknown arguments (exit code 2) rather than silently
 ignoring them.
 
 The scripts are section-by-section mirrors of bootstrap — they remove the skills
-junction, CLAUDE.md redirect, active-env files, aios-exec wrappers, registry,
+symlink, CLAUDE.md redirect, active-env files, aios-exec wrappers, registry,
 `aios_local.conf`, git hooks, `core.hooksPath`, system PATH entry, and
 brains-group ACEs. Emit `[MANUAL]` advisories for what cannot be automated (shell
 profile line, global gitconfig `include.path`, sync schedule, `brains` group,

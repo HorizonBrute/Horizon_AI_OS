@@ -107,7 +107,7 @@ P.10.2 **Statusline** uses `$HORIZON_BIN/statusline/statusline.sh`, a bash dispa
 
 P.10.3 **Linux audio dependency**: at least one of `paplay`, `aplay`, `ffplay`, or `mpg123` must be installed for sounds to play on Linux. Sounds are skipped silently if none are present.
 
-P.11 **No administrator privileges are required for the Claude config wiring**. `~/.claude/settings.json` is a plain file copy of the template (no special permissions needed), and `~/.claude/skills/` is a directory junction on Windows / symlink on Unix — neither requires elevation. (The full `bootstrap` script's ACL-hardening step does require admin/root, but the config wiring itself does not.)
+P.11 **No administrator privileges are required for the Claude config wiring**. `~/.claude/settings.json` is a plain file copy of the template (no special permissions needed), and `~/.claude/skills/` is a directory symlink — neither requires elevation. (The full `bootstrap` script's ACL-hardening step does require admin/root, but the config wiring itself does not.)
 
 P.12 **Developer Mode is not required**.
 
@@ -140,7 +140,7 @@ Bootstrap and brain provisioning both run `horizon_aios_harden.py`, which sets O
   sudo bash horizon_system/sbin/bootstrap.sh
   ```
 
-All other bootstrap steps (CLAUDE.md redirect, skills junction, git hooks, settings.json copy) are non-destructive and idempotent. The privilege requirement is solely for the ACL hardening step.
+All other bootstrap steps (CLAUDE.md redirect, skills symlink, git hooks, settings.json copy) are non-destructive and idempotent. The privilege requirement is solely for the ACL hardening step.
 
 ---
 
@@ -262,8 +262,8 @@ bash "$HORIZON_SYSTEM/sbin/bootstrap.sh"
 
 The script will:
 - Create `~/.claude/CLAUDE.md` with the `@` redirect (Step 6)
-- Create `~/.claude/skills/` as a junction/symlink pointing to `$HORIZON_SYSTEM/skills_sbin/` (Step 7)
-- Register machine-local user skills (`usrbin/usr_skills/` → `skills_sbin/` junctions) via `horizon_aios_register_user_skills.py` (best-effort; see Step 7)
+- Create `~/.claude/skills/` as a symlink pointing to `$HORIZON_SYSTEM/skills_sbin/` (Step 7)
+- Register machine-local user skills (`usrbin/usr_skills/` → `skills_sbin/` symlinks) via `horizon_aios_register_user_skills.py` (best-effort; see Step 7)
 - Initialize the AIOS registry + indirection layer (`horizon_aios_switch.py init`) and offer to copy `settings.json` from the template, pointed at the `aios-exec` wrapper (Step 6.2)
 - Create `$HORIZON_ROOT/handoffs/` and `$HORIZON_SYSTEM/logs/`
 - Wire git `core.hooksPath` and install DCO hooks
@@ -345,7 +345,7 @@ Both should confirm the files exist.
 
 ## 7. Skills Redirect
 
-AIOS skills live in `$HORIZON_SYSTEM/skills_sbin/` (primary user) and `$HORIZON_SYSTEM/skills_bin/` (brain users). Claude Code reads skills from `~/.claude/skills/`. Bootstrap wires this by creating `~/.claude/skills/` as a junction (Windows) or symlink (Unix/macOS) pointing directly to the source directory — there is no copy step. Skills are live on disk as soon as the repo is updated; only a session restart is needed to pick up changes.
+AIOS skills live in `$HORIZON_SYSTEM/skills_sbin/` (primary user) and `$HORIZON_SYSTEM/skills_bin/` (brain users). Claude Code reads skills from `~/.claude/skills/`. Bootstrap wires this by creating `~/.claude/skills/` as a symlink pointing directly to the source directory — there is no copy step. Skills are live on disk as soon as the repo is updated; only a session restart is needed to pick up changes.
 
 7.1 The bootstrap script (Step 5) handles this automatically. To verify or create the redirect manually:
 
@@ -364,7 +364,7 @@ ln -s "$HORIZON_SYSTEM/skills_sbin" ~/.claude/skills
 
 7.2 Verify the redirect:
 ```bash
-# Should show the junction/symlink target, not a real directory listing
+# Should show the symlink target, not a real directory listing
 ls -la ~/.claude/skills
 ```
 On Windows: `Get-Item "$HOME\.claude\skills" | Select-Object LinkType, Target`
@@ -373,7 +373,7 @@ On Windows: `Get-Item "$HOME\.claude\skills" | Select-Object LinkType, Target`
 
 7.4 **Skills load at session start, not hot-reloaded.** Start a new session after changes.
 
-7.5 **Machine-local user skills.** Personal skills you want kept out of the OS repo (and safe from upstream syncs) live in `$HORIZON_USRBIN/usr_skills/<name>/SKILL.md`. `horizon_aios_register_user_skills.py` junctions each into `skills_sbin/`, so they surface flat through the same `~/.claude/skills/` junction alongside OS skills. Bootstrap runs it automatically (and it re-runs after each successful sync, since a sync can refresh `skills_sbin`). Run it manually any other time you add or remove a user skill:
+7.5 **Machine-local user skills.** Personal skills you want kept out of the OS repo (and safe from upstream syncs) live in `$HORIZON_USRBIN/usr_skills/<name>/SKILL.md`. `horizon_aios_register_user_skills.py` symlinks each into `skills_sbin/`, so they surface flat through the same `~/.claude/skills/` symlink alongside OS skills. Bootstrap runs it automatically (and it re-runs after each successful sync, since a sync can refresh `skills_sbin`). Run it manually any other time you add or remove a user skill:
 
 ```bash
 python "$HORIZON_SYSTEM/sbin/horizon_aios_register_user_skills.py"   # or invoke /resync-user-skills
@@ -383,7 +383,7 @@ It is idempotent, prunes stale links, and refuses to shadow an OS skill of the s
 
 7.6 Troubleshooting — if a skill is not recognized:
 
-1. Confirm the junction/symlink exists: `Get-Item "$HOME\.claude\skills"` (Windows) or `ls -la ~/.claude/skills` (Unix)
+1. Confirm the symlink exists: `Get-Item "$HOME\.claude\skills"` (Windows) or `ls -la ~/.claude/skills` (Unix)
 2. Start a **fresh** Claude Code session. Long-running sessions can miss newly available skills.
 3. Confirm the `SKILL.md` has valid YAML frontmatter (`name:` and `description:` fields).
 4. Run `horizon_aios_doctor.py`: `python "$env:HORIZON_SYSTEM\sbin\horizon_aios_doctor.py"`
@@ -716,7 +716,7 @@ A brain is an isolated AI persona running under a separate OS user account, scop
 > independently have a harness installed whose executable is on a `PATH` it can run with
 > valid permissions — either its own per-user install or a system-/all-users install.
 > `horizon_aios_create_brain.py` wires the brain's *config* (`.claude/CLAUDE.md`,
-> `settings.json`, skills junction) but does **not** install the brain's harness and does
+> `settings.json`, skills symlink) but does **not** install the brain's harness and does
 > **not** verify the harness is pointed at the AIOS-redirected config. Both of those are
 > deliberately left as operator responsibilities for now and may be automated for common
 > harnesses in a future release. See `getting_started/dependencies_and_footprint.md` →
@@ -804,7 +804,7 @@ See `$HORIZON_ETC/security_invariants.md` for the full ownership and ACL model, 
 | Skills (primary user source) | `$HORIZON_SYSTEM/skills_sbin/` |
 | Skills (brain user source) | `$HORIZON_SYSTEM/skills_bin/` |
 | Skills (machine-local user tier) | `$HORIZON_USRBIN/usr_skills/` |
-| Skills (Claude Code reads here — junction) | `~/.claude/skills/` → `skills_sbin/` |
+| Skills (Claude Code reads here — symlink) | `~/.claude/skills/` → `skills_sbin/` |
 | Handoffs (default output) | `$HORIZON_ROOT/handoffs/` |
 | Objectives (default store) | `$HORIZON_ROOT/objectives/` |
 | Operational logs | `$HORIZON_SYSTEM/logs/` |

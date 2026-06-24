@@ -12,8 +12,7 @@ operator points at the tree.
 The redirect points `~/.claude/projects/` at `$HORIZON_ROOT/memory/`:
 
 ```
-~/.claude/projects/   ->   $HORIZON_ROOT/memory/     (junction on Windows,
-                                                      symlink on Unix/macOS)
+~/.claude/projects/   ->   $HORIZON_ROOT/memory/     (symlink)
 ```
 
 Inside `memory/`, the harness keeps one directory per project, named by a hash
@@ -26,13 +25,13 @@ install ships the *mechanism*, never any memory *content*.
 
 ## How the redirect works
 
-**Owner** — `$HORIZON_SYSTEM/sbin/horizon_aios_redirect_memory.py` creates the junction. It is
+**Owner** — `$HORIZON_SYSTEM/sbin/horizon_aios_redirect_memory.py` creates the symlink. It is
 backup-first, idempotent, and supports `--dry-run`:
 
 - It **moves** any existing content out of `~/.claude/projects/` into the memory
   root (merging), after taking a backup, then replaces `~/.claude/projects/`
-  with the junction.
-- It is idempotent: if the junction is already in place pointing at the memory
+  with the symlink.
+- It is idempotent: if the symlink is already in place pointing at the memory
   root, it does nothing.
 - Before moving, it leaves a safety copy at `~/.claude/projects.backup-<timestamp>`.
 
@@ -40,7 +39,7 @@ backup-first, idempotent, and supports `--dry-run`:
 > open. Close Claude Code, run `horizon_aios_redirect_memory.py`, then restart Claude.
 
 **Brains** — handled separately and already redirected. `horizon_aios_create_brain.py`
-junctions each brain's home `~/.claude` to its workspace `brains/<name>/.claude/`,
+symlinks each brain's home `~/.claude` to its workspace `brains/<name>/.claude/`,
 so a brain's `projects/` (transcripts + memory) lives inside its OWN isolated,
 group-owned brain folder (accessed via the `<brain>_group` Windows group /
 `<brain>` Unix account). Brains never see the owner's memory or each other's —
@@ -69,7 +68,7 @@ exists in exactly one place on disk with no tracked or synced copy. Therefore:
   the rest of the tree, unless you have copied `$HORIZON_ROOT/memory/`
   elsewhere first.
 - Uninstall scripts and `horizon_aios_switch.py uninstall` remove the *machine-local
-  configuration footprint* (junctions, wrappers, registry) — they do **not**
+  configuration footprint* (symlinks, wrappers, registry) — they do **not**
   preserve or relocate memory content for you.
 - If you want to keep your transcripts and agent memory across an uninstall,
   reinstall, or machine migration, **back up `$HORIZON_ROOT/memory/` yourself

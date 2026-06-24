@@ -99,7 +99,7 @@ Claude Code hardcodes two global config lookup paths that cannot be changed. The
 1.6.5 Any folder that has been `git init`'d (nested repos are invisible to the OS repo)
 1.6.6 `$HORIZON_ROOT\handoffs\` — machine-local session handoff documents (gitignored)
 1.6.7 `$HORIZON_ROOT\objectives\` — machine-local durable `/objective` goals (gitignored)
-1.6.8 `$HORIZON_ROOT\usrbin\usr_skills\` — machine-local user skills, junctioned into `skills_sbin/` at runtime (gitignored)
+1.6.8 `$HORIZON_ROOT\usrbin\usr_skills\` — machine-local user skills, symlinked into `skills_sbin/` at runtime (gitignored)
 1.6.9 `$HORIZON_SYSTEM\ai_os_etc\git_identity.local.gitconfig` — machine-local git identity (`user.name`/`user.email`/`user.signingkey`) written by `aios setup` and wired via global `include.path`; gitignored, never shows in `git status`
 1.6.10 `$HORIZON_ROOT\local.agents.md` and `$HORIZON_ROOT\.claude\local.agents.md` — machine-local agent instruction overrides; gitignored (bare `local.agents.md` pattern); materialized from their `.template` siblings by `aios setup`; `@`-imported last by the sibling `agents.md` so local content wins. See `$HORIZON_ETC/file_structure_invariants.md` §12.6.
 

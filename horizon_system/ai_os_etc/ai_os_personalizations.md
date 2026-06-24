@@ -115,7 +115,7 @@ All contributed templates must use placeholder strings instead of real paths and
 
 ## 7. /handoff Skill
 
-Generates a structured session handoff document. See `$HORIZON_SYSTEM/skills_sbin/handoff/SKILL.md`. The skill is live via the `~/.claude/skills/` junction created by bootstrap — no manual copy needed.
+Generates a structured session handoff document. See `$HORIZON_SYSTEM/skills_sbin/handoff/SKILL.md`. The skill is live via the `~/.claude/skills/` symlink created by bootstrap — no manual copy needed.
 
 ---
 

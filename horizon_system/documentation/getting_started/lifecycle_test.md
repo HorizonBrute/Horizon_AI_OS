@@ -96,7 +96,7 @@ open a fresh elevated shell or use the long form
 
 ### Clean reset after uninstall (step 5)
 Run the **post-uninstall verification checklist in `system/uninstall.md`** — it is
-authoritative (horizon_aios_doctor.py failures = success, skills/memory junctions gone with
+authoritative (horizon_aios_doctor.py failures = success, skills/memory symlinks gone with
 targets intact, PATH cleaned, ACEs stripped, idempotent re-run).
 
 One switch-test-specific note: the registry (`aios_registry.json`) lives under

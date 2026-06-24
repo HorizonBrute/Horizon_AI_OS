@@ -44,7 +44,7 @@ error if not run elevated.
 - **Windows:** Run bootstrap in an Administrator PowerShell (`Run as administrator`).
 - **Linux/macOS:** Run bootstrap with `sudo bash horizon_system/sbin/bootstrap.sh`.
 
-All other bootstrap steps (CLAUDE.md redirect, skills junction, settings.json copy,
+All other bootstrap steps (CLAUDE.md redirect, skills symlink, settings.json copy,
 git hooks, directories) are non-destructive and do not require elevation.
 
 ### Harness installation is a per-user (and per-Brain) responsibility
@@ -120,11 +120,11 @@ What changes on the machine when `bootstrap.ps1` / `bootstrap.sh` runs.
 | `~/.claude/` | Created if absent | Created if absent | Created if absent | Bootstrap creates it if Claude Code has not been launched yet; Claude Code itself creates it on first launch |
 | `~/.horizon/bin/` | Created | Created | Created | Created by `horizon_aios_switch.py init` alongside the wrapper scripts |
 
-### Junctions / symlinks created
+### Symlinks created
 
 | Link | Windows | macOS | Linux | Notes |
 |---|---|---|---|---|
-| `~/.claude/skills/` | Directory junction → `$HORIZON_SYSTEM/skills_sbin/` | Symlink → `$HORIZON_SYSTEM/skills_sbin/` | Symlink → `$HORIZON_SYSTEM/skills_sbin/` | Created by Section 3 of bootstrap; no admin/root required for this step on any platform |
+| `~/.claude/skills/` | Symlink → `$HORIZON_SYSTEM/skills_sbin/` | Symlink → `$HORIZON_SYSTEM/skills_sbin/` | Symlink → `$HORIZON_SYSTEM/skills_sbin/` | Created by Section 3 of bootstrap; no admin/root required for this step on any platform |
 
 ### OS-level changes
 
@@ -211,7 +211,7 @@ Must be run as Administrator (Windows) or root (Unix).
 |---|---|---|---|
 | `$HORIZON_ROOT/brains/<brain-name>/` | `icacls /inheritance:r`; `<brain-name>:(OI)(CI)F`; `<invoking-user>:(OI)(CI)F`; `SYSTEM:(OI)(CI)F`; `Administrators:(OI)(CI)F` | `chown -R <brain-name>:<brain-name>`; `chmod 770` | Created with `os.makedirs`; parents created if absent |
 | `$HORIZON_ROOT/brains/<brain-name>/.claude/` | Inherits brain folder ACLs | `chown <brain-name>:<brain-name>` | Created by Phase 5 (template deployment) |
-| `<brain-home>/.claude/` | Created by Phase 3 (`C:\Users\<brain-name>\.claude\`) | Created by Phase 3 | Holds the brain's `~/.claude/skills` junction/symlink |
+| `<brain-home>/.claude/` | Created by Phase 3 (`C:\Users\<brain-name>\.claude\`) | Created by Phase 3 | Holds the brain's `~/.claude/skills` symlink |
 
 ### ACLs set (per-brain, in addition to AIOS-layer hardening)
 

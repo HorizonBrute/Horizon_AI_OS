@@ -52,7 +52,7 @@ Bootstrap sets up:
 - The AIOS registry + indirection layer (`~/.horizon/`: `aios_registry.json`, `active_env.{ps1,sh}`, `bin/aios-exec.{ps1,sh}`) via `horizon_aios_switch.py init`
 - Generates `~/.horizon/active_env.*` and prints the one-line profile include to add — it sets `HORIZON_ROOT` + derived vars for the active AIOS (see `system/aios_switching.md`)
 - `~/.claude/CLAUDE.md` stub redirect
-- `~/.claude/skills/` junction/symlink → `skills_sbin/`
+- `~/.claude/skills/` symlink → `skills_sbin/`
 - Machine-local user skills (`usrbin/usr_skills/` → `skills_sbin/`) registered via `horizon_aios_register_user_skills.py`
 - `~/.claude/settings.json` from template, pointed at the `aios-exec` wrapper
 - Git hooks (DCO sign-off enforcement)
@@ -80,12 +80,12 @@ Run as administrator (Windows) or with `sudo` (Linux/macOS). The script:
 
 **Brain users do not run `bootstrap.ps1`/`bootstrap.sh`.** Bootstrap is the *owner/admin* machine-setup step, run once. `horizon_aios_create_brain.py` is the per-brain onboarding script — it configures each brain user's harness so that, the moment the brain logs in and launches the harness, it is already pointed at the AIOS layer.
 
-The brain's config is **canonical in its workspace** `brains/<name>/.claude/`, and the brain's home `~/.claude` is a **junction/symlink to it** — so everything is surfaced at the user-level `~/.claude` regardless of the brain's cwd. Phase 5 deploys/links:
+The brain's config is **canonical in its workspace** `brains/<name>/.claude/`, and the brain's home `~/.claude` is a **symlink to it** — so everything is surfaced at the user-level `~/.claude` regardless of the brain's cwd. Phase 5 deploys/links:
 
 - `brains/<name>/.claude/CLAUDE.md` — from `brains/.aioscommon/brain_CLAUDE.md.template`. It `@`-imports `$HORIZON_ROOT/.claude/CLAUDE.md`, so the brain inherits the full AIOS config chain (agents.md, invariants, personalizations) plus its own identity/scope/skills block.
 - `brains/<name>/.claude/settings.json` — from `brain_settings.json.template`: harness-layer permission scoping (allow the brain folder; deny `sbin`/writes to `horizon_system`). Defense-in-depth only — real isolation is the OS ACLs from step 3.
-- `brains/<name>/.claude/skills` — a junction (Windows) / symlink (Unix) to `$HORIZON_SYSTEM/skills_bin/`, so the brain sees the group-readable skill tier (never `skills_sbin`).
-- `<brain-home>/.claude` → junction/symlink → `brains/<name>/.claude/` — makes the above resolve from the brain's home directory.
+- `brains/<name>/.claude/skills` — a symlink to `$HORIZON_SYSTEM/skills_bin/`, so the brain sees the group-readable skill tier (never `skills_sbin`).
+- `<brain-home>/.claude` → symlink → `brains/<name>/.claude/` — makes the above resolve from the brain's home directory.
 - The brain user's **shell/PowerShell profile** — exports the `HORIZON_*` environment variables and `cd`s to the brain folder on interactive login.
 
 So there is no separate "point the brain at AIOS" step: provisioning *is* that step. To customize a brain after provisioning, edit its `brains/<name>/.claude/CLAUDE.md` Role section (the template leaves a placeholder), not the AIOS layer.
@@ -104,7 +104,7 @@ python $HORIZON_SYSTEM/sbin/horizon_aios_remove_brain.py brain-name --yes  # non
 python $HORIZON_SYSTEM/sbin/horizon_aios_remove_brain.py brain-name --dry-run
 ```
 
-It reverses `horizon_aios_create_brain.py`: removes the OS user account, the per-brain group (`<name>_group` on Windows; the shared `brains` group is kept), the workspace folder `$HORIZON_ROOT/brains/brain-name/`, the user-profile config, and the stored credential. All links — the home `~/.claude` → workspace junction and the workspace `.claude/skills` → `skills_bin` junction — are deleted as reparse points **before** any recursive delete, so neither the workspace nor `skills_bin` is ever followed or destroyed.
+It reverses `horizon_aios_create_brain.py`: removes the OS user account, the per-brain group (`<name>_group` on Windows; the shared `brains` group is kept), the workspace folder `$HORIZON_ROOT/brains/brain-name/`, the user-profile config, and the stored credential. All links — the home `~/.claude` → workspace symlink and the workspace `.claude/skills` → `skills_bin` symlink — are deleted as reparse points **before** any recursive delete, so neither the workspace nor `skills_bin` is ever followed or destroyed.
 
 ---
 

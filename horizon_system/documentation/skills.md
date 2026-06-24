@@ -14,7 +14,7 @@ Skills live in one of two OS-level directories:
   Deny ACL on this directory
 
 At bootstrap (or when `/resync-user-skills` is run), the owner's
-`~/.claude/skills/` is pointed at `skills_sbin/`, and junctions are created
+`~/.claude/skills/` is pointed at `skills_sbin/`, and symlinks are created
 inside `skills_sbin/` for each `skills_bin/` skill so the owner sees the full
 set flat. Brain users' `~/.claude/skills/` points directly at `skills_bin/`.
 
@@ -26,7 +26,7 @@ set flat. Brain users' `~/.claude/skills/` points directly at `skills_bin/`.
 |---|---|---|
 | `/context-cost` | `skills_bin/` | Report KB, word count, and token estimates for all files the harness auto-loads above a given path |
 | `/create-brain` | `skills_sbin/` | Provision a new brain OS user, groups, workspace, shell profile, and keystore credential (Admin/root) |
-| `/doctor` | `skills_bin/` | Run the AIOS health check — env vars, skills junction, hooks, registry, and privileged-dir Deny ACLs |
+| `/doctor` | `skills_bin/` | Run the AIOS health check — env vars, skills symlink, hooks, registry, and privileged-dir Deny ACLs |
 | `/handoff` | `skills_sbin/` | Write a structured session handoff document for the next session or a human reviewer |
 | `/harden` | `skills_sbin/` | Apply the authoritative brains-group ACL model to the AIOS layer (Admin/root) |
 | `/agent-teams` | `skills_sbin/` | List, create, or edit agent-team definitions in `local.agent_teams.md` at any scope; manage custom role flags |
@@ -44,7 +44,7 @@ set flat. Brain users' `~/.claude/skills/` points directly at `skills_bin/`.
 | `/objective` | `skills_sbin/` | Create, list, show, or update durable multi-session objectives that handoffs chain back to |
 | `/pre-flight-tooling-validation` | `skills_sbin/` | Validate the repo ships full-lifecycle tooling per platform, then emit a ready-to-run test prompt per platform |
 | `/remove-brain` | `skills_sbin/` | Deprovision a brain — remove its OS user, per-brain group, workspace, profile, and credential (Admin/root) |
-| `/resync-user-skills` | `skills_sbin/` | Report skill inventory and rebuild junctions so the owner view matches the filesystem |
+| `/resync-user-skills` | `skills_sbin/` | Report skill inventory and rebuild symlinks so the owner view matches the filesystem |
 | `/skill-creation` | `skills_sbin/` | Scaffold a new AIOS skill with correct structure, frontmatter, and index registration |
 
 ---
@@ -197,13 +197,13 @@ independent of the skill.
 
 Reports whether the owner's aggregated skill view (`skills_bin/` + `usr_skills/`
 linked into `skills_sbin/`) matches the filesystem, then heals any drift by
-rebuilding junctions or symlinks. Also compares the on-disk state to what is
+rebuilding symlinks. Also compares the on-disk state to what is
 loaded in the current session and advises on restarts. An upstream sync that
 refreshes `skills_sbin/` can drop these links; running this skill or
 `horizon_aios_register_user_skills.py --check` detects that.
 
 **Onboarding:** Provides a single command to verify and repair the skill wiring
-after any sync or new skill is added, without needing to understand the junction
+after any sync or new skill is added, without needing to understand the symlink
 mechanics.
 **Offboarding:** You lose the check/heal UX. The underlying
 `horizon_aios_register_user_skills.py` script remains at `$HORIZON_SYSTEM/sbin/` and can be
@@ -220,7 +220,7 @@ Scaffolds a new AIOS skill at the correct tier (`skills_bin/`, `skills_sbin/`, o
 `usr_skills/`), writes a valid `SKILL.md` with required YAML frontmatter, updates
 the tier's `index.md`, and for `skills_sbin/` skills also updates `.gitignore` to
 whitelist the new directory. Enforces the invariant that name, directory, and
-frontmatter `name:` field must all match. OS skills require a restart; the junction
+frontmatter `name:` field must all match. OS skills require a restart; the symlink
 is live immediately.
 
 **Onboarding:** Ensures every new skill is correctly structured, registered, and
@@ -315,7 +315,7 @@ section of `getting_started/ReadMeToSetupYourSystem.md`.
 **Underlying tool:** `$HORIZON_SYSTEM/sbin/horizon_aios_remove_brain.py`
 
 Deprovisions a brain by removing its OS user account, per-brain group, workspace
-folder, profile config (including the skills junction), and stored credential.
+folder, profile config (including the skills symlink), and stored credential.
 The shared `brains` group is left intact. Requires Administrator/root.
 
 **Onboarding:** Provides a safe, guided teardown path that mirrors provisioning.
@@ -345,7 +345,7 @@ without needing to recall the `icacls`/`chmod` commands manually.
 **Location:** `skills_bin/` (available to all users including brains)
 **Underlying tool:** `$HORIZON_SYSTEM/sbin/horizon_aios_doctor.py`
 
-Runs the AIOS health check: verifies env vars, the `~/.claude/skills/` junction,
+Runs the AIOS health check: verifies env vars, the `~/.claude/skills/` symlink,
 git hooks, local config (`aios_local.conf`), the AIOS registry, and that `sbin/`,
 `skills_sbin/`, and `logs/` have an explicit Deny ACE for the `brains` group.
 Reports PASS / WARN / FAIL for each check. Optional `--post-setup` flag adds
@@ -445,7 +445,7 @@ Skills that wrap underlying scripts: `/context-cost`, `/doctor`, `/create-brain`
 perform live fetches or agent spawns at runtime. The remaining skills have no
 separate script — Claude is the engine and the `SKILL.md` is the procedure.
 
-Unregistering the skills (by removing the `~/.claude/skills/` junction or clearing
+Unregistering the skills (by removing the `~/.claude/skills/` symlink or clearing
 the skills directories) does not delete any underlying data or scripts. Handoff
 documents, objective files, the documentation index, and the model-preference
 extend file remain on disk exactly as written. The Python scripts in

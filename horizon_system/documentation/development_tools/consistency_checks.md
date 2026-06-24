@@ -115,7 +115,7 @@ skills, hooks, and templates.
 - **CC-C2 — Instructions cover all OSes.** Setup/usage docs give correct
   Windows, Linux, and macOS instructions where they differ.
 - **CC-C3 — No unguarded OS assumptions.** Path separators, shells, line endings,
-  symlink/junction handling, and OS-only commands are guarded or abstracted, not
+  symlink handling, and OS-only commands are guarded or abstracted, not
   hardcoded to one platform outside a platform branch.
 
 ### D. Deployment flexibility
@@ -178,7 +178,7 @@ skills, hooks, and templates.
   tokens every session. (Aligns with `dev_values.md` token economy.)
 - **CC-G6 — Dependency list.** Documentation provides a current, explicit list of
   external dependencies required to run the AIOS — language runtimes (Python,
-  PowerShell, bash), `git`, OS features (directory junctions/symlinks, ACL
+  PowerShell, bash), `git`, OS features (directory symlinks, ACL
   tooling), and any optional tools — with minimum versions where they matter. A
   dependency introduced by code is added to this list in the same change.
 
