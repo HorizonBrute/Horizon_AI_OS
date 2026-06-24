@@ -703,7 +703,7 @@ Three owner skills support the agent-team and SAILL workflow end-to-end:
 | `/test-agent-teams` | End-to-end self-test: spawns each role of every defined team, each echoes a nonce + role name + charter + actual model; reports per-team PASS/FAIL for resolution and model routing |
 | `/convert-prompt-to-saill` | Converts a natural-language prompt into a SAILL agent-team flow (roles, model groups, flags, sub-team boxes, loops, `-context-` values); outputs the SAILL block with a gloss, then offers to save or run it |
 
-Use `/test-agent-teams` after defining or modifying a team to confirm that roles resolve to the expected models before you invoke the team on real work. Use `/convert-prompt-to-saill` as a starting point when you want a new team but don't know the SAILL syntax.
+Use `/test-agent-teams` after defining or modifying a team to confirm that roles resolve to the expected models before you invoke the team on real work. Use `/convert-prompt-to-saill` ad hoc to turn any workflow you can describe in plain language into SAILL, then feed that output into `/agent-teams` to populate a custom agent team — the on-ramp from "a workflow in my head" to standardized SAILL to a reusable named team (verify it with `/test-agent-teams`).
 
 See `$HORIZON_DOCS/system/agent_teams.md` for the full SAILL spec, scope cascade, and team-definition grammar.
 

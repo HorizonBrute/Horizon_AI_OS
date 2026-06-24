@@ -347,18 +347,32 @@ is a planned extension.
 
 Wherever a SAILL parameter would take a literal — a loop's pass condition or cap, a scope, a
 target — you can instead write **`-context-`** to mean *"resolve this from context"*: the
-user's invocation, the conversation, or runtime state. Qualify it for readability —
-`-context-pass` (pass condition), `-context-cap` (iteration cap), `-context-scope` (focus).
-It keeps a team definition generic and reusable: the structure is fixed; the specifics
-arrive at run time. It is the explicit hook for "a team is a scaffold you parameterize in
-plain language" (§1.2) — it marks exactly where context fills in. Examples:
+user's invocation, the conversation, or runtime state. Qualify it with the delimited form
+**`-context:<name>-`**, where `<name>` may be multi-word — `-context:pass criteria-`,
+`-context:cap-`, `-context:source data-`, `-context:findings-`. It keeps a team definition
+generic and reusable: the structure is fixed; the specifics arrive at run time. It is the
+explicit hook for "a team is a scaffold you parameterize in plain language" (§1.2). Examples:
 
 1. Loop until a context-defined pass, capped at a literal 3:
-   `[ Implementer (`#lowcost`), Validator (`#midcost`) **Loop:** to "Implementer" until -context-pass or 3 ]`
+   `[ Implementer (`#lowcost`), Validator (`#midcost`) **Loop:** to "Implementer" until -context:pass criteria- or 3 ]`
 2. Both the pass and the cap from context:
-   `… **Loop:** to "Implementer" until -context-pass or -context-cap`
+   `… **Loop:** to "Implementer" until -context:pass- or -context:cap-`
 3. Scope a role from context:
-   `Investigator (`#midcost`) — focus on -context-scope` (its charter pulls the target from your request)
+   `Investigator (`#midcost`) — audit -context:source data-` (its charter pulls the target from your request)
+
+### Failure handling, skill calls, and compound loop exits
+
+Three further pieces let a flow react and reach out:
+1. **`if fail <action>`** — a failure handler on a role or box: if it fails (or a loop hits its
+   cap unmet), run `<action>` instead of stopping silently. The action is usually a skill —
+   `Build[ … ] if fail /build_fail_triage_report` — or a fallback role/box.
+2. **Skill calls** — a role's charter (or an `if fail` action) may invoke a named skill by its
+   slash name: `Ship (`#lowcost`, ask user) — present the result; wait for approval before
+   /deploy`. The skill is the role's *work* (charter), not a control-flow flag (§1.2).
+3. **Compound loop exits** — a `**Loop:**` may list several `or`-separated exit conditions: a
+   pass (`-context:pass criteria-` or literal), `ask user` (the user can approve/stop early),
+   and a cap (`3` or `-context:cap-`). Example:
+   `Security-Reviewer (`#highcap`) — audit -context:source data-; on -context:findings- **Loop:** to "Build" until clean or ask user or -context:cap-`
 
 The vocabulary lives in `$HORIZON_ETC/agent_team_flags.md` (shipped) plus
 `local.agent_team_flags.md` (your additions) — a deliberately dense, info-heavy block
