@@ -381,6 +381,58 @@ deep reference. The resolver parses flags generically, so the language is open: 
 term works the moment it is used, and the registry gives it meaning. List the current
 vocabulary with `resolve_agent_teams.py --flags`.
 
+### Major Initiative — a complex combined example
+
+All SAILL primitives in one place: nested boxes, parallel + wait, per-component loops with
+`-context:` and compound exits, `ask user` gates, a box-level `if fail`, and an inline
+`/deploy` call.
+
+```
+### Major Initiative
+Ship a large feature across frontend and backend with gating, parallel work, and failure handling.
+1. Recon[
+       1.1. Requirements-reader (`#lowcost`) — digest the spec; hand findings to Analyst.
+       1.2. Codebase-analyst (`#investigate`, parallel) — map impacted areas.
+       1.3. Security-pre-check (`#highcap`, parallel) — identify pre-existing risks in scope.
+       wait
+   ]
+2. Planner (`#highcap`, ask user) — design the approach from Recon findings; present for approval before continuing.
+3. Build[
+       Frontend[
+           F1. UI-implementer (`#lowcost`) — implement frontend changes per plan.
+               **Loop:** to "UI-implementer" until -context:pass criteria- or ask user or -context:cap-.
+       ]
+       Backend[
+           B1. API-implementer (`#lowcost`, parallel) — implement backend changes per plan.
+               **Loop:** to "API-implementer" until -context:pass criteria- or ask user or -context:cap-.
+           B2. DB-migrator (`#lowcost`, parallel) — write, test, and verify migrations.
+       ]
+       wait
+   ] if fail /build_fail_triage_report
+4. Security-reviewer (`#highcap`) — audit the full diff against -context:security criteria-.
+   **Loop:** to "Security-reviewer" until clean or ask user or 2.
+5. Releaser (`#lowcost`, ask user) — summarize the change set; wait for approval before /deploy.
+```
+
+What each primitive contributes here:
+
+1. **Nested boxes** — `Recon[…]` and `Build[ Frontend[…], Backend[…] ]` group work into named
+   units; nesting means the outer box's `if fail` covers everything inside it.
+2. **`parallel` + `wait`** — inside Recon, `Codebase-analyst` and `Security-pre-check` run
+   concurrently; inside Backend, `API-implementer` and `DB-migrator` run in parallel. `wait`
+   syncs before the box exits.
+3. **`-context:` values** — pass criteria and loop cap arrive from the user's invocation, so
+   the same team definition works for a minor feature or a full rearchitecture.
+4. **Compound loop exits** — `until -context:pass criteria- or ask user or -context:cap-` lets
+   either a programmatic pass, a human decision, or the iteration cap stop the loop.
+5. **`ask user` gates** — the Planner pauses for plan approval; the Releaser pauses before
+   deploy — two human-in-the-loop checkpoints at the moments that matter.
+6. **Box-level `if fail`** — if anything inside Build fails (or hits its cap unresolved),
+   `/build_fail_triage_report` runs instead of silent failure; the skill surfaces a structured
+   diagnosis.
+7. **Inline `/deploy`** — the Releaser's charter includes `/deploy` as its work (charter prose,
+   not a flag); the skill is invoked as part of that role's job.
+
 **This is a community frontier.** A shared, open language for agentic loops — adopted and
 extended across harnesses and projects — is where SAILL gets valuable. Propose terms,
 converge on meanings, and contribute them upstream; the goal is a common tongue for

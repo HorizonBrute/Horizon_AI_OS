@@ -158,10 +158,10 @@ def parse_teams(path):
                     continue
                 loop = True
                 r["loop"] = True
-                cap = re.search(r"or\s+(\d+)\s+iteration", a["text"], re.IGNORECASE)
+                cap = re.search(r"\bor\s+(\d+)\b", a["text"], re.IGNORECASE)
                 if cap:
                     loop_max = int(cap.group(1))
-                tgt = re.search(r'(?:return to|from)\s+["“]([^"”]+)["”]',
+                tgt = re.search(r'(?:return to|from|to)\s+["“]([^"”]+)["”]',
                                 a["text"], re.IGNORECASE)
                 if tgt:
                     loop_target = tgt.group(1).strip()
