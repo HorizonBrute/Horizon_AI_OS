@@ -364,7 +364,7 @@ if (Test-Path $SettingsJson) {
 # SECTION 5b: ~/.claude/projects memory redirect (reverses bootstrap 5c)
 # Bootstrap symlinks ~/.claude/projects -> $HORIZON_ROOT/memory via
 # horizon_aios_redirect_memory.py so the harness's per-project memory lives in the AIOS.
-# We remove only the JUNCTION - never the memory target's contents (that data
+# We remove only the SYMLINK - never the memory target's contents (that data
 # lives in $HORIZON_ROOT/memory, part of the repo). Mirrors the Section 3
 # skills-symlink removal: link-only delete, not confirm-gated.
 # =============================================================================

@@ -146,7 +146,7 @@ Wiki upkeep pass complete. <N> items remain open:
 
 ### Step 5 — Update the documentation index if needed
 
-5.1 If the wiki file's index entry in `$HORIZON_DOCS/index.md` is stale (wrong title or outdated purpose summary), update it.
+5.1 If the wiki file's index entry in `$HORIZON_DOCS/documentation.index.md` is stale (wrong title or outdated purpose summary), update it.
 
 5.2 If new sections were added to the wiki during this pass, update the section map in `$HORIZON_SYSTEM/skills_bin/userguides/SKILL.md` to reflect the new count and titles.
 

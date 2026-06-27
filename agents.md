@@ -7,7 +7,7 @@ Invariant documents — authoritative:
 - Terseness contract: `$HORIZON_DOCS/terseness_contract_index.md`
 
 User documentation — constitutional (the canonical user-facing reference):
-- Documentation index: `$HORIZON_DOCS/index.md`
+- Documentation index: `$HORIZON_DOCS/documentation.index.md`
 - Operational wiki: `$HORIZON_DOCS/user_guides/using_Horizon.AIOS.md`
 
 # OS Overhead
@@ -23,6 +23,6 @@ Role-flag vocabulary (if needed / if asked / parallel / wait / loop, plus any cu
 @horizon_system/ai_os_etc/local.agent_team_flags.md
 
 # Local Over Rides
-@includes/local.agent_teams.md
-@includes/local.agents.md
+@local.agent_teams.md
+@local.agents.md
 @horizon_system/ai_os_etc/horizon_aios_model_prefs.local.md

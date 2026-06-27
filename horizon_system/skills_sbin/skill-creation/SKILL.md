@@ -1,14 +1,12 @@
 ---
 name: skill-creation
-description: Create a new Horizon AIOS skill with correct structure and registration. Use when the user asks to create, add, or scaffold a new skill (user-callable or admin-only).
+description: Create a new AIOS skill with correct structure and registration. Use when the user asks to create, add, or scaffold a new skill (user-callable or admin-only).
 tools: Read, Write, Edit, Glob, Grep
 ---
 
 # Skill: /skill-creation
 
-**Model preference:** `#midcost` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
-
-Create a new Horizon AIOS skill with the required directory structure, frontmatter, and index registration. Enforce this skill before writing any new skill file in this project.
+Create a new AIOS skill with the required directory structure, frontmatter, and index registration. Enforce this skill before writing any new skill file in this project.
 
 ---
 
@@ -81,14 +79,6 @@ $HORIZON_SYSTEM/skills_sbin/<skill-name>/
 
 2.3 Name the skill with a lowercase hyphenated slug that matches the intended `/slash-command` name.
 
-2.4 Add the **model-preference callout** as the first body line, immediately after the `# Skill:` heading (blank line before and after):
-
-```
-**Model preference:** `#GROUP` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
-```
-
-Choose the group from the skill's dominant work: security/privileged/destructive → `#highcap`; research/fetch/analysis → `#investigate`; authoring/summarizing → `#midcost`; mechanical/read-only/reporting → `#lowcost`; trivial/latency-bound → `#fast`; debugging/coding → `#debug`. **If you cannot determine it confidently, default to `#midcost`** and note it for later review with `/model-prefs-assign`. The callout MUST be in the body — frontmatter is stripped before the model sees the skill, so a frontmatter field would never be read.
-
 **User-tier flow (`usr_skills`):** if you chose the user tier in Step 1.1:
 - Create `$HORIZON_USRBIN/usr_skills/<skill-name>/SKILL.md` (same frontmatter and body rules).
 - Register it: run `python "$HORIZON_SYSTEM/sbin/horizon_aios_register_user_skills.py"` (or invoke `/resync-user-skills`). This symlinks it into `skills_sbin/` so it loads flat.
@@ -103,10 +93,8 @@ Choose the group from the skill's dominant work: security/privileged/destructive
 3.2 Add a row to the table:
 
 ```markdown
-| <skill-name> | `/<skill-name>` | `#<group>` | <one-line purpose> |
+| <skill-name> | `/<skill-name>` | <one-line purpose> |
 ```
-
-The "Model group" column value must match the callout you chose in Step 2.4.
 
 3.3 **If the tier is `skills_sbin`**, also add the new skill to the whitelist in `$HORIZON_SYSTEM/skills_sbin/.gitignore` (two lines: `!<skill-name>/` and `!<skill-name>/**`). That file ignores everything by default so user-skill symlinks stay out of git; a new OS skill must be explicitly re-included or it will be untracked.
 
@@ -131,7 +119,6 @@ No manual copy needed. `~/.claude/skills/` is a symlink to `skills_sbin/` (prima
 - [ ] `SKILL.md` has valid YAML frontmatter with `name`, `description`, `tools`
 - [ ] `name` in frontmatter matches directory name
 - [ ] `description` is specific enough for agent routing (not just "does X")
-- [ ] Body has the **Model preference** callout (group chosen by Step 2.4, or `#midcost` default); index "Model group" column matches
 - [ ] **OS skill:** `index.md` updated in the same commit; if `skills_sbin`, `.gitignore` whitelist updated too
 - [ ] **User skill:** registered via `horizon_aios_register_user_skills.py` / `/resync-user-skills`; nothing committed
 - [ ] Claude Code restarted to load the new skill (symlink is live; restart is sufficient)
@@ -141,7 +128,6 @@ No manual copy needed. `~/.claude/skills/` is a symlink to `skills_sbin/` (prima
 ## Notes for the executing agent
 
 - Never create a flat `<skill-name>.md` file directly in `skills_bin/` or `skills_sbin/`. The directory-per-skill structure is required — bootstrap and horizon_aios_doctor.py both check for it.
-- **Never reimplement logic that already exists in an `sbin/` script.** If a script in `$HORIZON_SYSTEM/sbin/` already does what the skill needs, the skill must invoke that script — not reproduce its behavior in SKILL.md instructions. Skills are orchestration layers over scripts, not replacements for them. Reimplementing script behavior in a skill creates two diverging implementations with no enforcement layer to keep them in sync.
 - User-skill symlinks appear inside `skills_sbin/` but must never be committed; the `skills_sbin/.gitignore` whitelist keeps them out of git. If a new OS skill is missing from that whitelist it will be silently untracked — always update it when adding an sbin skill.
 - The `name` frontmatter field is what Claude Code uses to register the `/slash-command`. It must exactly match the directory name.
 - If the user already has the skill deployed at `~/.claude/skills/` from a previous run, bootstrap will prompt before overwriting (or auto-overwrite with `--yes`).

@@ -47,7 +47,7 @@ def err(m):  print(f"  [ERR]  {m}", file=sys.stderr)
 
 
 def is_reparse(path):
-    """True if path is a junction/symlink (reparse point), without following it."""
+    """True if path is a symlink (reparse point), without following it."""
     if os.path.islink(path):
         return True
     if os.name == "nt":
@@ -76,7 +76,7 @@ def make_link(link, target):
 
 
 def remove_link(path):
-    """Remove a junction/symlink WITHOUT touching the target's contents."""
+    """Remove a symlink WITHOUT touching the target's contents."""
     if os.name == "nt":
         subprocess.run(["cmd", "/c", "rmdir", path], check=True,
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

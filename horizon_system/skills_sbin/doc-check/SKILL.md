@@ -32,7 +32,7 @@ Run `horizon_aios_doc_integrity.py` against the active AIOS install and interpre
 echo "ROOT=$HORIZON_ROOT | SYSTEM=$HORIZON_SYSTEM | DOCS=$HORIZON_DOCS"
 ```
 
-If any are empty, stop and ask the user to run the onboarding script (`horizon_aios_dev_onboard.ps1` or `source horizon_aios_dev_onboard.sh`) before continuing.
+If any are empty, stop and tell the user that the AIOS environment variables are not set and to run the AIOS bootstrap before continuing.
 
 ### Step 2 — Run the verifier
 

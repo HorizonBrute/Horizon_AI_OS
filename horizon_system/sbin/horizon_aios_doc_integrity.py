@@ -215,19 +215,26 @@ def _parse_skills_index(index_path: Path) -> Dict[str, int]:
 
 
 def _parse_docs_index(index_path: Path) -> Dict[str, int]:
-    """Return {repo_relative_path: line_number} from documentation/index.md."""
+    """Return {repo_relative_path: line_number} from documentation/documentation.index.md.
+
+    New index format: Serial | Filename | Path (from doc root) | Description | Cross-Refs | Status | Type
+    Path column (parts[3]) is relative to $HORIZON_DOCS; prepend 'horizon_system/documentation/' for full path.
+    """
     result: Dict[str, int] = {}
+    docs_prefix = "horizon_system/documentation/"
     with index_path.open(encoding="utf-8") as fh:
         for lineno, line in enumerate(fh, 1):
             line = line.strip()
             if not line.startswith("|") or line.startswith("|---"):
                 continue
             parts = [p.strip() for p in line.split("|")]
-            if len(parts) < 3:
+            # Need at least 8 parts: empty | Serial | Filename | Path | Desc | XRef | Status | Type | empty
+            if len(parts) < 8:
                 continue
-            col0 = parts[1].strip("`").strip()
-            if "/" in col0 and col0 not in _SKIP_COL0:
-                result[col0] = lineno
+            type_col = parts[7].strip()
+            path_col = parts[3].strip("`").strip()
+            if type_col == "File" and path_col and path_col not in _SKIP_COL0:
+                result[docs_prefix + path_col] = lineno
     return result
 
 
@@ -296,11 +303,11 @@ def _verify_skills_index(tier: str, index_path: Path, skills_dir: Path) -> List[
 
 
 def _verify_docs_index() -> List[Finding]:
-    docs_index = _vars["HORIZON_DOCS"] / "index.md"
+    docs_index = _vars["HORIZON_DOCS"] / "documentation.index.md"
     findings: List[Finding] = []
 
     if not docs_index.exists():
-        return [Finding("FAIL", "index", "docs/index.md", "file not found")]
+        return [Finding("FAIL", "index", "docs/documentation.index.md", "file not found")]
 
     entries = _parse_docs_index(docs_index)
     horizon_root = _vars["HORIZON_ROOT"]

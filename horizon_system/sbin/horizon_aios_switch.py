@@ -294,7 +294,7 @@ def repoint_skills_link(root, dry):
 
 
 def _is_reparse(path):
-    """Windows: True if path is a reparse point (junction/symlink)."""
+    """Windows: True if path is a reparse point (symlink)."""
     try:
         attrs = os.stat(path, follow_symlinks=False).st_file_attributes
         return bool(attrs & 0x400)  # FILE_ATTRIBUTE_REPARSE_POINT

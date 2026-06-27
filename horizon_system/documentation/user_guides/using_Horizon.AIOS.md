@@ -796,6 +796,18 @@ python "$HORIZON_SYSTEM/sbin/horizon_aios_doctor.py"
 
 This checks env vars, the skills symlink, git hooks, the AIOS registry, and the Deny ACLs on `sbin`, `skills_sbin`, and `logs`.
 
+To verify documentation integrity (canon structure, doc index, cross-references):
+
+```bash
+# From a Claude Code session
+/doc-check
+
+# From the command line
+python "$HORIZON_SYSTEM/sbin/horizon_aios_doc_integrity.py"
+```
+
+This checks that required canon files are present, all docs are indexed, and cross-references resolve. Exits 0 if clean (warnings are expected for gitignored local configs).
+
 ---
 
 ## 9. The Terseness Contract
@@ -804,7 +816,7 @@ This checks env vars, the skills symlink, git hooks, the AIOS registry, and the 
 
 The **Terseness Contract** is a set of authoring rules that governs every file loaded unconditionally into every AIOS session — the always-loaded chain. Because each byte in those files is billed on every session for every user and every brain, verbosity in them is a cost imposed on all interactions the AIOS will ever have.
 
-The always-loaded files include `agents.md`, `horizon_aios_agents.md`, `horizon_aios_model_prefs.md`, `agent_teams.md`, `agent_team_flags.md`, and the @-import chain that wires them together. The authoritative index of which files are in-scope is `$HORIZON_DOCS/terseness_contract_index.md`.
+The always-loaded files subject to strict terseness enforcement are `agents.md` and `horizon_aios_agents.md`. Files such as `agent_teams.md`, `agent_team_flags.md`, and `horizon_aios_model_prefs.md` are in the always-loaded chain but are explicitly excluded from terseness enforcement — their content scope is the operator's prerogative. The authoritative index of which files are tracked, excluded, or advisory is `$HORIZON_DOCS/terseness_contract_index.md`.
 
 ### 9.2 The Seven Criteria
 
@@ -826,7 +838,7 @@ Run the terseness check from any owner session:
 /terseness-check
 ```
 
-The skill evaluates each tracked file in the index against the seven criteria and reports `PASS` or `FAIL` per criterion per file. Files in the gitignored / user-controlled section of the index are checked and reported as `ADVISORY` — the user bears the cost of their own verbosity, so fixes are not applied without prompting.
+The skill evaluates each tracked file in the index against the seven criteria and reports `PASS` or `FAIL` per criterion per file. Files in the Excluded section of the index are skipped entirely — no `FAIL`, `ADVISORY`, or `NOTED` findings are generated for them. Files in the gitignored / user-controlled section are checked and reported as `ADVISORY` — the user bears the cost of their own verbosity, so fixes are not applied without prompting.
 
 Run `/terseness-check` after adding or modifying any always-loaded file or @-import. Confirm all tracked files pass before committing.
 

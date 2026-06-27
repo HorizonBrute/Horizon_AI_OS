@@ -46,9 +46,25 @@ The `/terseness-check` skill evaluates each one on every pass.
 | `.claude/agents.md` | @-import from `.claude/CLAUDE.md` | Scope @-router | Only @-imports + gitignored override slots; no prose |
 | `agents.md` | @-import from `.claude/agents.md` and `CLAUDE.md` | Cross-harness instruction root | Every line taxes every session; any prose must be strictly operative |
 | `horizon_system/ai_os_etc/horizon_aios_agents.md` | @-import from `agents.md` | OS-layer agent config | Imperative directives only; no tutorials; no rationale beyond a one-phrase label |
-| `horizon_system/ai_os_etc/horizon_aios_model_prefs.md` | @-import from `agents.md` | Model preference spec | Structural headings + mechanism description; examples in the extend template, not here |
-| `agent_teams.md` | @-import from `agents.md` | Agent team definitions | Team blocks + loop/flag grammar only; no narrative onboarding prose. **C5-exempt** vs `agent_team_flags.md` — SAILL flags used in-context here and defined there; co-load is intentional OS overhead. |
-| `horizon_system/ai_os_etc/agent_team_flags.md` | @-import from `agents.md` | Role-flag catalog | Table only + one-line header; no prose examples. **C5-exempt** vs `agent_teams.md` — flag definitions co-located with usage; co-load is intentional OS overhead. |
+
+---
+
+## Index — Excluded (terseness check does not apply)
+
+These files are in the always-loaded chain but are explicitly excluded from
+terseness enforcement. The `/terseness-check` skill skips them entirely — no
+`FAIL`, `ADVISORY`, or `NOTED` findings are generated. Exclusions are intentional
+design decisions recorded here; do not add a file to this table without a reason.
+
+| File | Loaded by | Role | Reason for exclusion |
+|---|---|---|---|
+| `agent_teams.md` | @-import from `agents.md` | Agent team definitions | Operator-defined team configuration; content scope and verbosity are the operator's prerogative, not subject to OS terseness enforcement |
+| `horizon_system/ai_os_etc/agent_team_flags.md` | @-import from `agents.md` | Role-flag catalog | Companion to `agent_teams.md`; excluded for the same reason |
+| `local.agent_teams.md` | @-import from `agents.md` | User team overrides | User-controlled extension of `agent_teams.md`; excluded for the same reason |
+| `horizon_system/ai_os_etc/local.agent_team_flags.md` | @-import from `agents.md` | User flag extensions | User-controlled extension of `agent_team_flags.md`; excluded for the same reason |
+| `.claude/local.agent_teams.md` | @-import from `.claude/agents.md` | .claude scope team overrides | User-controlled; excluded for the same reason |
+| `horizon_system/ai_os_etc/horizon_aios_model_prefs.md` | @-import from `agents.md` | Model preference spec | Operator-defined model configuration; content scope and verbosity are the operator's prerogative, not subject to OS terseness enforcement |
+| `horizon_system/ai_os_etc/horizon_aios_model_prefs.local.md` | @-import from `agents.md` | User model-pref overrides | User-controlled extension of `horizon_aios_model_prefs.md`; excluded for the same reason |
 
 ---
 
@@ -61,11 +77,7 @@ findings `ADVISORY` (not `FAIL`) and does not apply fixes without prompting.
 
 | File | Loaded by | Role |
 |---|---|---|
-| `horizon_system/ai_os_etc/horizon_aios_model_prefs.local.md` | @-import from `agents.md` | User model-pref overrides |
-| `local.agent_teams.md` | @-import from `agents.md` | User team overrides |
-| `horizon_system/ai_os_etc/local.agent_team_flags.md` | @-import from `agents.md` | User flag extensions |
 | `local.agents.md` | @-import from `agents.md` | User session overrides |
-| `.claude/local.agent_teams.md` | @-import from `.claude/agents.md` | .claude scope team overrides |
 | `.claude/local.agents.md` | @-import from `.claude/agents.md` | .claude scope overrides |
 | `brains/<name>/.claude/CLAUDE.md` | Harness — auto, brain sessions | Brain identity + scope | Brain identity, persona, skill pointers; no large doc blocks |
 

@@ -1,6 +1,6 @@
-# skills_sbin contains tracked OS skills AND machine-local junctions to user
+# skills_sbin contains tracked OS skills AND machine-local symlinks to user
 # skills in $HORIZON_USRBIN/usr_skills (created by horizon_aios_register_user_skills.py).
-# git traverses Windows junctions, so without this whitelist those user skills
+# git traverses Windows symlinks, so without this whitelist those user skills
 # would be staged into the OS repo. Ignore everything, then re-include each
 # tracked OS skill. When adding a new OS skill here, add it to this whitelist
 # (skill-creation enforces this in the same commit).

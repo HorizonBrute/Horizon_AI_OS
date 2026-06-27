@@ -11,7 +11,7 @@ Harness-specific config: `horizon_system/harness_configs/<harness>/`. Invariants
 **The main session is an orchestrator, not a worker.** Decompose tasks, spawn agents, synthesize results. Never read files, write code, or run commands inline if the work can be delegated.
 
 **"Send an agent team"** resolves through the Agent Teams framework defined in
-`$HORIZON_ROOT/agent_teams.md`. Named variants select the matching team by name.
+`$HORIZON_ROOT/agent_teams.md`.
 
 When in doubt, delegate.
 
@@ -58,6 +58,10 @@ To make a skill available to brains: add it to `skills_bin/` and update `skills_
 When adding any skill, update the appropriate index.md in the same commit.
 
 **New skills must follow the `skill-creation` skill template.** Invoke `/skill-creation` or read `$HORIZON_SYSTEM/skills_sbin/skill-creation/SKILL.md` before creating any new skill to ensure correct structure and registration.
+
+## Documentation
+
+Check `$HORIZON_DOCS/documentation.index.md` for Horizon.AIOS subjects before file system searches.
 
 ## OS-Layer Development Values
 

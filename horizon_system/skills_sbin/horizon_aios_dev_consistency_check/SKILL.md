@@ -6,8 +6,6 @@ tools: Read, Grep, Glob, Bash, Edit, Write
 
 # Skill: /horizon_aios_dev_consistency_check
 
-**Model preference:** `#midcost` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
-
 Run a consistency validation pass over the Horizon AIOS repo using the standing
 standard at `$HORIZON_DOCS/development_tools/consistency_checks.md`. That file —
 not this one — is the single source of truth for the checks (IDs `CC-*`), the
@@ -78,9 +76,5 @@ have the main session synthesize one report, then re-run until clean or blocked.
 - CC-G4 (doc index) and CC-G5 (token economy of context-loaded files) often pair
   with `/horizon_aios_documentation_index_update`; run or recommend it when CC-G4
   fails.
-- **CC-T2 must be delegated** to the `/terseness-check` skill — do not inline-
-  evaluate terseness. Spawn it as a sub-agent, collect its report, and map each
-  FAIL finding to `CC-T2 FAIL` in this pass's report. CC-T1 (index currency) can
-  be verified inline by tracing the @-import chain.
 - Commit fixes only if the user asks (DCO sign-off per repo rules); otherwise
   leave changes in the working tree and report.
