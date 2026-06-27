@@ -249,7 +249,7 @@ Bare `/agent-teams` lists all resolved agent teams in effect at the current path
 **Location:** `skills_sbin/` (owner only)
 **Underlying tool:** None — delegates section checks to `#investigate` subagents, then edits the wiki directly
 
-Runs a consistency pass between `$HORIZON_DOCS/user_guides/using_your_aios.md` and its source documents. Spawns one subagent per section to check for factual drift, stale paths, outdated examples, and coverage gaps. Applies unambiguous fixes; surfaces judgment calls for user decision. Re-runs until all sections are CLEAN or remaining issues are explicitly deferred.
+Runs a consistency pass between `$HORIZON_DOCS/user_guides/using_Horizon.AIOS.md` and its source documents. Spawns one subagent per section to check for factual drift, stale paths, outdated examples, and coverage gaps. Applies unambiguous fixes; surfaces judgment calls for user decision. Re-runs until all sections are CLEAN or remaining issues are explicitly deferred.
 
 **Onboarding:** Keeps the operational wiki accurate after source docs change, without requiring a full manual audit.
 **Offboarding:** Audit sections manually by reading the wiki and source docs side-by-side. The source-doc mapping is in `$HORIZON_SYSTEM/skills_sbin/horizon_aios_wiki_upkeep/SKILL.md`.
@@ -285,10 +285,10 @@ End-to-end integration test of the Agent Teams system. Runs `resolve_agent_teams
 **Location:** `skills_bin/` (available to all users including brains)
 **Underlying tool:** None — Claude reads the wiki file and optionally spawns Haiku summarizer agents
 
-Bare `/userguides` reads `$HORIZON_DOCS/user_guides/using_your_aios.md`, discovers all numbered sections dynamically, spawns one `#lowcost` (Haiku) agent per section in parallel to write a 3–5 sentence summary, and presents summaries in section order. `/userguides N` displays the full text of section N. The section map in the SKILL.md is informational; the live file read is authoritative.
+Bare `/userguides` reads `$HORIZON_DOCS/user_guides/using_Horizon.AIOS.md`, discovers all numbered sections dynamically, spawns one `#lowcost` (Haiku) agent per section in parallel to write a 3–5 sentence summary, and presents summaries in section order. `/userguides N` displays the full text of section N. The section map in the SKILL.md is informational; the live file read is authoritative.
 
 **Onboarding:** Provides a one-command overview of the full operational wiki without reading thousands of words; section N access gives targeted reference lookup.
-**Offboarding:** Read `$HORIZON_DOCS/user_guides/using_your_aios.md` directly.
+**Offboarding:** Read `$HORIZON_DOCS/user_guides/using_Horizon.AIOS.md` directly.
 
 ---
 

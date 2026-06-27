@@ -8,7 +8,7 @@ tools: Agent, Read, Bash
 
 **Model preference:** `#lowcost` (summaries via Haiku agents; section display is a file read).
 
-Browse the Horizon AIOS operational wiki at `$HORIZON_DOCS/user_guides/using_your_aios.md`.
+Browse the Horizon AIOS operational wiki at `$HORIZON_DOCS/user_guides/using_Horizon.AIOS.md`.
 
 ---
 
@@ -49,7 +49,7 @@ authoritative at runtime.
 
 ### Both branches — Step 0: discover live section count
 
-Before branching, read `$HORIZON_DOCS/user_guides/using_your_aios.md` and scan for
+Before branching, read `$HORIZON_DOCS/user_guides/using_Horizon.AIOS.md` and scan for
 all `## N.` headings (where N is an integer). Collect them as an ordered list:
 `[(N, title), ...]`. This is the authoritative section list for this invocation.
 The section map table above is informational only.
@@ -98,7 +98,7 @@ title line:
 ---
 ```
 
-After all summaries: `Full wiki: $HORIZON_DOCS/user_guides/using_your_aios.md`
+After all summaries: `Full wiki: $HORIZON_DOCS/user_guides/using_Horizon.AIOS.md`
 
 ---
 
@@ -120,7 +120,7 @@ Extract the text from `## <N>.` through (but not including) the next `## <N+1>.`
 heading or `## Reference Pointers`, whichever comes first. Display the full
 extracted text verbatim, preserving all Markdown formatting.
 
-Footer: `— Section <N> of <total> | Full wiki: $HORIZON_DOCS/user_guides/using_your_aios.md`
+Footer: `— Section <N> of <total> | Full wiki: $HORIZON_DOCS/user_guides/using_Horizon.AIOS.md`
 
 ---
 

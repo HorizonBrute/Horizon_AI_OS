@@ -12,7 +12,7 @@ at the end of a session to save state. Start with the setup guide in
 ## user_guides
 | ID (path) | Title | Purpose |
 |---|---|---|
-| `horizon_system/documentation/user_guides/using_your_aios.md` | Using Your Horizon AIOS — Operational Wiki | Post-install operational guide: security model, building and configuring brains, projects, handoffs/objectives, case study, BYOH/local.agents.md, model preferences and agent teams, context management, gitignore conventions, enterprise deployment, IaC/containerization, and integrated identity/existing infrastructure. Maintained by `/horizon_aios_wiki_update` (arc authoring, dev-tool) and `/horizon_aios_wiki_upkeep` (fact consistency). |
+| `horizon_system/documentation/user_guides/using_Horizon.AIOS.md` | Using Your Horizon AIOS — Operational Wiki | Post-install operational guide: security model, building and configuring brains, projects, handoffs/objectives, case study, BYOH/local.agents.md, model preferences and agent teams, context management, gitignore conventions, enterprise deployment, IaC/containerization, and integrated identity/existing infrastructure. Maintained by `/horizon_aios_wiki_update` (arc authoring, dev-tool) and `/horizon_aios_wiki_upkeep` (fact consistency). |
 
 ## Skill indexes
 | ID (path) | Title | Purpose |
@@ -61,6 +61,7 @@ at the end of a session to save state. Start with the setup guide in
 | `horizon_system/documentation/deployment/brain_automation.md` | Horizon AIOS — Brain Automation | Opt-in, least-privilege OS logon rights (Windows `SeBatchLogonRight`/`SeServiceLogonRight`, Unix linger/systemd analogs) that let a brain run unattended via scheduled task or service; how to provision, register, and tear down. |
 | `horizon_system/documentation/deployment/desktop.md` | Horizon AIOS — Desktop Deployment | The primary local always-on deployment model: AIOS and brains run as OS accounts on the user's own machine. |
 | `horizon_system/documentation/deployment/docker.md` | Horizon AIOS — Docker Deployment | Deploying the AIOS layer as a Linux-based Docker container with brains as sub-containers or OS users. |
+| `horizon_system/documentation/deployment/multi_brain_deployment.md` | Horizon AIOS — Multi-Brain Deployment | Flexible deployment model for hosting multiple brains on one AIOS install: parallel expert systems, filesystem peer coordination, isolation tradeoff table, provisioning and teardown. |
 | `horizon_system/documentation/deployment/server.md` | Horizon AIOS — Server / Headless Deployment | Running AIOS headless on a remote/always-on machine, accessed via SSH with the audit log as the operational interface. |
 
 ## build_decisions
@@ -93,4 +94,6 @@ at the end of a session to save state. Start with the setup guide in
 | `horizon_system/ai_os_etc/file_structure_invariants.md` | File Structure Invariants — Horizon AIOS | Hard constraints on path variables, the directory tree, what the repo tracks vs. ignores, and structural conventions. |
 | `horizon_system/ai_os_etc/horizon_aios_agents.md` | Horizon AIOS — Agent Configuration (OS Layer) | Harness-agnostic agent instructions (orchestration model, agent usage) loaded into every session. |
 | `horizon_system/ai_os_etc/horizon_aios_model_prefs.md` | Model Preferences — Directive Spec | Context-loaded directive spec for model selection when spawning agents: fallback order, per-session slots, group names, and merge rules. Intentionally directive-only; full reference at `horizon_system/documentation/model_prefs_details.md`. |
-| `horizon_system/ai_os_etc/security_invariants.md` | Security Invariants — Horizon AIOS | Hard security constraints for all users, harnesses, and brains, including the three-tier principal model. |
+| `horizon_system/ai_os_etc/security_invariants.md` | Security Invariants — Horizon AIOS (Quick Reference) | Session-load quick-ref: three operational lines covering the principal model, brain isolation/ACL boundaries, and no-secrets rule. Pointer to the full spec. |
+| `horizon_system/documentation/security_architecture_invariants.md` | Security Architecture Invariants — Horizon AIOS | Full security specification: three-tier principal model, brain isolation, bin/sbin boundary, tool provisioning, least privilege, no sensitive data, audit trail, and branding rationale (§0–§8). |
+| `horizon_system/documentation/branding_invariants.md` | Branding Invariants — Horizon AIOS | Naming and identification conventions: the Horizon.AIOS / horizon_aios_ brand tokens, required self-identifying artifacts, and deliberately exempt functional identifiers. |

@@ -1,13 +1,14 @@
 # Horizon AIOS — Agent Instructions
 Invariant documents — authoritative:
-- Security invariants: `$HORIZON_ETC/security_invariants.md`
+- Security invariants: `$HORIZON_DOCS/security_architecture_invariants.md`
+- Branding invariants: `$HORIZON_DOCS/branding_invariants.md`
 - File structure invariants: `$HORIZON_ETC/file_structure_invariants.md`
 - Personalization model: `$HORIZON_ETC/ai_os_personalizations.md`
 - Terseness contract: `$HORIZON_DOCS/terseness_contract_index.md`
 
 User documentation — constitutional (the canonical user-facing reference):
 - Documentation index: `$HORIZON_DOCS/index.md`
-- Operational wiki: `$HORIZON_DOCS/user_guides/using_your_aios.md`
+- Operational wiki: `$HORIZON_DOCS/user_guides/using_Horizon.AIOS.md`
 
 # OS Overhead
 Never hardcode paths — use $HORIZON_ROOT, $HORIZON_SYSTEM, $HORIZON_BIN, $HORIZON_ETC, $HORIZON_DOCS.

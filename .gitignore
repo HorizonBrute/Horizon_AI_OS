@@ -580,17 +580,24 @@ temp/
 # =============================================================================
 
 # Handoff session artifacts (machine-local continuity; not version history)
-handoffs/
+# Track scaffold (.gitkeep + README.md) but not session documents.
+handoffs/*
+!handoffs/.gitkeep
+!handoffs/README.md
 
 # Objective artifacts (machine-local durable goals; not version history)
-objectives/
+# Track scaffold only.
+objectives/*
+!objectives/.gitkeep
 
 # Harness per-project state redirected here by redirect_memory.py: conversation
 # transcripts AND agent memory (machine-local; sensitive; never committed/shipped/synced)
 memory/
 
 # Machine-local user skills (linked into skills_sbin at runtime; never tracked)
-usrbin/usr_skills/
+# Track the scaffold .gitkeep only so the dir exists on fresh clone.
+usrbin/usr_skills/*
+!usrbin/usr_skills/.gitkeep
 
 # Machine-local config overrides (configured from templates; never committed)
 *.local.json

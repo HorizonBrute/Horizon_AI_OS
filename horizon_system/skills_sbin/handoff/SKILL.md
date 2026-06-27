@@ -132,6 +132,16 @@ Consolidated the foundational work onto master and shipped the AIOS switcher; th
 
 ---
 
+## Lifecycle
+
+Handoff documents are temporary state snapshots. The durable record is git history and objectives files, not handoffs.
+
+**Pruning:** `horizon_aios_maintain_logs.py` prunes `$HORIZON_ROOT/handoffs/` by total size budget (`AIOS_HANDOFFS_MAX_SIZE_MB`, default 500 MB in `$HORIZON_ETC/aios_local.conf`). Oldest files are deleted first when the budget is exceeded. The authoritative directory registry is `$HORIZON_ETC/aios_logging_dirs.md`.
+
+**Retention:** If a handoff contains decisions or context you want to preserve beyond the pruning window, extract them into the linked objective file or into a commit message before the window closes.
+
+---
+
 ## Notes for the executing agent
 
 - NEVER print the full handoff document (or its sections) to the chat — on **either** side. When *writing*, the chat shows only the filename on the first line, the session name, and a one-paragraph summary. When *reading* a handoff handed to a new session, read it silently into context and give a 2–4 line orientation, never a reprint. Echoing the body bloats context and buries the filename at the bottom where `/clear` can truncate it — the exact problems this skill exists to avoid.

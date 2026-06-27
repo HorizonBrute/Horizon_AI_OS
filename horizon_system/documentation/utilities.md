@@ -145,6 +145,17 @@ days). All thresholds are read from `$HORIZON_ETC/aios_local.conf` and can be
 set to `0` to disable that category. Requires Administrator/root because it
 modifies ACL-protected log paths.
 
+**Authoritative directory registry:** `$HORIZON_ETC/aios_logging_dirs.md` is
+the single source of truth for which directories are subject to automated
+pruning. Do not add new directories directly to this script — add them to that
+file first. Machine-local path overrides go in `aios_logging_dirs.local.md`
+(gitignored).
+
+**Pruning triggers:** Two triggers cause pruning to run: (1) the recurring
+scheduled task installed by `horizon_aios_setup_sync_schedule.py`; (2) explicit
+invocation by the administrator. The scheduled task honors the same thresholds
+as manual invocation.
+
 **When to use it:** Schedule as a recurring task (e.g., weekly) to prevent
 unbounded log growth. Also run manually after a prolonged monitor run or before
 a disk-space-sensitive operation.

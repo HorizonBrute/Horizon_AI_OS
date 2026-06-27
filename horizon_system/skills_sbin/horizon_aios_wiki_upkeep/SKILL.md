@@ -8,7 +8,7 @@ tools: Agent, Read, Write, Edit, Glob, Grep, Bash
 
 **Model preference:** `#highcap` (cross-document consistency reasoning; drift detection requires full comprehension of both sources).
 
-Keep `$HORIZON_DOCS/user_guides/using_your_aios.md` consistent with the underlying source documentation it synthesizes. The wiki is a synthesis layer — when source docs change, the wiki can drift. This skill finds and fixes that drift.
+Keep `$HORIZON_DOCS/user_guides/using_Horizon.AIOS.md` consistent with the underlying source documentation it synthesizes. The wiki is a synthesis layer — when source docs change, the wiki can drift. This skill finds and fixes that drift.
 
 ---
 
@@ -23,7 +23,7 @@ Keep `$HORIZON_DOCS/user_guides/using_your_aios.md` consistent with the underlyi
 
 ## Scope
 
-**Wiki file:** `$HORIZON_DOCS/user_guides/using_your_aios.md`
+**Wiki file:** `$HORIZON_DOCS/user_guides/using_Horizon.AIOS.md`
 
 **Section count:** Dynamic — read the actual `## N. Title` headings from the wiki
 file at runtime. Do not rely on any hardcoded count. The scope table below is an
@@ -59,7 +59,7 @@ paths that exist), not for completeness.
 
 ### Step 1 — Identify scope
 
-1.1 Read `$HORIZON_DOCS/user_guides/using_your_aios.md`. Extract all numbered
+1.1 Read `$HORIZON_DOCS/user_guides/using_Horizon.AIOS.md`. Extract all numbered
 section headings dynamically by scanning for `## N.` patterns. This is the
 authoritative section list — not any hardcoded count in this file.
 
@@ -122,7 +122,7 @@ Judgment calls (<N> found): [list each briefly, with options]
 Clean sections: [list section numbers]
 ```
 
-3.3 Apply all unambiguous fixes directly — edit `$HORIZON_DOCS/user_guides/using_your_aios.md` using Edit. For each fix, report the change in one line: `Fixed §<N>: <what changed>`.
+3.3 Apply all unambiguous fixes directly — edit `$HORIZON_DOCS/user_guides/using_Horizon.AIOS.md` using Edit. For each fix, report the change in one line: `Fixed §<N>: <what changed>`.
 
 3.4 For each judgment call, present it to the user with a clear question and 2–3 options. Wait for the user's decision before making any change. Apply their choice, then report: `Applied §<N>: <what changed>`.
 

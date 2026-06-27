@@ -1,6 +1,6 @@
 ---
 name: skill-creation
-description: Create a new AIOS skill with correct structure and registration. Use when the user asks to create, add, or scaffold a new skill (user-callable or admin-only).
+description: Create a new Horizon AIOS skill with correct structure and registration. Use when the user asks to create, add, or scaffold a new skill (user-callable or admin-only).
 tools: Read, Write, Edit, Glob, Grep
 ---
 
@@ -8,7 +8,7 @@ tools: Read, Write, Edit, Glob, Grep
 
 **Model preference:** `#midcost` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
 
-Create a new AIOS skill with the required directory structure, frontmatter, and index registration. Enforce this skill before writing any new skill file in this project.
+Create a new Horizon AIOS skill with the required directory structure, frontmatter, and index registration. Enforce this skill before writing any new skill file in this project.
 
 ---
 
@@ -141,6 +141,7 @@ No manual copy needed. `~/.claude/skills/` is a symlink to `skills_sbin/` (prima
 ## Notes for the executing agent
 
 - Never create a flat `<skill-name>.md` file directly in `skills_bin/` or `skills_sbin/`. The directory-per-skill structure is required — bootstrap and horizon_aios_doctor.py both check for it.
+- **Never reimplement logic that already exists in an `sbin/` script.** If a script in `$HORIZON_SYSTEM/sbin/` already does what the skill needs, the skill must invoke that script — not reproduce its behavior in SKILL.md instructions. Skills are orchestration layers over scripts, not replacements for them. Reimplementing script behavior in a skill creates two diverging implementations with no enforcement layer to keep them in sync.
 - User-skill symlinks appear inside `skills_sbin/` but must never be committed; the `skills_sbin/.gitignore` whitelist keeps them out of git. If a new OS skill is missing from that whitelist it will be silently untracked — always update it when adding an sbin skill.
 - The `name` frontmatter field is what Claude Code uses to register the `/slash-command`. It must exactly match the directory name.
 - If the user already has the skill deployed at `~/.claude/skills/` from a previous run, bootstrap will prompt before overwriting (or auto-overwrite with `--yes`).
