@@ -52,6 +52,6 @@ To add a directory to automated pruning:
 1. Add a row to the table above with the path, pruning mode, default threshold, and the config key name.
 2. Implement the corresponding pruning logic in `horizon_aios_maintain_logs.py` referencing this file as the authoritative source.
 3. Update `$HORIZON_DOCS/utilities.md` (the `horizon_aios_maintain_logs.py` entry) to document the new target.
-4. Add the config key to `$HORIZON_ETC/aios_local.conf.template`.
+4. Add the config key to `$HORIZON_SYSTEM/templates/aios_local.conf.template`.
 
 Do not add a directory to the script without adding it here first.

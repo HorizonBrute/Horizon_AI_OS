@@ -43,3 +43,5 @@
 !test-agent-teams/**
 !convert-prompt-to-saill/
 !convert-prompt-to-saill/**
+!doc-check/
+!doc-check/**

@@ -17,7 +17,7 @@ Never hardcode paths — use $HORIZON_ROOT, $HORIZON_SYSTEM, $HORIZON_BIN, $HORI
 
 ## Agent Teams
 If asked to send/spawn an agent team, consult these (local overrides win):
-@horizon_system/ai_os_etc/agent_teams.md"
+@agent_teams.md
 Role-flag vocabulary (if needed / if asked / parallel / wait / loop, plus any custom flags); local overrides win:
 @horizon_system/ai_os_etc/agent_team_flags.md
 @horizon_system/ai_os_etc/local.agent_team_flags.md

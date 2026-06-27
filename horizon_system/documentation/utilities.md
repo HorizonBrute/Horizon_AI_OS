@@ -40,6 +40,32 @@ files or `@`-imports to confirm the overhead stayed in budget (see
 
 ---
 
+## horizon_aios_doc_integrity.py
+
+**Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_doc_integrity.py`
+
+Verifies that the documentation layer is internally consistent. Runs three checks:
+
+1. **Canon** — every `$HORIZON_*` path declared (backtick-quoted) in `agents.md` exists on disk.
+2. **Indexes** — the `skills_sbin/index.md`, `skills_bin/index.md`, and `documentation/index.md` tables match their on-disk directories; FAILs on index entries whose target is missing, WARNs on on-disk items absent from the index.
+3. **Cross-references** — every `$HORIZON_*` file path referenced in `.md` files under `$HORIZON_SYSTEM` resolves to a real file on disk.
+
+Exits 0 if only WARNs (or clean); exits 1 if any FAILs.
+
+**When to use it:** After any rename, move, or deletion of a doc or skill; after a documentation session; as part of the pre-flight gauntlet before pushing AIOS changes. Use through the `/doc-check` skill, which interprets the output and offers to fix unambiguous gaps.
+
+**Key flags:**
+
+- `--check` — run all three verifiers (default when no flag is given)
+- `--canon` — canon verifier only
+- `--indexes` — index verifier only
+- `--refs` — cross-reference verifier only
+- `--handoff <path>` — parse a handoff document's "Files Changed" section and verify every path listed there exists on disk; catches sessions whose declared work was never committed
+
+**Referenced by a skill?** Yes — `/doc-check`.
+
+---
+
 ## horizon_aios_doctor.py
 
 **Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_doctor.py`
