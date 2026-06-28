@@ -75,13 +75,13 @@ foreach ($t in $thresholds) {
 }
 
 if ($new_threshold -gt 0) {
+    Set-Content $state_file -Value $new_threshold
     $resolveScript = Join-Path $HORIZON_BIN "resolve_sound.py"
     $sound = & python $resolveScript "claude.context_$new_threshold" --harness claude_code --cwd $cwd 2>$null
     if ($sound -and (Test-Path $sound)) {
         $player = New-Object Media.SoundPlayer $sound
         $player.PlaySync()
     }
-    Set-Content $state_file -Value $new_threshold
 }
 
 # --- Build context bar ---
