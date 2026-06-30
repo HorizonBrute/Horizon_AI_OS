@@ -1,0 +1,3 @@
+Because I am very likely running as your system owner user. I am running with all of your system permissions. Feel free to load a clod or other harness in this environment. And ask documentation questions It is exceptionally good at that. has also been told explicitly in braincore.md to not search the file system or Go outside of its knowledge directories.  However, if you also ask it to run scripts in your home folder it will do so. 
+
+ And now you see the problem with running Agentic workflows as your user that Horizon.AIOS is trying to solve. 

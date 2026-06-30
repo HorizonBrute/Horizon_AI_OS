@@ -6,6 +6,8 @@ tools: Agent, Bash, Read, Glob, Grep, Write
 
 # Skill: /pre-flight-tooling-validation
 
+**Model preference:** `#investigate` (per `horizon_aios_model_prefs.md`; overridable by a prompt directive).
+
 Coordinate a **fleet of investigation agents — one per major platform** — that each
 verify the AIOS, *as it would arrive from a fresh GitHub clone*, contains all the
 tooling required to run its full lifecycle. If every capability is covered, emit a
@@ -79,7 +81,7 @@ a **freshly installed Claude Code with Administrator/sudo** on the target machin
 can run end-to-end. **Write it to the canonical path**
 `$HORIZON_DOCS/development_tools/<platform>_install_switch_uninstall_test_prompt.md`
 (e.g. `windows_install_switch_uninstall_test_prompt.md`) and register it in
-`documentation/documentation.index.md` in the same commit (CC-G4). These prompts are durable,
+`documentation/index.md` in the same commit (CC-G4). These prompts are durable,
 shared lifecycle-test artifacts — useful to the owner and any future contributors —
 not throwaway scratch. Each prompt must:
 - State it requires elevation and a clean machine; never run on the dev box.

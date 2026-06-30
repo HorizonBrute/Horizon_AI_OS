@@ -1,0 +1,11 @@
+{
+  "_comment": "Brain-local Claude Code harness settings. Resolved values (not placeholders). Deployed to brains/[BRAIN_NAME]/.claude/settings.local.json. Add brain-specific allow/deny rules as needed.",
+  "permissions": {
+    "allow": [
+      "PowerShell($env:HORIZON_DOCS; $env:HORIZON_ROOT; $env:HORIZON_SKILLS_BIN; $env:HORIZON_BIN)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(Get-Command *)",
+      "Bash(git *)"
+    ]
+  }
+}

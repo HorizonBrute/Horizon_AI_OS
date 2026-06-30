@@ -129,7 +129,7 @@ Practical provisioning:
 
 1.1 **Scripts and CLI tools** — place in `brains/<name>/tools/`. These are files the brain's OS user owns and can execute. Keep them deterministic. The brain coordinates the tool; the tool does the computation.
 
-1.2 **MCP servers** — MCP configuration lives in the brain's `settings.json` under the `mcpServers` key. Since the brain's `~/.claude/settings.json` points at `brains/<name>/.claude/settings.json`, MCP servers configured there are available only to that brain.
+1.2 **MCP servers** — MCP configuration lives in the brain's harness settings (`brains/<name>/.claude/settings.local.json`) under the `mcpServers` key. Since the brain's `~/.claude` symlinks to `brains/<name>/.claude/`, MCP servers configured there are available only to that brain.
 
 ```json
 {
@@ -501,9 +501,12 @@ horizon_aios_agents.md           ← OS-layer agent config (skills, orchestratio
 local.agents.md                  ← machine-local overrides (gitignored)
 ```
 
-For a brain, the chain adds one more layer at the innermost level:
+For a brain, the chain adds its workspace-root config at the innermost level:
 ```
-brains/<name>/.claude/CLAUDE.md  ← brain identity, persona, scope restrictions
+brains/<name>/CLAUDE.md          ← thin entry; @-imports the files below
+  ↓ @-imports
+brains/<name>/brain_invariants.md ← brain hard rules
+brains/<name>/brain_core.md       ← brain identity, persona, role, knowledge, scope
 ```
 
 ### 6.3 local.agents.md — The Primary Configuration Seam
@@ -779,7 +782,7 @@ See `$HORIZON_DOCS/authoring/claude_md_authoring.md` for the full authoring refe
 | `$HORIZON_ROOT/.claude/CLAUDE.md` | Never — thin entry point only | One line: `@$HORIZON_ROOT/CLAUDE.md` |
 | `$HORIZON_ROOT/agents.md` | AIOS-wide cross-harness instructions | Rules that apply to every session in every project |
 | `local.agents.md` | Machine-local overrides | Short — loads every session |
-| `brains/<name>/.claude/CLAUDE.md` | Brain persona, scope, memory pointers | Short — loads every brain session |
+| `brains/<name>/CLAUDE.md` (+ `brain_core.md` / `brain_invariants.md`) | Brain persona, scope, memory pointers | Short — loads every brain session |
 | `my-project/.claude/CLAUDE.md` | Project-specific context | Only what Claude cannot derive from the code |
 
 ### 8.6 Health Check

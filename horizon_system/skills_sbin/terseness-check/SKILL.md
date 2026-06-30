@@ -21,15 +21,10 @@ Read these before evaluating anything:
 1. `$HORIZON_DOCS/terseness_contract_index.md` — the canonical file list and all
    seven terseness criteria.
 2. Each file in the **Tracked** table, in order.
-3. Check the **Excluded** table — files listed there are skipped entirely (no
-   findings of any kind).
 
 ---
 
 ## Evaluation protocol
-
-**Skip** any file in the **Excluded** table of the index. Do not read it, do not
-generate findings, do not mention it in the report.
 
 For each tracked file:
 

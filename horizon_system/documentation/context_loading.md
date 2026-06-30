@@ -82,8 +82,8 @@ AIOS-wide rules, `@`-import of `agents.md`, and prose pointers to the invariant 
 **`$HORIZON_ROOT/agents.md` (cross-harness)**
 Harness-agnostic agent instructions: orchestration model, session-start checklist, skills conventions, commit rules. This file is consumed by Claude Code and other harnesses (Codex, OpenHands). It `@`-imports its sibling `local.agents.md` last — the machine-local override seam (see §12.6 of `$HORIZON_ETC/file_structure_invariants.md`). `local.agents.md` is gitignored, materialized by `aios setup`, and is the right place for owner/machine-specific instructions that must not ship. Do not put `@`-imports here with the intent that they will be inlined — they will not be. If you need a file inlined, `@`-import it from a `CLAUDE.md`.
 
-**Brain `CLAUDE.md`**
-Brain-specific persona, memory conventions, scope restrictions, and any tools or context the brain needs at session start. Brains load the AIOS base layers above plus this file. Keep it short: token economy applies to brain sessions too. See `$HORIZON_ETC/security_invariants.md §2` for why brain sessions are isolated from the owner's config.
+**Brain config (`brains/<name>/`)**
+A brain's identity lives in its **workspace root**, not in `.claude/`. `brains/<name>/CLAUDE.md` is a thin entry that `@`-imports the brain's `agents.md`, `brain_invariants.md` (hard rules), and `brain_core.md` (persona, role, knowledge locations, behaviors). Brains also load the AIOS base layers above via ancestor-directory auto-loading, since a brain session's cwd is its workspace root. Keep these files short: token economy applies to brain sessions too. See `$HORIZON_ETC/security_invariants.md §2` for why brain sessions are isolated from the owner's config.
 
 **`CLAUDE.local.md` (any level)**
 Machine-local overrides: paths that differ by machine, API keys, local-only conventions. Must not be committed. Add to `.gitignore`. This is the right way to override an AIOS config without touching committed files.

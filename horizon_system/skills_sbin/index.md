@@ -10,7 +10,6 @@ Owner-only privileged skills. Brain users must not have access to this directory
 | Skill | Trigger | Model group | Purpose |
 |---|---|---|---|
 | create-brain | `/create-brain` | `#lowcost` | Provision a new brain — OS user, groups, workspace, shell profile, keystore credential (Admin/root) |
-| handoff | `/handoff` | `#midcost` | Write a structured session handoff document |
 | harden | `/harden` | `#highcap` | Apply the authoritative brains-group ACL model to the AIOS layer (Admin/root) |
 | pre-flight-tooling-validation | `/pre-flight-tooling-validation` | `#investigate` | Validate the repo ships full-lifecycle tooling per platform (install/brain/2nd-AIOS/switch/delete), then emit an admin/sudo test-run prompt per platform |
 | objective | `/objective` | `#lowcost` | Bare `/objective` surfaces the conversation's active objective (else lists/creates); create/list/show/update durable multi-session objectives that handoffs chain back to |
@@ -27,9 +26,4 @@ Owner-only privileged skills. Brain users must not have access to this directory
 | test-agent-teams | `/test-agent-teams` | `#midcost` | End-to-end self-test: walk every defined agent team, spawn each role so it echoes a nonce + its role + what it was told to do (charter) + the model it actually ran as; per-team table + PASS/FAIL of resolution + model routing |
 | context-cost | `/context-cost` | `#lowcost` | Report harness context overhead (KB, words, ~tokens) for a given path — walks the directory tree collecting CLAUDE.md, agents.md, and @-import files the harness auto-loads. Symlink → skills_bin/context-cost. |
 | convert-prompt-to-saill | `/convert-prompt-to-saill` | `#midcost` | Convert a natural-language prompt into a SAILL agent-team flow (roles + model groups + flags + boxes + loops + -context-); outputs the SAILL block + a gloss, then offers to save/run/test it |
-| doc-check | `/doc-check` | `#lowcost` | Run the doc integrity verifier — catches canon pointers to missing files, index tables out of sync with on-disk skills, and stale $HORIZON_* cross-references after renames |
-| doctor | `/doctor` | `#lowcost` | Run the read-only AIOS health check (env vars, skills symlink, hooks, registry, privileged-dir Deny ACLs) and report passed/warnings/failures. Canonical home: skills_bin/doctor. |
-| model-catalog-refresh | `/model-catalog-refresh` | `#investigate` | Fetch current models + pricing from live provider docs (Anthropic, OpenAI, Gemini, Ollama) and return a structured catalog to populate or validate the model-preference config. Canonical home: skills_bin/model-catalog-refresh. |
-| model-prefs-test | `/model-prefs-test` | `#lowcost` | Test how each model group resolves in the current runtime (dry-run), or spawn small agents by group to confirm the spawn honors the config (--live). Canonical home: skills_bin/model-prefs-test. |
-| monitor | `/monitor` | `#fast` | Start the AIOS filesystem integrity monitor (watches the system dirs, logs create/modify/delete/move events as JSON lines); requires elevation. Canonical home: skills_bin/monitor. |
-| userguides | `/userguides [N]` | `#lowcost` | Browse the operational wiki: no argument spawns one Haiku agent per section and presents all summaries in order; `/userguides N` displays the full text of section N. Canonical home: skills_bin/userguides. |
+| context-cost-tree | `/context-cost-tree` | `#lowcost` | Walk every directory under a root path and report harness context overhead (tokens, KB, words) per directory, with a grand summary table sorted by token cost descending |

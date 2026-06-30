@@ -22,7 +22,7 @@ The user types `/create-brain`, or asks to "create a brain", "provision a brain 
 
 `/create-brain <brain-name> [--automation none|scheduled|daemon] [--horizon-root PATH] [--dry-run]`
 
-- `<brain-name>` — **required** positional; must match `^[a-z][a-z0-9_]{1,31}$` (start with a lowercase letter, then 1–31 lowercase letters/digits/underscores). If the user did not supply one, ask before running.
+- `<brain-name>` — **required** positional; must match `^[a-z][a-z0-9_]{1,19}$` (start with a lowercase letter, then 1–19 lowercase letters/digits/underscores; **max 20 chars** — Windows local user name limit). If the user did not supply one, ask before running. If the supplied name exceeds 20 characters, reject it and ask for a shorter name before running.
 - `--automation` — opt-in logon-rights tier (default `none`). `scheduled` grants "Log on as a batch job" (Windows) / enables systemd lingering (Linux); `daemon` grants "Log on as a service" (Windows) / prints system-service guidance.
 - `--horizon-root PATH` — explicit root; otherwise derived from the script location.
 - `--dry-run` — print every action without making changes.

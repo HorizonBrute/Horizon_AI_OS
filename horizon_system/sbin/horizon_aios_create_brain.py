@@ -95,9 +95,10 @@ except Exception:
 # Constants
 # ---------------------------------------------------------------------------
 
-# Regex enforcing brain names: start with lowercase letter, then 1-31 chars
-# of lowercase letters, digits, or underscores.  Total length: 2-32 chars.
-BRAIN_NAME_RE = re.compile(r'^[a-z][a-z0-9_]{1,31}$')
+# Regex enforcing brain names: start with lowercase letter, then 1-19 chars
+# of lowercase letters, digits, or underscores.  Total length: 2-20 chars.
+# 20-char cap matches the Windows local user name limit.
+BRAIN_NAME_RE = re.compile(r'^[a-z][a-z0-9_]{1,19}$')
 
 # The common group that every brain belongs to.  Members of this group get
 # read+execute on $HORIZON_BIN but are explicitly denied access to sbin.
@@ -210,8 +211,8 @@ def phase1_preflight(args):
     if not BRAIN_NAME_RE.match(brain_name):
         error(
             f'Invalid brain name: "{brain_name}"\n'
-            '  Must match ^[a-z][a-z0-9_]{{1,31}}$ '
-            '(start with lowercase letter, then 1-31 lowercase letters/digits/underscores)'
+            '  Must match ^[a-z][a-z0-9_]{{1,19}}$ '
+            '(start with lowercase letter, then 1-19 lowercase letters/digits/underscores; max 20 chars)'
         )
         sys.exit(1)
     info(f'Brain name is valid: {brain_name}')
@@ -441,8 +442,7 @@ def _win_create_group_if_absent(group_name, dry_run):
         return
     info(f'Creating local group: {group_name}')
     run_ps(
-        f'New-LocalGroup -Name "{group_name}" '
-        f'-Description "Horizon.AIOS group: {group_name}"',
+        f'New-LocalGroup -Name "{group_name}" -Description "H.AIOS group: {group_name}"',
         dry_run=dry_run,
     )
 
@@ -786,8 +786,10 @@ def phase4_verify(ctx, dry_run=False):
     print('  Next steps:')
     print(f'    1. Log in as "{brain_name}" and verify read+execute on $HORIZON_BIN.')
     print(f'    2. Review and customize the deployed workspace files (Phase 5):')
-    print(f'       $HORIZON_ROOT/brains/{brain_name}/.claude/CLAUDE.md')
-    print(f'       $HORIZON_ROOT/brains/{brain_name}/.claude/settings.json')
+    print(f'       $HORIZON_ROOT/brains/{brain_name}/brain_core.md        (fill in [BRAIN_DESCRIPTION] / role / knowledge)')
+    print(f'       $HORIZON_ROOT/brains/{brain_name}/brain_invariants.md  (brain-specific invariants)')
+    print(f'       $HORIZON_ROOT/brains/{brain_name}/.aioscommon/local.agent_teams.md')
+    print(f'       $HORIZON_ROOT/brains/{brain_name}/.claude/settings.local.json')
     print(f'    3. Provision tools from $HORIZON_USRBIN into the brain folder as needed.')
     print(f'    4. Retrieve account password: python horizon_aios_brain_credential.py get {brain_name} --show')
     print(f'       (Stored in OS keystore. Windows Task Scheduler: use this password when setting up scheduled tasks.)')
@@ -947,21 +949,33 @@ def _link_brain_claude(ctx, dry_run=False):
 
 def phase5_deploy_templates(ctx, dry_run=False):
     """
-    Deploy .aioscommon templates into the brain's .claude/ workspace directory,
-    write the brain user's shell profile (sets HORIZON_* env vars and default
-    working directory), and write a machine-readable provisioning manifest.
+    Deploy .aioscommon templates into the brain's workspace, write the brain
+    user's shell profile (sets HORIZON_* env vars and default working
+    directory), and write a machine-readable provisioning manifest.
 
-    Creates:
-        brains/<brain_name>/.claude/CLAUDE.md       (from brain_CLAUDE.md.template)
-        brains/<brain_name>/.claude/settings.json   (from brain_settings.json.template)
-        brains/<brain_name>/.claude/agents.md       (from brain_agents.md.template)
-        brains/<brain_name>/.claude/local.agent_teams.md  (from brain_local.agent_teams.md.template)
+    Brain config lives in the WORKSPACE ROOT (loaded from cwd = brain root);
+    .aioscommon/ holds local overrides + reference settings; .claude/ holds only
+    the harness-local settings and the skills symlink. Creates:
+
+        brains/<brain_name>/CLAUDE.md                        (from brain_CLAUDE.md.template)
+        brains/<brain_name>/agents.md                        (from brain_agents.md.template)
+        brains/<brain_name>/brain_core.md                    (from brain_core.md.template)
+        brains/<brain_name>/brain_invariants.md              (from brain_invariants.md.template)
+        brains/<brain_name>/.aioscommon/settings.json        (from brain_settings.json.template)
+        brains/<brain_name>/.aioscommon/local.agent_teams.md (from brain_local.agent_teams.md.template)
+        brains/<brain_name>/.aioscommon/agents.local.md      (empty local override)
+        brains/<brain_name>/.aioscommon/.gitkeep             (empty)
+        brains/<brain_name>/.claude/settings.local.json      (from brain_settings.local.json.template)
         brains/<brain_name>/.claude/skills          (directory symlink -> skills_bin)
         <brain_home>/.claude                        (directory symlink -> brains/<brain_name>/.claude)
         brains/<brain_name>/.aios_provision.json    (provisioning record for auditors)
         <brain_home>/.bashrc (Linux) / .zshrc+.bash_profile (macOS) /
             Documents/WindowsPowerShell/Microsoft.PowerShell_profile.ps1 (Windows)
             — sets HORIZON_* env vars and cd's to brain folder on interactive login
+
+    Every deployed text file has [BRAIN_NAME] and [HORIZON_ROOT_PATH] resolved
+    ([HORIZON_ROOT_PATH] -> the portable "$HORIZON_ROOT" env-var token, not a
+    hardcoded path); [BRAIN_DESCRIPTION] is left for the operator to fill in.
 
     Non-fatal: if templates are missing or file writes fail, a warning is
     printed and provisioning continues.  OS-level setup from Phases 1-3 is
@@ -973,81 +987,81 @@ def phase5_deploy_templates(ctx, dry_run=False):
     brain_dir    = ctx['brain_dir']
     horizon_root = ctx['horizon_root']
 
-    aioscommon_dir   = os.path.join(horizon_root, 'brains', '.aioscommon')
+    aioscommon_src   = os.path.join(horizon_root, 'brains', '.aioscommon')
+    brain_aioscommon = os.path.join(brain_dir, '.aioscommon')
     brain_claude_dir = os.path.join(brain_dir, '.claude')
 
+    # Placeholders resolved in every deployed file. [HORIZON_ROOT_PATH] -> the
+    # "$HORIZON_ROOT" env-var token (portable, not a hardcoded absolute path);
+    # [BRAIN_DESCRIPTION] is intentionally left for the operator to fill in.
+    subs = {
+        '[BRAIN_NAME]':        brain_name,
+        '[HORIZON_ROOT_PATH]': '$HORIZON_ROOT',
+    }
+
     if dry_run:
-        print(f'  [DRY-RUN] Would create {brain_claude_dir}')
-        print(f'  [DRY-RUN] Would deploy CLAUDE.md from {aioscommon_dir}/brain_CLAUDE.md.template')
-        print(f'  [DRY-RUN] Would deploy settings.json from {aioscommon_dir}/brain_settings.json.template')
-        print(f'  [DRY-RUN] Would deploy agents.md from {aioscommon_dir}/brain_agents.md.template')
-        print(f'  [DRY-RUN] Would deploy local.agent_teams.md from {aioscommon_dir}/brain_local.agent_teams.md.template')
+        print(f'  [DRY-RUN] Would create {brain_aioscommon} and {brain_claude_dir}')
+        print(f'  [DRY-RUN] Would deploy CLAUDE.md, agents.md, brain_core.md, brain_invariants.md to {brain_dir}')
+        print(f'  [DRY-RUN] Would deploy settings.json, local.agent_teams.md, agents.local.md to {brain_aioscommon}')
+        print(f'  [DRY-RUN] Would deploy settings.local.json to {brain_claude_dir}')
         _link_brain_claude(ctx, dry_run=True)
         print(f'  [DRY-RUN] Would write .aios_provision.json to {brain_dir}')
         print(f'  [DRY-RUN] Would write shell profile for {brain_name}')
         return
 
-    # 5.1 Create .claude/ directory
-    try:
-        os.makedirs(brain_claude_dir, exist_ok=True)
-        info(f'Created: {brain_claude_dir}')
-    except OSError as exc:
-        warn(f'Could not create {brain_claude_dir}: {exc}')
-        warn('Skipping template deployment — create .claude/ manually.')
-        return
+    # 5.1 Create workspace subdirectories (.aioscommon/ and .claude/)
+    for d in (brain_aioscommon, brain_claude_dir):
+        try:
+            os.makedirs(d, exist_ok=True)
+            info(f'Created: {d}')
+        except OSError as exc:
+            warn(f'Could not create {d}: {exc}')
+            warn('Skipping template deployment — create the directory manually.')
+            return
 
-    # Use forward slashes in the @ import path (Claude Code expects this on all platforms)
-    horizon_root_fwd = horizon_root.replace('\\', '/')
+    # 5.2 Brain-root config (workspace-canonical: loaded from cwd = brain root)
+    for tmpl, dest in (
+        ('brain_CLAUDE.md.template',     'CLAUDE.md'),
+        ('brain_agents.md.template',     'agents.md'),
+        ('brain_core.md.template',       'brain_core.md'),
+        ('brain_invariants.md.template', 'brain_invariants.md'),
+    ):
+        _deploy_template(
+            src=os.path.join(aioscommon_src, tmpl),
+            dest=os.path.join(brain_dir, dest),
+            substitutions=subs,
+        )
 
-    # 5.2 Deploy CLAUDE.md
+    # 5.3 .aioscommon/ — local overrides + reference settings
     _deploy_template(
-        src=os.path.join(aioscommon_dir, 'brain_CLAUDE.md.template'),
-        dest=os.path.join(brain_claude_dir, 'CLAUDE.md'),
-        substitutions={
-            '[BRAIN_NAME]':        brain_name,
-            '[HORIZON_ROOT_PATH]': horizon_root_fwd,
-        },
+        src=os.path.join(aioscommon_src, 'brain_settings.json.template'),
+        dest=os.path.join(brain_aioscommon, 'settings.json'),
+        substitutions=subs,
+    )
+    _deploy_template(
+        src=os.path.join(aioscommon_src, 'brain_local.agent_teams.md.template'),
+        dest=os.path.join(brain_aioscommon, 'local.agent_teams.md'),
+        substitutions=subs,
+    )
+    # Empty local-override files the brain config @-imports (operator fills as needed).
+    for empty in ('agents.local.md', '.gitkeep'):
+        _touch_empty(os.path.join(brain_aioscommon, empty))
+
+    # 5.4 .claude/ — harness-local settings (resolved values, not placeholders)
+    _deploy_template(
+        src=os.path.join(aioscommon_src, 'brain_settings.local.json.template'),
+        dest=os.path.join(brain_claude_dir, 'settings.local.json'),
+        substitutions=subs,
     )
 
-    # 5.3 Deploy settings.json
-    _deploy_template(
-        src=os.path.join(aioscommon_dir, 'brain_settings.json.template'),
-        dest=os.path.join(brain_claude_dir, 'settings.json'),
-        substitutions={
-            '[BRAIN_NAME]':        brain_name,
-            '[HORIZON_ROOT_PATH]': horizon_root_fwd,
-        },
-    )
-
-    # 5.3b Deploy agents.md
-    _deploy_template(
-        src=os.path.join(aioscommon_dir, 'brain_agents.md.template'),
-        dest=os.path.join(brain_claude_dir, 'agents.md'),
-        substitutions={
-            '[BRAIN_NAME]':        brain_name,
-            '[HORIZON_ROOT_PATH]': horizon_root_fwd,
-            '[BRAIN_DESCRIPTION]': ctx.get('description', ''),
-        },
-    )
-
-    # 5.3c Deploy local.agent_teams.md (brain-local team override; gitignored in brain scope)
-    _deploy_template(
-        src=os.path.join(aioscommon_dir, 'brain_local.agent_teams.md.template'),
-        dest=os.path.join(brain_claude_dir, 'local.agent_teams.md'),
-        substitutions={
-            '[BRAIN_NAME]':        brain_name,
-            '[HORIZON_ROOT_PATH]': horizon_root_fwd,
-        },
-    )
-
-    # 5.4 Unify the brain's .claude: workspace skills symlink + home redirect
-    #     (GAP 1 — must run after the workspace .claude/ and its templates exist)
+    # 5.5 Unify the brain's .claude: workspace skills symlink + home redirect
+    #     (GAP 1 — must run after the workspace .claude/ exists)
     _link_brain_claude(ctx, dry_run=False)
 
-    # 5.5 Write shell profile (sets HORIZON_* env vars + default working dir)
+    # 5.6 Write shell profile (sets HORIZON_* env vars + default working dir)
     _write_brain_shell_profile(ctx)
 
-    # 5.6 Write provisioning manifest
+    # 5.7 Write provisioning manifest
     _write_provision_manifest(ctx)
 
     info(f'Phase 5 complete for brain: {brain_name}')
@@ -1188,6 +1202,18 @@ def _safe_write_profile(path, content, brain_name):
             os.chown(path, pw.pw_uid, pw.pw_gid)
         except (KeyError, OSError) as e:
             warn(f'Could not chown {path} to {brain_name}: {e}')
+
+
+def _touch_empty(path):
+    """Create an empty file if it does not already exist (preserves existing content)."""
+    if os.path.exists(path):
+        return
+    try:
+        with open(path, 'w', encoding='utf-8') as fh:
+            fh.write('')
+        info(f'Created: {path}')
+    except OSError as exc:
+        warn(f'Could not create {path}: {exc}')
 
 
 def _deploy_template(src, dest, substitutions):
@@ -1375,7 +1401,7 @@ def parse_args():
     )
     parser.add_argument(
         'brain_name',
-        help='Name for the new brain (must match ^[a-z][a-z0-9_]{1,31}$)',
+        help='Name for the new brain (must match ^[a-z][a-z0-9_]{1,19}$; max 20 chars)',
     )
     parser.add_argument(
         '--horizon-root',
@@ -1404,13 +1430,6 @@ def parse_args():
         ),
     )
     parser.add_argument(
-        '--description',
-        metavar='TEXT',
-        default=None,
-        help="One or two sentences describing this brain's purpose and role. "
-             "If omitted, you will be prompted interactively.",
-    )
-    parser.add_argument(
         '--dry-run',
         action='store_true',
         default=False,
@@ -1425,15 +1444,6 @@ def main():
     if args.dry_run:
         print('\n  *** DRY-RUN MODE — no changes will be made ***\n')
 
-    description = args.description
-    if not description:
-        try:
-            description = input(f'  Brain purpose/role for "{args.brain_name}" (1-2 sentences): ').strip()
-        except (EOFError, KeyboardInterrupt):
-            description = ''
-    if not description:
-        description = f'Brain: {args.brain_name}'
-
     try:
         ctx = phase1_preflight(args)
     except SystemExit:
@@ -1444,7 +1454,6 @@ def main():
 
     # Carry the chosen automation tier through to the rights step and manifest.
     ctx['automation'] = args.automation
-    ctx['description'] = description
 
     try:
         phase2_create_user_and_groups(ctx, dry_run=args.dry_run)

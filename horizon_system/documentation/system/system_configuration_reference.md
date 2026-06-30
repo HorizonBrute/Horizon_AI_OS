@@ -52,7 +52,7 @@ P.13 **`~/.claude/` must exist** before bootstrap. Claude Code creates this dire
 
 P.14 **`.git/info/exclude` is hook-managed**. The pre-commit hook overwrites this file on every OS repo commit. Do not manually edit `.git/info/exclude` — edit `.gitignore.user` instead and commit to apply changes.
 
-P.15 **OS repo `$HORIZON_ROOT` is not a project workspace**. The OS repo tracks config and assets only. It is not intended to hold source code, build outputs, or project-specific files directly. Those belong in project repos nested inside `$HORIZON_ROOT`.
+P.15 **OS repo `$HORIZON_ROOT` is not a project workspace**. The OS repo tracks config and assets only. Source code, build outputs, and user work belong in `$HORIZON_PROJECTS` (`$HORIZON_ROOT/Projects/`) — the designated non-agentic workspace. Do not place project repos directly at the `$HORIZON_ROOT` level; use `Projects/` as the home for user work.
 
 ---
 
@@ -64,7 +64,7 @@ Horizon AIOS is a portable, Git-versioned Claude Code operating system layer. Th
 
 1.1.1 The **OS repo** (`$HORIZON_ROOT`) is a Git repository that tracks the AIOS config and asset layer. It is not a project repo — it does not track source code, build artifacts, or project-specific files. It tracks: `.claude/CLAUDE.md`, `.claude/settings.json`, `horizon_system/`, `.gitignore`, `.gitignore.user`. Machine-local runtime artifacts (`handoffs/`, `objectives/`, `usrbin/usr_skills/`) are gitignored.
 
-1.1.2 **Project repos** are independent Git repositories placed inside `$HORIZON_ROOT`. Each project manages its own history, branches, and remotes. The OS repo does not track them and has no knowledge of their contents.
+1.1.2 **Project repos** are independent Git repositories placed inside `$HORIZON_PROJECTS` (`$HORIZON_ROOT/Projects/`). Each project manages its own history, branches, and remotes. The OS repo does not track them and has no knowledge of their contents. `$HORIZON_PROJECTS` is the designated non-agentic workspace — the things you work on, not the machinery that does the working. Brain access to any project is an explicit administrative grant; it is denied by default.
 
 1.2 **Config inheritance — no wiring required**
 

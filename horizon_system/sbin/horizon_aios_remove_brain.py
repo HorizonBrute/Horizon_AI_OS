@@ -25,7 +25,7 @@ Safety:
     - Validates the brain name and refuses reserved names (brains, the invoking
       user, administrator/root, etc.).
     - The brain's links — home <home>/.claude -> workspace, and workspace
-      .claude/skills -> $HORIZON_SYSTEM/skills_bin — are symlinks.
+      .claude/skills -> $HORIZON_SYSTEM/skills_bin — are JUNCTIONS/symlinks.
       Every link is removed with `rmdir`/unlink (reparse-point delete) BEFORE
       any recursive delete, so neither the workspace nor skills_bin is ever
       followed/destroyed. Also handles the old topology (~/.claude/skills).
@@ -171,7 +171,7 @@ def _windows_profile_dir(brain_name):
 
 def _remove_reparse(path, dry_run):
     """
-    Delete a symlink at `path` as a REPARSE POINT — `rmdir` (Windows) /
+    Delete a junction/symlink at `path` as a REPARSE POINT — `rmdir` (Windows) /
     `unlink` (Unix) removes only the link, never following it into its target.
     This is the safety mechanism: the brain's links point at the workspace and
     at skills_bin, and a recursive delete that followed them would destroy those

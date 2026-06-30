@@ -80,15 +80,23 @@ Run as administrator (Windows) or with `sudo` (Linux/macOS). The script:
 
 **Brain users do not run `bootstrap.ps1`/`bootstrap.sh`.** Bootstrap is the *owner/admin* machine-setup step, run once. `horizon_aios_create_brain.py` is the per-brain onboarding script — it configures each brain user's harness so that, the moment the brain logs in and launches the harness, it is already pointed at the AIOS layer.
 
-The brain's config is **canonical in its workspace** `brains/<name>/.claude/`, and the brain's home `~/.claude` is a **symlink to it** — so everything is surfaced at the user-level `~/.claude` regardless of the brain's cwd. Phase 5 deploys/links:
+The brain's config is **canonical in its workspace root** `brains/<name>/`. Because the harness auto-loads `CLAUDE.md` from the cwd and every ancestor directory, a brain session (cwd = its workspace root) inherits the AIOS root `CLAUDE.md` chain from `$HORIZON_ROOT/` automatically, then layers its own root config on top. The brain's home `~/.claude` is a **symlink to `brains/<name>/.claude/`**, so the skills tier and harness settings surface at the user level regardless of cwd. Phase 5 deploys/links (every deployed file has `[BRAIN_NAME]` and `[HORIZON_ROOT_PATH]`→`$HORIZON_ROOT` resolved; `[BRAIN_DESCRIPTION]` is left for the operator):
 
-- `brains/<name>/.claude/CLAUDE.md` — from `brains/.aioscommon/brain_CLAUDE.md.template`. It `@`-imports `$HORIZON_ROOT/.claude/CLAUDE.md`, so the brain inherits the full AIOS config chain (agents.md, invariants, personalizations) plus its own identity/scope/skills block.
-- `brains/<name>/.claude/settings.json` — from `brain_settings.json.template`: harness-layer permission scoping (allow the brain folder; deny `sbin`/writes to `horizon_system`). Defense-in-depth only — real isolation is the OS ACLs from step 3.
-- `brains/<name>/.claude/skills` — a symlink to `$HORIZON_SYSTEM/skills_bin/`, so the brain sees the group-readable skill tier (never `skills_sbin`).
-- `<brain-home>/.claude` → symlink → `brains/<name>/.claude/` — makes the above resolve from the brain's home directory.
+- **Brain-root config** — loaded as project files from the workspace root, all from `brains/.aioscommon/*.template`:
+  - `brains/<name>/CLAUDE.md` — thin entry; `@`-imports the brain's `agents.md`, `brain_invariants.md`, and `brain_core.md`.
+  - `brains/<name>/agents.md` — `@`-imports the brain's invariants, the `.aioscommon` overrides, and `brain_core.md`.
+  - `brains/<name>/brain_core.md` — the brain's identity, role, knowledge locations, and behaviors (carries a `[BRAIN_DESCRIPTION]` placeholder and `TODO` sections to fill in).
+  - `brains/<name>/brain_invariants.md` — the brain's hard rules (security-invariant reference plus brain-specific invariants).
+- **`.aioscommon/`** — local override seam:
+  - `settings.json` — reference permission scoping for applications that read it (allow the brain folder; deny `sbin`/writes to `horizon_system`). Defense-in-depth only — real isolation is the OS ACLs from step 3.
+  - `local.agent_teams.md`, `agents.local.md`, `.gitkeep` — brain-local team/agent overrides (start empty).
+- **`.claude/`** — harness-local layer:
+  - `settings.local.json` — Claude Code permissions for the brain's interactive sessions.
+  - `skills` — a symlink to `$HORIZON_SYSTEM/skills_bin/`, so the brain sees the group-readable skill tier (never `skills_sbin`).
+- `<brain-home>/.claude` → symlink → `brains/<name>/.claude/` — surfaces the skills tier + harness settings from the brain's home directory.
 - The brain user's **shell/PowerShell profile** — exports the `HORIZON_*` environment variables and `cd`s to the brain folder on interactive login.
 
-So there is no separate "point the brain at AIOS" step: provisioning *is* that step. To customize a brain after provisioning, edit its `brains/<name>/.claude/CLAUDE.md` Role section (the template leaves a placeholder), not the AIOS layer.
+So there is no separate "point the brain at AIOS" step: provisioning *is* that step. To customize a brain after provisioning, fill in its `brains/<name>/brain_core.md` (identity / role / knowledge) and `brain_invariants.md`, not the AIOS layer.
 
 On the desktop, you can switch to a brain session by logging in as that OS user (fast user switching) or by running the harness as that user (`runas /user:brain-name claude` on Windows).
 

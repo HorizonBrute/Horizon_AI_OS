@@ -75,12 +75,12 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   ├── horizon_aios_brain_credential.py         # Brain account credential manager (OS keystore)
 │   │   └── [other privileged scripts]
 │   ├── skills_bin/                     # Group-readable AIOS skills; brains: R+X explicit (see Section 7)
-│   │   └── index.md                    # Skills index — check this first; update when adding a skill
+│   │   ├── index.md                    # Skills index — check this first; update when adding a skill
+│   │   └── handoff/                    # /handoff skill (available to all)
+│   │       └── SKILL.md
 │   ├── skills_sbin/                    # Owner-only privileged skills; brains: DENY (see Section 7)
 │   │   ├── index.md
 │   │   ├── .gitignore                  # Whitelist: tracks OS skills, ignores user-skill symlinks (see Section 7)
-│   │   ├── handoff/                    # /handoff skill (owner-only)
-│   │   │   └── SKILL.md
 │   │   ├── objective/                  # /objective skill (owner-only)
 │   │   │   └── SKILL.md
 │   │   ├── resync-user-skills/         # /resync-user-skills skill (owner-only)
@@ -123,11 +123,26 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   └── <skill-name>/SKILL.md
 │   └── [installed tools and apps]/     # Admin: full access. Brains: no default access — provisioned selectively per brain.
 ├── brains/                             # Brain home directories (gitignored per brain, but .aioscommon is tracked)
-│   └── .aioscommon/                    # Shared brain provisioning templates — tracked in git; used by horizon_aios_create_brain.py Phase 5
-│       ├── brain_CLAUDE.md.template    # Template deployed to brains/<name>/.claude/CLAUDE.md on provisioning
-│       ├── brain_settings.json.template # Template deployed to brains/<name>/.claude/settings.json on provisioning
-│       ├── brain_agents.md.template    # Template deployed to brains/<name>/.claude/agents.md on provisioning (§13)
-│       └── brain_local.agent_teams.md.template # Template deployed to brains/<name>/.claude/local.agent_teams.md (§13)
+│   ├── .aioscommon/                    # Shared brain provisioning templates — tracked in git; used by horizon_aios_create_brain.py Phase 5
+│   │   ├── brain_CLAUDE.md.template    # → brains/<name>/CLAUDE.md (thin @-import entry)
+│   │   ├── brain_agents.md.template    # → brains/<name>/agents.md (§13)
+│   │   ├── brain_core.md.template      # → brains/<name>/brain_core.md (identity/role/knowledge; [BRAIN_DESCRIPTION] placeholder)
+│   │   ├── brain_invariants.md.template # → brains/<name>/brain_invariants.md (brain hard rules)
+│   │   ├── brain_settings.json.template # → brains/<name>/.aioscommon/settings.json (reference permission scoping)
+│   │   ├── brain_settings.local.json.template # → brains/<name>/.claude/settings.local.json (harness permissions)
+│   │   └── brain_local.agent_teams.md.template # → brains/<name>/.aioscommon/local.agent_teams.md (§13)
+│   └── <name>/                         # Per-brain workspace (gitignored); provisioned by horizon_aios_create_brain.py
+│       ├── CLAUDE.md                   # Thin @-import entry: brain agents.md + brain_invariants.md + brain_core.md
+│       ├── agents.md                   # @-imports brain_invariants.md, the .aioscommon override seam, and brain_core.md
+│       ├── brain_core.md               # Brain identity, role, knowledge locations, behaviors
+│       ├── brain_invariants.md         # Brain hard rules (security ref + brain-specific invariants)
+│       ├── .claude/                    # Harness-local layer
+│       │   ├── settings.local.json     # Claude Code permissions for the brain's sessions
+│       │   └── skills                  # Symlink → $HORIZON_SYSTEM/skills_bin
+│       └── .aioscommon/                # Brain-scope machine-local override seam (gitignored) — the brain equivalent of local.agents.md (§12.6)
+│           ├── agents.local.md         # Machine-local agent overrides; @-imported by the brain's agents.md (NOT local.agents.md; §12.6)
+│           ├── local.agent_teams.md    # Machine-local team override for the brain scope (§13)
+│           └── settings.json           # Reference settings for apps consuming this config
 └── Projects/                           # $HORIZON_PROJECTS — primary user's project workspace (see Section 8)
     └── [project folders]/              # Primary user sets filesystem permissions per project; no default convention
         ├── aios_overrides.md           # Optional — project-level AIOS config overrides (see Section 7)
@@ -293,7 +308,13 @@ Check `$HORIZON_USRBIN` before installing new tools.
 
 ### 8.2 Projects — Primary User Workspace (`$HORIZON_PROJECTS`)
 
-`$HORIZON_ROOT/Projects/` is the primary user's home-directory equivalent — personal development work and projects unrelated to AIOS. Each project folder is independent and may be its own git repository.
+`$HORIZON_ROOT/Projects/` is the primary user's workspace for **non-agentic work** — the things you work on, not the machinery that does the working. The conceptual analogy: `brains/` is `C:\Program Files\` (installed agentic applications), `Projects/` is `My Documents` / `~/` (your personal workspace).
+
+What belongs here: code repositories, working copies, research, documents, and agentic workflow output locations. What does not: skills, brain configuration, or AIOS tooling — those belong in brains or the system layer.
+
+Brains and projects are **not intrinsically linked**. Brain access to a project is always an explicit grant (see `security_invariants.md §4`) — never automatic.
+
+Each project folder is independent and may be its own git repository. The OS repo pre-commit hook automatically drops nested `.git` folders from tracking — no manual `.gitignore` entry is needed.
 
 **Filesystem permissions:** No convention set at the `Projects/` level. The primary user sets permissions per project folder using OS tools. Brains are neither granted nor denied access by default.
 
@@ -403,7 +424,7 @@ Invariant: `aios_statusline.conf` is project-owned. Add it to `$HORIZON_ROOT/.gi
 
 ## 12. CLAUDE.md Thin-Pointer Invariant
 
-`agents.md` is the cross-harness, open-standard configuration file (read by Claude Code, Codex, and any harness supporting it); `CLAUDE.md` is a Claude-Code-specific shim. The open-source agent ecosystem has converged on `agents.md` as its standard, and AIOS adopts it as the canonical, **vendor-neutral** instruction file. To keep ONE harness-agnostic source of truth — aligning with the BYOH (bring-your-own-harness) philosophy — every `CLAUDE.md` in the AIOS system layer is a thin pointer to its sibling `agents.md`. All real content lives in `agents.md`. Because each `agents.md` is git-tracked and can be overwritten on upstream sync, every one also carries a machine-local sibling `local.agents.md` (clause 6) — the git-safe seam for owner/machine overrides that must survive updates.
+`agents.md` is the cross-harness, open-standard configuration file (read by Claude Code, Codex, and any harness supporting it); `CLAUDE.md` is a Claude-Code-specific shim. The open-source agent ecosystem has converged on `agents.md` as its standard, and AIOS adopts it as the canonical, **vendor-neutral** instruction file. To keep ONE harness-agnostic source of truth — aligning with the BYOH (bring-your-own-harness) philosophy — every `CLAUDE.md` in the AIOS system layer is a thin pointer to its sibling `agents.md`. All real content lives in `agents.md`. Because each `agents.md` is git-tracked and can be overwritten on upstream sync, every one also carries a machine-local sibling `local.agents.md` (clause 6) — the git-safe seam for owner/machine overrides that must survive updates. (Brain scopes use an equivalent seam at `.aioscommon\agents.local.md` instead of a sibling `local.agents.md`; see clause 6.5.)
 
 1. **Scope.** This invariant governs the AIOS system layer only — every `CLAUDE.md` at or under `$HORIZON_ROOT` that AIOS owns (e.g., `$HORIZON_ROOT/CLAUDE.md`, `$HORIZON_ROOT/.claude/CLAUDE.md`).
    1.1. Opted-out project folders that are their own git repositories (e.g., `Projects/*`, and external repos such as `GameDev\*`, `Horizon.AI.Apps\*`) are explicitly OUT OF SCOPE — they own their own config.
@@ -421,6 +442,7 @@ Invariant: `aios_statusline.conf` is project-owned. Add it to `$HORIZON_ROOT/.gi
    6.2. **Ships as a template, materialized on setup.** It ships as `local.agents.md.template` (tracked) and is materialized to `local.agents.md` by `aios setup` (`horizon_aios_switch.py` → `setup_local_agents`) if absent, so the `@local.agents.md` import never dangles. Its existence is structural, not optional.
    6.3. **Division of content.** Shipped, version-controlled defaults live in `agents.md`; personal/owner overrides live in `local.agents.md`. Keep `local.agents.md` short — it loads into context every session.
    6.4. **CLAUDE.md is unaffected.** Clause 3 still holds: a `CLAUDE.md` imports ONLY its sibling `agents.md`. The `local.agents.md` import is anchored on `agents.md` (clause 5), never on `CLAUDE.md`.
+   6.5. **Brain-scope exception (`.aioscommon\agents.local.md`).** Clauses 6–6.4 (the `local.agents.md` / `local.agents.md.template` sibling pattern) apply at the **OS/project layer** — root, `.claude/`, and project folders. **Brain scopes (`brains/<name>/`) do NOT use a sibling `local.agents.md`.** Instead, each brain folder carries a `.aioscommon\` subfolder whose `agents.local.md`, `local.agent_teams.md`, and `settings.local.json` serve the identical function: the machine-local, gitignored override layer for that brain. The brain's `agents.md` (and its `CLAUDE.md`, until the harness honors `@`-imports from `agents.md`) `@`-imports `.aioscommon\agents.local.md` and `.aioscommon\local.agent_teams.md` directly. This is intentional and is the canonical brain-scope seam — treat `.aioscommon\agents.local.md` as the brain equivalent of `local.agents.md`. The `.aioscommon\` files are deployed/owned per brain (brain folders are gitignored, so they are never tracked there); the shared `brains/.aioscommon/` provisioning templates that seed them are tracked (see §2 and §13.4.2).
 
 ---
 
@@ -433,7 +455,7 @@ Named, reusable multi-agent workflows. Cascades alongside `agents.md` and model-
 3. **Override-file anchoring.** The override is @-imported by that scope's `agents.md` (root `agents.md` imports both base and override; nested scopes import only `@./local.agent_teams.md`). NEVER by `CLAUDE.md` — same anchoring as §12.5 and model-prefs.
 4. **Scopes carrying the seam today:**
    4.1. Root and `.claude/` — templates tracked (`local.agent_teams.md.template`); live files materialized by `aios setup`.
-   4.2. Brain scaffold — deployed by `horizon_aios_create_brain.py` Phase 5 from `brains/.aioscommon/brain_agents.md.template` and `brain_local.agent_teams.md.template` into `brains/<name>/.claude/`. Brain folders are gitignored so `local.agent_teams.md` is never tracked there.
+   4.2. Brain scaffold — deployed by `horizon_aios_create_brain.py` Phase 5: `brain_agents.md.template` → `brains/<name>/agents.md` (workspace root), and `brain_local.agent_teams.md.template` → `brains/<name>/.aioscommon/local.agent_teams.md`. Brain folders are gitignored so `local.agent_teams.md` is never tracked there.
    4.3. Project/subfolder scopes — user-created; follow the same convention (drop `local.agent_teams.md.template`, add `@./local.agent_teams.md` to that scope's `agents.md`).
-5. **Cascade.** OS(root) → project-root → brain-root → subfolder; most-specific wins. Identical semantics to `model_prefs_details.md` "Scope Precedence" — no new semantics introduced here.
+5. **Cascade.** OS(root) → project-root → brain-root → subfolder; most-specific wins. Identical semantics to `horizon_aios_model_prefs.md` "Scope Precedence" — no new semantics introduced here.
 6. **Role-flag registry.** Role markers beyond label + model group (`if needed`, `if asked`, `parallel`, `wait`, `Loop`, and any custom flag) are cataloged in **`agent_team_flags.md`** (`$HORIZON_ETC`, TRACKED, shipped); user-added flags live in **`local.agent_team_flags.md`** (same dir, gitignored via the specific path, materialized by `aios setup` → `setup_agent_team_flags`). Both are @-imported by the root `agents.md` and read by `$HORIZON_BIN/resolve_agent_teams.py`, which parses flags **generically** (inline `(`#group`, <flag>)` tokens + `**Name:** …` annotations), labels them from the registry, lists them with `--flags`, and warns on flags not in the registry. Adding a flag needs no code change — append a registry row (or use `/agent-teams`) and use it.

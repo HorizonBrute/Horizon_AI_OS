@@ -1,52 +1,44 @@
-# Model Preferences — Horizon AIOS
-
-Governs the model used for spawned agents and delegated tasks. Apply in this order:
-
-1. Named group from the prompt — first runnable member.
-2. Task-Class Routing match — first runnable member of the mapped group.
-3. Sub-Agent Override (sub-agents only, if set).
-4. Spawned Agent Model (if set).
-5. Harness / provider default.
-
-Member resolution: try members in listed order; skip any not runnable in the current runtime; never surface errors about unreachable models.
-
----
-
 ## Per-Session Slot Preferences
 
-### Spawned Agent Model
-Unset
+### Default Spawned Agent Model:
+claude:sonnet
 
 ### Sub-Agent Override
-Unset
-
----
+claude:sonnet
 
 ## Model Groups
 
-Members defined in `horizon_aios_model_prefs.local.md`.
-
 ### #lowcost
-### #midcost
-### #highcap
-### #investigate
-### #debug
-### #fast
+# Minimize token cost. Cheapest acceptable model first.
+- claude:haiku
+- ollama:llama3.2
 
----
+### #midcost
+# Balanced cost vs. capability.
+- claude:sonnet
+
+### #highcap
+# Maximum capability regardless of cost.
+- claude:opus
+
+### #investigate
+# Research, exploration, open-ended analysis.
+- claude:sonnet
+
+### #debug
+# Step-by-step debugging; favor strong coding models.
+- claude:sonnet
+- ollama:qwen2.5-coder:7b
+
+### #fast
+# Latency over depth; small/fast models.
+- claude:haiku
+- ollama:llama3.2
 
 ## Task-Class Routing
-
-Defined in `horizon_aios_model_prefs.local.md`.
-
----
-
-## Merge Rules
-
-When local and base files both load:
-- Slots: local wins if not "Unset".
-- Groups: membership combined.
-- Routing: local rules apply; more specific class wins on conflict.
-
-Scope cascade (OS-global < project < brain < subfolder): same merge rules, most specific scope wins.
-Override files @-imported from `agents.md`; never routed through `CLAUDE.md`.
+# Give a kind of work a default group so cheap work stops landing on expensive
+# models. A prompt directive ("use #X") always overrides these.
+- documentation, formatting, mechanical edits -> #lowcost
+- research, exploration                       -> #investigate
+- architecture, security-sensitive changes    -> #highcap
+- step-by-step debugging                      -> #debug

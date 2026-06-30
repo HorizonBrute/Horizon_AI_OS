@@ -1,5 +1,5 @@
 {
-  "_comment": "Template Claude Code settings for a brain workspace. Copy to brains/<brain-name>/.claude/settings.json and remove this comment key.",
+  "_comment": "Reference settings for applications that read this brain's configuration. Deployed to brains/[BRAIN_NAME]/.aioscommon/settings.json with placeholders resolved.",
   "permissions": {
     "allow": [
       "Read([HORIZON_ROOT_PATH]/brains/[BRAIN_NAME]/**)",

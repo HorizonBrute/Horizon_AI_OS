@@ -71,8 +71,12 @@ Total: N files — X.X KB — Y words — ~Z tokens
 ```
 
 3.4 Threshold flags (after totals):
-- If `total_tokens` >= 2000: print a warning: `[WARN] High context load: ~Z tokens. Consider trimming CLAUDE.md files or @-imports above this path.`
-- Else if `total_tokens` >= 1000: print a notice: `[NOTE] Moderate context load: ~Z tokens. Worth reviewing if sessions feel slow.`
+- If you know the size of the context window
+- If total_tokens >= 12% context window print a notice: `[WARN] High context load: ~Z tokens. Consider trimming CLAUDE.md files or @-imports above this path.` 
+- Else  if total_tokens >= 4%  print a notice: `[NOTE] Moderate context load: ~Z tokens.  Worth reviewing.`,
+- If you dont know the size of the context window:
+- If `total_tokens` >=  20000 : print a warning: `[WARN] High context load: ~Z tokens. Consider trimming CLAUDE.md files or @-imports above this path.`
+- Else if `total_tokens` >= 8000: print a notice: `[NOTE] Moderate context load: ~Z tokens. Worth reviewing if sessions feel slow.`
 - Otherwise: no flag.
 
 ---

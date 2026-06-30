@@ -47,7 +47,7 @@ def err(m):  print(f"  [ERR]  {m}", file=sys.stderr)
 
 
 def is_reparse(path):
-    """True if path is a symlink (reparse point), without following it."""
+    """True if path is a junction/symlink (reparse point), without following it."""
     if os.path.islink(path):
         return True
     if os.name == "nt":
@@ -76,7 +76,7 @@ def make_link(link, target):
 
 
 def remove_link(path):
-    """Remove a symlink WITHOUT touching the target's contents."""
+    """Remove a junction/symlink WITHOUT touching the target's contents."""
     if os.name == "nt":
         subprocess.run(["cmd", "/c", "rmdir", path], check=True,
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -108,9 +108,6 @@ def main():
                    help="HORIZON_ROOT path. Default: env HORIZON_ROOT, else derived from this script.")
     p.add_argument("--dry-run", action="store_true", help="Show actions, change nothing.")
     p.add_argument("--no-backup", action="store_true", help="Skip the safety backup of ~/.claude/projects.")
-    p.add_argument("--repoint", action="store_true",
-                   help="If ~/.claude/projects is a symlink pointing at the wrong AIOS root, "
-                        "remove it and recreate it. Without this flag, a wrong-target symlink exits with error.")
     args = p.parse_args()
     dry = args.dry_run
 
@@ -130,25 +127,9 @@ def main():
                                                              if os.path.exists(memory_root) else memory_root):
             ok("Already redirected to the AIOS memory root - nothing to do.")
             return 0
-        if not args.repoint:
-            warn(f"~/.claude/projects is a symlink pointing elsewhere: {tgt}")
-            warn("To repoint it for a cross-AIOS switch, re-run with --repoint.")
-            return 1
-        # --repoint: remove old symlink and recreate pointing at this AIOS.
-        info(f"Repointing: old target -> {tgt}")
-        info(f"            new target -> {memory_root}")
-        if not dry:
-            try:
-                remove_link(projects)
-            except Exception as exc:
-                err(f"Failed to remove existing symlink: {exc}")
-                err("Close Claude Code first (it holds the dir open), then re-run.")
-                return 1
-            os.makedirs(memory_root, exist_ok=True)
-            make_link(projects, memory_root)
-        ok(f"Repointed ~/.claude/projects -> {memory_root}")
-        warn("Restart Claude Code now - it must re-open its project dir through the new link.")
-        return 0
+        warn(f"~/.claude/projects is already a link, but points elsewhere: {tgt}")
+        warn("Resolve manually, then re-run.")
+        return 1
 
     if not os.path.exists(projects):
         # Nothing to migrate; just create the memory root and link.

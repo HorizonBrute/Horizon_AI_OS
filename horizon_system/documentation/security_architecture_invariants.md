@@ -1,12 +1,8 @@
-# Security Architecture Invariants — Horizon AIOS
+# Security Invariants — Horizon AIOS
 
 Hard constraints for all users, harnesses, and brain configurations.
 
 > **Deployment prerequisite:** These invariants describe the security properties that Horizon AIOS establishes when correctly deployed. They are enforced by `bootstrap.ps1`/`bootstrap.sh` (which runs as Administrator/root) and `horizon_aios_harden.py`. On a machine where bootstrap has not been run, these properties do not yet hold.
-
-> **Quick-reference:** `$HORIZON_ETC/security_invariants.md` is a session-loaded quick-ref (three operational lines + pointer here). Add new rules to this file and update the quick-ref summary if warranted — do not add rules only to the quick-ref.
-
-> **Branding rules:** Naming and identification conventions are in `$HORIZON_DOCS/branding_invariants.md`. Section §8 below summarizes the security rationale; the naming authority is that document.
 
 ---
 
@@ -19,6 +15,14 @@ Horizon AIOS operates under a three-tier principal model.
 **Tier 2 — Brain accounts:** Separate OS user accounts that run agentic workflows. Each brain is an expert system scoped to a specific task or set of tasks. Brain accounts start with zero access outside their own folder. Access to any additional resource is provisioned explicitly by the administrative context.
 
 **Tier 3 — Docker (optional, per brain):** A brain may run its own Docker containers for isolated services. Docker adds network and process isolation on top of the OS account boundary, not instead of it.
+
+### Why Dedicated Brain Accounts Exist
+
+Running agentic workflows under a primary OS user account — the common default for most AI tooling — means the agent inherits everything that account can touch: the full filesystem, stored credentials, network resources, and any application the user can run. A misbehaving or compromised agent is operationally equivalent to a compromised user session. There is no containment boundary; blast radius equals the user's access.
+
+Horizon AIOS addresses this by requiring that agentic workflows run as dedicated brain OS accounts with zero-default access. The brain's ACL boundary is enforced by the OS, not by harness instructions or agent promises — it cannot be overridden by anything the harness says or any prompt injection succeeds in getting the agent to attempt. The primary user retains full administrative control; the brain has only what it was explicitly given.
+
+---
 
 ### Primary Threat Models
 
@@ -54,6 +58,10 @@ The primary OS user (the human who installed Horizon AIOS) owns $HORIZON_ROOT an
 - The primary user may read, write, delete, or restructure any path in the OS at any time.
 - Access control is enforced entirely by OS filesystem permissions (NTFS ACLs on Windows, POSIX permissions on Unix). Horizon AIOS does not implement its own access control layer. All documentation, configuration, and agent instructions that reference access control are describing OS-level permissions to be set by the primary user, not an AIOS enforcement mechanism.
 
+**Single-user vs. multi-user access to brains and projects.** In a single-user installation, the installing user owns `$HORIZON_ROOT` and all its contents — they have full access to `brains/` and `$HORIZON_PROJECTS/` by default because they own the machine. This does not extend to multi-user, team, or enterprise deployments. In those environments, additional flesh-and-blood operators are real OS accounts that do not own the AIOS root. They must be explicitly granted access to the specific `brains/<name>/` folders and `$HORIZON_PROJECTS/` paths they need — via direct OS ACL grants (`icacls` / `setfacl`) or by membership in groups that the organization's identity infrastructure already manages.
+
+Horizon AIOS tooling does not automate or presume these human-operator grants. AIOS provisions brain account ACLs out of the box because that is what falls within its portable, IaC-forward scope — brain accounts are AIOS-managed objects that the tooling creates and controls. Human operators are not AIOS-managed objects; their access to brains and projects is a deployment-specific decision implemented by the administrative context using whatever OS or identity-provider tooling the organization already operates.
+
 ---
 
 ## 2. Brain Isolation
@@ -80,6 +88,9 @@ Each "brain" is an isolated AI persona running as a separate OS user account, sc
 | `$HORIZON_ROOT/` | None |
 | `$HORIZON_SYSTEM/` (everything else: `ai_os_etc`, `templates`, `harness_configs`, `documentation`, …) | No write anywhere (read permitted) |
 | `brains/<brain-name>/` | That brain's account: full. All others: none. |
+| OS system directories (`/etc/`, `/etc/passwd`, `/etc/shadow`, `C:\Windows\System32\`, Windows Registry, etc.) | No access — enforced by the OS, not by AIOS. Brain accounts are standard non-privileged OS user accounts. They have no special access to OS system paths; those paths are protected by the OS's own permission model exactly as they are for any other non-elevated account. AIOS does not need to explicitly deny these paths. |
+
+**This table covers brain account permissions only.** It does not describe what flesh-and-blood operator accounts can access. Human operators are not in the `brains` group and are not subject to the Deny ACEs above — they are owners, Administrators, or members of whatever OS groups the organization assigns them. In a single-user install, the owner has full access to `brains/` and `$HORIZON_PROJECTS/` by default. In multi-user or enterprise deployments, additional human operators must be explicitly granted access to the specific brain workspaces and project folders they need; no such grant is created by AIOS tooling. See §1 (User Ownership Model) for the full treatment.
 
 **Provisioning model.** AIOS hardening is an administrative/root action — hence bootstrap and `horizon_aios_harden.py` require elevation. The model is expressed entirely through two kinds of principal: the **owner + SYSTEM + Administrators**, who must always retain Full control (they are never stripped, and are re-granted by SID so this is locale-independent on Windows), and the **`brains` group**, which is restricted as above. *Human* operators are never granted access by AIOS — they are owners or members of Administrators, whatever the OS/infra already made them. On a single-user home workstation the operator is simultaneously owner and Administrator, so the model applies unchanged.
 
@@ -153,6 +164,20 @@ This is stronger than application-layer deny lists (such as Claude Code's `deny`
 
 **Implication for threat modeling:** A fully compromised brain (Threat 1 — prompt injection succeeding completely) still cannot compromise the AIOS layer or other brains. Blast radius is bounded by what that brain's OS account can reach, which is bounded by what the administrative context provisioned to it.
 
+### When the Model Is Not Followed — The Elevated Account Risk
+
+The security properties above are only valid when the deployment prerequisite is met: **AI harnesses must run as brain OS accounts, not as the operator's account.**
+
+Running an AI harness under a developer's own account — particularly on a workstation where that account holds local Administrator rights — is functionally equivalent to running Linux as `root`: the harness inherits everything the account can touch, including OS system directories, credential stores, other users' files, and installed software. There is no OS-level containment boundary, because the account is the containment boundary, and it has not been applied.
+
+**UAC is not a containment boundary.** Windows User Account Control governs interactive elevation prompts. It does not prevent a process running under an admin-group account from accessing most of the filesystem. It can be bypassed by misconfigured auto-elevation settings, COM object abuse, or developer-applied elevation grants. A harness with broad tool permissions may operate with effectively unrestricted access regardless of UAC.
+
+**No AIOS configuration compensates for a missing OS account boundary.** The `settings.json` deny array, `agents.md` instructions, and harness-level permission lists are defense-in-depth — they reinforce the OS account boundary, they do not replace it. If the harness runs as an administrator or as the owner account, these controls are advisory. The OS enforces nothing against the account that owns the AIOS layer.
+
+**An improperly installed AIOS short-circuits the security model it was designed to provide.** The user retains all the configuration overhead with none of the structural security properties. This risk is not a flaw in the model — it is the consequence of not applying the model's foundational prerequisite.
+
+The correct deployment is: a separate administrative account manages AIOS; brain OS accounts run harnesses. See `$HORIZON_DOCS/philosophy.md §3` (Improper Installation Risk) for the full treatment.
+
 ---
 
 ## 6. No Sensitive Data in Committed Files
@@ -190,10 +215,22 @@ See `$HORIZON_DOCS/security/audit_logging.md` for setup, service registration, D
 
 ## 8. Branding & Identification
 
-Attribution is a security property — see `$HORIZON_DOCS/branding_invariants.md` for the full naming authority. Summary: every artifact Horizon AIOS creates that a blue team, IT administrator, or auditor could encounter must self-identify as Horizon AIOS without external context.
+Attribution is a security property. Every artifact Horizon AIOS creates that a blue team, IT administrator, or auditor could encounter **must self-identify as Horizon AIOS without external context** — a running process, an OS account or group, a scheduled task/service, a log file, a log record, or an OS event-log/syslog entry. An investigator must be able to tell what an object is and what created it from the object alone.
 
 **Standard brand tokens:**
 - Human-readable text (OS-object descriptions, log fields, event sources): **`Horizon.AIOS`**.
 - Filenames and machine identifiers: **`horizon_aios_`** prefix — lowercase, underscores.
 
-On change: any new admin-visible artifact adopts the `Horizon.AIOS` / `horizon_aios_` form at creation. Renaming an exempt functional identifier is a breaking change requiring an ADR. See `$HORIZON_DOCS/branding_invariants.md` for the full required/exempt lists.
+**Required — these MUST self-identify:**
+- **Audit/log records** — every record carries `source: Horizon.AIOS` and the originating `horizon_root` (see §7).
+- **Log files / directories** — `horizon_aios_` prefix (`horizon_aios_security.log`, `horizon_aios_sync.log`, `horizon_aios_monitor/`).
+- **OS principals** — brain/group `Description` / Linux `--comment` / Windows `FullName` / macOS `RealName` begin with `Horizon.AIOS` (e.g. `Horizon.AIOS brain account`, `Horizon.AIOS group: <name>`). Set by `horizon_aios_create_brain.py` and `horizon_aios_harden.py`.
+- **OS log channels** — Windows Event source `Horizon.AIOS Monitor`; syslog logger under `horizon_aios.*`.
+- **Privileged utility scripts** — `$HORIZON_SYSTEM/sbin/horizon_aios_*.{py,ps1}`, so process listings (`ps`, Task Manager, scheduled-task `/TR` targets) self-identify.
+
+**Deliberately exempt — stable functional identifiers.** These are interface/compatibility contracts; renaming them breaks existing deployments, so they keep their established (already `AIOS`/`HorizonAIOS`-recognizable) names rather than the `horizon_aios_` form:
+- Public entry points: `bootstrap.{ps1,sh}`, `uninstall.{ps1,sh}`, and the `aios` command wrapper.
+- The `brains` OS group; the scheduled-task names `HorizonAIOS_Sync` / `HorizonAIOS_MaintainLogs` and their cron markers.
+- Config filenames (`aios_*.conf`) and `AIOS_*` environment variables.
+
+**On change:** any new admin-visible artifact (log, OS object, scheduled task/service, privileged script, event channel) adopts this invariant at creation — the `Horizon.AIOS` / `horizon_aios_` form is not optional for them. Renaming an exempt functional identifier is a breaking change requiring an ADR. The filename side of this convention is restated in `file_structure_invariants.md §6`.

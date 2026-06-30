@@ -7,6 +7,29 @@ access to the log directory (enforced by `horizon_aios_harden.py`).
 
 ---
 
+## Default State
+
+**AIOS ships with write logging to all AIOS system directories enabled by default.** The bootstrap registers the monitor as a scheduled task (Windows) or systemd service (Linux/macOS), so logging is active from first boot after setup — no extra configuration step required.
+
+This is intentional: some basic logging on implementation is better than none. Write detection covers the primary integrity surface (unauthorized changes to the AIOS system layer) without making any presumptions about the broader environment. Deeper logging — read detection, brain-internal activity, project-folder access — requires OS-level audit infrastructure that varies by environment and is left to the operator (see *Log Analysis and Alerting* below).
+
+**The monitor script is deliberately simple and easy to extend.** If the default watched paths or log destination do not fit your environment, editing `aios_monitor.conf` or the script itself is straightforward. The configuration file, CLI flags, and environment variables cover the most common extension patterns without touching the script at all.
+
+**Dependency:** Logging is only active if the scheduled task or service was successfully registered during bootstrap. Verify with:
+
+```powershell
+# Windows
+Get-ScheduledTask -TaskName "AIOSMonitor"
+```
+```sh
+# Linux
+systemctl status aios-monitor
+```
+
+If the task is absent or in an error state, logging is not running regardless of what the script can do. Re-register using the instructions in *Running as a Service* below.
+
+---
+
 ## Quick Start
 
 ```sh
@@ -262,7 +285,37 @@ documented in your OS vendor's security hardening guides.
 
 ---
 
-## Opt-Out
+## Logging Coverage and Existing Infrastructure
 
-Do not start `horizon_aios_monitor.py`. Do not schedule `horizon_aios_monitor_analyze.py`.
-No other configuration needed — neither script is auto-started by AIOS.
+The built-in monitor covers write detection on AIOS system directories. Everything it does not cover — read detection, brain-internal activity, network access, process-level audit — is already handled by standard infrastructure-level logging tools: `auditd`, Windows Security Audit, EDR agents, network flow collectors. Those tools are not absent; they are already running in any environment with a baseline security posture.
+
+What they need to cover the AIOS is the same thing they need for any new application onboarded into a secure environment: **an understanding of which files and directories are significant.** For AIOS, that is:
+
+| Path | Why it matters |
+|---|---|
+| `$HORIZON_SYSTEM/` | The AIOS system layer — changes here are integrity events |
+| `$HORIZON_SYSTEM/sbin/` and `skills_sbin/` | Owner-only privileged tooling |
+| `$HORIZON_SYSTEM/logs/` | The audit log directory itself |
+| `$HORIZON_ROOT/.claude/` | OS-layer harness configuration |
+| `$HORIZON_ROOT/brains/` | Brain workspace root — structural changes (account created, deleted, renamed) |
+| `brains/<name>/` | Individual brain workspace — if brain-level audit is required |
+
+Point your existing tooling at these paths with the same rules you use for any sensitive application directory. No AIOS-specific integration is needed beyond that. The onboarding effort is the same as bringing any new service into your logging pipeline.
+
+---
+
+## Modifying or Disabling the Monitor
+
+To extend the default watched paths, log destination, or behavior, edit `$HORIZON_ETC/aios_monitor.conf` (see *Configuration File* above) or pass CLI flags. No script changes are needed for common customizations.
+
+To disable monitoring entirely: remove or disable the scheduled task / systemd service. The scripts will not run on their own.
+
+```powershell
+# Windows — disable
+Unregister-ScheduledTask -TaskName "AIOSMonitor" -Confirm:$false
+Unregister-ScheduledTask -TaskName "AIOSMonitorAnalyzer" -Confirm:$false
+```
+```sh
+# Linux — disable
+sudo systemctl disable --now aios-monitor
+```

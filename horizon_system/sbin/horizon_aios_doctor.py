@@ -198,20 +198,6 @@ def check_gitignore_user(horizon_root):
 
 
 # ---------------------------------------------------------------------------
-# 7a. local.agents.md
-# ---------------------------------------------------------------------------
-def check_local_agents_md(horizon_root):
-    f = horizon_root / "local.agents.md"
-    if not f.exists():
-        template = horizon_root / "horizon_system" / "templates" / "local.agents.md.template"
-        hint = (f"copy {template} -> {f}" if template.exists()
-                else "create local.agents.md at $HORIZON_ROOT (template: $HORIZON_SYSTEM/templates/local.agents.md.template)")
-        warn("local.agents.md", f"not found — {hint}")
-    else:
-        ok("local.agents.md")
-
-
-# ---------------------------------------------------------------------------
 # 7. Privileged-dir ACLs (Windows only)
 # Verify an explicit DENY ACE for the brains group exists on each privileged
 # directory (sbin, skills_sbin, logs). Per security_invariants.md §3, the
@@ -571,12 +557,11 @@ def check_gpgsign(horizon_root):
     if val in ("true", "1", "yes", "on"):
         ok(name)
     elif not val:
-        warn(name, "commit.gpgsign is not set — AIOS is usable, but signed commits are "
-                   "blocked; next: install GPG and run 'git config commit.gpgsign true' "
-                   "(see setup guide §P.6–P.9)")
+        fail(name, "commit.gpgsign is not set — run 'git config commit.gpgsign true' "
+                   "(repo enforces signed commits / DCO)")
     else:
-        warn(name, f"commit.gpgsign is '{val}', expected true — "
-                   "run 'git config commit.gpgsign true' to enable signed commits")
+        fail(name, f"commit.gpgsign is '{val}', expected true — "
+                   "run 'git config commit.gpgsign true'")
 
 
 def run_post_setup(env):
@@ -645,7 +630,6 @@ def main():
 
     if horizon_root:
         check_gitignore_user(horizon_root)
-        check_local_agents_md(horizon_root)
         check_claude_md(horizon_root)
         check_memory_redirect(horizon_root)
     else:

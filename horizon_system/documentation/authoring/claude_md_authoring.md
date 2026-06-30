@@ -53,6 +53,9 @@ it follows the same rule.
 it wins). `local.agents.md` is gitignored and machine-local — the git-safe seam for
 owner/machine overrides. `CLAUDE.md` is unaffected: it imports only its sibling `agents.md`,
 never `local.agents.md` directly (see `$HORIZON_ETC/file_structure_invariants.md` §12.5–6).
+This sibling-`local.agents.md` pattern is the OS/project-layer seam. **Brain scopes
+(`brains/<name>/`) instead use `.aioscommon\agents.local.md`** as the equivalent
+machine-local override, `@`-imported by the brain's `agents.md` (see §12.6.5).
 
 ---
 

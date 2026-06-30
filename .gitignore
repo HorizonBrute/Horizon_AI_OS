@@ -677,3 +677,8 @@ horizon_system/logs/*
 horizon_system/logs/*/*
 !horizon_system/logs/*/.gitkeep
 !horizon_system/logs/**/README.md
+
+# Shipped reference brain — track the whole template_brain scaffold
+# (must come last: overrides brains/* and the bare local.agent_teams.md / local.agents.md patterns)
+!brains/template_brain
+!brains/template_brain/**
