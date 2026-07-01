@@ -213,10 +213,13 @@ mkdir -p "$CLAUDE_HOME_DIR"
 if [ -f "$CLAUDE_MD" ]; then
   if grep -qF "@" "$CLAUDE_MD" && grep -qF ".claude/CLAUDE.md" "$CLAUDE_MD"; then
     ok "~/.claude/CLAUDE.md already contains an @ redirect — skipping."
-    current_content="$(cat "$CLAUDE_MD")"
-    if [ "$current_content" != "$EXPECTED_REDIRECT" ]; then
+    # Block-aware check: bootstrap writes a two-line block (primary import plus
+    # the owner-only aios-dev import). Pass silently as long as the expected
+    # primary redirect line is present anywhere in the file, rather than
+    # requiring the whole file to equal a single line.
+    if ! grep -qxF "$EXPECTED_REDIRECT" "$CLAUDE_MD"; then
       warn "Existing redirect points somewhere else:"
-      warn "  Current:  $current_content"
+      warn "  Current:  $(cat "$CLAUDE_MD")"
       warn "  Expected: $EXPECTED_REDIRECT"
       warn "If this is wrong, update ~/.claude/CLAUDE.md manually."
     fi
@@ -457,7 +460,7 @@ fi
 # doctor-clean (horizon_aios_doctor.py checks $HORIZON_ROOT/.gitignore.user).
 # Idempotent: never overwrite an existing file (it holds user-local patterns).
 GITIGNORE_USER="$HORIZON_ROOT/.gitignore.user"
-GITIGNORE_TEMPLATE="$HORIZON_ROOT/.gitignore.user.template"
+GITIGNORE_TEMPLATE="$HORIZON_SYSTEM/templates/.gitignore.user.template"
 if [ -f "$GITIGNORE_USER" ]; then
   info ".gitignore.user already exists — skipping template copy."
 elif [ -f "$GITIGNORE_TEMPLATE" ]; then

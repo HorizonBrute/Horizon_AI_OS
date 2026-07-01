@@ -514,7 +514,11 @@ def harden_unix(paths, os_name, owner, have_group, have_humans, dry_run, strict)
                 dry_run=dry_run, check=False)
             run(['setfacl', '-R', '-d', '-m', f'g:{BRAINS_GROUP}:---', path],
                 dry_run=dry_run, check=False)
-            deny(f'brains DENY (setfacl ---) on {label}: {path}')
+            # Also enforce owner-only base mode bits. The setfacl deny alone
+            # leaves the stat mode at 0o770; doctor --post-setup asserts 0o700
+            # on sbin/skills_sbin/logs, so tighten the base permissions too.
+            run(['chmod', '-R', '700', path], dry_run=dry_run, check=False)
+            deny(f'brains DENY (setfacl --- + owner-only 700) on {label}: {path}')
         return
 
     if not strict and not (have_group and have_setfacl):
