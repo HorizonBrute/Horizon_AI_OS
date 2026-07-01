@@ -11,7 +11,9 @@ This is the real enforcement point for security_invariants.md §2/§3/§5: the
 brain OS user has *no write access to $HORIZON_SYSTEM* and is explicitly
 DENIED sbin/, skills_sbin/, and the audit logs/.
 
-ACL model applied (brains group, conventionally `brains`):
+ACL model applied:
+
+  brains group (conventionally `brains`):
     $HORIZON_SYSTEM/bin          -> brains: Read+Execute (explicit grant)
     $HORIZON_SYSTEM/skills_bin    -> brains: Read+Execute (explicit grant)
     $HORIZON_SYSTEM/sbin          -> brains: DENY (explicit, full)
@@ -21,19 +23,39 @@ ACL model applied (brains group, conventionally `brains`):
                      documentation, sounds, harness_configs, ...)
                                   -> brains: NO WRITE anywhere (inheritable
                                      Deny-Write; reads stay allowed)
-    owner + SYSTEM + Administrators -> Full control, always preserved.
 
-Two modes (Windows):
-    additive (default) -- Preserve all existing/inherited ACLs (GPO/SCCM/Intune
-        pushes, SYSTEM, Administrators). Enforce the brains model purely by
-        ADDING ACEs: an inheritable brains Deny-Write at the root (an
-        explicit/inherited Deny beats any Allow, so this holds even under broad
-        infra grants) plus full Deny on the privileged dirs. Nothing is
-        stripped. This is the right default for managed machines AND home boxes.
-    --strict -- Additionally drop inherited ACEs (/inheritance:r) at the root
-        and on each privileged dir, re-establishing owner + SYSTEM +
-        Administrators first. For locked-down standalone installs that want no
-        inherited ACEs at all. Never silently drops SYSTEM/Administrators.
+  horizon_humans group (flesh-and-blood human operators; created on every
+  install, secure-by-onboarding — empty is fine, an empty grant grants nobody):
+    $HORIZON_ROOT (whole AIOS tree) -> humans: Full control
+    $HORIZON_ROOT/brains            -> humans: Read-Only (explicit Deny-Write;
+                                       to write there a human elevates to admin
+                                       or changes permissions)
+
+  owner + SYSTEM + Administrators -> Full control, always preserved. Root
+  inheritance is broken and these are re-granted, so broad inherited grants
+  from the volume root (Authenticated Users, sandbox groups, stray SIDs) no
+  longer reach the AIOS tree.
+
+Human operators are ENROLLED into horizon_humans by onboarding (bootstrap),
+not by this engine. This script only creates the groups and applies the ACLs.
+
+Root inheritance (Windows): ALWAYS controlled. The engine breaks inheritance at
+    $HORIZON_ROOT and re-grants only owner + SYSTEM + Administrators + the
+    horizon_humans group. This is the secure-by-onboarding baseline that removes
+    broad inherited write grants from the volume root; you cannot suppress an
+    inherited Allow (e.g. Authenticated Users:Modify) without breaking
+    inheritance, and a Deny on Authenticated Users would also catch the human
+    owner/admins (who are themselves authenticated).
+
+Two modes for the $HORIZON_SYSTEM subtree (Windows):
+    additive (default) -- Preserve the system subtree's existing/inherited ACLs
+        (GPO/SCCM/Intune pushes, SYSTEM, Administrators). Enforce the brains
+        model by ADDING ACEs: an inheritable brains Deny-Write plus full Deny on
+        the privileged dirs. Right for managed machines AND home boxes.
+    --strict -- Additionally drop inherited ACEs (/inheritance:r) on the system
+        dir and each privileged dir, re-establishing owner + SYSTEM +
+        Administrators first. For locked-down standalone installs. Never
+        silently drops SYSTEM/Administrators.
 
 Ordering invariant (mirrors horizon_aios_create_brain.py): all Deny ACEs are applied
 AFTER all brains-group grants, so an inherited permission can never
@@ -74,6 +96,16 @@ import sys
 # The common group every brain belongs to. Brain ACEs are group-based, so this
 # group must exist for the grants/denies below to be settable.
 BRAINS_GROUP = 'brains'
+
+# The AIOS-managed group for flesh-and-blood human operators (secure-by-
+# onboarding: created on every install alongside `brains`, even when empty).
+# Members get Full control of the AIOS tree but are held Read-Only on brains/
+# (brain locations are for brains — to write there a human elevates to admin or
+# changes permissions). An EMPTY horizon_humans is harmless: an empty group
+# granted Full grants nobody, so a server with no enrolled humans reduces to
+# "only owner/SYSTEM/Administrators write" without a separate code path.
+HUMANS_GROUP = 'horizon_humans'
+HUMANS_GROUP_DESC = 'Horizon.AIOS Actual Humans'
 
 # Principals that must NEVER lose control of the AIOS tree, regardless of mode.
 # Well-known SIDs are used (locale-independent: works on non-English Windows).
@@ -166,6 +198,9 @@ def resolve_paths(horizon_root_arg):
         'sbin':                os.path.join(horizon_system, 'sbin'),
         'skills_sbin':         os.path.join(horizon_system, 'skills_sbin'),
         'logs':                os.path.join(horizon_system, 'logs'),
+        # brains/ lives under HORIZON_ROOT (not HORIZON_SYSTEM). The humans model
+        # holds this subtree Read-Only for the horizon_humans group.
+        'brains':              os.path.join(horizon_root, 'brains'),
     }
 
 
@@ -203,54 +238,74 @@ def current_user(os_name):
 # Brains group: ensure it exists (idempotent, group-based ACEs require it)
 # ---------------------------------------------------------------------------
 
-def ensure_brains_group(os_name, dry_run):
+def ensure_group(os_name, group, description, dry_run):
     """
-    Ensure the `brains` group exists so group-based ACEs are settable.
-    An empty group is fine. Returns True if the group exists (or was
-    created / would be created in dry-run), False if it is absent and
-    could not be created (caller continues with owner-side hardening).
+    Ensure a local OS group exists so group-based ACEs are settable. An empty
+    group is fine (it grants nobody until members are enrolled). Returns True if
+    the group exists (or was / would be created), False if absent and could not
+    be created (caller continues with owner-side hardening only).
     """
-    if _brains_group_exists(os_name):
-        ok(f'Brains group already exists: {BRAINS_GROUP}')
+    if _group_exists(os_name, group):
+        ok(f'Group already exists: {group}')
         return True
 
     if dry_run:
-        info(f'Brains group "{BRAINS_GROUP}" absent — would create it.')
+        info(f'Group "{group}" absent — would create it.')
         return True
 
     try:
         if os_name == 'Windows':
             run(['powershell', '-NonInteractive', '-Command',
-                 f'New-LocalGroup -Name "{BRAINS_GROUP}" '
-                 f'-Description "Horizon.AIOS group: {BRAINS_GROUP}"'],
+                 f'New-LocalGroup -Name "{group}" -Description "{description}"'],
                 dry_run=dry_run)
         elif os_name == 'Linux':
-            run(['groupadd', BRAINS_GROUP], dry_run=dry_run)
+            run(['groupadd', group], dry_run=dry_run)
         else:  # Darwin
-            run(['dseditgroup', '-o', 'create', BRAINS_GROUP], dry_run=dry_run)
-        ok(f'Created brains group: {BRAINS_GROUP}')
+            run(['dseditgroup', '-o', 'create', group], dry_run=dry_run)
+        ok(f'Created group: {group}')
         return True
     except (subprocess.CalledProcessError, FileNotFoundError, OSError) as exc:
-        warn(f'Could not create brains group "{BRAINS_GROUP}": {exc}')
-        warn('Continuing with owner-side hardening only. Brain grant/deny ACEs '
-             'will be skipped until the group exists (re-run after creating it).')
+        warn(f'Could not create group "{group}": {exc}')
+        warn('Continuing with owner-side hardening only. Group-based grant/deny '
+             'ACEs will be skipped until the group exists (re-run after it does).')
         return False
 
 
-def _brains_group_exists(os_name):
+def ensure_brains_group(os_name, dry_run):
+    """Ensure the `brains` group exists (group-based brain ACEs need it)."""
+    return ensure_group(os_name, BRAINS_GROUP,
+                        f'Horizon.AIOS group: {BRAINS_GROUP}', dry_run)
+
+
+def ensure_humans_group(os_name, dry_run):
+    """Ensure the `horizon_humans` group exists. Created on every install
+    (secure-by-onboarding), even with zero members — an empty group grants
+    nobody, so the humans:F grant is a harmless no-op on a bare server."""
+    return ensure_group(os_name, HUMANS_GROUP, HUMANS_GROUP_DESC, dry_run)
+
+
+def _group_exists(os_name, group):
     if os_name == 'Windows':
         result = subprocess.run(
             ['powershell', '-NonInteractive', '-Command',
-             f'Get-LocalGroup -Name "{BRAINS_GROUP}" -ErrorAction SilentlyContinue'],
+             f'Get-LocalGroup -Name "{group}" -ErrorAction SilentlyContinue'],
             capture_output=True, text=True)
         return bool(result.stdout.strip())
-    result = subprocess.run(['getent', 'group', BRAINS_GROUP], capture_output=True)
-    if result.returncode == 0:
-        return True
-    # macOS without getent: fall back to dscl.
-    result = subprocess.run(
-        ['dscl', '.', '-read', f'/Groups/{BRAINS_GROUP}'], capture_output=True)
-    return result.returncode == 0
+    try:
+        result = subprocess.run(['getent', 'group', group], capture_output=True)
+        if result.returncode == 0:
+            return True
+    except (FileNotFoundError, OSError):
+        pass
+    # macOS without getent: fall back to dscl (macOS-only binary — never Linux).
+    if os_name == 'Darwin':
+        try:
+            result = subprocess.run(
+                ['dscl', '.', '-read', f'/Groups/{group}'], capture_output=True)
+            return result.returncode == 0
+        except (FileNotFoundError, OSError):
+            pass
+    return False
 
 
 # ---------------------------------------------------------------------------
@@ -273,89 +328,131 @@ def _grant_must_have_full(path, owner, dry_run):
         grant(f'{label} Full control (preserved)')
 
 
-def harden_windows(paths, owner, have_group, dry_run, strict):
+def harden_windows(paths, owner, have_group, have_humans, dry_run, strict):
     """
-    Apply the ACL model on Windows with icacls.
+    Apply the uniform ACL model on Windows with icacls.
 
-    Default (additive) strategy — preserve everything, enforce by adding ACEs:
-      1. Ensure owner + SYSTEM + Administrators have Full control (idempotent).
-         Existing/inherited ACLs (GPO/SCCM/Intune, etc.) are left untouched.
-      2. Add an inheritable brains Deny-Write across $HORIZON_SYSTEM. Per
-         security_invariants §3, an explicit/inherited Deny beats any Allow, so
-         this enforces "no write anywhere" even when infra grants broad write
-         (e.g. Authenticated Users:Modify). The mask denies write/create/delete
-         only — brains keep whatever READ they were granted (etc/templates/docs
-         are not in the deny list; the model forbids writes there, not reads).
-      3. Grant brains Read+Execute on bin and skills_bin. Windows satisfies a
-         read/exec request from this explicit Allow before consulting the
-         inherited Deny-Write; a write/delete falls through to the Deny.
-      4. Apply full Deny on sbin/skills_sbin/logs AFTER all grants. No
-         inheritance strip — SYSTEM/Administrators/owner stay via the ACEs
-         already on those dirs.
+    Secure-by-onboarding baseline (always applied):
+      A. Establish a CONTROLLED ROOT ACL on $HORIZON_ROOT: break inheritance
+         (/inheritance:r) and re-grant only the known-good principals. This is
+         what removes the human-side write hole — broad inherited grants from the
+         volume root (Authenticated Users:Modify, sandbox groups, stray cloud
+         SIDs) no longer reach the tree. owner + SYSTEM + Administrators are
+         re-granted FIRST (never collateral; re-granted by well-known SID so this
+         is locale-independent).
+      B. Grant the horizon_humans group Full control across the tree. An EMPTY
+         horizon_humans grants nobody, so a server with no enrolled humans
+         reduces to "only owner/SYSTEM/Administrators write" with no separate
+         code path. Human operators are enrolled by onboarding (bootstrap).
 
-    --strict adds: drop inherited ACEs (/inheritance:r) at the root and on each
-    privileged dir, re-establishing the must-have principals FIRST. For
-    locked-down standalone installs. It never drops SYSTEM/Administrators.
+    Brain model (unchanged, scoped to $HORIZON_SYSTEM):
+      1. owner + SYSTEM + Administrators Full (idempotent under the inherited
+         root ACEs; strict additionally strips system inheritance).
+      2. Inheritable brains Deny-Write across $HORIZON_SYSTEM (write/delete only;
+         reads stay allowed). An explicit/inherited Deny beats any Allow.
+      3. brains Read+Execute on bin and skills_bin (explicit Allow satisfies a
+         read/exec request before the Deny-Write is consulted).
+      4. Full Deny on sbin/skills_sbin/logs AFTER all grants.
+
+    Humans-on-brains (C, after the humans grant):
+      C. Explicit horizon_humans Deny-Write on $HORIZON_ROOT/brains so human
+         operators are Read-Only there (brain locations are for brains). Reads
+         flow through the inherited humans Full; the deny removes write/delete.
+         Escape hatches by construction: Administrators are not in
+         horizon_humans (elevate-to-admin writes) and the mask omits WRITE_DAC
+         (a human retains the right to re-permission).
+
+    --strict additionally drops inherited ACEs on each privileged dir,
+    re-establishing the must-have principals first. It never drops
+    SYSTEM/Administrators.
     """
+    root   = paths['horizon_root']
     system = paths['horizon_system']
+    brains = paths['brains']
 
-    # 1. Root: ensure must-have principals; strict additionally strips inheritance.
-    if strict:
-        info(f'STRICT: dropping inherited ACEs on AIOS root: {system}')
-        run(['icacls', system, '/inheritance:r'], dry_run=dry_run)
+    # --- A. Controlled root ACL: break inheritance + re-grant known-good set. ---
+    info(f'Establishing controlled root ACL (break inheritance + re-grant): {root}')
+    run(['icacls', root, '/inheritance:r'], dry_run=dry_run)
+    _grant_must_have_full(root, owner, dry_run)
+
+    # --- B. horizon_humans Full control across the tree (empty group = no-op). --
+    if have_humans:
+        run(['icacls', root, '/grant', f'{HUMANS_GROUP}:(OI)(CI)F'], dry_run=dry_run)
+        grant(f'humans Full control on AIOS tree: {HUMANS_GROUP} -> {root}')
     else:
-        info(f'ADDITIVE: preserving existing/inherited ACLs on AIOS root: {system}')
+        warn('horizon_humans group unavailable — skipping humans grant. Re-run '
+             'after the group exists to grant human operators tree access.')
+
+    # --- 1. System: ensure must-haves; strict additionally strips inheritance. --
+    if strict:
+        info(f'STRICT: dropping inherited ACEs on AIOS system dir: {system}')
+        run(['icacls', system, '/inheritance:r'], dry_run=dry_run)
     _grant_must_have_full(system, owner, dry_run)
 
-    if not have_group:
-        warn('brains group unavailable — skipping all brains grant/deny ACEs. '
-             'owner/SYSTEM/Administrators control is ensured; re-run after the '
-             'group exists to apply the brains restrictions.')
-        return
-
-    # 2. Broad invariant: brains never WRITE/DELETE anywhere under $HORIZON_SYSTEM.
-    run(['icacls', system, '/deny', f'{BRAINS_GROUP}:(OI)(CI){BRAINS_NOWRITE_MASK}'],
-        dry_run=dry_run)
-    deny(f'brains DENY write/delete across $HORIZON_SYSTEM: {system}')
-
-    # 3. Explicit RX grants for brains on bin and skills_bin (before any deny).
-    for label, key in (('bin', 'bin'), ('skills_bin', 'skills_bin')):
-        path = paths[key]
-        if os.path.isdir(path):
-            run(['icacls', path, '/grant', f'{BRAINS_GROUP}:(OI)(CI)RX'],
-                dry_run=dry_run)
-            grant(f'brains Read+Execute on {label}: {path}')
-        else:
-            warn(f'{label} missing, skipping grant: {path}')
-
-    # 4. Full Deny on privileged dirs — MUST come after all grants above.
-    for label, key in (('sbin', 'sbin'),
-                       ('skills_sbin', 'skills_sbin'),
-                       ('logs', 'logs')):
-        path = paths[key]
-        if not os.path.isdir(path):
-            warn(f'{label} missing, skipping deny: {path}')
-            continue
-        if strict:
-            # Strip the dir's inheritance, then re-establish the must-have
-            # principals before the Deny so they are never collateral.
-            run(['icacls', path, '/inheritance:r'], dry_run=dry_run)
-            _grant_must_have_full(path, owner, dry_run)
-        # Full-control deny (read+write+delete) — these dirs are "DENY
-        # (explicit)" per security_invariants §2/§3. Applied last so it wins.
-        run(['icacls', path, '/deny', f'{BRAINS_GROUP}:(OI)(CI)F'],
+    if have_group:
+        # 2. Broad invariant: brains never WRITE/DELETE anywhere in $HORIZON_SYSTEM.
+        run(['icacls', system, '/deny', f'{BRAINS_GROUP}:(OI)(CI){BRAINS_NOWRITE_MASK}'],
             dry_run=dry_run)
-        deny(f'brains DENY (full) on {label}: {path}')
+        deny(f'brains DENY write/delete across $HORIZON_SYSTEM: {system}')
+
+        # 3. Explicit RX grants for brains on bin and skills_bin (before any deny).
+        for label, key in (('bin', 'bin'), ('skills_bin', 'skills_bin')):
+            path = paths[key]
+            if os.path.isdir(path):
+                run(['icacls', path, '/grant', f'{BRAINS_GROUP}:(OI)(CI)RX'],
+                    dry_run=dry_run)
+                grant(f'brains Read+Execute on {label}: {path}')
+            else:
+                warn(f'{label} missing, skipping grant: {path}')
+
+        # 4. Full Deny on privileged dirs — MUST come after all grants above.
+        for label, key in (('sbin', 'sbin'),
+                           ('skills_sbin', 'skills_sbin'),
+                           ('logs', 'logs')):
+            path = paths[key]
+            if not os.path.isdir(path):
+                warn(f'{label} missing, skipping deny: {path}')
+                continue
+            if strict:
+                run(['icacls', path, '/inheritance:r'], dry_run=dry_run)
+                _grant_must_have_full(path, owner, dry_run)
+            run(['icacls', path, '/deny', f'{BRAINS_GROUP}:(OI)(CI)F'],
+                dry_run=dry_run)
+            deny(f'brains DENY (full) on {label}: {path}')
+    else:
+        warn('brains group unavailable — skipping all brains grant/deny ACEs. '
+             'owner/SYSTEM/Administrators/humans control is ensured; re-run '
+             'after the group exists to apply the brains restrictions.')
+
+    # --- C. horizon_humans Read-Only on brains/ (after the humans Full grant). --
+    if have_humans:
+        if not os.path.isdir(brains):
+            info(f'Creating brains dir so its humans deny can be applied: {brains}')
+            if not dry_run:
+                try:
+                    os.makedirs(brains, exist_ok=True)
+                except OSError as exc:
+                    warn(f'Could not create brains dir {brains}: {exc}')
+        if os.path.isdir(brains) or dry_run:
+            run(['icacls', brains, '/deny',
+                 f'{HUMANS_GROUP}:(OI)(CI){BRAINS_NOWRITE_MASK}'], dry_run=dry_run)
+            deny(f'humans Read-Only on brains (DENY write/delete): {HUMANS_GROUP} '
+                 f'-> {brains}')
+        else:
+            warn(f'brains dir missing, skipping humans read-only deny: {brains}')
 
 
 # ---------------------------------------------------------------------------
 # Unix / macOS hardening (chown / chmod / setfacl)
 # ---------------------------------------------------------------------------
 
-def harden_unix(paths, os_name, owner, have_group, dry_run, strict):
+def harden_unix(paths, os_name, owner, have_group, have_humans, dry_run, strict):
     """
-    Apply the ACL model on Linux/macOS.
+    Apply the uniform ACL model on Linux/macOS.
 
+      - horizon_humans => Full-equivalent (rwx) across the tree, but Read-Only
+        (r-x) on brains/ — the Unix analogue of the Windows humans model. An
+        empty group grants nobody, so a server reduces to owner-only write.
       - sbin / skills_sbin / logs => brains denied (setfacl g:brains:--- where
         available; 700 owner-only otherwise)
       - bin / skills_bin          => brains Read+Execute
@@ -373,7 +470,29 @@ def harden_unix(paths, os_name, owner, have_group, dry_run, strict):
     can never cascade into them (mirrors horizon_aios_create_brain.py).
     """
     system = paths['horizon_system']
+    root   = paths['horizon_root']
+    brains = paths['brains']
     have_setfacl = shutil.which('setfacl') is not None
+
+    # --- horizon_humans model (tree Full-equivalent, brains/ Read-Only). ---
+    # setfacl is the closest analogue to a named-group grant + brains deny.
+    if have_humans and have_setfacl and os_name == 'Linux':
+        info('setfacl horizon_humans rwx across the AIOS tree (Full-equivalent)')
+        run(['setfacl', '-R', '-m', f'g:{HUMANS_GROUP}:rwx', root],
+            dry_run=dry_run, check=False)
+        run(['setfacl', '-R', '-d', '-m', f'g:{HUMANS_GROUP}:rwx', root],
+            dry_run=dry_run, check=False)
+        grant(f'humans Full-equivalent on AIOS tree: {HUMANS_GROUP} -> {root}')
+        if os.path.isdir(brains) or dry_run:
+            run(['setfacl', '-R', '-m', f'g:{HUMANS_GROUP}:r-x', brains],
+                dry_run=dry_run, check=False)
+            run(['setfacl', '-R', '-d', '-m', f'g:{HUMANS_GROUP}:r-x', brains],
+                dry_run=dry_run, check=False)
+            deny(f'humans Read-Only on brains: {HUMANS_GROUP} -> {brains}')
+    elif have_humans:
+        warn('horizon_humans model needs setfacl (Linux) to express a named-group '
+             'grant + brains Read-Only. On this platform, enroll humans as the '
+             'owner or manage their access with the OS/identity tooling directly.')
 
     if not strict and have_group and have_setfacl and os_name == 'Linux':
         # Additive: add a brains ACL entry (read+exec, no write) across the tree
@@ -515,9 +634,11 @@ def main():
     owner = current_user(os_name)
     info(f'Owner (Full control) user: {owner or "<unknown>"}')
 
-    # Ensure the brains group exists (group-based ACEs need it).
-    banner('Ensure brains group')
-    have_group = ensure_brains_group(os_name, args.dry_run)
+    # Ensure both AIOS-managed groups exist (group-based ACEs need them). Both
+    # are created on every install (secure-by-onboarding); empty is fine.
+    banner('Ensure AIOS groups (brains, horizon_humans)')
+    have_group  = ensure_brains_group(os_name, args.dry_run)
+    have_humans = ensure_humans_group(os_name, args.dry_run)
 
     # Ensure the canonical logs dir exists so its deny can be applied.
     if not os.path.isdir(paths['logs']):
@@ -533,9 +654,11 @@ def main():
     banner('Apply ACL model')
     try:
         if os_name == 'Windows':
-            harden_windows(paths, owner, have_group, args.dry_run, args.strict)
+            harden_windows(paths, owner, have_group, have_humans,
+                           args.dry_run, args.strict)
         else:
-            harden_unix(paths, os_name, owner, have_group, args.dry_run, args.strict)
+            harden_unix(paths, os_name, owner, have_group, have_humans,
+                        args.dry_run, args.strict)
     except subprocess.CalledProcessError as exc:
         error(f'An ACL command failed: {exc}')
         error('Hardening is incomplete. Re-run elevated and review the output above.')
@@ -548,13 +671,21 @@ def main():
     print('    bin, skills_bin      -> Read+Execute (explicit grant)')
     print('    sbin, skills_sbin, logs -> DENY (explicit, full; after grants)')
     print('    rest of $HORIZON_SYSTEM -> no write (inheritable Deny-Write)')
+    print(f'  {HUMANS_GROUP} group:')
+    print('    AIOS tree            -> Full control (empty group = only admins write)')
+    print('    brains/              -> Read-Only (DENY write/delete; elevate/re-perm to write)')
     if os_name == 'Windows':
-        print('  owner + SYSTEM + Administrators -> Full control (preserved).')
+        print('  owner + SYSTEM + Administrators -> Full control (root inheritance broken).')
     else:
         print('  owner -> Full control on the whole subtree.')
     if not have_group:
-        print('\n  NOTE: brains group was unavailable — only owner-side hardening '
-              'was applied. Re-run after the group exists.')
+        print('\n  NOTE: brains group was unavailable — brains ACEs skipped. '
+              'Re-run after the group exists.')
+    if not have_humans:
+        print('\n  NOTE: horizon_humans group was unavailable — humans grant/deny '
+              'skipped. Re-run after the group exists.')
+    print('\n  Human operators are enrolled into horizon_humans by onboarding '
+          '(bootstrap); this engine only sets up the group + ACLs.')
     print()
     sys.exit(0)
 

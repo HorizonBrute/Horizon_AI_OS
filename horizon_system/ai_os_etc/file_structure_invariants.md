@@ -32,6 +32,7 @@ Rules:
 
 ```
 $HORIZON_ROOT/                          # OS repo root; primary user owns everything
+├── .horizon_aios_deployment.json       # Deployment marker written by onboarding (bootstrap): profile (server/workstation) + enrolled horizon_humans members; gitignored (holds real account names/SIDs; security_architecture_invariants §1)
 ├── agents.md                           # Cross-harness canonical agent instructions (Codex, OpenHands, etc.)
 ├── local.agents.md                     # Machine-local override (gitignored; @-imported last by agents.md; §12.6)
 ├── local.agents.md.template            # Tracked template; materialized to local.agents.md by `aios setup`

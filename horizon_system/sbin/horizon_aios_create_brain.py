@@ -104,6 +104,14 @@ BRAIN_NAME_RE = re.compile(r'^[a-z][a-z0-9_]{1,19}$')
 # read+execute on $HORIZON_BIN but are explicitly denied access to sbin.
 BRAINS_GROUP = 'brains'
 
+# The AIOS-managed group for flesh-and-blood human operators (see
+# horizon_aios_harden.py). Brain folders are Read-Only to humans: brain
+# locations are for brains — to write into one a human elevates to admin or
+# changes permissions. The brain folder has its inheritance stripped below, so
+# the humans grant must be applied EXPLICITLY here (the tree-level humans Full
+# from harden does not reach a broken-inheritance child).
+HUMANS_GROUP = 'horizon_humans'
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -462,6 +470,8 @@ def _phase2_unix(brain_name, invoking_user, os_name, password, dry_run):
              '--create-home',
              '--shell', '/bin/bash',
              '--comment', 'Horizon.AIOS brain account',
+             '--no-user-group',
+             '--gid', brain_name,
              '--password', _linux_hash_password(password, brain_name),
              brain_name],
             dry_run=dry_run,
@@ -625,6 +635,12 @@ def _phase3_windows(brain_name, invoking_user,
     All Deny ACEs MUST be applied AFTER all brains-group RX grants — Deny
     takes precedence over Allow, and applying after ensures inherited
     permissions never accidentally reach privileged dirs.
+
+    No-regression guard: this function only ADDS ACEs on the brain folder and
+    the shared bin/skills_bin/sbin/skills_sbin/logs dirs. It never touches
+    $HORIZON_ROOT inheritance and never re-grants Authenticated Users, so it
+    cannot re-open the human-side write hole that horizon_aios_harden.py closed
+    by breaking root inheritance.
     """
 
     # -- Brain folder: isolate it (drop inherited ACEs) but never strip the
@@ -640,6 +656,15 @@ def _phase3_windows(brain_name, invoking_user,
          '/grant', '*S-1-5-18:(OI)(CI)F',
          '/grant', '*S-1-5-32-544:(OI)(CI)F'],
         dry_run=dry_run)
+
+    # -- Human operators: Read-Only on this brain folder (inheritance is
+    #    stripped above, so the tree-level humans Full does not reach here; grant
+    #    RX explicitly). To write, a human elevates to admin (Administrators keep
+    #    F above) or changes permissions. Mirrors the harden brains/ read-only. --
+    info(f'Granting {HUMANS_GROUP} Read-Only on brain folder: {brain_dir}')
+    run(['icacls', brain_dir,
+         '/grant', f'{HUMANS_GROUP}:(OI)(CI)RX'],
+        dry_run=dry_run, check=False)
 
     # -- horizon_system/bin: grant brains group RX --
     info(f'Granting brains group RX on bin: {horizon_bin}')
@@ -691,6 +716,17 @@ def _phase3_unix(brain_name, invoking_user, os_name,
     info(f'Setting ownership of brain folder: {brain_dir}')
     run(['chown', '-R', f'{brain_name}:{brain_name}', brain_dir], dry_run=dry_run)
     run(['chmod', '770', brain_dir], dry_run=dry_run)
+
+    # -- Human operators: Read-Only on this brain folder (setfacl where
+    #    available). Mirrors the Windows humans RX grant / harden brains/
+    #    read-only. To write, a human uses the OS/identity tooling or elevates. --
+    import shutil as _shutil
+    if _shutil.which('setfacl') is not None:
+        info(f'Granting {HUMANS_GROUP} Read-Only on brain folder: {brain_dir}')
+        run(['setfacl', '-R', '-m', f'g:{HUMANS_GROUP}:r-x', brain_dir],
+            dry_run=dry_run, check=False)
+        run(['setfacl', '-R', '-d', '-m', f'g:{HUMANS_GROUP}:r-x', brain_dir],
+            dry_run=dry_run, check=False)
 
     # -- bin: set brains group and grant rx --
     info(f'Setting bin group to "{BRAINS_GROUP}" and granting rx')

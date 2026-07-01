@@ -242,6 +242,19 @@ def repoint_claude_md(root, dry):
         info(f"would point ~/.claude/CLAUDE.md -> {target}")
         return
     os.makedirs(CLAUDE_DIR, exist_ok=True)
+    # Idempotent re-run: if a redirect is already present, compare where it
+    # points before touching it. Normalize BOTH sides (strip whitespace, drop
+    # the leading '@', then os.path.realpath + os.path.normcase) so a cosmetic
+    # difference (trailing whitespace, separators, symlink resolution, case)
+    # never triggers a false "points somewhere else" warning.
+    if os.path.isfile(CLAUDE_MD):
+        with open(CLAUDE_MD, "r", encoding="utf-8") as f:
+            existing = f.read().strip().lstrip("@").strip()
+        norm_existing = os.path.normcase(os.path.realpath(existing)) if existing else ""
+        norm_target = os.path.normcase(os.path.realpath(target))
+        if norm_existing and norm_existing != norm_target:
+            warn("Existing ~/.claude/CLAUDE.md redirect points somewhere else "
+                 f"- repointing.\n  Current:  {existing}\n  Expected: {target}")
     with open(CLAUDE_MD, "w", encoding="utf-8") as f:
         f.write(redirect)
     ok(f"Pointed ~/.claude/CLAUDE.md -> {target}")

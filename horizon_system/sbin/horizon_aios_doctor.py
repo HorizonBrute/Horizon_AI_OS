@@ -205,28 +205,28 @@ def check_gitignore_user(horizon_root):
 # A missing Deny is a FAIL (the central security claim is unenforced).
 # ---------------------------------------------------------------------------
 BRAINS_GROUP = "brains"
+HUMANS_GROUP = "horizon_humans"
 
 
-def _has_brains_deny(path):
+def _has_group_deny(path, group):
     """
     Return (status, detail) where status is 'deny', 'nodeny', or 'error'.
 
-    Verifies an EXPLICIT (non-inherited) Deny ACE for the brains group exists on
-    `path`, via Get-Acl rather than parsing icacls text. icacls renders a
-    full-control Deny as "(N)" and a partial Deny as "(DENY)(bits)" — too
-    fragile to string-match. Get-Acl exposes the authoritative AccessControlType.
+    Verifies an EXPLICIT (non-inherited) Deny ACE for `group` exists on `path`,
+    via Get-Acl rather than parsing icacls text. icacls renders a full-control
+    Deny as "(N)" and a partial Deny as "(DENY)(bits)" -- too fragile to
+    string-match. Get-Acl exposes the authoritative AccessControlType.
 
     Requiring an explicit (IsInherited=False) Deny matches security_invariants
-    §3 ("an explicit Deny is required") and holds in both harden_aios modes:
-    additive sets the explicit Deny alongside inherited ACEs; --strict sets it
-    after stripping inheritance. An inherited-only Deny would NOT satisfy this.
+    section 3 ("an explicit Deny is required"): additive sets the explicit Deny
+    alongside inherited ACEs; --strict sets it after stripping inheritance.
     """
     ps = (
         "$a=(Get-Acl -LiteralPath '{p}').Access | Where-Object {{ "
         "$_.IdentityReference -like '*{g}*' -and "
         "$_.AccessControlType -eq 'Deny' -and -not $_.IsInherited }}; "
         "if ($a) {{ $a | ForEach-Object {{ $_.FileSystemRights }} }}"
-    ).format(p=str(path), g=BRAINS_GROUP)
+    ).format(p=str(path), g=group)
     try:
         result = subprocess.run(
             ["powershell", "-NonInteractive", "-NoProfile", "-Command", ps],
@@ -237,8 +237,118 @@ def _has_brains_deny(path):
 
     detail = result.stdout.strip()
     if detail:
-        return ("deny", f"explicit brains Deny ({detail})")
+        return ("deny", f"explicit {group} Deny ({detail})")
     return ("nodeny", "")
+
+
+def _has_brains_deny(path):
+    """Back-compat wrapper: explicit Deny for the brains group on `path`."""
+    return _has_group_deny(path, BRAINS_GROUP)
+
+
+def _group_write_allow(path, identity_pattern):
+    """
+    Return a detail string if any Allow ACE granting write/modify/full control
+    to an identity matching `identity_pattern` (Get-Acl -like) exists on `path`
+    (inherited or not), else "" ; or None on error. Used to detect broad
+    non-admin write grants (Authenticated Users / Users / Everyone) that the
+    secure-by-onboarding model must have removed by breaking root inheritance.
+    """
+    ps = (
+        "$a=(Get-Acl -LiteralPath '{p}').Access | Where-Object {{ "
+        "$_.IdentityReference -like '{pat}' -and "
+        "$_.AccessControlType -eq 'Allow' -and "
+        "($_.FileSystemRights.ToString() -match 'Write|Modify|FullControl') }}; "
+        "if ($a) {{ $a | ForEach-Object {{ "
+        "$_.IdentityReference.ToString() + ' :: ' + $_.FileSystemRights }} }}"
+    ).format(p=str(path), pat=identity_pattern)
+    try:
+        result = subprocess.run(
+            ["powershell", "-NonInteractive", "-NoProfile", "-Command", ps],
+            capture_output=True, text=True, timeout=20,
+        )
+    except Exception:  # noqa: BLE001
+        return None
+    return result.stdout.strip()
+
+
+def check_no_broad_write(horizon_root, horizon_system):
+    """
+    FAIL if a broad non-admin principal (Authenticated Users / BUILTIN\\Users /
+    Everyone) holds a write/modify/full Allow ACE on the AIOS root or system.
+    Onboarding closes this by breaking root inheritance and re-granting only
+    owner + SYSTEM + Administrators + horizon_humans (see horizon_aios_harden.py).
+    """
+    name = "No broad non-admin write"
+    patterns = [
+        ("Authenticated Users", "*Authenticated Users*"),
+        ("BUILTIN\\Users",      "*\\Users"),
+        ("Everyone",            "*Everyone*"),
+    ]
+    offenders = []
+    errored = False
+    for target in (horizon_root, horizon_system):
+        if not target or not Path(target).exists():
+            continue
+        for label, pat in patterns:
+            detail = _group_write_allow(target, pat)
+            if detail is None:
+                errored = True
+            elif detail:
+                offenders.append(f"{Path(target).name}: {detail.splitlines()[0]}")
+    if offenders:
+        fail(name, "broad write grant(s) still present — re-run onboarding "
+                   "(horizon_aios_harden.py breaks root inheritance): "
+                   + "; ".join(offenders))
+    elif errored:
+        warn(name, "could not fully evaluate broad-write ACEs (Get-Acl error)")
+    else:
+        ok("No broad non-admin write on AIOS root/system")
+
+
+def check_humans_group(horizon_root):
+    """horizon_humans group exists and holds a Full/Modify Allow on the AIOS
+    root (the tree-level human grant). WARN (not FAIL) if absent: a bare server
+    may legitimately never have run the workstation enrollment, but the group
+    itself should exist after onboarding."""
+    name = "horizon_humans group"
+    ps = ("if (Get-LocalGroup -Name '{g}' -ErrorAction SilentlyContinue) "
+          "{{ 'yes' }}").format(g=HUMANS_GROUP)
+    try:
+        res = subprocess.run(
+            ["powershell", "-NonInteractive", "-NoProfile", "-Command", ps],
+            capture_output=True, text=True, timeout=20)
+    except Exception as e:  # noqa: BLE001
+        warn(name, f"could not query group: {e}")
+        return
+    if "yes" not in res.stdout:
+        warn(name, f"group '{HUMANS_GROUP}' not found — run onboarding "
+                   "(bootstrap) to create it")
+        return
+    detail = _group_write_allow(horizon_root, f"*{HUMANS_GROUP}*")
+    if detail:
+        ok(f"horizon_humans group present with tree grant ({detail.splitlines()[0]})")
+    else:
+        warn(name, f"'{HUMANS_GROUP}' exists but has no Full grant on {horizon_root} "
+                   "— re-run onboarding")
+
+
+def check_humans_brains_readonly(horizon_root):
+    """Explicit horizon_humans Deny-Write on brains/ (humans are Read-Only
+    there). FAIL if humans could write brain folders."""
+    name = "brains/ humans Read-Only"
+    brains = Path(horizon_root) / "brains"
+    if not brains.exists():
+        warn(name, f"{brains} does not exist yet — created on first brain/onboarding")
+        return
+    status, detail = _has_group_deny(brains, HUMANS_GROUP)
+    if status == "deny":
+        ok("brains/ — explicit horizon_humans Deny-Write present (Read-Only)")
+    elif status == "nodeny":
+        fail(name, f"no explicit Deny ACE for '{HUMANS_GROUP}' on {brains} — humans "
+                   "can write brains; re-run onboarding (horizon_aios_harden.py)")
+    else:
+        warn(name, f"could not evaluate: {detail}")
 
 
 def check_sbin_acl(horizon_system):
@@ -618,6 +728,13 @@ def main():
         check_local_conf(horizon_system)
         if sys.platform == "win32":
             check_sbin_acl(horizon_system)
+            if horizon_root:
+                # Human-operator boundary (secure-by-onboarding): no broad
+                # non-admin write; horizon_humans group present; humans
+                # Read-Only on brains/.
+                check_no_broad_write(horizon_root, horizon_system)
+                check_humans_group(horizon_root)
+                check_humans_brains_readonly(horizon_root)
         else:
             check_sbin_acl_unix(horizon_system)
         horizon_bin = env.get("HORIZON_BIN")

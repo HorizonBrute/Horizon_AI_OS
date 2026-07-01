@@ -16,11 +16,40 @@ set -euo pipefail
 # Parse --yes / -y flag
 # -----------------------------------------------------------------------------
 YES_ALL=false
+# Onboarding flags (SECTION 10 - secure-by-onboarding: humans group + profile).
+#   --profile server|workstation   deployment profile (gates human enrollment)
+#   --humans <name> [<name>...]    human accounts to enroll into horizon_humans
+#   --add-human <name>             enroll one human and exit (management mode)
+PROFILE_VAL=""
+ADD_HUMAN_VAL=""
+HUMANS_LIST=()
+_collect_humans=false
 for arg in "$@"; do
+  if [ "$_collect_humans" = true ]; then
+    case "$arg" in
+      -*) _collect_humans=false ;;    # next flag ends the list
+      *)  HUMANS_LIST+=("$arg"); continue ;;
+    esac
+  fi
   case "$arg" in
-    --yes|-y) YES_ALL=true ;;
+    --yes|-y)     YES_ALL=true ;;
+    --profile=*)  PROFILE_VAL="${arg#*=}" ;;
+    --profile)    _next_is=profile ;;
+    --add-human=*) ADD_HUMAN_VAL="${arg#*=}" ;;
+    --add-human)  _next_is=addhuman ;;
+    --humans)     _collect_humans=true ;;
+    *)
+      case "${_next_is:-}" in
+        profile)  PROFILE_VAL="$arg"; _next_is="" ;;
+        addhuman) ADD_HUMAN_VAL="$arg"; _next_is="" ;;
+      esac
+      ;;
   esac
 done
+
+# AIOS-managed group for flesh-and-blood human operators.
+HUMANS_GROUP="horizon_humans"
+HUMANS_GROUP_DESC="Horizon.AIOS Actual Humans"
 
 # -----------------------------------------------------------------------------
 # Require root — horizon_aios_harden.py (run below) needs root privileges to set
@@ -73,6 +102,72 @@ err()  { echo "  [ERR]  $1"; }
 
 pass_check() { echo "  [PASS] $1"; PASS=$((PASS + 1)); }
 fail_check() { echo "  [FAIL] $1"; FAIL=$((FAIL + 1)); }
+
+# -----------------------------------------------------------------------------
+# Onboarding helpers: horizon_humans group, enrollment, deployment marker.
+# add_human is a FUNCTION of onboarding (not a separate script) - see --add-human.
+# -----------------------------------------------------------------------------
+DEPLOY_MARKER="$HORIZON_ROOT/.horizon_aios_deployment.json"
+
+ensure_humans_group() {
+  if getent group "$HUMANS_GROUP" >/dev/null 2>&1; then
+    info "Group already exists: $HUMANS_GROUP"
+  elif command -v groupadd >/dev/null 2>&1; then
+    groupadd "$HUMANS_GROUP" && ok "Created group: $HUMANS_GROUP"
+  elif command -v dseditgroup >/dev/null 2>&1; then
+    dseditgroup -o create "$HUMANS_GROUP" && ok "Created group: $HUMANS_GROUP"
+  else
+    warn "No groupadd/dseditgroup available - cannot create $HUMANS_GROUP."
+  fi
+}
+
+enroll_human() {
+  # $1 = account name. (Unix has no cloud-SID enrollment analogue.)
+  local member="$1"
+  if command -v usermod >/dev/null 2>&1; then
+    usermod -aG "$HUMANS_GROUP" "$member" 2>/dev/null \
+      && ok "Enrolled human into $HUMANS_GROUP: $member" \
+      || warn "Could not enroll '$member' into $HUMANS_GROUP (does the account exist?)"
+  elif command -v dseditgroup >/dev/null 2>&1; then
+    dseditgroup -o edit -a "$member" -t user "$HUMANS_GROUP" 2>/dev/null \
+      && ok "Enrolled human into $HUMANS_GROUP: $member" \
+      || warn "Could not enroll '$member' into $HUMANS_GROUP"
+  else
+    warn "No usermod/dseditgroup available - cannot enroll '$member'."
+  fi
+}
+
+write_deploy_marker() {
+  # $1 = profile; remaining args = enrolled humans. Holds machine-specific
+  # identities -> gitignored (security_invariants sec 6).
+  local profile="$1"; shift
+  local humans_json="" h
+  for h in "$@"; do
+    [ -z "$h" ] && continue
+    if [ -z "$humans_json" ]; then humans_json="\"$h\""; else humans_json="$humans_json, \"$h\""; fi
+  done
+  cat > "$DEPLOY_MARKER" <<EOF
+{
+  "source": "Horizon.AIOS",
+  "profile": "$profile",
+  "humans_group": "$HUMANS_GROUP",
+  "humans": [$humans_json],
+  "updated_utc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+EOF
+  ok "Wrote deployment marker: $DEPLOY_MARKER"
+}
+
+# --- Management mode: `bootstrap.sh --add-human <name>` enrolls one human and
+#     exits, without re-running the whole install. ---
+if [ -n "$ADD_HUMAN_VAL" ]; then
+  banner "Add human operator to $HUMANS_GROUP"
+  ensure_humans_group
+  enroll_human "$ADD_HUMAN_VAL"
+  write_deploy_marker "workstation" "$ADD_HUMAN_VAL"
+  info "Note: horizon_humans is Read-Only on brains/ by design (elevate or re-permission to write there)."
+  exit 0
+fi
 
 # -----------------------------------------------------------------------------
 # SECTION 1: Environment Variables
@@ -522,17 +617,20 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# SECTION 10: Harden AIOS layer ACLs (brains group)
-# Enforces security_invariants.md §2/§3/§5 — brains denied on sbin/skills_sbin/
-# logs, granted rx on bin/skills_bin, no write elsewhere in $HORIZON_SYSTEM.
-# FATAL: horizon_aios_harden.py failure exits bootstrap non-zero — ACL hardening is a
-# security requirement, not a best-effort step.
+# SECTION 10: Onboarding - secure by implementation
+# There is no separate "hardening step": onboarding IS the security boundary.
+# It always creates the brains + horizon_humans groups and applies the uniform
+# ACL model via the horizon_aios_harden.py engine, then asks server vs
+# workstation and enrolls human operators into horizon_humans accordingly.
+# The infrastructure (groups + ACLs) is built even with zero humans - an empty
+# horizon_humans grants nobody, so a server reduces to owner-only write.
+# FATAL: engine failure exits non-zero - the ACL model is a security requirement.
 # -----------------------------------------------------------------------------
-banner "SECTION 10: Harden AIOS layer ACLs"
+banner "SECTION 10: Onboarding (groups + ACL model + human enrollment)"
 
 HARDEN_SCRIPT="$HORIZON_SYSTEM/sbin/horizon_aios_harden.py"
 if [ "${AIOS_SKIP_HARDEN:-}" = "1" ]; then
-  ok "Hardening skipped (AIOS_SKIP_HARDEN=1) — already applied as root before this step."
+  ok "ACL model already applied as root before this step (AIOS_SKIP_HARDEN=1)."
 elif [ -f "$HARDEN_SCRIPT" ]; then
   if command -v python3 >/dev/null 2>&1; then
     if python3 "$HARDEN_SCRIPT"; then
@@ -551,3 +649,49 @@ else
   err "horizon_aios_harden.py not found at $HARDEN_SCRIPT — ACL hardening FAILED. The system is NOT secured."
   exit 1
 fi
+
+# Deployment profile - gates human enrollment (NOT the ACLs; those are uniform).
+# Server: enroll nobody (horizon_humans stays empty -> only owner/root write).
+# Workstation: enroll the human operator account(s).
+if [ -z "$PROFILE_VAL" ]; then
+  if [ "${AIOS_DEPLOY_MODE:-}" = "docker" ]; then
+    PROFILE_VAL="server"
+    info "Docker mode: deployment profile = server (no human enrollment)."
+  elif [ "$YES_ALL" = "true" ]; then
+    PROFILE_VAL="workstation"
+    info "Non-interactive: deployment profile = workstation (override with --profile server|workstation)."
+  else
+    echo ""
+    echo "  Is this primarily a SERVER, or an active-use WORKSTATION with human users?"
+    echo "    [S] Server      - no non-admin humans; horizon_humans stays empty (only root writes)"
+    echo "    [W] Workstation - enroll human operator accounts into horizon_humans"
+    printf "  Enter S or W [W]: "
+    read -r _prof_ans
+    case "$_prof_ans" in [Ss]*) PROFILE_VAL="server" ;; *) PROFILE_VAL="workstation" ;; esac
+  fi
+fi
+
+if [ "$PROFILE_VAL" = "workstation" ]; then
+  if [ "${#HUMANS_LIST[@]}" -eq 0 ] && [ "$YES_ALL" != "true" ] && [ "${AIOS_DEPLOY_MODE:-}" != "docker" ]; then
+    echo ""
+    echo "  Enter the human account(s) to grant AIOS access - space-separated."
+    echo "  Leave blank to skip (add later: bootstrap.sh --add-human <name>)."
+    printf "  Humans: "
+    read -r _humans_raw
+    if [ -n "$_humans_raw" ]; then
+      # shellcheck disable=SC2206
+      HUMANS_LIST=($_humans_raw)
+    fi
+  fi
+  ensure_humans_group
+  for _h in "${HUMANS_LIST[@]}"; do enroll_human "$_h"; done
+  if [ "${#HUMANS_LIST[@]}" -eq 0 ]; then
+    warn "Workstation profile but no humans enrolled yet. Add later: bootstrap.sh --add-human <name>"
+  else
+    info "horizon_humans has Full-equivalent access to the tree but is Read-Only on brains/."
+  fi
+else
+  info "Server profile: no humans enrolled. horizon_humans stays empty (only owner/root write)."
+fi
+
+write_deploy_marker "$PROFILE_VAL" "${HUMANS_LIST[@]}"

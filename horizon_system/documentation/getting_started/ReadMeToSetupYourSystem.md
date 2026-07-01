@@ -28,7 +28,7 @@ What it does, idempotently and re-run safe:
 7. **Git init**, **settings.local.json** stub, **model-prefs** and **`local.agents.md`** template materialization. First commit is opt-in (`--first-commit`; off by default so `--yes` completes without a GPG key).
 8. **Verify gate** — runs `horizon_aios_doctor.py --post-setup` (non-fatal summary).
 
-Add `--yes` for a non-interactive run (accepts defaults, mirrors bootstrap's `--yes`).
+Add `--yes` for a non-interactive run (accepts defaults, mirrors bootstrap's `--yes`). Onboarding asks whether this machine is primarily a server or an active-use workstation, and (workstation) which human accounts to enroll in the `horizon_humans` group; a non-interactive run must therefore pass `--yes` or `--profile server|workstation [--humans <name|sid> ...]`. See "Prerequisites — Elevated Privileges Required" below.
 
 `aios setup` decouples the first signed commit from `--yes`. By default (and with `--yes`) no commit is created — GPG is not required for an unattended install. To create the first commit in the same pass, add `--first-commit`; to explicitly suppress it, use `--no-first-commit`. Run the commit manually later with `git commit -s` once a signing key is ready.
 
@@ -125,7 +125,14 @@ P.16 **`.git/info/exclude`** in the OS repo is managed automatically by the pre-
 
 ## Prerequisites — Elevated Privileges Required
 
-Bootstrap and brain provisioning both run `horizon_aios_harden.py`, which sets OS-level filesystem ACLs. This requires administrator or root privileges. **Bootstrap will exit immediately with an error if not run elevated.**
+Onboarding is the single secure entry point: bootstrap always creates the AIOS OS groups and applies the ACL model (there is no separate hardening step). Both bootstrap and brain provisioning run `horizon_aios_harden.py`, which sets OS-level filesystem ACLs. This requires administrator or root privileges. **Bootstrap will exit immediately with an error if not run elevated.**
+
+Onboarding creates the AIOS-managed OS group **horizon_humans** ("Horizon.AIOS Actual Humans") on every install and asks whether the machine is primarily a server or an active-use workstation:
+
+- **Server** — no humans enrolled; the group stays empty, so only the owner, SYSTEM, and Administrators can write to the AIOS tree.
+- **Workstation** — enroll the human operator account(s) supplied by name or SID (cloud / Azure AD accounts are SIDs). Members of `horizon_humans` get Full control of the AIOS tree but are Read-Only on `brains/` (to write into a brain folder a human elevates to administrator or changes the permissions).
+
+On Windows, onboarding breaks inheritance at `$HORIZON_ROOT` and re-grants only owner + SYSTEM + Administrators + `horizon_humans`, removing broad inherited write grants (e.g. Authenticated Users). Non-interactive runs must pass `--yes` or `--profile server|workstation [--humans <name|sid> ...]`. Enroll a human later with `bootstrap --add-human <name|sid>`. The chosen profile and enrolled humans are recorded in the gitignored marker `$HORIZON_ROOT/.horizon_aios_deployment.json`.
 
 - **Windows:** Open PowerShell by right-clicking the Start button (or the PowerShell icon) and choosing **Run as administrator**. Then run:
   ```powershell
@@ -140,7 +147,7 @@ Bootstrap and brain provisioning both run `horizon_aios_harden.py`, which sets O
   sudo bash horizon_system/sbin/bootstrap.sh
   ```
 
-All other bootstrap steps (CLAUDE.md redirect, skills symlink, git hooks, settings.json copy) are non-destructive and idempotent. The privilege requirement is solely for the ACL hardening step.
+All other bootstrap steps (CLAUDE.md redirect, skills symlink, git hooks, settings.json copy) are non-destructive and idempotent. The privilege requirement is solely for the OS-group creation and ACL steps that onboarding always applies.
 
 ---
 

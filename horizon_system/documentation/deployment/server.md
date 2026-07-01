@@ -28,17 +28,37 @@ The server deployment runs the AIOS on a remote or always-on machine without a d
 
 ## Setup
 
-Same bootstrap as desktop — run over SSH:
+Same bootstrap as desktop — run over SSH. Onboarding is the single secure entry point: it always creates the AIOS OS groups and applies the ACL model (no separate hardening step). Run as root / admin so those steps succeed.
 
 ```bash
 git clone <your-aios-repo-url> /opt/aios   # or your preferred path
 
 # Linux / macOS
-bash /opt/aios/horizon_system/sbin/bootstrap.sh
+sudo bash /opt/aios/horizon_system/sbin/bootstrap.sh
 
 # Windows Server (PowerShell, as admin)
 & C:\aios\horizon_system\sbin\bootstrap.ps1
 ```
+
+### Server profile — enroll no humans
+
+Onboarding asks whether the machine is primarily a server or an active-use workstation, and creates the AIOS-managed OS group **horizon_humans** ("Horizon.AIOS Actual Humans") on every install. On a headless server, choose the **server** profile: the group stays empty and only the owner, SYSTEM, and Administrators can write to the AIOS tree. On Windows, onboarding breaks inheritance at `$HORIZON_ROOT` and re-grants only those principals, so broad inherited write grants (e.g. Authenticated Users) are removed — an empty `horizon_humans` grants nobody, reducing a bare server to admin-only write.
+
+For unattended / IaC runs, declare the profile explicitly (interactive prompts would hang):
+
+```bash
+bash bootstrap.sh --profile server        # no humans enrolled
+bash bootstrap.sh --yes                   # accept detected defaults
+```
+
+If specific humans do operate this server (see "Multi-Operator Server Pattern" below), use the workstation profile and enroll them by name or SID (cloud / Azure AD accounts are SIDs), or enroll one later without re-onboarding:
+
+```bash
+bash bootstrap.sh --profile workstation --humans operator-1 --humans operator-2
+bash bootstrap.sh --add-human operator-3
+```
+
+Members of `horizon_humans` get Full control of the AIOS tree but are Read-Only on `brains/`. The chosen profile and enrolled humans are recorded in the gitignored marker `$HORIZON_ROOT/.horizon_aios_deployment.json`.
 
 After bootstrap, add the env vars to the system profile so they are available to all users and cron jobs:
 
@@ -163,6 +183,8 @@ sudo bash /opt/aios/horizon_system/sbin/bootstrap.sh
 ```
 
 Bootstrap installs each person's personal `~/.claude/settings.json` from the shared AIOS template. The devroot `.claude/settings.json` (permissions only, committed to the repo) is shared across all operators — that is intentional. Per-operator state (hooks, statusLine, global settings) lives in each account's own `~/.claude/`.
+
+Each operator who needs day-to-day write access to the tree must be enrolled in `horizon_humans` — pass them at onboarding (`--profile workstation --humans <name|sid> ...`) or add them later with `bootstrap --add-human <name|sid>`. Enrolled humans get Full control of the AIOS tree but stay Read-Only on `brains/`.
 
 **Brains are not the right mechanism for human co-workers.** Brains are isolated AI agent accounts. Human operators need their own OS accounts with their own Claude Code sessions, their own SSH keys, and their own shell environments.
 

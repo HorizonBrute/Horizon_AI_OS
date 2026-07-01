@@ -13,8 +13,35 @@
 
 $ErrorActionPreference = "Stop"
 
+# Capture script-level args (inside functions $args refers to the function's
+# own args, so snapshot them here for the onboarding flags below).
+$ScriptArgs = $args
+
 # Parse --yes / -y flag
-$YesAll = $args -contains "--yes" -or $args -contains "-y"
+$YesAll = $ScriptArgs -contains "--yes" -or $ScriptArgs -contains "-y"
+
+# -----------------------------------------------------------------------------
+# Onboarding flags (SECTION 10 - secure-by-onboarding: humans group + lanes)
+#   --profile server|workstation   deployment profile (gates human enrollment)
+#   --humans <name|sid> [<...>]    human accounts to enroll into horizon_humans
+#   --add-human <name|sid>         enroll one human and exit (management mode)
+# A human may be an account NAME or a raw SID - cloud/AzureAD identities surface
+# as SIDs (e.g. a Windows 365 cloud user), and Add-LocalGroupMember takes either.
+# -----------------------------------------------------------------------------
+$ProfileVal  = $null
+$AddHumanVal = $null
+$HumansList  = @()
+for ($i = 0; $i -lt $ScriptArgs.Count; $i++) {
+    switch ($ScriptArgs[$i]) {
+        "--profile"   { if ($i + 1 -lt $ScriptArgs.Count) { $ProfileVal  = $ScriptArgs[$i + 1]; $i++ } }
+        "--add-human" { if ($i + 1 -lt $ScriptArgs.Count) { $AddHumanVal = $ScriptArgs[$i + 1]; $i++ } }
+        "--humans"    { while ($i + 1 -lt $ScriptArgs.Count -and $ScriptArgs[$i + 1] -notlike "-*") { $HumansList += $ScriptArgs[$i + 1]; $i++ } }
+    }
+}
+
+# AIOS-managed group for flesh-and-blood human operators.
+$HUMANS_GROUP      = "horizon_humans"
+$HUMANS_GROUP_DESC = "Horizon.AIOS Actual Humans"
 
 # -----------------------------------------------------------------------------
 # Require Administrator - horizon_aios_harden.py (run below) needs elevated privileges
@@ -77,6 +104,76 @@ function Err($msg)  { Write-Host "  [ERR]  $msg" -ForegroundColor Red }
 
 function PassCheck($msg) { Write-Host "  [PASS] $msg" -ForegroundColor Green; $script:PassCount++ }
 function FailCheck($msg) { Write-Host "  [FAIL] $msg" -ForegroundColor Red;   $script:FailCount++ }
+
+# -----------------------------------------------------------------------------
+# Onboarding helpers: horizon_humans group, human enrollment, deployment marker.
+# add_human is a FUNCTION of onboarding (not a separate script) - see -add-human.
+# -----------------------------------------------------------------------------
+$DeployMarker = Join-Path $HORIZON_ROOT ".horizon_aios_deployment.json"
+
+function Ensure-HumansGroup {
+    if (-not (Get-LocalGroup -Name $HUMANS_GROUP -ErrorAction SilentlyContinue)) {
+        New-LocalGroup -Name $HUMANS_GROUP -Description $HUMANS_GROUP_DESC | Out-Null
+        Ok "Created group: $HUMANS_GROUP ($HUMANS_GROUP_DESC)"
+    } else {
+        Info "Group already exists: $HUMANS_GROUP"
+    }
+}
+
+function Enroll-Human([string]$member) {
+    # $member = account name OR raw SID (cloud/AzureAD identities are SIDs).
+    try {
+        Add-LocalGroupMember -Group $HUMANS_GROUP -Member $member -ErrorAction Stop
+        Ok "Enrolled human into ${HUMANS_GROUP}: $member"
+        return $true
+    } catch {
+        if ($_.Exception.Message -match "already a member") {
+            Info "Already enrolled in ${HUMANS_GROUP}: $member"; return $true
+        }
+        Warn "Could not enroll '$member' into ${HUMANS_GROUP}: $($_.Exception.Message)"
+        return $false
+    }
+}
+
+function Read-DeploymentMarker {
+    if (Test-Path $DeployMarker) {
+        try { return (Get-Content $DeployMarker -Raw | ConvertFrom-Json) } catch { return $null }
+    }
+    return $null
+}
+
+function Write-DeploymentMarker([string]$profile, [string[]]$humans) {
+    # Records profile + enrolled humans (incl. cloud SIDs) so re-runs and
+    # create_brain/doctor agree. Holds a real personal SID -> gitignored (sec 6).
+    $obj = [ordered]@{
+        source       = "Horizon.AIOS"
+        profile      = $profile
+        humans_group = $HUMANS_GROUP
+        humans       = @($humans)
+        updated_utc  = (Get-Date).ToUniversalTime().ToString("o")
+    }
+    ($obj | ConvertTo-Json) | Set-Content -Path $DeployMarker -Encoding UTF8
+    Ok "Wrote deployment marker: $DeployMarker"
+}
+
+# --- Management mode: `bootstrap.ps1 --add-human <name|sid>` enrolls one human
+#     and exits, without re-running the whole install. Administrator manages
+#     membership from here after onboarding. ---
+if ($AddHumanVal) {
+    Banner "Add human operator to $HUMANS_GROUP"
+    Ensure-HumansGroup
+    if (Enroll-Human $AddHumanVal) {
+        $existing = Read-DeploymentMarker
+        $profile  = if ($existing -and $existing.profile) { $existing.profile } else { "workstation" }
+        $humans   = @()
+        if ($existing -and $existing.humans) { $humans += $existing.humans }
+        if ($humans -notcontains $AddHumanVal) { $humans += $AddHumanVal }
+        Write-DeploymentMarker $profile $humans
+        Info "Note: horizon_humans is Read-Only on brains/ by design (elevate to admin or change permissions to write there)."
+        exit 0
+    }
+    exit 1
+}
 
 # -----------------------------------------------------------------------------
 # SECTION 1: Environment Variables
@@ -506,30 +603,85 @@ if ($env:AIOS_DEPLOY_MODE -eq "docker") {
 }
 
 # -----------------------------------------------------------------------------
-# SECTION 10: Harden AIOS layer ACLs (brains group)
-# Enforces security_invariants.md s2/s3/s5 - brains denied on sbin/skills_sbin/
-# logs, granted RX on bin/skills_bin, no write elsewhere in $HORIZON_SYSTEM.
-# FATAL: horizon_aios_harden.py failure exits bootstrap non-zero - ACL hardening is a
-# security requirement, not a best-effort step.
+# SECTION 10: Onboarding - secure by implementation
+# There is no separate "hardening step": onboarding IS the security boundary.
+# It always (a) creates the brains + horizon_humans groups and applies the
+# uniform ACL model via the horizon_aios_harden.py engine, then (b) asks whether
+# this is a server or an active-use workstation and enrolls human operators into
+# horizon_humans accordingly. The infrastructure (groups + ACLs) is built even
+# with zero humans defined - an empty horizon_humans grants nobody, so a server
+# reduces to "only owner/SYSTEM/Administrators write" with no separate code path.
+# FATAL: engine failure exits non-zero - the ACL model is a security requirement.
 # -----------------------------------------------------------------------------
-Banner "SECTION 10: Harden AIOS layer ACLs"
+Banner "SECTION 10: Onboarding (groups + ACL model + human enrollment)"
 
+# (a) Apply the uniform ACL model. The engine creates both groups and sets every
+#     ACE (root inheritance broken + re-granted; humans Full on the tree,
+#     Read-Only on brains/; brains denied on sbin/skills_sbin/logs).
 $HardenScript = Join-Path $HORIZON_SYSTEM "sbin\horizon_aios_harden.py"
 if (Test-Path $HardenScript) {
     if (Get-Command python -ErrorAction SilentlyContinue) {
         python $HardenScript
-        if ($LASTEXITCODE -eq 0) { Ok "AIOS layer hardened (brains-group ACLs applied)." }
+        if ($LASTEXITCODE -eq 0) { Ok "AIOS ACL model applied (brains + horizon_humans)." }
         else {
-            Err "horizon_aios_harden.py exited with code $LASTEXITCODE - ACL hardening FAILED. The system is NOT secured."
-            Err "Re-run bootstrap elevated and review horizon_aios_harden.py output before using this installation."
+            Err "horizon_aios_harden.py exited with code $LASTEXITCODE - ACL model FAILED. The system is NOT secured."
+            Err "Re-run bootstrap elevated and review the output before using this installation."
             exit 1
         }
     } else {
-        Err "python not found - cannot run horizon_aios_harden.py. ACL hardening FAILED. The system is NOT secured."
+        Err "python not found - cannot run horizon_aios_harden.py. ACL model FAILED. The system is NOT secured."
         Err "Install Python 3.6+ and re-run bootstrap elevated: python $HardenScript"
         exit 1
     }
 } else {
-    Err "horizon_aios_harden.py not found at $HardenScript - ACL hardening FAILED. The system is NOT secured."
+    Err "horizon_aios_harden.py not found at $HardenScript - ACL model FAILED. The system is NOT secured."
     exit 1
 }
+
+# (b) Deployment profile - gates human enrollment (NOT the ACLs; those are
+#     uniform). Server: enroll nobody (horizon_humans stays empty -> only admins
+#     write). Workstation: enroll the human operator accounts.
+$existingMarker = Read-DeploymentMarker
+if (-not $ProfileVal) {
+    if ($YesAll) {
+        # Non-interactive: reuse a prior choice, else default to the safer
+        # superset (workstation keeps humans able to work without being admins).
+        $ProfileVal = if ($existingMarker -and $existingMarker.profile) { $existingMarker.profile } else { "workstation" }
+        Info "Non-interactive: deployment profile = $ProfileVal (override with --profile server|workstation)."
+    } else {
+        Write-Host ""
+        Write-Host "  Is this primarily a SERVER, or an active-use WORKSTATION with human users?"
+        Write-Host "    [S] Server      - no non-admin humans; horizon_humans stays empty (only admins write)"
+        Write-Host "    [W] Workstation - enroll human operator accounts into horizon_humans"
+        $ans = Read-Host "  Enter S or W [W]"
+        $ProfileVal = if ($ans -match '^[Ss]') { "server" } else { "workstation" }
+    }
+}
+
+# Assemble the human enrollment set: any prior marker humans + supplied --humans.
+$humansToEnroll = @()
+if ($existingMarker -and $existingMarker.humans) { $humansToEnroll += $existingMarker.humans }
+if ($HumansList.Count -gt 0) { $humansToEnroll += $HumansList }
+
+if ($ProfileVal -eq "workstation") {
+    if ($humansToEnroll.Count -eq 0 -and -not $YesAll) {
+        Write-Host ""
+        Write-Host "  Enter the human account(s) to grant AIOS access - names or SIDs,"
+        Write-Host "  space-separated. Cloud/AzureAD users appear as SIDs. Leave blank to skip."
+        $raw = Read-Host "  Humans"
+        if ($raw.Trim()) { $humansToEnroll += ($raw -split '[\s,]+' | Where-Object { $_ }) }
+    }
+    $humansToEnroll = @($humansToEnroll | Select-Object -Unique)
+    Ensure-HumansGroup
+    foreach ($h in $humansToEnroll) { Enroll-Human $h | Out-Null }
+    if ($humansToEnroll.Count -eq 0) {
+        Warn "Workstation profile but no humans enrolled yet. Add later: bootstrap.ps1 --add-human <name|sid>"
+    } else {
+        Info "horizon_humans has Full control of the tree but is Read-Only on brains/ (elevate/re-perm to write there)."
+    }
+} else {
+    Info "Server profile: no humans enrolled. horizon_humans stays empty (only owner/SYSTEM/Administrators write)."
+    $humansToEnroll = @($humansToEnroll | Select-Object -Unique)  # preserve any prior entries
+}
+
+Write-DeploymentMarker $ProfileVal $humansToEnroll

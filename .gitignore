@@ -609,6 +609,12 @@ usrbin/usr_skills/*
 horizon_system/ai_os_etc/aios_local.conf
 horizon_system/ai_os_etc/aios_monitor.conf
 
+# Deployment marker written by onboarding (bootstrap): records the deployment
+# profile (server/workstation) and the enrolled human operators, which may
+# include real account names/SIDs (e.g. a Windows 365 cloud SID). Machine-local
+# and personal - never committed (security_invariants section 6).
+.horizon_aios_deployment.json
+
 # Machine-local git identity written by `aios setup` (user.name/email/signingkey);
 # pulled in via `git config --global include.path`. Never committed (decision 2).
 horizon_system/ai_os_etc/git_identity.local.gitconfig
