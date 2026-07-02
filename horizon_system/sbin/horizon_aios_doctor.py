@@ -333,9 +333,22 @@ def check_humans_group(horizon_root):
                    "— re-run onboarding")
 
 
+def _rights_block_write(rights_text):
+    """True if a FileSystemRights string (from Get-Acl) denies the WRITE class,
+    not merely delete. A .NET FileSystemRights.ToString() renders the composite
+    write bits (WriteData|AppendData|WriteAttributes|WriteExtendedAttributes) as
+    'Write', and FullControl/Modify imply write; a delete-only Deny renders as
+    'Delete, DeleteSubdirectoriesAndFiles' (no 'write'). Used to tell a genuine
+    Read-Only Deny from a delete-only one that leaves modify allowed."""
+    t = (rights_text or "").lower()
+    return ("write" in t) or ("fullcontrol" in t) or ("modify" in t)
+
+
 def check_humans_brains_readonly(horizon_root):
-    """Explicit horizon_humans Deny-Write on brains/ (humans are Read-Only
-    there). FAIL if humans could write brain folders."""
+    """Explicit horizon_humans Deny on brains/ that actually blocks writes (humans
+    are Read-Only there). FAIL if there is no Deny at all; WARN if a Deny exists but
+    is delete-only — that leaves modify allowed, so 'Read-Only' would be false
+    assurance and means the full no-write mask was never (re)applied."""
     name = "brains/ humans Read-Only"
     brains = Path(horizon_root) / "brains"
     if not brains.exists():
@@ -343,12 +356,89 @@ def check_humans_brains_readonly(horizon_root):
         return
     status, detail = _has_group_deny(brains, HUMANS_GROUP)
     if status == "deny":
-        ok("brains/ — explicit horizon_humans Deny-Write present (Read-Only)")
+        if _rights_block_write(detail):
+            ok(f"brains/ — explicit horizon_humans Deny blocks writes / Read-Only ({detail})")
+        else:
+            warn(name, f"explicit '{HUMANS_GROUP}' Deny on {brains} is delete-only "
+                       f"({detail}), NOT write-blocking — humans can still MODIFY files "
+                       "in brains/. Re-run horizon_aios_harden.py to apply the full "
+                       "no-write mask (WD,AD,WEA,WA,DE,DC).")
     elif status == "nodeny":
         fail(name, f"no explicit Deny ACE for '{HUMANS_GROUP}' on {brains} — humans "
                    "can write brains; re-run onboarding (horizon_aios_harden.py)")
     else:
         warn(name, f"could not evaluate: {detail}")
+
+
+def _local_group_member_map(group):
+    """Return {SID: Name} for members of local `group`.
+    Sentinels: the string 'NOGROUP' if the group doesn't exist, None on error."""
+    ps = (
+        "$g = Get-LocalGroup -Name '{g}' -ErrorAction SilentlyContinue; "
+        "if (-not $g) {{ Write-Output 'NOGROUP'; return }}; "
+        "Get-LocalGroupMember -Group '{g}' -ErrorAction SilentlyContinue | "
+        "ForEach-Object {{ $_.SID.Value + '|' + $_.Name }}"
+    ).format(g=group)
+    try:
+        r = subprocess.run(
+            ["powershell", "-NonInteractive", "-NoProfile", "-Command", ps],
+            capture_output=True, text=True, timeout=20)
+    except Exception:  # noqa: BLE001
+        return None
+    out = r.stdout.strip()
+    if out == "NOGROUP":
+        return "NOGROUP"
+    members = {}
+    for line in out.splitlines():
+        sid, sep, nm = line.strip().partition("|")
+        if sep:
+            members[sid.strip()] = nm.strip()
+    return members
+
+
+def check_runtime_groups_no_humans(horizon_root):
+    """No human operator (a horizon_humans member) may belong to a per-brain runtime
+    group <brain>_group. That group means 'runs as the brain'; the security model
+    denies it write on the brain's edit-source (code + policy), so a human in it would
+    be locked out of editing when hardened AND it breaks the writer≠runner split
+    (brain_security_model.md #2/#7). FAIL listing offenders; fix with
+    Remove-LocalGroupMember. Detection is SID-based (case/domain-robust): the
+    intersection of each <brain>_group with horizon_humans."""
+    name = "Runtime groups exclude humans"
+    brains = Path(horizon_root) / "brains"
+    if not brains.exists():
+        warn(name, f"{brains} does not exist yet — no brains to check")
+        return
+    humans = _local_group_member_map(HUMANS_GROUP)
+    if humans is None:
+        warn(name, f"could not query '{HUMANS_GROUP}' membership")
+        return
+    if humans == "NOGROUP" or not humans:
+        # No enrolled humans → nobody can be an offender.
+        ok(f"{name} — no '{HUMANS_GROUP}' members to conflict")
+        return
+    human_sids = set(humans)
+    offenders, errored = [], False
+    for d in sorted(brains.iterdir()):
+        if not d.is_dir():
+            continue
+        members = _local_group_member_map(f"{d.name}_group")
+        if members is None:
+            errored = True
+            continue
+        if members == "NOGROUP":
+            continue  # not a Windows-provisioned brain / no runtime group
+        bad = sorted(members[s] for s in members if s in human_sids)
+        if bad:
+            offenders.append(f"{d.name}_group: {', '.join(bad)}")
+    if offenders:
+        fail(name, "human operator(s) in runtime group(s) — they will be locked out of "
+                   "the edit-source when hardened, and it violates writer≠runner. "
+                   "Remove with Remove-LocalGroupMember: " + "; ".join(offenders))
+    elif errored:
+        warn(name, "could not fully evaluate one or more runtime groups")
+    else:
+        ok(f"{name} — no humans in any <brain>_group")
 
 
 def check_sbin_acl(horizon_system):
@@ -735,6 +825,7 @@ def main():
                 check_no_broad_write(horizon_root, horizon_system)
                 check_humans_group(horizon_root)
                 check_humans_brains_readonly(horizon_root)
+                check_runtime_groups_no_humans(horizon_root)
         else:
             check_sbin_acl_unix(horizon_system)
         horizon_bin = env.get("HORIZON_BIN")

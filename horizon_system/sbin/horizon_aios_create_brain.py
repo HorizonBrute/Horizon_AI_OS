@@ -7,8 +7,18 @@ Creates and configures everything needed for a new AI brain:
   - OS user account  (<brain-name>)
   - Group: brains    (common AIOS group, grants horizon_system/bin rx)
   - Group: <brain-name>_group (brain-specific group on Windows) or <brain-name> (Linux/macOS)
+                     — the per-brain RUNTIME group: the set of accounts that may run AS
+                     the brain. On WINDOWS only brain-runner accounts join it (NOT the
+                     human invoker), so the security model can deny that whole group
+                     write on the brain's edit-source without catching the human — the
+                     writer is never the runner (brain_security_model.md #2/#7). The human
+                     keeps write via an explicit invoking-user ACE. On UNIX the human is
+                     still a member (their 770 write path; no Unix edit-source lock yet).
   - Brain folder:    $HORIZON_ROOT/brains/<brain-name>/
-  - Permissions:     brain folder (770 / icacls full-control for user+group)
+  - Permissions:     Windows — full-control for the brain user + runtime group + the human
+                     invoker (explicit ACE, independent of group); horizon_humans RX.
+                     Unix — 770 owned brain:brain (human writes via runtime-group
+                     membership); horizon_humans read-only via setfacl.
                      horizon_system/bin + skills_bin (group brains rx)
                      sbin/skills_sbin/logs locked to owner-only AFTER
                      all grants (security invariant)
@@ -272,7 +282,8 @@ def phase1_preflight(args):
         invoking_user = getpass.getuser()
     except Exception:
         invoking_user = os.getlogin()
-    info(f'Invoking user (will be added to <brain-name> group): {invoking_user}')
+    info(f'Invoking user (Windows: explicit Full ACE, NOT in the runtime group; '
+         f'Unix: member of the runtime group for 770 write): {invoking_user}')
 
     # --- Check whether the brain user already exists ---
     if _user_exists(brain_name, os_name):
@@ -406,11 +417,11 @@ def _phase2_windows(brain_name, invoking_user, password, dry_run):
         dry_run=dry_run,
     )
 
-    info(f'Adding invoking user ({invoking_user}) to group: {brain_group}')
-    run_ps(
-        f'Add-LocalGroupMember -Group "{brain_group}" -Member "{invoking_user}"',
-        dry_run=dry_run,
-    )
+    # The human invoker is deliberately NOT added to the runtime group. <brain>_group
+    # means "runs as the brain", and the security model denies that group write on the
+    # brain's edit-source (code + policy). The human keeps folder access via an explicit
+    # invoking-user Full ACE granted in phase 3 — independent of the group — so the
+    # writer≠runner split holds (brain_security_model.md #2/#7).
 
 
 def _win_create_user_with_password(brain_name, password, dry_run):
@@ -485,6 +496,14 @@ def _phase2_unix(brain_name, invoking_user, os_name, password, dry_run):
     info(f'Adding {brain_name} to group: {brain_name}')
     _unix_add_user_to_group(brain_name, brain_name, os_name, dry_run)
 
+    # NOTE (writer≠runner, Unix): on Windows the human invoker is deliberately NOT a
+    # member of the runtime group (<brain>_group) — the edit-source lock denies that
+    # group write, and the human keeps write via an explicit invoking-user ACE. On Unix
+    # the human's WRITE path to the 770 brain folder is *this* group membership (there is
+    # no per-user ACE), and there is no Unix edit-source lock yet — so removing it here
+    # would only regress the human to read-only for no security gain. Keep it until a
+    # Unix edit-source lock lands; at that point switch to an explicit
+    # `setfacl u:{invoking_user}:rwX` grant here and drop this membership together.
     info(f'Adding invoking user ({invoking_user}) to group: {brain_name}')
     _unix_add_user_to_group(invoking_user, brain_name, os_name, dry_run)
 
