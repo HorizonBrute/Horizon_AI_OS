@@ -517,7 +517,7 @@ def harden_unix(paths, os_name, owner, have_group, have_humans, dry_run, strict)
             # Also enforce owner-only base mode bits. The setfacl deny alone
             # leaves the stat mode at 0o770; doctor --post-setup asserts 0o700
             # on sbin/skills_sbin/logs, so tighten the base permissions too.
-            run(['chmod', '-R', '700', path], dry_run=dry_run, check=False)
+            run(['chmod', '-R', 'u=rwX,go=', path], dry_run=dry_run, check=False)
             deny(f'brains DENY (setfacl --- + owner-only 700) on {label}: {path}')
         return
 
@@ -565,7 +565,7 @@ def harden_unix(paths, os_name, owner, have_group, have_humans, dry_run, strict)
         if not os.path.isdir(path):
             warn(f'{label} missing, skipping deny: {path}')
             continue
-        run(['chmod', '-R', '700', path], dry_run=dry_run, check=False)
+        run(['chmod', '-R', 'u=rwX,go=', path], dry_run=dry_run, check=False)
         # Optional explicit group deny via ACL (Linux setfacl) to mirror the
         # Windows explicit-Deny posture, on top of the 700 mode bits.
         if have_group and have_setfacl and os_name == 'Linux':
