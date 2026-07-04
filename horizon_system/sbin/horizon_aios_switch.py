@@ -118,7 +118,7 @@ def horizon_vars(root):
         ("HORIZON_ETC", os.path.join(system, "ai_os_etc")),
         ("HORIZON_DOCS", os.path.join(system, "documentation")),
         ("HORIZON_USRBIN", os.path.join(root, "usrbin")),
-        ("HORIZON_PROJECTS", os.path.join(root, "Projects")),
+        ("HORIZON_PROJECTS", os.path.join(root, "projects")),
         ("HORIZON_LOGS", os.path.join(system, "logs")),
         ("HORIZON_SOUNDS", os.path.join(system, "sounds")),
     ]
