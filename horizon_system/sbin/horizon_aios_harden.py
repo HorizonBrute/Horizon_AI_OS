@@ -504,6 +504,17 @@ def harden_unix(paths, os_name, owner, have_group, have_humans, dry_run, strict)
         run(['setfacl', '-R', '-d', '-m', f'g:{BRAINS_GROUP}:r-x', system],
             dry_run=dry_run, check=False)
         ok('brains have read+execute but no write under $HORIZON_SYSTEM')
+        # Brains must TRAVERSE the AIOS root and the brains/ parent to reach both
+        # their granted paths (bin/skills_bin) and their own workspace
+        # (brains/<name>/, 0o770 <name>:<name>). Grant execute-only (--x; not
+        # recursive, no default) so a brain can traverse to a known path but
+        # cannot enumerate the root or its siblings. Without this the brains r-x
+        # grant above is unreachable on Linux (the root dir denies non-owners).
+        for trav in (root, brains):
+            if os.path.isdir(trav) or dry_run:
+                run(['setfacl', '-m', f'g:{BRAINS_GROUP}:--x', trav],
+                    dry_run=dry_run, check=False)
+        grant(f'brains traverse (--x) on AIOS root + brains/: {BRAINS_GROUP}')
         for label, key in (('sbin', 'sbin'), ('skills_sbin', 'skills_sbin'),
                            ('logs', 'logs')):
             path = paths[key]
