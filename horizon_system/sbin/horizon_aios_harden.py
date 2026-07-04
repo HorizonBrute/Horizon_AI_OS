@@ -568,6 +568,18 @@ def harden_unix(paths, os_name, owner, have_group, have_humans, dry_run, strict)
         warn('brains group unavailable — skipping brains rx grants on bin/skills_bin. '
              'Owner-side hardening (go-w + 700 on privileged dirs) is applied.')
 
+    # Brains traverse (--x) on AIOS root + brains/ so their bin/skills_bin grant
+    # and their own workspace (brains/<name>/) are reachable -- same fix as the
+    # additive branch. Execute-only: traverse without listing, preserving
+    # inter-brain isolation. Requires setfacl; mode bits alone cannot express a
+    # named-group traverse ACE without opening the dir to all "other".
+    if have_group and have_setfacl and os_name == 'Linux':
+        for trav in (root, brains):
+            if os.path.isdir(trav):
+                run(['setfacl', '-m', f'g:{BRAINS_GROUP}:--x', trav],
+                    dry_run=dry_run, check=False)
+        grant(f'brains traverse (--x) on AIOS root + brains/: {BRAINS_GROUP}')
+
     # Privileged dirs: owner-only 700 — applied AFTER the grants above.
     for label, key in (('sbin', 'sbin'),
                        ('skills_sbin', 'skills_sbin'),
