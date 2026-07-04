@@ -20,43 +20,46 @@ git remote set-url origin <your-own-private-repo>      # your fork / backup repo
    ```bash
    python horizon_system/sbin/horizon_aios_backup_user_data.py        # memory/handoffs/objectives -> your remote
    ```
-2. Pull upstream — **fast-forward-only**:
+2. Pull upstream -- **two-lane sync**:
    ```bash
    python horizon_system/sbin/horizon_aios_sync.py
-   #   equivalently: git fetch upstream && git merge --ff-only upstream/<branch>
    ```
+   The **official lane** overwrites every framework path (everything except
+   `projects/`, `usrbin/`, `brains/`) with the upstream version and commits it.
+   The **personal lane** leaves `projects/`, `usrbin/`, and `brains/` alone unless
+   you opt in. See `$HORIZON_DOCS/sync_setup.md` for lane mechanics and config
+   keys.
 3. If it reports already up to date, you're done. Your user-space files
    (`aios_local.conf`, `.gitignore.user`, `memory/`, `handoffs/`, `objectives/`,
-   `~/.horizon/`, `~/.claude/`, `brains/`, `*.local.*`) were never touched —
+   `~/.horizon/`, `~/.claude/`, `brains/`, `*.local.*`) were never touched --
    upstream doesn't own them.
 
-## If the update REFUSES (fast-forward not possible)
+## If a local framework change disappeared after updating
 
-A refusal is a feature, not a failure: it means your local branch **diverged**
-from upstream — almost always because a *framework* file (`horizon_system/**`,
-the tracked `.gitignore`, a template) was edited locally. Don't force it. Instead:
+This is expected, not a bug. The official lane is authoritative and **overwrites**
+framework paths (`horizon_system/**`, the tracked `.gitignore`, templates, and
+other non-personal paths) with the upstream version -- it does not stop to ask.
+If a change you made to a framework file vanished after a sync, it was reclaimed
+by design. To keep the customization across every future update, move it into the
+**override layer**:
 
-1. See what diverged:
+1. Recover your change from git history if needed:
    ```bash
-   git fetch upstream
-   git log --oneline upstream/<branch>..HEAD     # your local-only commits
-   git status
+   git log -p -- <the framework file you edited>   # find your prior version
    ```
-2. Move your customization into the **override layer** so it survives every future
-   update — `aios_overrides.md` (project), `aios_local.conf` (machine),
+2. Re-express it in the **override layer** so the official lane never touches it
+   again -- `aios_overrides.md` (project), `aios_local.conf` (machine),
    `.gitignore.user` (ignores), `settings.local.json` (permissions),
-   `CLAUDE.local.md` (instructions) — then restore the framework file:
-   ```bash
-   git checkout -- <the framework file you edited>
-   python horizon_system/sbin/horizon_aios_sync.py
-   ```
-3. Or, if the local change is intentional and you accept the maintenance cost,
-   merge manually and resolve conflicts:
-   ```bash
-   git merge upstream/<branch>
-   ```
-   (`.gitignore` is set to `merge=union` in `.gitattributes`, so ignore-list
-   edits combine instead of conflicting.)
+   `CLAUDE.local.md` (instructions).
+3. If the change genuinely belongs in the framework, contribute it upstream
+   rather than carrying it locally; the official lane will otherwise reclaim it on
+   every run.
+
+For personal paths (`projects/`, `usrbin/`, `brains/`), the personal lane keeps
+local by default. If you opted in with `SYNC_PERSONAL_FROM_REMOTE=yes` and your
+personal branch **diverged** from its remote, the lane keeps local and skips
+rather than rewriting; `--force-personal` is the deliberate override that
+overwrites personal paths (and discards local personal changes).
 
 ## After updating
 
@@ -81,6 +84,8 @@ git reset --hard <that-commit>
 ## Automating it
 
 `horizon_aios_sync.py` can run on a schedule (cron / Task Scheduler) via
-`horizon_aios_setup_sync_schedule.py`; configure cadence in `aios_local.conf`
-(`SYNC_AIOS_FROM_REMOTE`, `AIOS_SYNC_FREQ`, `AIOS_REPO_REMOTE`, `AIOS_REPO_BRANCH`).
+`horizon_aios_setup_sync_schedule.py`; configure cadence and lanes in
+`aios_local.conf` (`SYNC_AIOS_FROM_REMOTE`, `AIOS_SYNC_FREQ`, `AIOS_SYNC_TIME`,
+`AIOS_OFFICIAL_REMOTE`, `AIOS_OFFICIAL_BRANCH`, and the optional personal-lane
+keys `AIOS_PERSONAL_REMOTE` / `AIOS_PERSONAL_BRANCH` / `SYNC_PERSONAL_FROM_REMOTE`).
 See `$HORIZON_DOCS/sync_setup.md`.

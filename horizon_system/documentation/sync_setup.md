@@ -1,10 +1,30 @@
 # Horizon AIOS — Sync Setup Reference
 
-Auto-sync keeps your local AIOS installation up to date with an upstream git
-remote. The sync is a fast-forward-only `git fetch` + `git merge --ff-only`
-against the configured remote and branch. It will not run if you have
-uncommitted changes, and it will not force-push or rebase — if histories have
-diverged, it fails loudly and leaves you to resolve it manually.
+Auto-sync keeps your local AIOS installation aligned with upstream through a
+two-lane model that mirrors the framework-vs-user-space ownership split.
+
+- Official / upstream lane ("stay synced"): pulls the canonical Horizon AIOS
+  system layer and is authoritative. Its scope is every path EXCEPT `projects/`,
+  `usrbin/`, and `brains/`. It OVERWRITES your local copy of those official paths
+  via a scoped hard-restore (`git fetch`, then `git checkout <remote>/<branch> --
+  <official paths>`), and commits the result. Local edits to official paths are
+  discarded by design -- move any customization into the override layer instead
+  (see `system/distribution_and_updates.md`).
+- Personal lane ("updates optional, local wins"): its scope is exactly
+  `projects/`, `usrbin/`, and `brains/`. Local always wins. By default it keeps
+  local and pulls nothing. You can opt in to a fast-forward-only advance, or use
+  the `--force-personal` danger flag to overwrite personal paths from the
+  personal remote.
+
+The path partition is the boundary the whole model rests on: anything not
+explicitly personal-owned is treated as official and may be overwritten by the
+official lane. The personal lane runs first, then the official lane. Setting
+`SYNC_AIOS_FROM_REMOTE=no` disables both lanes. Nothing force-pushes to a remote;
+all activity is logged.
+
+Because these commits are automated machine housekeeping (not human
+contributions), the sync bypasses the DCO `commit-msg` hook with `--no-verify` --
+see "Automated commits and the DCO hook" below.
 
 ---
 
@@ -16,11 +36,56 @@ is git-ignored; never commit it.
 
 | Key | Values | Default | Description |
 |-----|--------|---------|-------------|
-| `SYNC_AIOS_FROM_REMOTE` | `yes` / `no` | `yes` | Master switch. Set to `no` to disable all syncing and prevent the scheduler from being installed. |
+| `SYNC_AIOS_FROM_REMOTE` | `yes` / `no` | `yes` | Master switch. Set to `no` to disable both lanes and prevent the scheduler from being installed. |
 | `AIOS_SYNC_FREQ` | `hourly` / `daily` / `weekly` | `daily` | How often the scheduled task or cron job runs. |
 | `AIOS_SYNC_TIME` | `HH:MM` (24h) | `03:00` | Time of day for daily and weekly schedules. Ignored for hourly. |
-| `AIOS_REPO_REMOTE` | remote name or URL | `origin` | The git remote to fetch from. Use a remote name if it is already configured in the repo, or a full URL. |
-| `AIOS_REPO_BRANCH` | branch name | `main` | Branch on the remote to sync from. |
+| `AIOS_OFFICIAL_REMOTE` | remote name or URL | `origin` | Official lane: the canonical Horizon AIOS remote to fetch the system layer from. |
+| `AIOS_OFFICIAL_BRANCH` | branch name | `main` | Official lane: branch on the official remote to sync from. |
+| `AIOS_PERSONAL_REMOTE` | remote name or URL | `` (empty) | Personal lane: your own remote for `projects/`, `usrbin/`, `brains/`. Empty means the personal lane is skipped entirely. |
+| `AIOS_PERSONAL_BRANCH` | branch name | `main` | Personal lane: branch on the personal remote. |
+| `SYNC_PERSONAL_FROM_REMOTE` | `yes` / `no` | `no` | Personal lane opt-in. `no` keeps local and pulls nothing. `yes` allows a fast-forward-only advance of the personal paths (never a rewrite; a diverged branch is left as-is). Overwrite still requires `--force-personal`. |
+
+**Deprecated (back-compat) keys:** `AIOS_REPO_REMOTE` and `AIOS_REPO_BRANCH`
+are the pre-two-lane single-remote keys. They are still honored: when the new
+`AIOS_OFFICIAL_*` keys are absent, the sync maps `AIOS_REPO_REMOTE` /
+`AIOS_REPO_BRANCH` onto the official lane. Prefer the `AIOS_OFFICIAL_*` names in
+new configs.
+
+---
+
+## Running sync manually
+
+```
+python $HORIZON_SYSTEM/sbin/horizon_aios_sync.py                 # both lanes
+python $HORIZON_SYSTEM/sbin/horizon_aios_sync.py --lane official # official only
+python $HORIZON_SYSTEM/sbin/horizon_aios_sync.py --lane personal # personal only
+python $HORIZON_SYSTEM/sbin/horizon_aios_sync.py --force-personal # DANGER: overwrite personal paths
+```
+
+- `--lane official | personal | both` selects which lane(s) to run (default
+  `both`).
+- `--force-personal` overwrites your local `projects/`, `usrbin/`, and `brains/`
+  from the personal remote. This is the deliberate, logged override to the
+  local-wins default; use it only when you intend to discard local personal
+  changes.
+
+---
+
+## Automated commits and the DCO hook
+
+Both lanes finish by creating a commit for the paths they changed (official:
+`chore(sync): pull official AIOS update from ...`; forced personal:
+`chore(sync): FORCE-pull personal paths from ...`). The repo ships a DCO
+`commit-msg` hook that rejects any commit whose message lacks a `Signed-off-by:`
+line -- the sign-off requirement for human contributions.
+
+An automated sync commit is machine housekeeping, not a human contribution, so
+the sync passes `git commit --no-verify` to bypass that hook. This is the one
+deliberate exception to the DCO policy. Without it, every scheduled sync would be
+rejected by the hook and abort, leaving official paths overwritten in the working
+tree but never committed -- a dirty tree that re-overwrites on each run. Human
+commits still sign off normally (`git commit -s`); only the sync's own commits
+skip the hook.
 
 ---
 
@@ -189,12 +254,17 @@ addition to writing the log.
 - `git fetch failed` — SSH key not loaded, wrong remote URL, or network issue.
   Run `ssh -T git@github.com` (or your remote host) to test SSH auth.
 
-- `Uncommitted changes` — the sync refuses to run when tracked files are
-  dirty. Commit or stash your changes first.
+- Official lane discarded a local edit -- expected, not a failure. The official
+  lane OVERWRITES official paths (everything except `projects/`, `usrbin/`,
+  `brains/`). If a local change to an official path vanished after a sync, move
+  that customization into the override layer (see
+  `system/distribution_and_updates.md`); the official lane is not the place to
+  keep local edits.
 
-- `Fast-forward not possible` — your local branch has commits not on the
-  remote, or the remote was force-pushed. Inspect with
-  `git log origin/main..HEAD` and resolve manually.
+- `Personal lane: local diverged` -- informational, not a failure. With
+  `SYNC_PERSONAL_FROM_REMOTE=yes` the personal lane only fast-forwards; if your
+  personal branch diverged from the remote it keeps local and skips. Use
+  `--force-personal` only if you intend to discard local personal changes.
 
 - `aios_local.conf not found` — sync runs with defaults (remote=`origin`,
   branch=`main`). Copy the template to create the file:

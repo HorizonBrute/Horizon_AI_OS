@@ -448,26 +448,38 @@ validating the security model.
 
 **Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_sync.py`
 
-Pulls upstream AIOS updates into the local tree. Reads sync settings from
-`$HORIZON_ETC/aios_local.conf` (`SYNC_AIOS_FROM_REMOTE`, `AIOS_REPO_REMOTE`,
-`AIOS_REPO_BRANCH`, …), verifies git is available and the working tree is clean,
-and performs a fast-forward-only merge from the configured remote/branch so a
-scheduled run can never create a merge commit or clobber local work. Activity is
-logged to the configured AIOS log dir. This is the script driven by the auto-sync
-scheduled task; run it manually to sync on demand.
+Pulls AIOS updates into the local tree via a **two-lane sync**. Reads sync
+settings from `$HORIZON_ETC/aios_local.conf`. The **official lane**
+(`AIOS_OFFICIAL_REMOTE` / `AIOS_OFFICIAL_BRANCH`) is authoritative: it OVERWRITES
+every path except `projects/`, `usrbin/`, `brains/` via a scoped hard-restore
+(`git checkout <ref> -- <official paths>`) and commits the result. The
+**personal lane** (`AIOS_PERSONAL_REMOTE` / `AIOS_PERSONAL_BRANCH`) covers exactly
+those three personal paths and is local-wins: it keeps local by default, allows a
+fast-forward-only advance with `SYNC_PERSONAL_FROM_REMOTE=yes`, and overwrites
+only under `--force-personal`. `SYNC_AIOS_FROM_REMOTE=no` disables both lanes.
+The deprecated `AIOS_REPO_REMOTE` / `AIOS_REPO_BRANCH` keys are honored as
+back-compat aliases mapped onto the official lane. Activity is logged to the
+configured AIOS log dir; after a sync the script re-registers machine-local user
+skills. Its automated commits pass `git commit --no-verify` to bypass the DCO
+`commit-msg` hook (machine housekeeping, not a human contribution). This is the
+script driven by the auto-sync scheduled task; run it manually to sync on demand.
 
 **When to use it:** To pull the latest AIOS layer manually, or as the body of the
 scheduled sync job installed by `horizon_aios_setup_sync_schedule.py`.
 
 **Key flags:**
 
-- `--status` — read-only health check: reports whether auto-sync is installed
-  and when it last ran/succeeded. Never triggers a sync. (See `sync_setup.md`
-  for the exit-code contract.)
+- `--lane official | personal | both` — select which lane(s) to run (default
+  `both`).
+- `--force-personal` — DANGER: overwrite local `projects/`, `usrbin/`, `brains/`
+  from the personal remote (discards local personal changes).
+- `--status` — read-only health check: reports whether auto-sync is installed,
+  both lanes' configuration, and when it last ran/succeeded. Never triggers a
+  sync. (See `sync_setup.md` for the exit-code contract.)
 - `--help` — usage.
 
-Default (no flags) performs the fast-forward sync; all sync behaviour comes
-from `aios_local.conf`.
+Default (no flags) runs both lanes; all sync behaviour comes from
+`aios_local.conf`.
 
 **Referenced by a skill?** No.
 

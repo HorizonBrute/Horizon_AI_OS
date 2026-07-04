@@ -182,6 +182,23 @@ The hook at `horizon_system/harness_configs/git/hooks/pre-commit` is a bash scri
 
 2.6.5 Exits 0 in all cases — the hook never blocks a commit. Removal of nested repos and ignore sync happen silently unless removals are detected.
 
+2.7 **Commit-msg hook detail (DCO)**
+
+The hook at `horizon_system/harness_configs/git/hooks/commit-msg` enforces the
+Developer Certificate of Origin: it rejects any commit whose message lacks a
+`Signed-off-by:` line and exits non-zero, aborting the commit. Human commits
+satisfy it with `git commit -s` (`commit.signoff = true` in the framework
+gitconfig adds the line automatically).
+
+2.7.1 **Automated-sync exception.** `horizon_aios_sync.py` creates commits as
+part of machine housekeeping (overwriting official paths from upstream, or a
+forced personal-path pull). These are not human contributions, so the sync passes
+`git commit --no-verify` to bypass this hook. It is the one deliberate carve-out
+to the DCO rule. Without it, the hook would reject every automated sync commit and
+abort the sync, leaving official paths overwritten in the working tree but never
+committed. The exception is scoped to the sync utility's own commits; all other
+commits on the machine remain subject to the hook.
+
 ---
 
 ## 3. Path Dependencies Catalog
