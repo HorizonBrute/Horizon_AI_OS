@@ -461,12 +461,18 @@ if (Test-Path $GitignoreUser) {
 }
 
 # -----------------------------------------------------------------------------
-# SECTION 7: System PATH
+# SECTION 7: System PATH + HORIZON_* Machine-scope environment
 # Adds $HORIZON_SYSTEM\bin to the Machine-scope PATH so brain accounts and new
 # shells can run AIOS commands without manually editing PATH.
 # Removes any stale horizon_system\bin entry first (handles AIOS switching).
+#
+# Also registers HORIZON_ROOT + the derived vars at MACHINE scope so EVERY
+# account on the box (brains, service accounts, new users) inherits them - not
+# just the owner whose profile sources active_env. active_env still overrides
+# in the owner's live shells (so 'aios switch' repoints without a restart);
+# these Machine vars are the system-wide baseline.
 # -----------------------------------------------------------------------------
-Banner "SECTION 7: System PATH"
+Banner "SECTION 7: System PATH + HORIZON_* environment"
 
 $MachinePath = [System.Environment]::GetEnvironmentVariable("Path", "Machine")
 $PathEntries = $MachinePath -split ";" | ForEach-Object { $_.TrimEnd('\').TrimEnd('/') }
@@ -490,6 +496,28 @@ if ($Cleaned -contains $BinPath) {
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
             [System.Environment]::GetEnvironmentVariable("Path", "User")
 Ok "Refreshed session PATH."
+
+# Register HORIZON_* at Machine scope (system-wide baseline for all accounts).
+$MachineEnv = [ordered]@{
+    HORIZON_SYSTEM   = $HORIZON_SYSTEM
+    HORIZON_ROOT     = $HORIZON_ROOT
+    HORIZON_BIN      = $HORIZON_BIN
+    HORIZON_SBIN     = $HORIZON_SBIN
+    HORIZON_ETC      = $HORIZON_ETC
+    HORIZON_DOCS     = $HORIZON_DOCS
+    HORIZON_USRBIN   = $HORIZON_USRBIN
+    HORIZON_PROJECTS = $HORIZON_PROJECTS
+    HORIZON_LOGS     = $HORIZON_LOGS
+    HORIZON_SOUNDS   = $HORIZON_SOUNDS
+}
+try {
+    foreach ($name in $MachineEnv.Keys) {
+        [System.Environment]::SetEnvironmentVariable($name, $MachineEnv[$name], "Machine")
+    }
+    Ok "Registered HORIZON_* at Machine scope (inherited by all accounts)."
+} catch {
+    Warn "Could not set Machine-scope HORIZON_* env (need Administrator): $($_.Exception.Message)"
+}
 
 # -----------------------------------------------------------------------------
 # SECTION 8: Verification

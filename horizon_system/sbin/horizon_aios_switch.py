@@ -394,6 +394,61 @@ def update_system_path(root, dry):
                 warn(_ADVISORY)
 
 
+def update_machine_env(root, dry):
+    """Persist the HORIZON_* vars at Machine scope so EVERY account on the box
+    (brains, service accounts, freshly created users) inherits them, not just
+    the owner whose profile sources active_env.
+
+    This is the system-wide baseline; active_env.{ps1,sh} still overrides it in
+    the owner's live shells, so a switch repoints the current shell with no
+    restart while new shells / other accounts pick up the Machine value.
+
+    Windows only. On Linux/macOS the per-user active_env.sh mechanism (plus the
+    brain env written by horizon_aios_create_brain.py) already covers this;
+    system-wide env there is a separate follow-up.  Requires admin; degrades
+    with an advisory warn if not elevated.
+    """
+    if os.name != "nt":
+        return
+
+    vars_ = horizon_vars(root)
+
+    if dry:
+        for k, v in vars_:
+            info(f"would set Machine env {k} -> {v}")
+        return
+
+    _ADVISORY = (
+        "[WARN] Could not set Machine-scope HORIZON_* env (insufficient "
+        "privileges). Session + active_env are correct. To fix, re-run: "
+        "python horizon_aios_switch.py switch <name>  (as Administrator)."
+    )
+
+    # One PowerShell call sets all vars; escape backslashes/quotes for the
+    # single-quoted PS literals.
+    sets = []
+    for k, v in vars_:
+        val = v.replace("'", "''")
+        sets.append(
+            f"[System.Environment]::SetEnvironmentVariable('{k}','{val}','Machine');"
+        )
+    ps_script = "".join(sets)
+    try:
+        result = subprocess.run(
+            ["powershell", "-NonInteractive", "-Command", ps_script],
+            capture_output=True, text=True
+        )
+        if result.returncode != 0:
+            warn(_ADVISORY)
+            if result.stderr.strip():
+                info(f"  Detail: {result.stderr.strip()[:200]}")
+        else:
+            ok(f"Set Machine-scope HORIZON_* env -> {root}")
+    except OSError as exc:
+        warn(_ADVISORY)
+        info(f"  Detail: {exc}")
+
+
 def advise_sync(root):
     sched = os.path.join(root, "horizon_system", "sbin", "horizon_aios_setup_sync_schedule.py")
     if os.path.isfile(sched):
@@ -499,6 +554,7 @@ def cmd_init(reg, _args):
     aroot = reg["aioses"][active]["root"]
     write_active_env(active, aroot, False)
     update_system_path(aroot, False)
+    update_machine_env(aroot, False)
     write_wrappers(False)
     info(f"Generated active_env + aios-exec wrappers for active AIOS '{active}'.")
     if active != name:
@@ -526,6 +582,7 @@ def cmd_switch(reg, args):
 
     write_active_env(name, root, args.dry_run)
     update_system_path(root, args.dry_run)
+    update_machine_env(root, args.dry_run)
     write_wrappers(args.dry_run)
     repoint_claude_md(root, args.dry_run)
     repoint_skills_link(root, args.dry_run)

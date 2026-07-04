@@ -475,6 +475,28 @@ if ($Cleaned.Count -lt $PathEntries.Count) {
     Skip "No horizon_system\bin entry found in Machine-scope PATH."
 }
 
+# Remove Machine-scope HORIZON_* env vars registered by bootstrap Section 7.
+$HorizonVars = @(
+    "HORIZON_SYSTEM", "HORIZON_ROOT", "HORIZON_BIN", "HORIZON_SBIN",
+    "HORIZON_ETC", "HORIZON_DOCS", "HORIZON_USRBIN", "HORIZON_PROJECTS",
+    "HORIZON_LOGS", "HORIZON_SOUNDS"
+)
+$FoundVars = $HorizonVars | Where-Object {
+    [System.Environment]::GetEnvironmentVariable($_, "Machine")
+}
+if ($FoundVars.Count -gt 0) {
+    if ($DryRun) {
+        Dry "remove Machine-scope env vars: $($FoundVars -join ', ')"
+    } else {
+        foreach ($v in $FoundVars) {
+            [System.Environment]::SetEnvironmentVariable($v, $null, "Machine")
+        }
+        Ok "Removed Machine-scope HORIZON_* env vars: $($FoundVars -join ', ')"
+    }
+} else {
+    Skip "No Machine-scope HORIZON_* env vars found."
+}
+
 # =============================================================================
 # SECTION 8: Shell profile line + global git include.path entries
 # `aios setup` (horizon_aios_switch.py) actively writes three machine-wide
