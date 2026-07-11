@@ -42,6 +42,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 
 # Reuse the exact group name and credential deletion from the provisioning side.
 BRAINS_GROUP = 'brains'
@@ -303,11 +304,24 @@ def _remove_workspace(brain_dir, dry_run):
         info(f'No workspace folder at: {brain_dir}')
         return
     info(f'Removing workspace folder: {brain_dir}')
-    try:
-        shutil.rmtree(brain_dir)
-        ok(f'Removed workspace: {brain_dir}')
-    except OSError as exc:
-        warn(f'Could not fully remove {brain_dir}: {exc}')
+    # A WSL distro's ext4.vhdx handle can linger for several seconds after
+    # `wsl --unregister` returns, so a bare rmtree loses the race with a
+    # WinError 32 (sharing violation) and orphans the ~GB vhdx. Retry with
+    # backoff (1,2,4,8,16s) to let the handle release before giving up.
+    last_exc = None
+    for attempt in range(6):
+        try:
+            shutil.rmtree(brain_dir)
+            ok(f'Removed workspace: {brain_dir}')
+            return
+        except OSError as exc:
+            last_exc = exc
+            if attempt < 5:
+                delay = 2 ** attempt
+                info(f'workspace still locked (vhdx handle releasing); '
+                     f'retry {attempt + 1}/5 in {delay}s...')
+                time.sleep(delay)
+    warn(f'Could not fully remove {brain_dir} after retries: {last_exc}')
 
 
 # ---------------------------------------------------------------------------
