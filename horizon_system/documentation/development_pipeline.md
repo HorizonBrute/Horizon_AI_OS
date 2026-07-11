@@ -113,9 +113,12 @@ Items are grouped by status, not priority — priority is implicit from the grou
   audio playback are undocumented. No entry in `utilities.md`; no authoring guide for
   adding new sounds or cues.
 
-- **Sync system** — `horizon_aios_sync.py` and `horizon_aios_setup_sync_schedule.py` are listed in
-  `utilities.md` but the sync workflow (what gets synced, upstream vs. downstream,
-  conflict handling) has no dedicated doc. `sync_setup.md` exists but may be stale.
+- **Sync system** — RESOLVED (2026-07-04): `sync_setup.md` is now the dedicated
+  operational reference for the two-lane sync workflow (what is synced, official
+  vs. personal lane, overwrite vs. local-wins handling, the DCO `--no-verify`
+  exception); `system/distribution_and_updates.md` and `getting_started/updating.md`
+  cover the model. Prior gap: the workflow had no dedicated doc and `sync_setup.md`
+  was stale relative to the two-lane implementation.
 
 - **Brain authoring guide** — no doc on what goes in a brain's `CLAUDE.md`, how to scope
   its tools/permissions, or how to design a brain persona. The template has defaults but

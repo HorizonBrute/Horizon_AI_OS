@@ -504,6 +504,17 @@ def harden_unix(paths, os_name, owner, have_group, have_humans, dry_run, strict)
         run(['setfacl', '-R', '-d', '-m', f'g:{BRAINS_GROUP}:r-x', system],
             dry_run=dry_run, check=False)
         ok('brains have read+execute but no write under $HORIZON_SYSTEM')
+        # Brains must TRAVERSE the AIOS root and the brains/ parent to reach both
+        # their granted paths (bin/skills_bin) and their own workspace
+        # (brains/<name>/, 0o770 <name>:<name>). Grant execute-only (--x; not
+        # recursive, no default) so a brain can traverse to a known path but
+        # cannot enumerate the root or its siblings. Without this the brains r-x
+        # grant above is unreachable on Linux (the root dir denies non-owners).
+        for trav in (root, brains):
+            if os.path.isdir(trav) or dry_run:
+                run(['setfacl', '-m', f'g:{BRAINS_GROUP}:--x', trav],
+                    dry_run=dry_run, check=False)
+        grant(f'brains traverse (--x) on AIOS root + brains/: {BRAINS_GROUP}')
         for label, key in (('sbin', 'sbin'), ('skills_sbin', 'skills_sbin'),
                            ('logs', 'logs')):
             path = paths[key]
@@ -517,7 +528,7 @@ def harden_unix(paths, os_name, owner, have_group, have_humans, dry_run, strict)
             # Also enforce owner-only base mode bits. The setfacl deny alone
             # leaves the stat mode at 0o770; doctor --post-setup asserts 0o700
             # on sbin/skills_sbin/logs, so tighten the base permissions too.
-            run(['chmod', '-R', '700', path], dry_run=dry_run, check=False)
+            run(['chmod', '-R', 'u=rwX,go=', path], dry_run=dry_run, check=False)
             deny(f'brains DENY (setfacl --- + owner-only 700) on {label}: {path}')
         return
 
@@ -557,6 +568,18 @@ def harden_unix(paths, os_name, owner, have_group, have_humans, dry_run, strict)
         warn('brains group unavailable — skipping brains rx grants on bin/skills_bin. '
              'Owner-side hardening (go-w + 700 on privileged dirs) is applied.')
 
+    # Brains traverse (--x) on AIOS root + brains/ so their bin/skills_bin grant
+    # and their own workspace (brains/<name>/) are reachable -- same fix as the
+    # additive branch. Execute-only: traverse without listing, preserving
+    # inter-brain isolation. Requires setfacl; mode bits alone cannot express a
+    # named-group traverse ACE without opening the dir to all "other".
+    if have_group and have_setfacl and os_name == 'Linux':
+        for trav in (root, brains):
+            if os.path.isdir(trav):
+                run(['setfacl', '-m', f'g:{BRAINS_GROUP}:--x', trav],
+                    dry_run=dry_run, check=False)
+        grant(f'brains traverse (--x) on AIOS root + brains/: {BRAINS_GROUP}')
+
     # Privileged dirs: owner-only 700 — applied AFTER the grants above.
     for label, key in (('sbin', 'sbin'),
                        ('skills_sbin', 'skills_sbin'),
@@ -565,7 +588,7 @@ def harden_unix(paths, os_name, owner, have_group, have_humans, dry_run, strict)
         if not os.path.isdir(path):
             warn(f'{label} missing, skipping deny: {path}')
             continue
-        run(['chmod', '-R', '700', path], dry_run=dry_run, check=False)
+        run(['chmod', '-R', 'u=rwX,go=', path], dry_run=dry_run, check=False)
         # Optional explicit group deny via ACL (Linux setfacl) to mirror the
         # Windows explicit-Deny posture, on top of the 700 mode bits.
         if have_group and have_setfacl and os_name == 'Linux':

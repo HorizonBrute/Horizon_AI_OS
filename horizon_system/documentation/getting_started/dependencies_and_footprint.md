@@ -106,7 +106,7 @@ What changes on the machine when `bootstrap.ps1` / `bootstrap.sh` runs.
 | `~/.horizon/bin/aios-exec.sh` | N/A | Created | Created | Same wrapper purpose, POSIX shell |
 | `$HORIZON_ETC/aios_local.conf` | Created from template (interactive prompt) | Created from template (interactive prompt) | Created from template (interactive prompt) | Machine-local AIOS config; copied from `$HORIZON_SYSTEM/templates/aios_local.conf.template` |
 | `$HORIZON_ROOT/.git/hooks/pre-commit` | Copied | Copied | Copied | Installed by bootstrap into `.git/hooks/`; syncs `.gitignore.user` to `.git/info/exclude` on commit |
-| `$HORIZON_ROOT/.git/hooks/commit-msg` | Copied | Copied | Copied | DCO sign-off enforcement |
+| `$HORIZON_ROOT/.git/hooks/commit-msg` | Copied | Copied | Copied | DCO sign-off enforcement: rejects commits lacking a `Signed-off-by` line. The auto-sync utility (`horizon_aios_sync.py`) is the one exception -- its housekeeping commits pass `--no-verify` to bypass the hook |
 | `$HORIZON_ROOT/local.agents.md` | Created from template (if absent) | Created from template (if absent) | Created from template (if absent) | Materialized by `aios setup` (`setup_local_agents`) from `local.agents.md.template`; gitignored; machine-local override imported last by `agents.md` (see §12.6) |
 | `$HORIZON_ROOT/.claude/local.agents.md` | Created from template (if absent) | Created from template (if absent) | Created from template (if absent) | Same pattern for the `.claude/` scope |
 

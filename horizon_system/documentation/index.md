@@ -28,7 +28,7 @@ at the end of a session to save state. Start with the setup guide in
 | `horizon_system/documentation/dev_values.md` | Horizon AIOS — Development Values | The engineering values guiding AIOS design (agent-first architecture, token economy, security posture); authority tier above architecture decisions. |
 | `horizon_system/documentation/development_pipeline.md` | Horizon AIOS — Development Pipeline | Placeholder backlog tracking known work items, gaps, and research threads before formal issue management is integrated. |
 | `horizon_system/documentation/philosophy.md` | Horizon AIOS — Philosophy and Conceptual Framework | The "why" behind the architecture and the Brain vs. AI-OS vocabulary; highest authority tier. |
-| `horizon_system/documentation/sync_setup.md` | Horizon AIOS — Sync Setup Reference | How auto-sync keeps a local install current via fast-forward-only git fetch/merge, and the `aios_local.conf` keys that configure it. |
+| `horizon_system/documentation/sync_setup.md` | Horizon AIOS — Sync Setup Reference | How the two-lane auto-sync keeps a local install current (official lane overwrites framework paths; personal lane is local-wins), the `aios_local.conf` keys that configure both lanes, and the automated-commit DCO exception. |
 | `horizon_system/documentation/terseness_contract_index.md` | Terseness Contract Index — Horizon AIOS | Canonical list of every file loaded unconditionally at session start, the seven terseness criteria each must satisfy, and advisory guidance for gitignored/user-controlled files. Used by `/terseness-check` and CC-T checks. |
 | `horizon_system/documentation/tested_configurations.md` | Horizon AIOS — Tested Configurations | The verified harness/OS/deployment compatibility matrix and what "tested" means. |
 | `horizon_system/documentation/utilities.md` | Horizon AIOS — Utilities Reference | Quick-lookup catalog of all `sbin/` utility scripts: purpose, flags, and skill cross-references. (Tool catalog — maintained separately.) |
@@ -39,7 +39,7 @@ at the end of a session to save state. Start with the setup guide in
 |---|---|---|
 | `horizon_system/documentation/getting_started/ReadMeToSetupYourSystem.md` | Horizon AIOS — System Setup Guide | Human SOP and agent-executable protocol for bootstrapping AIOS on a new machine. |
 | `horizon_system/documentation/getting_started/dependencies_and_footprint.md` | Horizon AIOS — Dependencies and System Footprint Reference | Declarative, scannable reference: all AIOS dependencies with per-platform install commands, and a complete system footprint for both AIOS install and brain addition across Windows, macOS, and Linux. |
-| `horizon_system/documentation/getting_started/updating.md` | How to Update Horizon AIOS | Step-by-step procedure for pulling upstream changes (fast-forward-only sync), what to do when an update refuses, post-update verification, and rollback. |
+| `horizon_system/documentation/getting_started/updating.md` | How to Update Horizon AIOS | Step-by-step procedure for pulling upstream changes (two-lane sync: official lane overwrites framework paths, personal lane is local-wins), what to do when a local framework change is reclaimed, post-update verification, and rollback. |
 | `horizon_system/documentation/getting_started/lifecycle_test.md` | Horizon AIOS — End-to-End Lifecycle Test | Runbook for proving the full install → AIOS-switch → provision/update/back up → uninstall → clean-reset lifecycle on a dedicated clean machine, with per-step verification. |
 
 ## system

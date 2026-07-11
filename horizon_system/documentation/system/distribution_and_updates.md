@@ -31,14 +31,29 @@ git remote add upstream git@github.com:HorizonBrute/Horizon_AI_OS.git
 git remote set-url origin <your-own-private-repo>     # your work + backups
 
 # to update:
-python horizon_system/sbin/horizon_aios_sync.py               # fast-forward-only
+python horizon_system/sbin/horizon_aios_sync.py       # two-lane sync
 #   or: git fetch upstream && git merge upstream/<branch>
 ```
 
-Framework files advance; your user-space files are untouched because upstream
-never modified them. `horizon_aios_sync.py` is **fast-forward-only** on purpose: if you
-*did* edit a framework file, it refuses rather than silently overwriting — that
-refusal is the signal to move your change into the override layer.
+`horizon_aios_sync.py` runs a **two-lane sync** built directly on the
+framework-vs-user-space split above:
+
+- **Official lane (framework).** Scope is every path EXCEPT `projects/`,
+  `usrbin/`, and `brains/`. Upstream is authoritative here: the lane OVERWRITES
+  your local copy of those framework paths with the upstream version (a scoped
+  hard-restore -- `git fetch`, then `git checkout upstream/<branch> -- <framework
+  paths>` -- committed automatically). Local edits to framework files are
+  **discarded by design**. That is why you customize only through the override
+  layer: an edit parked in a framework file is exactly what the official lane
+  reclaims on the next run.
+- **Personal lane (user-space).** Scope is exactly `projects/`, `usrbin/`, and
+  `brains/`. **Local always wins** -- the lane never overwrites these unless you
+  opt in to a fast-forward-only advance (`SYNC_PERSONAL_FROM_REMOTE=yes`, against
+  your own personal remote) or force it with `--force-personal`.
+
+`SYNC_AIOS_FROM_REMOTE=no` disables both lanes. For the full key list, lane
+mechanics, and the automated-commit DCO exception, see
+`$HORIZON_DOCS/sync_setup.md`.
 
 ## Protecting your configuration
 
