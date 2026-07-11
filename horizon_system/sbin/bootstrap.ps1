@@ -713,3 +713,35 @@ if ($ProfileVal -eq "workstation") {
 }
 
 Write-DeploymentMarker $ProfileVal $humansToEnroll
+
+# -----------------------------------------------------------------------------
+# SECTION 11: Filesystem monitor service (boot + hourly watchdog)
+# Registers the audit monitor to start at reboot (AIOSMonitor) plus an hourly
+# watchdog (AIOSMonitorWatchdog) that restarts it if the process has stopped.
+# Optional but recommended - audit logging is the detection layer for prompt
+# injection. Non-fatal: a skipped/failed monitor does not fail bootstrap.
+# -----------------------------------------------------------------------------
+Banner "SECTION 11: Filesystem monitor service"
+
+$MonitorSetup = Join-Path $HORIZON_SYSTEM "sbin\horizon_aios_setup_monitor_service.py"
+if (-not (Test-Path $MonitorSetup)) {
+    Warn "horizon_aios_setup_monitor_service.py not found - skipping monitor service setup."
+} elseif ($env:AIOS_DEPLOY_MODE -eq "docker") {
+    Info "Docker mode: skipping monitor service (handle monitoring at the container layer)."
+} else {
+    $setupMon = if ($YesAll) { $true } else { (Read-Host "Install the filesystem monitor to start on boot + hourly watchdog? [y/N]") -match '^[Yy]' }
+    if ($setupMon) {
+        if (Get-Command python -ErrorAction SilentlyContinue) {
+            if ($YesAll) { python $MonitorSetup install --yes } else { python $MonitorSetup install }
+            if ($LASTEXITCODE -eq 0) {
+                Ok "Filesystem monitor installed (AIOSMonitor at startup; hourly AIOSMonitorWatchdog restarts it if stopped)."
+            } else {
+                Warn "Monitor service install did not complete (exit $LASTEXITCODE). A service-account credential may be needed. Run later: python $MonitorSetup install"
+            }
+        } else {
+            Warn "python not found - skipping monitor service. Run later: python $MonitorSetup install"
+        }
+    } else {
+        Info "Skipped. Enable later: python $MonitorSetup install"
+    }
+}

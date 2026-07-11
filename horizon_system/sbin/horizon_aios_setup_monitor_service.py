@@ -2,9 +2,11 @@
 """
 Install the Horizon AIOS filesystem monitor as a scheduled service.
 
-Windows — two Task Scheduler tasks:
-  AIOSMonitor         — at logon, elevated, runs horizon_aios_monitor_runner.ps1
+Windows — three Task Scheduler tasks:
+  AIOSMonitor         — at STARTUP (survives reboot), elevated, runs horizon_aios_monitor_runner.ps1
   AIOSMonitorAnalyzer — daily at 06:00, elevated, runs horizon_aios_monitor_analyze_runner.ps1
+  AIOSMonitorWatchdog — hourly, elevated, runs horizon_aios_monitor_watchdog_runner.ps1;
+                        restarts AIOSMonitor if the monitor process is not running
 
 The service account password is stored in the OS keyring (Windows Credential Manager /
 macOS Keychain / Linux Secret Service) under:
@@ -13,7 +15,9 @@ macOS Keychain / Linux Secret Service) under:
 
 Mirrors the brain credential pattern (horizon_aios_brain_credential.py).
 
-Linux/macOS — two cron entries for the current user (no password/keyring needed).
+Linux/macOS — three cron entries for the current user (no password/keyring needed):
+  monitor  @reboot (survives reboot), analyzer daily 06:00, and an hourly
+  watchdog that restarts the monitor if its process is not running.
 
 Usage:
   python horizon_aios_setup_monitor_service.py install          [--user NAME] [--yes]
@@ -37,8 +41,10 @@ HORIZON_ROOT   = HORIZON_SYSTEM.parent             # repo root
 
 MONITOR_RUNNER  = SCRIPT_DIR / "horizon_aios_monitor_runner.ps1"
 ANALYZER_RUNNER = SCRIPT_DIR / "horizon_aios_monitor_analyze_runner.ps1"
+WATCHDOG_RUNNER = SCRIPT_DIR / "horizon_aios_monitor_watchdog_runner.ps1"
 MONITOR_TASK    = "AIOSMonitor"
 ANALYZER_TASK   = "AIOSMonitorAnalyzer"
+WATCHDOG_TASK   = "AIOSMonitorWatchdog"
 
 KEYRING_SERVICE  = "horizon_aios"
 KEYRING_USERNAME = "monitor_account:{user}"
@@ -157,9 +163,15 @@ def install_windows(user: str, yes: bool) -> int:
         return 1
 
     ok = True
+    labels = {
+        "ONSTART": "at startup (survives reboot)",
+        "DAILY":   "daily at 06:00",
+        "HOURLY":  "hourly (watchdog: restarts monitor if stopped)",
+    }
     for task, runner, sched in [
-        (MONITOR_TASK,  MONITOR_RUNNER,  ["/SC", "ONLOGON"]),
+        (MONITOR_TASK,  MONITOR_RUNNER,  ["/SC", "ONSTART"]),
         (ANALYZER_TASK, ANALYZER_RUNNER, ["/SC", "DAILY", "/ST", "06:00"]),
+        (WATCHDOG_TASK, WATCHDOG_RUNNER, ["/SC", "HOURLY", "/MO", "1"]),
     ]:
         if _task_exists(task) and not yes:
             ans = input(f"Task '{task}' already exists. Overwrite? [y/N] ").strip().lower()
@@ -167,7 +179,7 @@ def install_windows(user: str, yes: bool) -> int:
                 print(f"[INFO] Skipped '{task}'.")
                 continue
         if _schtasks_create(task, runner, sched, user, pw):
-            label = "at logon" if "ONLOGON" in sched else "daily at 06:00"
+            label = next((labels[k] for k in labels if k in sched), "scheduled")
             print(f"[OK]  Task '{task}' registered — runs {label}, elevated as {user}")
         else:
             ok = False
@@ -182,7 +194,7 @@ def install_windows(user: str, yes: bool) -> int:
 
 def uninstall_windows() -> int:
     ok = True
-    for task in (MONITOR_TASK, ANALYZER_TASK):
+    for task in (MONITOR_TASK, ANALYZER_TASK, WATCHDOG_TASK):
         if _task_exists(task):
             if _schtasks_delete(task):
                 print(f"[OK]  Task '{task}' removed.")
@@ -195,7 +207,7 @@ def uninstall_windows() -> int:
 
 
 def status_windows() -> int:
-    for task in (MONITOR_TASK, ANALYZER_TASK):
+    for task in (MONITOR_TASK, ANALYZER_TASK, WATCHDOG_TASK):
         exists = _task_exists(task)
         tag = "[OK] " if exists else "[--]"
         print(f"{tag} Task Scheduler: {task} {'registered' if exists else 'NOT registered'}")
@@ -211,6 +223,7 @@ def install_unix(user: str) -> int:
     py = sys.executable
     marker_m = "# HorizonAIOS_Monitor"
     marker_a = "# HorizonAIOS_MonitorAnalyzer"
+    marker_w = "# HorizonAIOS_MonitorWatchdog"
 
     existing = subprocess.run(["crontab", "-l"], capture_output=True, text=True)
     current = existing.stdout if existing.returncode == 0 else ""
@@ -225,6 +238,14 @@ def install_unix(user: str) -> int:
     if marker_a not in current:
         new += f"\n{marker_a}\n0 6 * * * {py} {analyzer_script}\n"
         added.append("analyzer (daily 06:00)")
+
+    if marker_w not in current:
+        # Hourly watchdog: if no horizon_aios_monitor.py process is running,
+        # (re)start it detached. Survives crashes between reboots.
+        watchdog = (f"0 * * * * pgrep -f {monitor_script} >/dev/null 2>&1 || "
+                    f"nohup {py} {monitor_script} >/dev/null 2>&1 &")
+        new += f"\n{marker_w}\n{watchdog}\n"
+        added.append("watchdog (hourly restart-if-stopped)")
 
     if not added:
         print("[INFO] Cron entries already present — nothing to do.")
@@ -245,7 +266,8 @@ def uninstall_unix() -> int:
     if existing.returncode != 0:
         print("[INFO] No crontab found.")
         return 0
-    markers = {"# HorizonAIOS_Monitor", "# HorizonAIOS_MonitorAnalyzer"}
+    markers = {"# HorizonAIOS_Monitor", "# HorizonAIOS_MonitorAnalyzer",
+               "# HorizonAIOS_MonitorWatchdog"}
     lines = existing.stdout.splitlines(keepends=True)
     skip_next = False
     kept, removed = [], 0
@@ -276,6 +298,7 @@ def status_unix() -> int:
     for marker, label in [
         ("# HorizonAIOS_Monitor", "monitor (@reboot)"),
         ("# HorizonAIOS_MonitorAnalyzer", "analyzer (daily 06:00)"),
+        ("# HorizonAIOS_MonitorWatchdog", "watchdog (hourly restart-if-stopped)"),
     ]:
         found = marker in current
         print(f"{'[OK] ' if found else '[--]'} cron: {label} {'installed' if found else 'NOT installed'}")

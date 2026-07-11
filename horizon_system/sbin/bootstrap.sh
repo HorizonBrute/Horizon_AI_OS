@@ -698,3 +698,38 @@ else
 fi
 
 write_deploy_marker "$PROFILE_VAL" "${HUMANS_LIST[@]}"
+
+# -----------------------------------------------------------------------------
+# SECTION 11: Filesystem monitor service (boot + hourly watchdog)
+# Installs cron: monitor @reboot, analyzer daily 06:00, and an hourly watchdog
+# that restarts the monitor if its process has stopped. Optional but recommended
+# (audit logging is the detection layer for prompt injection). Non-fatal.
+# -----------------------------------------------------------------------------
+banner "SECTION 11: Filesystem monitor service"
+
+MONITOR_SETUP="$HORIZON_SYSTEM/sbin/horizon_aios_setup_monitor_service.py"
+if [ ! -f "$MONITOR_SETUP" ]; then
+  warn "horizon_aios_setup_monitor_service.py not found - skipping monitor service setup."
+elif [ "${AIOS_DEPLOY_MODE:-}" = "docker" ]; then
+  info "Docker mode: skipping monitor service (handle monitoring at the container layer)."
+else
+  if [ "$YES_ALL" = "true" ]; then
+    setup_mon=y
+  else
+    printf "Install the filesystem monitor to start on boot + hourly watchdog? [y/N] "
+    read -r setup_mon
+  fi
+  if echo "$setup_mon" | grep -qi "^y"; then
+    if command -v python3 >/dev/null 2>&1; then
+      if python3 "$MONITOR_SETUP" install; then
+        ok "Filesystem monitor installed (monitor @reboot; hourly watchdog restarts it if stopped)."
+      else
+        warn "Monitor service install did not complete. Run later: python3 $MONITOR_SETUP install"
+      fi
+    else
+      warn "python3 not found - skipping monitor service. Run later: python3 $MONITOR_SETUP install"
+    fi
+  else
+    info "Skipped. Enable later: python3 $MONITOR_SETUP install"
+  fi
+fi

@@ -515,6 +515,34 @@ def check_sbin_acl_unix(horizon_system):
 # Calls monitor_status.py ($HORIZON_BIN/monitor_status.py) and reports
 # PASS/WARN.  The monitor is optional — a stopped monitor is WARN, not FAIL.
 # ---------------------------------------------------------------------------
+def _monitor_service_installed():
+    """Windows: is the AIOSMonitor scheduled task registered? Returns
+    True/False, or None if it can't be determined / non-Windows."""
+    if sys.platform != "win32":
+        return None
+    try:
+        r = subprocess.run(["schtasks", "/Query", "/TN", "AIOSMonitor"],
+                           capture_output=True, text=True, timeout=10)
+        return r.returncode == 0
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _monitor_enable_hint():
+    """One-line guidance for enabling the monitor to auto-start on boot +
+    hourly watchdog. Distinguishes 'not set up' from 'set up but stopped'."""
+    installed = _monitor_service_installed()
+    if installed is False:
+        return ("not auto-started on boot — enable it: "
+                "python $HORIZON_SYSTEM/sbin/horizon_aios_setup_monitor_service.py install")
+    if installed is True:
+        return ("AIOSMonitor task is registered but the process is stopped — the "
+                "hourly AIOSMonitorWatchdog will restart it, or run now: "
+                "schtasks /Run /TN AIOSMonitor")
+    return ("enable auto-start on boot + hourly watchdog: "
+            "python $HORIZON_SYSTEM/sbin/horizon_aios_setup_monitor_service.py install")
+
+
 def check_monitor_status(horizon_bin):
     monitor_status_script = horizon_bin / "monitor_status.py"
     if not monitor_status_script.exists():
@@ -529,7 +557,8 @@ def check_monitor_status(horizon_bin):
         if status == "running":
             ok("Monitor: horizon_aios_monitor.py is running")
         elif status == "stopped":
-            warn("Monitor: horizon_aios_monitor.py", "not running — filesystem audit logging is inactive (optional)")
+            warn("Monitor: horizon_aios_monitor.py",
+                 f"not running — filesystem audit logging is inactive (optional). {_monitor_enable_hint()}")
         else:
             warn("Monitor: horizon_aios_monitor.py", f"unexpected status: {status!r}")
     except Exception as e:
