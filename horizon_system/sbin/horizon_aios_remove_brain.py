@@ -40,6 +40,7 @@ import os
 import platform
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import time
@@ -86,6 +87,256 @@ def info(msg):  print(f'  [INFO]  {msg}')
 def ok(msg):    print(f'  [OK]    {msg}')
 def warn(msg):  print(f'  [WARN]  {msg}')
 def error(msg): print(f'  [ERROR] {msg}', file=sys.stderr)
+
+
+def _rmtree_clear_readonly(path):
+    """rmtree a Windows PROFILE tree, clearing READONLY on the way down.
+
+    Windows stamps READONLY on a profile's shell folders (Documents, Music, Pictures,
+    Videos, Favorites, WinX/GroupN...) to mark them shell-customized (desktop.ini). A
+    READONLY *directory* cannot be removed and fails as a bare WinError 5 "Access is
+    denied" — which reads like a permissions problem but is not one, so elevation /
+    takeown / icacls never help, and neither does a reboot (it does not clear an
+    attribute). Leaving the profile behind makes the next create-brain mint a new SID +
+    a <name>.NNN profile, orphaning a ProfileList entry every cycle.
+
+    os.chmod on Windows maps to exactly one bit: READONLY. Clear it, then retry.
+    """
+    def _retry(func, p, _exc):
+        os.chmod(p, stat.S_IWRITE)
+        func(p)
+    # 3.12 deprecated onerror in favour of onexc; this callable fits both signatures.
+    if sys.version_info >= (3, 12):
+        shutil.rmtree(path, onexc=_retry)
+    else:
+        shutil.rmtree(path, onerror=_retry)
+
+
+# --- Profile handle release (the WinError 32 layer, under the READONLY one) -------------
+#
+# Clearing READONLY (above) fixes WinError 5. A SECOND blocker sits underneath it and shows
+# up as WinError 32 "used by another process":
+#
+#   1. The deleted account's hives (HKU\<SID> + HKU\<SID>_Classes) stay MOUNTED. A mounted
+#      hive IS an open handle on NTUSER.DAT / UsrClass.dat. This is the grain of truth in the
+#      old "loaded NTUSER.DAT hive" warning, but its remedy was wrong: a reboot is NOT needed.
+#      `reg unload` also fails here — an elevated token leaves SeRestorePrivilege DISABLED,
+#      and open keys inside the hive defeat a non-forced unload. Enable the privilege and call
+#      NtUnloadKey2(REG_FORCE_UNLOAD): it evicts the hive in place.
+#   2. A live process holds a file INSIDE the profile (observed: wslsettings.exe pinning
+#      AppData\LocalLow\Intel\ShaderCache\*, which `wsl --shutdown` does NOT kill).
+#
+# Mirrors windows_deploy_brain.py's helpers of the same names — duplicated deliberately: this
+# provisioner must run on hosts that have no factory tree (same reason _rmtree_clear_readonly
+# is duplicated). Keep the two in sync.
+
+_REG_FORCE_UNLOAD = 1
+_SE_PRIVILEGE_ENABLED = 0x2
+_TOKEN_ADJUST_PRIVILEGES = 0x20
+_TOKEN_QUERY = 0x8
+_OBJ_CASE_INSENSITIVE = 0x40
+
+
+def _windows_brain_sid(brain_name):
+    """Resolve the brain account's SID, or None. MUST be called while the account still
+    exists — it keys the HKU hives, and Get-LocalUser stops resolving once it is deleted."""
+    r = subprocess.run(['powershell', '-NonInteractive', '-Command',
+                        f'(Get-LocalUser -Name "{brain_name}" '
+                        f'-ErrorAction SilentlyContinue).SID.Value'],
+                       capture_output=True, text=True)
+    return (r.stdout or '').strip() or None
+
+
+def _enable_privilege(name):
+    """Enable a privilege the elevated token HOLDS but leaves DISABLED (else the unload
+    returns STATUS_PRIVILEGE_NOT_HELD). Returns True on success."""
+    import ctypes
+    from ctypes import wintypes
+
+    class _LUID(ctypes.Structure):
+        _fields_ = [('LowPart', wintypes.DWORD), ('HighPart', ctypes.c_long)]
+
+    class _LUID_AND_ATTRIBUTES(ctypes.Structure):
+        _fields_ = [('Luid', _LUID), ('Attributes', wintypes.DWORD)]
+
+    class _TOKEN_PRIVILEGES(ctypes.Structure):
+        _fields_ = [('PrivilegeCount', wintypes.DWORD),
+                    ('Privileges', _LUID_AND_ATTRIBUTES * 1)]
+
+    advapi32 = ctypes.WinDLL('advapi32', use_last_error=True)
+    kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+    # Explicit prototypes are required on x64: without them GetCurrentProcess's (HANDLE)-1
+    # is truncated to 32 bits and the call silently fails.
+    kernel32.GetCurrentProcess.argtypes = []
+    kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+    kernel32.CloseHandle.restype = wintypes.BOOL
+    advapi32.OpenProcessToken.argtypes = [wintypes.HANDLE, wintypes.DWORD,
+                                          ctypes.POINTER(wintypes.HANDLE)]
+    advapi32.OpenProcessToken.restype = wintypes.BOOL
+    advapi32.LookupPrivilegeValueW.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR,
+                                               ctypes.POINTER(_LUID)]
+    advapi32.LookupPrivilegeValueW.restype = wintypes.BOOL
+    advapi32.AdjustTokenPrivileges.argtypes = [wintypes.HANDLE, wintypes.BOOL,
+                                               ctypes.POINTER(_TOKEN_PRIVILEGES),
+                                               wintypes.DWORD, ctypes.c_void_p,
+                                               ctypes.c_void_p]
+    advapi32.AdjustTokenPrivileges.restype = wintypes.BOOL
+
+    token = wintypes.HANDLE()
+    if not advapi32.OpenProcessToken(kernel32.GetCurrentProcess(),
+                                     _TOKEN_ADJUST_PRIVILEGES | _TOKEN_QUERY,
+                                     ctypes.byref(token)):
+        return False
+    try:
+        luid = _LUID()
+        if not advapi32.LookupPrivilegeValueW(None, name, ctypes.byref(luid)):
+            return False
+        tp = _TOKEN_PRIVILEGES()
+        tp.PrivilegeCount = 1
+        tp.Privileges[0].Luid = luid
+        tp.Privileges[0].Attributes = _SE_PRIVILEGE_ENABLED
+        ctypes.set_last_error(0)
+        if not advapi32.AdjustTokenPrivileges(token, False, ctypes.byref(tp),
+                                              ctypes.sizeof(tp), None, None):
+            return False
+        # Succeeds with ERROR_NOT_ALL_ASSIGNED (1300) if the token lacks the privilege.
+        return ctypes.get_last_error() == 0
+    finally:
+        kernel32.CloseHandle(token)
+
+
+def _force_unload_profile_hives(sid):
+    """Force-unload HKU\\<sid> and HKU\\<sid>_Classes in place. Returns readable results."""
+    import ctypes
+    from ctypes import wintypes
+
+    class _UNICODE_STRING(ctypes.Structure):
+        _fields_ = [('Length', ctypes.c_ushort),
+                    ('MaximumLength', ctypes.c_ushort),
+                    ('Buffer', ctypes.c_wchar_p)]
+
+    class _OBJECT_ATTRIBUTES(ctypes.Structure):
+        _fields_ = [('Length', ctypes.c_ulong),
+                    ('RootDirectory', ctypes.c_void_p),
+                    ('ObjectName', ctypes.POINTER(_UNICODE_STRING)),
+                    ('Attributes', ctypes.c_ulong),
+                    ('SecurityDescriptor', ctypes.c_void_p),
+                    ('SecurityQualityOfService', ctypes.c_void_p)]
+
+    ntdll = ctypes.WinDLL('ntdll')
+    ntdll.NtUnloadKey2.argtypes = [ctypes.POINTER(_OBJECT_ATTRIBUTES), ctypes.c_ulong]
+    ntdll.NtUnloadKey2.restype = ctypes.c_long
+    _enable_privilege('SeRestorePrivilege')
+    _enable_privilege('SeBackupPrivilege')
+
+    results = []
+    for key in (f'{sid}_Classes', sid):
+        nt_path = f'\\Registry\\User\\{key}'
+        name = _UNICODE_STRING()
+        name.Buffer = nt_path
+        name.Length = len(nt_path) * 2
+        name.MaximumLength = name.Length + 2
+        oa = _OBJECT_ATTRIBUTES()
+        oa.Length = ctypes.sizeof(_OBJECT_ATTRIBUTES)
+        oa.RootDirectory = None
+        oa.ObjectName = ctypes.pointer(name)
+        oa.Attributes = _OBJ_CASE_INSENSITIVE
+        status = ntdll.NtUnloadKey2(ctypes.byref(oa), _REG_FORCE_UNLOAD) & 0xFFFFFFFF
+        # "Not loaded" is the common healthy case and must not read as a failure. Windows
+        # reports it as STATUS_INVALID_PARAMETER (0xC000000D) for a non-hive-root name;
+        # STATUS_OBJECT_NAME_NOT_FOUND (0xC0000034) is accepted too.
+        if status == 0:
+            results.append(f'unloaded HKU\\{key}')
+        elif status in (0xC000000D, 0xC0000034):
+            results.append(f'HKU\\{key} not loaded (nothing to do)')
+        else:
+            results.append(f'HKU\\{key} unload FAILED (NTSTATUS 0x{status:08X})')
+    return results
+
+
+def _profile_lockers(paths):
+    """Restart Manager: [(pid, app_name), ...] holding handles on `paths`. Naming the holder
+    is what turns a bare "Access is denied" into an actionable diagnosis."""
+    import ctypes
+    from ctypes import wintypes
+
+    class _FILETIME(ctypes.Structure):
+        _fields_ = [('dwLowDateTime', wintypes.DWORD), ('dwHighDateTime', wintypes.DWORD)]
+
+    class _RM_UNIQUE_PROCESS(ctypes.Structure):
+        _fields_ = [('dwProcessId', wintypes.DWORD), ('ProcessStartTime', _FILETIME)]
+
+    class _RM_PROCESS_INFO(ctypes.Structure):
+        _fields_ = [('Process', _RM_UNIQUE_PROCESS),
+                    ('strAppName', ctypes.c_wchar * 256),
+                    ('strServiceShortName', ctypes.c_wchar * 64),
+                    ('ApplicationType', ctypes.c_uint),
+                    ('AppStatus', ctypes.c_ulong),
+                    ('TSSessionId', wintypes.DWORD),
+                    ('bRestartable', wintypes.BOOL)]
+
+    try:
+        rm = ctypes.WinDLL('rstrtmgr')
+    except OSError:
+        return []
+
+    session = wintypes.DWORD()
+    key = ctypes.create_unicode_buffer(33)
+    if rm.RmStartSession(ctypes.byref(session), 0, key) != 0:
+        return []
+    try:
+        arr = (ctypes.c_wchar_p * len(paths))(*paths)
+        if rm.RmRegisterResources(session, len(paths), arr, 0, None, 0, None) != 0:
+            return []
+        needed, count, reasons = wintypes.UINT(), wintypes.UINT(0), wintypes.DWORD()
+        rc = rm.RmGetList(session, ctypes.byref(needed), ctypes.byref(count), None,
+                          ctypes.byref(reasons))
+        if rc != 234 or needed.value == 0:      # 234 = ERROR_MORE_DATA => there ARE lockers
+            return []
+        count = wintypes.UINT(needed.value)
+        info_arr = (_RM_PROCESS_INFO * needed.value)()
+        if rm.RmGetList(session, ctypes.byref(needed), ctypes.byref(count), info_arr,
+                        ctypes.byref(reasons)) != 0:
+            return []
+        return [(info_arr[i].Process.dwProcessId, info_arr[i].strAppName)
+                for i in range(count.value)]
+    finally:
+        rm.RmEndSession(session)
+
+
+def _release_profile_handles(profile_dir, sid, dry_run=False):
+    """Free a torn-down brain profile so it can actually be deleted. No reboot, ever.
+
+    Only WSL-owned holders are killed: the distro is already gone by this point, so they have
+    no business in this profile and are trivially restartable. Anything else is REPORTED, not
+    killed — a teardown must never shoot down a user's applications.
+    """
+    if dry_run:
+        print(f'  [DRY-RUN] force-unload HKU\\{sid}[_Classes]; release file holders under '
+              f'{profile_dir}')
+        return
+    if sid:
+        for line in _force_unload_profile_hives(sid):
+            info(f'  profile hive: {line}')
+    else:
+        warn('  Brain SID unresolved — leftover HKU hives (if any) not unloaded; the profile '
+             'delete may fail with WinError 32.')
+
+    files = []
+    for root, _dirs, names in os.walk(profile_dir):
+        files.extend(os.path.join(root, n) for n in names)
+        if len(files) > 500:                     # a representative sample is enough for RM
+            break
+    if not files:
+        return
+    for pid, app in _profile_lockers(files):
+        if 'wsl' in (app or '').lower():
+            info(f'  Releasing WSL holder of the brain profile: {app} (PID {pid})')
+            run(['taskkill', '/PID', str(pid), '/F'], check=False)
+        else:
+            warn(f'  {app} (PID {pid}) holds a file inside {profile_dir} and was NOT killed — '
+                 f'close it and re-run if the profile delete below fails.')
 
 
 def run(cmd, dry_run=False, check=True):
@@ -199,6 +450,11 @@ def remove_windows(brain_name, brain_dir, dry_run):
     home_skills  = os.path.join(profile_dir, '.claude', 'skills')       # symlink -> skills_bin (old topology)
     brain_group  = f'{brain_name}_group'                                # per-brain group is <name>_group on Windows
 
+    # 0. Capture the SID while the account still resolves — step 2 deletes it, and the SID
+    #    keys the HKU hives that step 4 must unload to free the profile. Same reason step 1b
+    #    revokes logon rights before the delete.
+    brain_sid = _windows_brain_sid(brain_name)
+
     # 1. Remove reparse points FIRST, so no later recursive delete can follow a
     #    symlink into the workspace or into skills_bin. Covers both the new
     #    topology (~/.claude -> workspace) and the old one (~/.claude/skills).
@@ -232,11 +488,23 @@ def remove_windows(brain_name, brain_dir, dry_run):
 
     # 4. Remove the user profile directory (now symlink-free after step 1).
     if dry_run:
-        print(f'  [DRY-RUN] Remove-Item -Recurse -Force {profile_dir}')
+        print(f'  [DRY-RUN] rmtree (clearing READONLY) {profile_dir}')
     elif os.path.isdir(profile_dir):
         info(f'Removing user profile directory: {profile_dir}')
-        run_ps(f'Remove-Item -LiteralPath "{profile_dir}" -Recurse -Force '
-               f'-ErrorAction SilentlyContinue', check=False)
+        # Release BEFORE the rmtree: READONLY (WinError 5) is cleared on the way down by
+        # _rmtree_clear_readonly, but a mounted hive / live file holder (WinError 32) must be
+        # cleared up front — no amount of retrying beats an open handle.
+        _release_profile_handles(profile_dir, brain_sid, dry_run=False)
+        try:
+            _rmtree_clear_readonly(profile_dir)
+            ok(f'Removed user profile directory: {profile_dir}')
+        except OSError as exc:
+            warn(f'Could not remove user profile directory {profile_dir}: {exc}')
+            warn('  A reboot is NOT the remedy: WinError 5 means READONLY (cleared '
+                 'automatically above) and WinError 32 means a live handle — any holder is '
+                 'named above. Do NOT leave it: a leftover profile makes the NEXT '
+                 'create-brain mint a fresh SID + a <name>.NNN profile, orphaning a '
+                 'ProfileList entry each cycle.')
     else:
         info(f'No user profile directory at: {profile_dir}')
 
