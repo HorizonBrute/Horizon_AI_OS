@@ -18,7 +18,11 @@ Removal footprint (mirrors what horizon_aios_create_brain.py provisions):
     - Workspace folder           $HORIZON_ROOT/brains/<brain-name>/
                                  (CLAUDE.md, settings.json, .aios_provision.json,
                                   and skills -> skills_bin)
-    - User profile dir           <home>           (Unix: via userdel -r)
+    - User profile dir           Windows: every path ProfileList records for this brain
+                                 (ProfileImagePath — NOT C:\\Users\\<brain>; Windows suffixes a
+                                  colliding profile, e.g. C:\\Users\\<brain>.LEATHERDECK), plus
+                                  its ProfileList row
+                                 Unix: <home> (via userdel -r)
     - Stored credential          OS keystore (via horizon_aios_brain_credential.py delete)
 
 Safety:
@@ -102,7 +106,12 @@ def _rmtree_clear_readonly(path):
 
     os.chmod on Windows maps to exactly one bit: READONLY. Clear it, then retry.
     """
+    _strip_junctions(path)
+
     def _retry(func, p, _exc):
+        if _is_reparse(p):
+            os.rmdir(p)          # a junction that appeared mid-walk: drop the LINK
+            return
         os.chmod(p, stat.S_IWRITE)
         func(p)
     # 3.12 deprecated onerror in favour of onexc; this callable fits both signatures.
@@ -110,6 +119,44 @@ def _rmtree_clear_readonly(path):
         shutil.rmtree(path, onexc=_retry)
     else:
         shutil.rmtree(path, onerror=_retry)
+
+
+def _is_reparse(p):
+    isjunction = getattr(os.path, 'isjunction', None)
+    try:
+        return bool(isjunction and isjunction(p)) or os.path.islink(p)
+    except OSError:
+        return False
+
+
+def _strip_junctions(root):
+    """Delete the legacy shell-folder JUNCTIONS inside a profile before the rmtree.
+
+    Every Windows profile carries pre-Vista compatibility junctions (Documents\\My Music,
+    My Pictures, My Videos, Application Data, Local Settings, …). Each one has an explicit
+    DENY ACE precisely so applications cannot enumerate it — so rmtree hits a bare
+    "WinError 5 Access is denied" ON THE JUNCTION, which reads like the READONLY problem but
+    is not one: clearing READONLY and retrying cannot fix a Deny ACE, and elevation does not
+    override it either.
+
+    Removing them link-first is also the SAFE order: os.rmdir on a reparse point removes only
+    the link, never the target. Descending into one would delete the target's contents, and
+    some of these targets are elsewhere in the profile.
+    """
+    removed = 0
+    for dirpath, dirnames, _files in os.walk(root, topdown=True):
+        for d in list(dirnames):
+            p = os.path.join(dirpath, d)
+            if _is_reparse(p):
+                dirnames.remove(d)        # never descend into a reparse point
+                try:
+                    os.rmdir(p)
+                    removed += 1
+                except OSError:
+                    pass                  # rmtree/_retry reports it if it still blocks
+    if removed:
+        info(f'  cleared {removed} shell-folder junction(s) from the profile')
+    return removed
 
 
 # --- Profile handle release (the WinError 32 layer, under the READONLY one) -------------
@@ -123,7 +170,11 @@ def _rmtree_clear_readonly(path):
 #      `reg unload` also fails here — an elevated token leaves SeRestorePrivilege DISABLED,
 #      and open keys inside the hive defeat a non-forced unload. Enable the privilege and call
 #      NtUnloadKey2(REG_FORCE_UNLOAD): it evicts the hive in place.
-#   2. A live process holds a file INSIDE the profile (observed: wslsettings.exe pinning
+#   2. The WSL utility VM holds AppData\Local\Temp\<guid>\swap.vhdx. Unregistering the distro
+#      does NOT stop the VM, and Restart Manager CANNOT see this holder — the VHDX is owned by
+#      vmmemWSL, not by a user-mode process with an ordinary handle, so _profile_lockers names
+#      nobody and there is no PID to kill. `wsl --shutdown` is the only remedy.
+#   3. A live process holds a file INSIDE the profile (observed: wslsettings.exe pinning
 #      AppData\LocalLow\Intel\ShaderCache\*, which `wsl --shutdown` does NOT kill).
 #
 # Mirrors windows_deploy_brain.py's helpers of the same names — duplicated deliberately: this
@@ -137,14 +188,68 @@ _TOKEN_QUERY = 0x8
 _OBJ_CASE_INSENSITIVE = 0x40
 
 
+def _profile_name_re(brain_name):
+    """Match a profile directory belonging to `brain_name`: the plain name, or one of Windows'
+    collision suffixes (<name>.LEATHERDECK, then <name>.LEATHERDECK.000, .001, ...).
+
+    Anchored and dot-delimited deliberately. A bare prefix glob (`<name>*`) would make brain
+    `test` claim `testbrain`'s profile — deleting another live brain's profile is the worst
+    failure this script could have, so the suffix must be a real dot-separated one.
+    """
+    return re.compile(rf'^{re.escape(brain_name)}(\.[^\\/]*)?$', re.IGNORECASE)
+
+
+def _profilelist_rows():
+    """[(sid, expanded ProfileImagePath), ...] for every row in ProfileList."""
+    r = subprocess.run(
+        ['powershell', '-NonInteractive', '-NoProfile', '-Command',
+         r'Get-ChildItem "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList" | '
+         'ForEach-Object { $p = (Get-ItemProperty $_.PSPath -Name ProfileImagePath '
+         '-ErrorAction SilentlyContinue).ProfileImagePath; '
+         'if ($p) { "$($_.PSChildName)|'
+         '$([Environment]::ExpandEnvironmentVariables($p))" } }'],
+        check=False, capture_output=True, text=True)
+    rows = []
+    for line in (r.stdout or '').splitlines():
+        sid, sep, path = line.strip().partition('|')
+        if sep and sid and path:
+            rows.append((sid, path.rstrip('\\/')))
+    return rows
+
+
 def _windows_brain_sid(brain_name):
-    """Resolve the brain account's SID, or None. MUST be called while the account still
-    exists — it keys the HKU hives, and Get-LocalUser stops resolving once it is deleted."""
+    """Resolve the brain account's SID, or None.
+
+    Prefers Get-LocalUser, which is authoritative while the account exists. Falls back to the
+    ProfileList row whose ProfileImagePath BASENAME is this brain's (plain or suffixed): a
+    teardown that fails partway leaves the profile + row behind but deletes the ACCOUNT, and
+    without this fallback the SID is unrecoverable — the re-run cannot unload the hives or drop
+    the row, so the residue is stuck forever and only a human with an rmtree can clear it.
+    Teardown must be able to finish its own unfinished work.
+
+    Matching on the basename, not on a constructed C:\\Users\\<brain>, is what lets the fallback
+    see a SUFFIXED profile at all — see _windows_profile_dir.
+    """
     r = subprocess.run(['powershell', '-NonInteractive', '-Command',
                         f'(Get-LocalUser -Name "{brain_name}" '
                         f'-ErrorAction SilentlyContinue).SID.Value'],
                        capture_output=True, text=True)
-    return (r.stdout or '').strip() or None
+    sid = (r.stdout or '').strip()
+    if sid:
+        return sid
+
+    pat = _profile_name_re(brain_name)
+    hits = [(s, p) for s, p in _profilelist_rows() if pat.match(os.path.basename(p))]
+    if hits:
+        # Several rows are the NORMAL residue shape here, not an anomaly: each failed cycle
+        # suffixes another profile (testbrain.LEATHERDECK, then .LEATHERDECK.000). They are all
+        # this brain's, and none can belong to a live account — Get-LocalUser just found none by
+        # this name. The first is returned for hive-unload/logon-rights; _windows_profile_targets
+        # collects every one of them for removal.
+        for s, p in hits:
+            info(f'  account gone; recovered SID from ProfileList: {s} ({p})')
+        return hits[0][0]
+    return None
 
 
 def _enable_privilege(name):
@@ -305,6 +410,93 @@ def _profile_lockers(paths):
         rm.RmEndSession(session)
 
 
+def _wait_for_wsl_vm_exit(timeout=90):
+    """Block until the WSL utility VM process is really gone.
+
+    `wsl --shutdown` is ASYNCHRONOUS: it returns as soon as the shutdown is requested, while
+    vmmemWSL keeps running for seconds afterwards and keeps swap.vhdx open. Deleting the
+    profile straight after the call therefore races the VM and loses — WinError 32 on
+    swap.vhdx, with the VM exiting moments later and leaving the residue behind. Waiting for
+    the process to disappear is what makes the stop actually mean stopped.
+    """
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        r = subprocess.run(
+            ['powershell', '-NonInteractive', '-Command',
+             '@(Get-Process -Name vmmemWSL,vmmem -ErrorAction SilentlyContinue).Count'],
+            check=False, capture_output=True, text=True)
+        if (r.stdout or '').strip() == '0':
+            info('  WSL VM stopped (swap.vhdx released)')
+            return True
+        time.sleep(1)
+    warn(f'  WSL VM still running {timeout}s after `wsl --shutdown` — the profile delete below '
+         f'will likely fail with WinError 32 on swap.vhdx.')
+    return False
+
+
+_wsl_vm_stopped = False
+
+
+def _stop_wsl_vm():
+    """Stop the WSL utility VM and its GUI apps, which hold files inside a brain profile.
+
+    Unconditional: Restart Manager cannot name vmmemWSL, so there is nothing to detect and no
+    PID to kill — the only way to release swap.vhdx is to stop the VM. Safe at this point: the
+    brain's distro is already unregistered, and any other distro restarts on next use.
+    `wsl --shutdown` stops distros but NOT the WSL GUI apps, so wslsettings is killed by name.
+
+    Once per run: a brain with several suffixed profiles has several targets, and the VM does
+    not come back on its own between them — re-stopping would just re-pay the exit wait.
+    """
+    global _wsl_vm_stopped
+    if _wsl_vm_stopped:
+        return
+    _wsl_vm_stopped = True
+    info('  Stopping the WSL VM (holds swap.vhdx inside the brain profile)')
+    subprocess.run(['wsl', '--shutdown'], check=False, capture_output=True, text=True)
+    subprocess.run(['taskkill', '/IM', 'wslsettings.exe', '/F'],
+                   check=False, capture_output=True, text=True)
+    _wait_for_wsl_vm_exit()
+
+
+def _profilelist_key(sid):
+    return (r'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList' '\\' + sid)
+
+
+def _profilelist_entry_exists(sid):
+    if not sid:
+        return False
+    r = subprocess.run(['powershell', '-NonInteractive', '-Command',
+                        f'if (Test-Path "{_profilelist_key(sid)}") {{ "yes" }}'],
+                       check=False, capture_output=True, text=True)
+    return (r.stdout or '').strip() == 'yes'
+
+
+def _remove_profilelist_entry(sid, dry_run=False):
+    """Delete the account's ProfileList row.
+
+    Remove-LocalUser does NOT remove it. A row left behind — even pointing at a directory that
+    is already gone — is what makes the next create-brain mint a fresh SID and a <name>.NNN
+    profile, orphaning a row per cycle. Removing the directory alone does not break the pileup.
+    """
+    if not sid:
+        return
+    if dry_run:
+        print(f'  [DRY-RUN] remove ProfileList row {sid}')
+        return
+    r = subprocess.run(
+        ['powershell', '-NonInteractive', '-Command',
+         f'$k = "{_profilelist_key(sid)}"; '
+         f'if (Test-Path $k) {{ Remove-Item -LiteralPath $k -Recurse -Force; "removed" }} '
+         f'else {{ "absent (nothing to do)" }}'],
+        check=False, capture_output=True, text=True)
+    out = (r.stdout or '').strip()
+    if r.returncode == 0 and out:
+        info(f'  ProfileList row {sid}: {out}')
+    else:
+        warn(f'  Could not remove ProfileList row {sid}: {(r.stderr or "").strip()}')
+
+
 def _release_profile_handles(profile_dir, sid, dry_run=False):
     """Free a torn-down brain profile so it can actually be deleted. No reboot, ever.
 
@@ -316,6 +508,7 @@ def _release_profile_handles(profile_dir, sid, dry_run=False):
         print(f'  [DRY-RUN] force-unload HKU\\{sid}[_Classes]; release file holders under '
               f'{profile_dir}')
         return
+    _stop_wsl_vm()
     if sid:
         for line in _force_unload_profile_hives(sid):
             info(f'  profile hive: {line}')
@@ -416,9 +609,58 @@ def invoking_user():
 # Windows removal
 # ---------------------------------------------------------------------------
 
-def _windows_profile_dir(brain_name):
-    system_drive = os.environ.get('SystemDrive', 'C:')
-    return os.path.join(system_drive + '\\', 'Users', brain_name)
+def _users_dir():
+    return os.path.join(os.environ.get('SystemDrive', 'C:') + '\\', 'Users')
+
+
+def _windows_profile_targets(brain_name, sid):
+    """Every (sid_or_None, directory) pair that is this brain's profile residue.
+
+    NEVER construct C:\\Users\\<brain>. When Windows cannot use the plain profile name — a
+    leftover directory, a mounted hive, a name collision — it creates the profile under a
+    SUFFIXED one (C:\\Users\\<brain>.LEATHERDECK, then .000 on repeat collisions) and records the
+    real path in ProfileList\\<SID>\\ProfileImagePath. That row is the only authority for where a
+    profile actually is. Deriving the path from the USERNAME instead is the mechanism that
+    generated every orphan on this box: the teardown deleted the constructed path (absent, or an
+    unrelated stray), never touched the real profile, and exited 0 — a wrong path does not fail
+    loudly, it succeeds at deleting nothing.
+
+    Three sources, because each one alone misses a case that is live on this box today:
+      - ProfileList\\<sid>\\ProfileImagePath — the authority for the current account's profile,
+        and the only thing that knows a suffixed path.
+      - Rows whose path basename is <brain>[.suffix] — residue from an earlier teardown whose
+        account is already gone, which the SID lookup above can no longer reach.
+      - C:\\Users\\<brain>[.suffix] directories with NO row — a profile whose row was dropped
+        while the directory survived. Not a rare corner: several brains on this box have a
+        directory and no row right now, and ProfileImagePath alone would never see them.
+
+    A directory claimed by some OTHER account's row is never a target: that is someone else's
+    profile and deleting it would be catastrophic.
+    """
+    pat = _profile_name_re(brain_name)
+    rows = _profilelist_rows()
+    targets = {}
+
+    for row_sid, path in rows:
+        if (sid and row_sid.lower() == sid.lower()) or pat.match(os.path.basename(path)):
+            targets[os.path.normcase(path)] = (row_sid, path)
+
+    claimed = {os.path.normcase(p) for _s, p in rows}
+    try:
+        entries = os.listdir(_users_dir())
+    except OSError:
+        entries = []
+    for name in entries:
+        path = os.path.join(_users_dir(), name)
+        key = os.path.normcase(path)
+        if key in targets or not pat.match(name) or not os.path.isdir(path):
+            continue
+        if key in claimed:
+            warn(f'  {path} is claimed by another account\'s ProfileList row — leaving it alone.')
+            continue
+        targets[key] = (None, path)
+
+    return sorted(targets.values(), key=lambda t: t[1].lower())
 
 
 def _remove_reparse(path, dry_run):
@@ -444,24 +686,179 @@ def _remove_reparse(path, dry_run):
         run(['rmdir', path], check=False)  # empty dir only; never recursive
 
 
-def remove_windows(brain_name, brain_dir, dry_run):
-    profile_dir  = _windows_profile_dir(brain_name)
-    home_claude  = os.path.join(profile_dir, '.claude')                 # symlink -> workspace .claude (new topology)
-    home_skills  = os.path.join(profile_dir, '.claude', 'skills')       # symlink -> skills_bin (old topology)
-    brain_group  = f'{brain_name}_group'                                # per-brain group is <name>_group on Windows
+def _delete_profile_via_api(sid, profile_dir):
+    """Delete the profile the SUPPORTED way: Win32_UserProfile.Delete().
 
-    # 0. Capture the SID while the account still resolves — step 2 deletes it, and the SID
-    #    keys the HKU hives that step 4 must unload to free the profile. Same reason step 1b
-    #    revokes logon rights before the delete.
+    This is what Windows itself uses. It removes the profile DIRECTORY and its ProfileList row
+    together, in the right context, and it copes with what a hand-written rmtree cannot: the
+    legacy shell-folder junctions (Documents\\My Music, …) are SYSTEM-owned and carry an
+    explicit Everyone:(DENY)(RD) ACE. Explicit Deny beats an Administrator's INHERITED Allow,
+    so rmdir/takeown/icacls are denied even ELEVATED and even AS SYSTEM (SYSTEM is in Everyone).
+    They are undeletable in place by any principal — but Windows deletes the profile as a whole
+    just fine.
+
+    THE ONE HARD REQUIREMENT: the WSL VM must already be STOPPED. The API copes with ACLs, not
+    with live handles — vmmemWSL holding swap.vhdx makes it fail "being used by another process".
+    It gets one attempt, so calling it against a running VM does not merely fail, it forfeits the
+    only mechanism that can finish the job (rmtree cannot beat the Deny'd junctions).
+
+    It does NOT require a live account — 2026-07-15, verified: this deleted the dir AND the
+    ProfileList row for an account that Remove-LocalUser had already removed, given only a SID
+    recovered from ProfileList. An earlier docstring asserted a live account as a hard
+    requirement and made profile-before-account "the whole ballgame"; that misread a
+    handle-in-use failure as an account-resolution failure. Profile-before-account is retained
+    because it is the sane order, not because the API depends on it.
+
+    Returns True only if the profile is really gone — VERIFIED, not merely reported. A clean
+    Remove-CimInstance is not proof: it has been observed returning success while leaving the
+    directory on disk, which printed an [OK] on one line and "falling back to manual profile
+    removal" on the next. Success is the postcondition (dir gone AND row gone), so that is what
+    is checked, and the [OK] is emitted only once it holds.
+    """
+    if not sid:
+        return False
+    ps = (f'$p = Get-CimInstance Win32_UserProfile -Filter "SID=\'{sid}\'" '
+          f'-ErrorAction SilentlyContinue; '
+          f'if (-not $p) {{ "absent"; exit 0 }}; '
+          f'try {{ $p | Remove-CimInstance -ErrorAction Stop; "deleted" }} '
+          f'catch {{ "failed: $($_.Exception.Message)" }}')
+    r = subprocess.run(['powershell', '-NonInteractive', '-NoProfile', '-Command', ps],
+                       check=False, capture_output=True, text=True)
+    out = (r.stdout or '').strip()
+
+    if out not in ('deleted', 'absent'):
+        warn(f'  Win32_UserProfile.Delete() did not succeed for {sid}: {out or r.stderr.strip()}')
+        return False
+
+    leftover = []
+    if profile_dir and os.path.isdir(profile_dir):
+        leftover.append(f'directory {profile_dir}')
+    if _profilelist_entry_exists(sid):
+        leftover.append(f'ProfileList row {sid}')
+    if leftover:
+        warn(f'  Win32_UserProfile.Delete() reported "{out}" for {sid} but left '
+             f'{" and ".join(leftover)} behind — treating as FAILED.')
+        return False
+
+    if out == 'absent':
+        info(f'  no Win32_UserProfile for {sid} (nothing to delete)')
+    else:
+        ok(f'  profile deleted via Win32_UserProfile.Delete() (dir + ProfileList row): {sid}')
+    return True
+
+
+def _remove_windows_profiles(targets, dry_run):
+    """Remove every profile in `targets` — [(sid_or_None, dir), ...] from
+    _windows_profile_targets. Returns True only if all of them are really gone."""
+    if not targets:
+        info('No profile directory or ProfileList row to remove.')
+        return True
+    return all([_remove_one_windows_profile(d, s, dry_run) for s, d in targets])
+
+
+def _remove_one_windows_profile(profile_dir, sid, dry_run):
+    """Remove one brain profile: release handles, supported API, manual as fallback.
+
+    What is load-bearing is STOPPING THE VM FIRST, not the account ordering. The manual path is
+    the source of every WinError 5 (READONLY, Deny'd junctions) and WinError 32 (mounted hives,
+    vmmemWSL holding swap.vhdx) in this teardown's history, so the job is to never need it: give
+    the API the one condition it requires and it takes the dir and the ProfileList row together.
+
+    Returns True only if the directory and the ProfileList row are both gone.
+    """
+    if dry_run:
+        print(f'  [DRY-RUN] stop WSL VM + unload hives, Win32_UserProfile.Delete() for '
+              f'{sid or profile_dir}, else rmtree {profile_dir}')
+        return True
+
+    dir_exists = bool(profile_dir) and os.path.isdir(profile_dir)
+    if not dir_exists and not _profilelist_entry_exists(sid):
+        info(f'No user profile directory at: {profile_dir}')
+        return True
+
+    # A row whose ProfileImagePath is already gone is residue on its own: it is what makes the
+    # next create-brain mint a fresh SID and a suffixed profile. Drop it — there is nothing to
+    # release handles on, and no directory for the API to delete.
+    if not dir_exists:
+        info(f'ProfileList row {sid} points at {profile_dir}, which is gone — removing the row.')
+        _remove_profilelist_entry(sid)
+        return not _profilelist_entry_exists(sid)
+
+    info(f'Removing user profile: {profile_dir}')
+
+    # Releasing the handles is a PRECONDITION OF THE API, not a fallback step. Win32_UserProfile
+    # .Delete() is not magic about live handles: with the VM up it fails "being used by another
+    # process" on swap.vhdx and burns its single attempt, dropping us into the manual path — and
+    # the manual path CANNOT finish, because the Deny'd junctions are undeletable in place. That
+    # is a guaranteed teardown failure, and it is exactly what shipping this call before the stop
+    # produced. Stop the VM and unload the hives FIRST, then let the supported API do its job.
+    _release_profile_handles(profile_dir, sid, dry_run=False)
+
+    if _delete_profile_via_api(sid, profile_dir):
+        _remove_profilelist_entry(sid)          # no-op if the API already took the row
+        return True
+
+    # FALLBACK: the API could not do it — no SID resolved at all, or WMI refused. NOT "the
+    # account is gone": that was measured 2026-07-15 and the API handles it fine. Handles are
+    # already released above; delete by hand and fail loudly if that cannot finish.
+    warn('  falling back to manual profile removal (the supported API could not be used)')
+    # Two attempts, because the hives are the one blocker worth re-clearing: a handle can be
+    # re-taken between the release above and the rmtree. Anything still holding after a second
+    # unload is not going to yield to a third.
+    for attempt in (1, 2):
+        try:
+            _rmtree_clear_readonly(profile_dir)
+            ok(f'Removed user profile directory: {profile_dir}')
+            # ONLY on success. The row is the sole way to recover the SID once the account is
+            # gone (_windows_brain_sid's fallback); dropping it while the directory survives
+            # strands the residue permanently and only a human can finish the job.
+            _remove_profilelist_entry(sid)
+            return True
+        except OSError as exc:
+            if attempt == 1:
+                warn(f'  manual removal blocked ({exc}) — re-unloading the hives and retrying.')
+                _release_profile_handles(profile_dir, sid, dry_run=False)
+                continue
+            warn(f'Could not remove user profile directory {profile_dir}: {exc}')
+            warn('  Keeping the ProfileList row: it is what lets a re-run recover the SID and '
+                 'finish this teardown.')
+            # NEVER rename the directory aside to free the name. It looks like success, exits 0,
+            # and leaves a profile nobody is tracking — that is precisely how the residue on this
+            # box accumulated unnoticed. A teardown that cannot finish must SAY so and exit
+            # non-zero, so the next run (or a human) knows there is work left.
+            warn('  Do NOT rename the profile aside to free the name — a silent rename is how '
+                 'orphans accumulate. This teardown is INCOMPLETE and exits non-zero.')
+            warn('  WinError 5 = READONLY (cleared above) or a SYSTEM-owned junction with an '
+                 'explicit Deny; WinError 32 = a live handle (any user-mode holder is named '
+                 'above). Getting here means the supported API was skipped or refused — fix '
+                 'THAT first. If the holder cannot be named or killed, REBOOT and re-run: the '
+                 'reboot drops the handle, and the re-run finishes from the ProfileList row.')
+            return False
+
+
+def remove_windows(brain_name, brain_dir, dry_run):
+    brain_group = f'{brain_name}_group'                 # per-brain group is <name>_group on Windows
+
+    # 0. SID FIRST — the profile path is derived FROM it (ProfileList\<SID>\ProfileImagePath),
+    #    never from the username, and Get-LocalUser stops resolving the moment the account is
+    #    gone. Everything below operates on the paths Windows actually recorded.
     brain_sid = _windows_brain_sid(brain_name)
+    targets = _windows_profile_targets(brain_name, brain_sid)
+    for tsid, tdir in targets:
+        info(f'Brain profile: {tdir}   (ProfileList row: {tsid or "none"})')
 
     # 1. Remove reparse points FIRST, so no later recursive delete can follow a
     #    symlink into the workspace or into skills_bin. Covers both the new
     #    topology (~/.claude -> workspace) and the old one (~/.claude/skills).
-    _remove_reparse(home_claude, dry_run)
-    _remove_reparse(home_skills, dry_run)
+    for _tsid, tdir in targets:
+        _remove_reparse(os.path.join(tdir, '.claude'), dry_run)
+        _remove_reparse(os.path.join(tdir, '.claude', 'skills'), dry_run)
 
-    # 1b. Revoke any AIOS automation logon rights BEFORE deleting the account,
+    # 2. PROFILE BEFORE ACCOUNT. This ordering is the whole ballgame — see
+    #    _delete_profile_via_api. The account must still exist here.
+    _remove_windows_profiles(targets, dry_run)
+
+    # 3. Revoke any AIOS automation logon rights BEFORE deleting the account,
     #     while the SID still resolves. Idempotent: harmless if none were granted.
     if _revoke_logon_right is not None and (dry_run or user_exists(brain_name, 'Windows')):
         for right in _AUTOMATION_RIGHTS:
@@ -474,42 +871,21 @@ def remove_windows(brain_name, brain_dir, dry_run):
             else:
                 warn(f'Could not revoke {right}: {detail}')
 
-    # 2. Remove the OS user account.
+    # 4. Remove the OS user account. AFTER the profile — never before it.
     if dry_run or user_exists(brain_name, 'Windows'):
         run_ps(f'Remove-LocalUser -Name "{brain_name}"', dry_run=dry_run)
     else:
         info(f'User does not exist (skipping): {brain_name}')
 
-    # 3. Remove the per-brain group (leave the shared `brains` group).
+    # 5. Remove the per-brain group (leave the shared `brains` group).
     if dry_run or group_exists(brain_group, 'Windows'):
         run_ps(f'Remove-LocalGroup -Name "{brain_group}"', dry_run=dry_run)
     else:
         info(f'Per-brain group does not exist (skipping): {brain_group}')
 
-    # 4. Remove the user profile directory (now symlink-free after step 1).
-    if dry_run:
-        print(f'  [DRY-RUN] rmtree (clearing READONLY) {profile_dir}')
-    elif os.path.isdir(profile_dir):
-        info(f'Removing user profile directory: {profile_dir}')
-        # Release BEFORE the rmtree: READONLY (WinError 5) is cleared on the way down by
-        # _rmtree_clear_readonly, but a mounted hive / live file holder (WinError 32) must be
-        # cleared up front — no amount of retrying beats an open handle.
-        _release_profile_handles(profile_dir, brain_sid, dry_run=False)
-        try:
-            _rmtree_clear_readonly(profile_dir)
-            ok(f'Removed user profile directory: {profile_dir}')
-        except OSError as exc:
-            warn(f'Could not remove user profile directory {profile_dir}: {exc}')
-            warn('  A reboot is NOT the remedy: WinError 5 means READONLY (cleared '
-                 'automatically above) and WinError 32 means a live handle — any holder is '
-                 'named above. Do NOT leave it: a leftover profile makes the NEXT '
-                 'create-brain mint a fresh SID + a <name>.NNN profile, orphaning a '
-                 'ProfileList entry each cycle.')
-    else:
-        info(f'No user profile directory at: {profile_dir}')
-
-    # 5. Remove the workspace folder (its skills symlink is cleared first).
+    # 6. Remove the workspace folder (its skills symlink is cleared first).
     _remove_workspace(brain_dir, dry_run)
+    return brain_sid
 
 
 # ---------------------------------------------------------------------------
@@ -658,9 +1034,22 @@ def main():
     # --- Nothing-to-do short-circuit ---
     exists_user = user_exists(brain_name, os_name)
     exists_ws = os.path.isdir(brain_dir)
-    if not exists_user and not exists_ws and not group_exists(per_brain_group, os_name):
-        warn(f'No trace of brain "{brain_name}" (user/group/workspace). Nothing to do.')
+    # Profile residue counts as a trace. A teardown that failed at the profile step deletes the
+    # account/group/workspace first, so user/group/workspace alone are all absent while the
+    # profile is still on disk — short-circuiting on those three made the re-run print "Nothing
+    # to do", exit 0, and strand the residue that mints the NEXT deploy's suffixed profile.
+    # Resolved from ProfileList, never constructed: a suffixed profile is invisible to a
+    # C:\Users\<brain> check, which is how this short-circuit used to miss the very residue it
+    # exists to catch.
+    profile_residue = (_windows_profile_targets(brain_name, _windows_brain_sid(brain_name))
+                       if os_name == 'Windows' else [])
+    if not exists_user and not exists_ws and not profile_residue \
+            and not group_exists(per_brain_group, os_name):
+        warn(f'No trace of brain "{brain_name}" (user/group/workspace/profile). Nothing to do.')
         sys.exit(0)
+    if profile_residue and not exists_user:
+        info(f'Account already gone but profile residue remains at '
+             f'{", ".join(d for _s, d in profile_residue)} — resuming an interrupted teardown.')
 
     # --- Confirmation ---
     if not args.yes and not args.dry_run:
@@ -674,8 +1063,11 @@ def main():
             sys.exit(1)
 
     banner('Removing')
+    brain_sid = None
     if os_name == 'Windows':
-        remove_windows(brain_name, brain_dir, args.dry_run)
+        # The SID cannot be re-resolved from the account once it is deleted, so verification
+        # below has to be handed the value removal actually used.
+        brain_sid = remove_windows(brain_name, brain_dir, args.dry_run)
     else:
         remove_unix(brain_name, brain_dir, os_name, args.dry_run)
 
@@ -704,6 +1096,20 @@ def main():
             remaining.append('per-brain group')
         if os.path.isdir(brain_dir):
             remaining.append('workspace folder')
+        # The profile dir and its ProfileList row are the two things that actually cause the
+        # next deploy to mint a suffixed profile. Verifying only user/group/workspace is how a
+        # teardown that left the profile behind still reported "fully removed", exit 0.
+        #
+        # Re-resolved from scratch rather than re-checking the paths removal started with: that
+        # is what makes this an independent check, and it is also the straggler sweep — a row
+        # whose directory is gone, or a directory with no row, still shows up here and still
+        # fails the run.
+        if os_name == 'Windows':
+            for tsid, tdir in _windows_profile_targets(brain_name, brain_sid):
+                if os.path.isdir(tdir):
+                    remaining.append(f'user profile directory ({tdir})')
+                if tsid and _profilelist_entry_exists(tsid):
+                    remaining.append(f'ProfileList row ({tsid} -> {tdir})')
     if remaining:
         warn(f'Still present after removal: {", ".join(remaining)}. Review above.')
         sys.exit(2)

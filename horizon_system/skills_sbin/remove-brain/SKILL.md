@@ -52,10 +52,13 @@ Append `--yes` / `--keep-credential` / `--horizon-root` / `--dry-run` as request
 
 Relay the removal output and the final "Verify removal" result. If anything is still present after removal (exit code 2), surface what remained so the user can clean it up.
 
+Exit 2 means the teardown did **not** finish and the residue will make the next `create-brain` mint a suffixed profile. Do not paper over it — never rename the profile directory aside to free the name, which reads as success and leaves an untracked profile behind. If the blocker is a live handle the script could not name, a reboot then a re-run is the remedy; the re-run finishes from the ProfileList row.
+
 ---
 
 ## Notes for the executing agent
 
 - Destructive and irreversible — it deletes the OS account, workspace, profile, and credential. Confirm intent before running with `--yes`.
+- The Windows profile directory is resolved from `ProfileList\<SID>\ProfileImagePath`, never constructed as `C:\Users\<brain>`: Windows suffixes a colliding profile (`C:\Users\<brain>.LEATHERDECK`, then `.000`), and a run that deletes the constructed path misses the real profile and still exits 0. The script removes every profile directory **and** ProfileList row belonging to the brain, including residue whose account is already gone. A `--dry-run` prints the resolved path — if it shows a bare `C:\Users\<brain>` for a brain you know is suffixed, stop and report it.
 - Links (home `~/.claude` → workspace, workspace `.claude/skills` → `skills_bin`) are removed as reparse points (rmdir/unlink) BEFORE any recursive delete, so `skills_bin` is never followed/destroyed — do not work around this; just run the script.
 - The shared `brains` group is intentionally kept. Only the per-brain group is removed.
