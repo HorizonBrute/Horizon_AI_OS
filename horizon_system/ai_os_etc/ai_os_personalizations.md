@@ -68,7 +68,7 @@ Use `$HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py` to automate brain setup.
 1. Create a new OS user account (`brain_researcher`, `brain_coder`, etc.). Windows: Settings > Accounts > Other users. Unix: `useradd`.
 2. Create the brain's home directory under the brains path.
 3. Set ACLs: brain user full access to its own folder; no access elsewhere, including $HORIZON_ROOT.
-4. Grant brain user read+execute on `$HORIZON_BIN/` (excluding `sbin/` and `skills_sbin/` — see security_invariants.md §3).
+4. Grant brain user read+execute on `$HORIZON_BIN/` (excluding `sbin/` and `skills_sbin/` — see security_architecture_invariants.md §3).
 5. Create `.claude/settings.json` inside the brain's folder scoped to the brain's permissions.
 6. Create `CLAUDE.md` inside the brain's folder: persona, scope, behavioral rules.
 7. Brain's CLAUDE.md may import `@$HORIZON_ROOT/CLAUDE.md` to inherit system-level instructions.

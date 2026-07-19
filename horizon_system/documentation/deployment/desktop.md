@@ -101,7 +101,7 @@ python $HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py brain-name
 Run as administrator (Windows) or with `sudo` (Linux/macOS). The script:
 1. Creates an OS user account (`brain-name`) in the `brains` group, with a generated credential.
 2. Creates `$HORIZON_ROOT/brains/brain-name/` with full access for that user.
-3. Sets ACLs: `brains` group read + execute on `$HORIZON_BIN`/`skills_bin`, explicit Deny on `sbin`/`skills_sbin`/`logs` (see `security_invariants.md §2`).
+3. Sets ACLs: `brains` group read + execute on `$HORIZON_BIN`/`skills_bin`, explicit Deny on `sbin`/`skills_sbin`/`logs` (see `security_architecture_invariants.md §2`).
 4. Provisions any keys and tools specified.
 5. **Configures the brain's harness to point at AIOS** (Phase 5 — see below).
 6. Writes a `.aios_provision.json` manifest into the brain folder for auditors.

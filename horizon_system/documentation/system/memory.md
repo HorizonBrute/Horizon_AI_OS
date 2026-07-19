@@ -43,7 +43,7 @@ symlinks each brain's home `~/.claude` to its workspace `brains/<name>/.claude/`
 so a brain's `projects/` (transcripts + memory) lives inside its OWN isolated,
 group-owned brain folder (accessed via the `<brain>_group` Windows group /
 `<brain>` Unix account). Brains never see the owner's memory or each other's —
-the same isolation boundary described in `security_invariants.md §2`.
+the same isolation boundary described in `security_architecture_invariants.md §2`.
 
 ## Why centralize it
 

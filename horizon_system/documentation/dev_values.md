@@ -37,7 +37,7 @@ the conversation. Offload to agents aggressively.
 - Flag misalignment with `security_invariants.md` immediately and loudly. Do not
   silently work around a security constraint.
 - Prefer explicit Deny ACLs over relying on absence of permissions (especially
-  for sbin on Windows, per security_invariants.md §3).
+  for sbin on Windows, per security_architecture_invariants.md §3).
 - No real paths, usernames, credentials, or machine-specific identifiers in any
   committed file. Templates use placeholders.
 - The gitignore defaults to conservative. When in doubt, ignore the file type.

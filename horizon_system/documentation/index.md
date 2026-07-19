@@ -72,6 +72,7 @@ at the end of a session to save state. Start with the setup guide in
 |---|---|---|
 | `horizon_system/documentation/security/audit_logging.md` | Audit Logging — AIOS Filesystem Monitor | How `horizon_aios_monitor.py` watches AIOS system directories and logs unexpected file changes as JSON-line audit events. |
 | `horizon_system/documentation/security/brain_isolation_test.md` | Horizon AIOS — Brain Isolation Test (Criterion #5) | `horizon_aios_verify_isolation.py`: safe ACL check by default, opt-in `--live` provision/probe/teardown that proves a brain reads `bin` but is denied `sbin`. |
+| `horizon_system/documentation/security_architecture_invariants.md` | Security Invariants — Horizon AIOS | The full security-architecture model: user-ownership and the three-tier principal hierarchy, the `horizon_humans` operator boundary (Full on user space, Read-Only on the install + canon), brain-isolation ACLs, the bin/sbin boundary, least privilege, audit trail, and branding invariants. The terse context-loaded summary is `ai_os_etc/security_invariants.md`. |
 
 ## development_tools
 | ID (path) | Title | Purpose |
@@ -92,4 +93,4 @@ at the end of a session to save state. Start with the setup guide in
 | `horizon_system/ai_os_etc/file_structure_invariants.md` | File Structure Invariants — Horizon AIOS | Hard constraints on path variables, the directory tree, what the repo tracks vs. ignores, and structural conventions. |
 | `horizon_system/ai_os_etc/horizon_aios_agents.md` | Horizon AIOS — Agent Configuration (OS Layer) | Harness-agnostic agent instructions (orchestration model, agent usage) loaded into every session. |
 | `horizon_system/ai_os_etc/horizon_aios_model_prefs.md` | Model Preferences — Horizon AIOS | Advisory preferences for model selection when harnesses spawn agents or sub-agents: per-session slot preferences and named model groups (#lowcost, #debug, etc.). Best-effort -- reliability depends on the harness and session model. Extend via `horizon_aios_model_prefs.local.md` (gitignored). |
-| `horizon_system/ai_os_etc/security_invariants.md` | Security Invariants — Horizon AIOS | Hard security constraints for all users, harnesses, and brains, including the three-tier principal model. |
+| `horizon_system/ai_os_etc/security_invariants.md` | Security Invariants — Horizon AIOS | The terse, context-loaded hard rules brains must obey (stay in your workspace, no system modification, no reading/writing sensitive files). The full ACL/ownership model and three-tier principal hierarchy live in `documentation/security_architecture_invariants.md`. |

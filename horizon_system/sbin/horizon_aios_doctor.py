@@ -200,7 +200,7 @@ def check_gitignore_user(horizon_root):
 # ---------------------------------------------------------------------------
 # 7. Privileged-dir ACLs (Windows only)
 # Verify an explicit DENY ACE for the brains group exists on each privileged
-# directory (sbin, skills_sbin, logs). Per security_invariants.md §3, the
+# directory (sbin, skills_sbin, logs). Per security_architecture_invariants.md §3, the
 # default "no entry" posture is insufficient — an explicit Deny is required.
 # A missing Deny is a FAIL (the central security claim is unenforced).
 # ---------------------------------------------------------------------------
@@ -455,7 +455,7 @@ def check_sbin_acl(horizon_system):
             ok(f"{label} ACL — explicit brains Deny present")
         elif status == "nodeny":
             fail(name, f"no explicit Deny ACE for '{BRAINS_GROUP}' on {path} — "
-                       "run horizon_aios_harden.py (security_invariants.md §3)")
+                       "run horizon_aios_harden.py (security_architecture_invariants.md §3)")
         else:
             warn(name, f"could not run icacls: {detail}")
 
@@ -494,7 +494,7 @@ def check_sbin_acl_unix(horizon_system):
         mode = stat.S_IMODE(st.st_mode)
         if mode != 0o700:
             fail(name, f"{path} mode is {oct(mode)}, expected 0o700 — "
-                       "run horizon_aios_harden.py (security_invariants.md §3)")
+                       "run horizon_aios_harden.py (security_architecture_invariants.md §3)")
             continue
 
         if st.st_uid != current_uid:
@@ -508,6 +508,75 @@ def check_sbin_acl_unix(horizon_system):
             continue
 
         ok(f"{label} ACL — mode 0o700, owner '{current_user}'")
+
+
+def _acl_group_effective(path, group):
+    """Return the effective 'rwx'-style perm string for a named group's ACL
+    entry on `path`, honoring the mask (#effective), or None if the entry is
+    absent / getfacl is unavailable."""
+    try:
+        r = subprocess.run(["getfacl", "-p", str(path)],
+                           capture_output=True, text=True, timeout=15)
+    except (FileNotFoundError, OSError, subprocess.SubprocessError):
+        return None
+    if r.returncode != 0:
+        return None
+    prefix = f"group:{group}:"
+    for line in r.stdout.splitlines():
+        line = line.strip()
+        if line.startswith(prefix):
+            # 'group:horizon_humans:r-x' or 'group:horizon_humans:rwx\t#effective:r--'
+            if "#effective:" in line:
+                return line.split("#effective:", 1)[1].strip()
+            return line[len(prefix):].strip()
+    return None
+
+
+def check_humans_readonly_system_unix(horizon_system, horizon_root):
+    """Unix: horizon_humans must be Read-Only (no write) across $HORIZON_SYSTEM
+    and on the root-level canon, and the canon parent dirs must carry the sticky
+    bit so the r-- ACL can't be bypassed by unlink+recreate. Mirrors the humans
+    model in horizon_aios_harden.py (security_architecture_invariants.md)."""
+    import stat as _stat
+
+    name = "humans Read-Only on $HORIZON_SYSTEM"
+    perms = _acl_group_effective(horizon_system, HUMANS_GROUP)
+    if perms is None:
+        warn(name, f"no '{HUMANS_GROUP}' ACL entry on {horizon_system} (getfacl "
+                   "unavailable or entry absent) — run horizon_aios_harden.py")
+    elif "w" in perms:
+        fail(name, f"'{HUMANS_GROUP}' has WRITE ({perms}) on {horizon_system} — "
+                   "humans can modify the install; run horizon_aios_harden.py")
+    else:
+        ok(f"humans Read-Only across $HORIZON_SYSTEM ({perms}, no write)")
+
+    if not horizon_root:
+        return
+    cname = "root canon Read-Only for humans"
+    canon_rel = ("agents.md", "CLAUDE.md",
+                 os.path.join(".claude", "agents.md"),
+                 os.path.join(".claude", "CLAUDE.md"))
+    problems, checked = [], 0
+    for rel in canon_rel:
+        cpath = Path(horizon_root) / rel
+        if not cpath.is_file():
+            continue
+        checked += 1
+        cperms = _acl_group_effective(cpath, HUMANS_GROUP)
+        if cperms is None or "w" in cperms:
+            problems.append(f"{rel}: writable ({cperms})")
+            continue
+        try:
+            if not (cpath.parent.stat().st_mode & _stat.S_ISVTX):
+                problems.append(f"{rel}: parent dir not sticky (unlink+recreate possible)")
+        except OSError as e:
+            problems.append(f"{rel}: parent stat error ({e})")
+    if checked == 0:
+        warn(cname, "no root canon files found to check")
+    elif problems:
+        fail(cname, "; ".join(problems) + " — run horizon_aios_harden.py")
+    else:
+        ok(f"root canon Read-Only for humans ({checked} files, r-- + sticky parents)")
 
 
 # ---------------------------------------------------------------------------
@@ -857,6 +926,7 @@ def main():
                 check_runtime_groups_no_humans(horizon_root)
         else:
             check_sbin_acl_unix(horizon_system)
+            check_humans_readonly_system_unix(horizon_system, horizon_root)
         horizon_bin = env.get("HORIZON_BIN")
         if horizon_bin:
             check_monitor_status(horizon_bin)

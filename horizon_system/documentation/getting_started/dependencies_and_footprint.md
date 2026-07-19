@@ -281,4 +281,4 @@ provisioning — this is a manual post-provisioning step. The filesystem monitor
 
 - `getting_started/ReadMeToSetupYourSystem.md` — procedural step-by-step instructions for AIOS installation
 - `documentation/utilities.md` — quick-lookup catalog for `horizon_aios_harden.py`, `horizon_aios_create_brain.py`, `horizon_aios_brain_credential.py`, and all other `sbin/` utilities
-- `ai_os_etc/security_invariants.md` — the ACL ownership model, the three-tier principal hierarchy, and why the Deny-after-grant ordering is a hard invariant
+- `documentation/security_architecture_invariants.md` — the ACL ownership model, the three-tier principal hierarchy, and why the Deny-after-grant ordering is a hard invariant

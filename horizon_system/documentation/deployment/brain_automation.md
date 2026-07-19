@@ -35,7 +35,7 @@ read or write.
 - **Read/write posture is untouched.** Granting a logon right does **not** change
   the brain's ACLs: the no-write Deny on `sbin`/`skills_sbin`/`logs` and the
   read-only `bin`/`skills_bin` grants are exactly as `horizon_aios_harden.py` set them
-  (see `security_invariants.md §2`). A scheduled brain can log on headlessly but
+  (see `security_architecture_invariants.md §2`). A scheduled brain can log on headlessly but
   still cannot write the AIOS layer or reach `sbin`.
 - **The password is the keystore password.** The credential Task Scheduler or a
   service consumes is the one AIOS already stored for the brain
@@ -236,5 +236,5 @@ the brain needs no per-account right). The equivalent setups:
   harness is wired to AIOS.
 - `security/audit_logging.md` — service/scheduled-task registration patterns for
   the AIOS monitor (the same Windows mechanics apply here).
-- `ai_os_etc/security_invariants.md §2` — the Deny/read-only ACL posture that
+- `documentation/security_architecture_invariants.md §2` — the Deny/read-only ACL posture that
   automation leaves untouched.
