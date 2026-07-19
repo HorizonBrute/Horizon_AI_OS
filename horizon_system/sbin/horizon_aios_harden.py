@@ -7,7 +7,9 @@ Applies the authoritative brains-group ACL model to the AIOS layer
 ($HORIZON_SYSTEM) INDEPENDENT of brain creation, so a freshly bootstrapped
 machine is protected before any brain account exists.
 
-This is the real enforcement point for security_invariants.md §2/§3/§5: the
+This is the real enforcement point for the ACL model documented in
+documentation/security_architecture_invariants.md §2/§3/§5 (the terse,
+context-loaded ai_os_etc/security_invariants.md is the operator-facing summary): the
 brain OS user has *no write access to $HORIZON_SYSTEM* and is explicitly
 DENIED sbin/, skills_sbin/, and the audit logs/.
 
@@ -26,8 +28,20 @@ ACL model applied:
 
   horizon_humans group (flesh-and-blood human operators; created on every
   install, secure-by-onboarding — empty is fine, an empty grant grants nobody):
-    $HORIZON_ROOT (whole AIOS tree) -> humans: Full control
-    $HORIZON_ROOT/brains            -> humans: Read-Only (explicit Deny-Write;
+    $HORIZON_ROOT (user space OUTSIDE horizon_system/) -> humans: Full control
+    $HORIZON_SYSTEM (the install itself)               -> humans: Read-Only
+                                       (read+execute, NO write). Install-wide
+                                       config/canon/tooling is admin-authored;
+                                       humans extend via scope-local (project /
+                                       folder) overrides that live outside
+                                       horizon_system. Writable executable dirs
+                                       are avoided here to close the privesc path
+                                       (a human-writable tool later run by root).
+    root-level canon (agents.md, CLAUDE.md, .claude/agents.md,
+                      .claude/CLAUDE.md)               -> humans: Read-Only
+                                       (install-wide canon lives outside
+                                       horizon_system but is still admin-owned).
+    $HORIZON_ROOT/brains               -> humans: Read-Only (explicit Deny-Write;
                                        to write there a human elevates to admin
                                        or changes permissions)
 
@@ -67,7 +81,7 @@ Docker note:
     this via AIOS_SKIP_HARDEN=1 and skips the normal Section 9 invocation to
     avoid running horizon_aios_harden.py twice. Never set AIOS_SKIP_HARDEN=1 in native
     (non-Docker) deployments — doing so bypasses the ACL hardening that enforces
-    brain isolation (see security_invariants.md §2).
+    brain isolation (see documentation/security_architecture_invariants.md §2).
 
 Usage:
     python horizon_aios_harden.py [--horizon-root /path] [--strict] [--dry-run]
@@ -106,6 +120,17 @@ BRAINS_GROUP = 'brains'
 # "only owner/SYSTEM/Administrators write" without a separate code path.
 HUMANS_GROUP = 'horizon_humans'
 HUMANS_GROUP_DESC = 'Horizon.AIOS Actual Humans'
+
+# Install-wide canon at the AIOS root that governs agent behavior but lives
+# OUTSIDE $HORIZON_SYSTEM (so the tree-wide humans Full grant would otherwise
+# leave it human-writable). horizon_humans are held Read-Only on these too, so
+# the only human-writable config is scope-local (project/folder) overrides.
+ROOT_CANON_RELPATHS = (
+    'agents.md',
+    'CLAUDE.md',
+    os.path.join('.claude', 'agents.md'),
+    os.path.join('.claude', 'CLAUDE.md'),
+)
 
 # Principals that must NEVER lose control of the AIOS tree, regardless of mode.
 # Well-known SIDs are used (locale-independent: works on non-English Windows).
@@ -202,6 +227,19 @@ def resolve_paths(horizon_root_arg):
         # holds this subtree Read-Only for the horizon_humans group.
         'brains':              os.path.join(horizon_root, 'brains'),
     }
+
+
+def root_canon_files(paths, dry_run=False):
+    """Existing root-level canon files (outside $HORIZON_SYSTEM) that humans are
+    held Read-Only on. In dry-run, return all candidates so the plan is visible
+    even before the files exist."""
+    root = paths['horizon_root']
+    out = []
+    for rel in ROOT_CANON_RELPATHS:
+        candidate = os.path.join(root, rel)
+        if dry_run or os.path.isfile(candidate):
+            out.append(candidate)
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -344,6 +382,14 @@ def harden_windows(paths, owner, have_group, have_humans, dry_run, strict):
          horizon_humans grants nobody, so a server with no enrolled humans
          reduces to "only owner/SYSTEM/Administrators write" with no separate
          code path. Human operators are enrolled by onboarding (bootstrap).
+      B2. Hold horizon_humans Read-Only on the install itself: an inheritable
+         Deny-Write (BRAINS_NOWRITE_MASK) across $HORIZON_SYSTEM plus a per-file
+         Deny-Write on the root-level canon (agents.md/CLAUDE.md/.claude/*). The
+         explicit Deny beats the inherited humans Allow-Full from B, so humans
+         keep Full on user space but only read+execute the install. Install-wide
+         config/canon/tooling is admin-authored; humans configure via scope-local
+         overrides outside horizon_system. (Administrators are not enrolled in
+         horizon_humans, so admins still write via elevation.)
 
     Brain model (unchanged, scoped to $HORIZON_SYSTEM):
       1. owner + SYSTEM + Administrators Full (idempotent under the inherited
@@ -424,6 +470,20 @@ def harden_windows(paths, owner, have_group, have_humans, dry_run, strict):
              'owner/SYSTEM/Administrators/humans control is ensured; re-run '
              'after the group exists to apply the brains restrictions.')
 
+    # --- B2. horizon_humans Read-Only across $HORIZON_SYSTEM + root canon. ------
+    #     Humans get Full on user space (grant B) but only read+execute on the
+    #     install itself. Explicit Deny-Write beats the inherited humans Allow.
+    if have_humans:
+        run(['icacls', system, '/deny',
+             f'{HUMANS_GROUP}:(OI)(CI){BRAINS_NOWRITE_MASK}'], dry_run=dry_run)
+        deny(f'humans Read-Only across $HORIZON_SYSTEM (DENY write/delete): '
+             f'{HUMANS_GROUP} -> {system}')
+        for canon in root_canon_files(paths, dry_run):
+            if os.path.isfile(canon) or dry_run:
+                run(['icacls', canon, '/deny',
+                     f'{HUMANS_GROUP}:{BRAINS_NOWRITE_MASK}'], dry_run=dry_run)
+                deny(f'humans Read-Only on root canon: {HUMANS_GROUP} -> {canon}')
+
     # --- C. horizon_humans Read-Only on brains/ (after the humans Full grant). --
     if have_humans:
         if not os.path.isdir(brains):
@@ -450,9 +510,10 @@ def harden_unix(paths, os_name, owner, have_group, have_humans, dry_run, strict)
     """
     Apply the uniform ACL model on Linux/macOS.
 
-      - horizon_humans => Full-equivalent (rwx) across the tree, but Read-Only
-        (r-x) on brains/ — the Unix analogue of the Windows humans model. An
-        empty group grants nobody, so a server reduces to owner-only write.
+      - horizon_humans => Full-equivalent (rwx) on user space, but Read-Only
+        (r-x) across $HORIZON_SYSTEM and on the root-level canon, and Read-Only
+        on brains/ — the Unix analogue of the Windows humans model. An empty
+        group grants nobody, so a server reduces to owner-only write.
       - sbin / skills_sbin / logs => brains denied (setfacl g:brains:--- where
         available; 700 owner-only otherwise)
       - bin / skills_bin          => brains Read+Execute
@@ -477,12 +538,39 @@ def harden_unix(paths, os_name, owner, have_group, have_humans, dry_run, strict)
     # --- horizon_humans model (tree Full-equivalent, brains/ Read-Only). ---
     # setfacl is the closest analogue to a named-group grant + brains deny.
     if have_humans and have_setfacl and os_name == 'Linux':
-        info('setfacl horizon_humans rwx across the AIOS tree (Full-equivalent)')
+        # 1. Full-equivalent on user space (whole tree root, access + default).
+        info('setfacl horizon_humans: rwx on user space, r-x on $HORIZON_SYSTEM')
         run(['setfacl', '-R', '-m', f'g:{HUMANS_GROUP}:rwx', root],
             dry_run=dry_run, check=False)
         run(['setfacl', '-R', '-d', '-m', f'g:{HUMANS_GROUP}:rwx', root],
             dry_run=dry_run, check=False)
-        grant(f'humans Full-equivalent on AIOS tree: {HUMANS_GROUP} -> {root}')
+        grant(f'humans Full-equivalent on user space: {HUMANS_GROUP} -> {root}')
+        # 2. Read-Only (read+execute, NO write) across the install itself.
+        #    Applied AFTER the tree-wide rwx so it overrides it for the
+        #    horizon_system subtree; the privileged-dir owner-only lockdowns
+        #    below run later still and further reduce sbin/skills_sbin/logs.
+        run(['setfacl', '-R', '-m', f'g:{HUMANS_GROUP}:r-x', system],
+            dry_run=dry_run, check=False)
+        run(['setfacl', '-R', '-d', '-m', f'g:{HUMANS_GROUP}:r-x', system],
+            dry_run=dry_run, check=False)
+        deny(f'humans Read-Only across $HORIZON_SYSTEM: {HUMANS_GROUP} -> {system}')
+        # 3. Root-level canon (outside horizon_system) held Read-Only too.
+        for canon in root_canon_files(paths, dry_run):
+            run(['setfacl', '-m', f'g:{HUMANS_GROUP}:r--', canon],
+                dry_run=dry_run, check=False)
+            deny(f'humans Read-Only on root canon: {HUMANS_GROUP} -> {canon}')
+        # 3b. The canon files live in human-writable dirs (user space), so the
+        #     r-- ACL alone would still let a human unlink+recreate them via the
+        #     writable parent. Set the sticky bit on the canon parent dirs so
+        #     only the file owner (root) can delete/rename files there, while
+        #     humans keep creating/deleting their OWN files (local overrides).
+        canon_parents = sorted({os.path.dirname(c)
+                                for c in root_canon_files(paths, dry_run)})
+        for parent in canon_parents:
+            if os.path.isdir(parent) or dry_run:
+                run(['chmod', '+t', parent], dry_run=dry_run, check=False)
+                grant(f'sticky bit (owner-only delete) on canon parent: {parent}')
+        # 4. brains/ Read-Only (unchanged).
         if os.path.isdir(brains) or dry_run:
             run(['setfacl', '-R', '-m', f'g:{HUMANS_GROUP}:r-x', brains],
                 dry_run=dry_run, check=False)
@@ -699,8 +787,9 @@ def main():
     print('    sbin, skills_sbin, logs -> DENY (explicit, full; after grants)')
     print('    rest of $HORIZON_SYSTEM -> no write (inheritable Deny-Write)')
     print(f'  {HUMANS_GROUP} group:')
-    print('    AIOS tree            -> Full control (empty group = only admins write)')
-    print('    brains/              -> Read-Only (DENY write/delete; elevate/re-perm to write)')
+    print('    user space (outside horizon_system/) -> Full control (empty group = only admins write)')
+    print('    $HORIZON_SYSTEM + root canon         -> Read-Only (read+execute, no write)')
+    print('    brains/                              -> Read-Only (DENY write/delete; elevate/re-perm to write)')
     if os_name == 'Windows':
         print('  owner + SYSTEM + Administrators -> Full control (root inheritance broken).')
     else:
