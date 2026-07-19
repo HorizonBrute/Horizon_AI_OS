@@ -67,7 +67,7 @@ ENV HORIZON_BIN=/aios/horizon_system/bin
 ENV HORIZON_ETC=/aios/horizon_system/ai_os_etc
 ENV HORIZON_DOCS=/aios/horizon_system/documentation
 ENV HORIZON_USRBIN=/aios/usrbin
-ENV HORIZON_PROJECTS=/aios/Projects
+ENV HORIZON_PROJECTS=/aios/projects
 ENV HORIZON_LOGS=/aios/horizon_system/logs
 ENV HORIZON_SOUNDS=/aios/horizon_system/sounds
 

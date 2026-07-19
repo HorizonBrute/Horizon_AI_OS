@@ -52,10 +52,14 @@ ACL model applied:
     $HORIZON_ROOT/brains               -> humans: Read/Write (near-admins modify
                                        brains/apps; brain-to-brain isolation
                                        rides on ownership + per-brain group)
-    $HORIZON_ROOT/projects             -> humans: per-user isolation (traverse-only
-                                       on the parent, nothing on the owner-only
-                                       child folders; new folders born isolated
-                                       via the parent default ACL)
+    $HORIZON_ROOT/{projects,handoffs,objectives,usrbin}
+                                       -> humans: SELF-SERVICE per-user isolation.
+                                       Each parent grants create-traverse (-wx:
+                                       create+enter, NO list) + sticky + no setgid;
+                                       new entries born owner-only + creator's own
+                                       private group via the isolating default ACL.
+                                       Peers cannot enumerate/read/delete them. Each
+                                       area has one group-shared shared/ drop-zone.
 
   owner + SYSTEM + Administrators -> Full control, always preserved. Root
   inheritance is broken and these are re-granted, so broad inherited grants
@@ -135,8 +139,8 @@ BRAINS_GROUP = 'brains'
 # The AIOS-managed group for flesh-and-blood human operators (secure-by-
 # onboarding: created on every install alongside `brains`, even when empty).
 # Members get Full control of the AIOS tree, Read/Write on brains/ (near-admins
-# who modify brains/apps), and are isolated from each other on projects/
-# (traverse-only parent, owner-only child folders). An EMPTY horizon_humans is
+# who modify brains/apps), and are self-service isolated from each other on the
+# four human areas (create-traverse parent, entries born owner-only). An EMPTY horizon_humans is
 # harmless: an empty group
 # granted Full grants nobody, so a server with no enrolled humans reduces to
 # "only owner/SYSTEM/Administrators write" without a separate code path.
@@ -255,8 +259,9 @@ def resolve_paths(horizon_root_arg):
         # brains/ lives under HORIZON_ROOT (not HORIZON_SYSTEM). The humans model
         # holds this subtree Read/Write for the horizon_humans group (near-admins).
         'brains':              os.path.join(horizon_root, 'brains'),
-        # projects/ lives under HORIZON_ROOT. Humans are isolated from each other:
-        # traverse-only on the parent, nothing on the (owner-only) child folders.
+        # projects/ lives under HORIZON_ROOT. One of the four self-service human
+        # areas (create-traverse parent, entries born owner-only); see the posture
+        # config file_acl_hardening.toml and horizon_aios_acl_posture.py.
         'projects':            os.path.join(horizon_root, 'projects'),
     }
 
@@ -713,7 +718,7 @@ def main():
     print('    user space (outside horizon_system/, projects/) -> Full control (empty group = only admins write)')
     print('    $HORIZON_SYSTEM + root canon         -> Read-Only (read+execute, no write)')
     print('    brains/                              -> Read/Write (near-admins; brain-to-brain isolation via ownership + per-brain group)')
-    print('    projects/                            -> per-user isolation (traverse-only parent, owner-only child folders)')
+    print('    projects/, handoffs/, objectives/, usrbin/ -> self-service per-user isolation (create-traverse parent, entries born owner-only; per-area shared/ drop-zone)')
     if os_name == 'Windows':
         print('  owner + SYSTEM + Administrators -> Full control (root inheritance broken).')
     else:
