@@ -50,7 +50,9 @@ DEFAULTS = {
     "AIOS_SYNC_TIME": "03:00",
     # Official / upstream lane.
     "AIOS_OFFICIAL_REMOTE": "origin",
-    "AIOS_OFFICIAL_BRANCH": "main",
+    # Blank = auto-detect the remote's default branch (main / master / ...).
+    # A hardcoded value that doesn't exist on the remote fails every sync.
+    "AIOS_OFFICIAL_BRANCH": "",
     # Personal lane (empty remote == lane disabled unless configured).
     "AIOS_PERSONAL_REMOTE": "",
     "AIOS_PERSONAL_BRANCH": "main",
@@ -58,7 +60,7 @@ DEFAULTS = {
     "AIOS_LOG_DIR": "",
     # Deprecated aliases -- mapped onto the official lane when the new keys are absent.
     "AIOS_REPO_REMOTE": "origin",
-    "AIOS_REPO_BRANCH": "main",
+    "AIOS_REPO_BRANCH": "",  # blank = auto-detect (see AIOS_OFFICIAL_BRANCH)
 }
 
 ACCEPTED_KEYS = set(DEFAULTS.keys())
@@ -265,19 +267,80 @@ def run_status(config):
     sys.exit(0)
 
 
+def _remote_branch_exists(remote, branch):
+    """True if <remote>/<branch> resolves locally (after a fetch)."""
+    return run_git("rev-parse", "--verify", "--quiet", f"{remote}/{branch}").returncode == 0
+
+
+def _detect_remote_default_branch(remote):
+    """Query the remote's default branch (its HEAD) directly. Returns the branch
+    name (e.g. 'master') or None. Works without local tracking refs."""
+    res = run_git("ls-remote", "--symref", remote, "HEAD")
+    if res.returncode != 0:
+        return None
+    for line in res.stdout.splitlines():
+        line = line.strip()
+        if line.startswith("ref:") and "refs/heads/" in line:
+            return line.split("refs/heads/", 1)[1].split()[0].strip()
+    return None
+
+
+def _current_branch():
+    """Current checked-out branch name, or 'HEAD' if detached, or None on error."""
+    res = run_git("rev-parse", "--abbrev-ref", "HEAD")
+    return res.stdout.strip() if res.returncode == 0 else None
+
+
 def sync_official(config):
     """Official lane: overwrite official-owned paths from the upstream remote.
 
     Returns the number of official files changed. Exits non-zero on hard failure.
     """
     remote = config["AIOS_OFFICIAL_REMOTE"]
-    branch = config["AIOS_OFFICIAL_BRANCH"]
-    ref = f"{remote}/{branch}"
+    branch = config["AIOS_OFFICIAL_BRANCH"].strip()
 
     fetch = run_git("fetch", remote)
     if fetch.returncode != 0:
         log("ERR", f"Official lane: git fetch {remote} failed: {fetch.stderr.strip()}")
         sys.exit(1)
+
+    # Resolve the official branch. Blank config => auto-detect the remote's
+    # default branch. A configured-but-missing branch => warn and fall back to
+    # the detected default. This removes the hardcoded-'main' footgun: a repo
+    # whose default is 'master' would otherwise fail every sync with
+    # "fatal: invalid reference".
+    if not branch:
+        branch = _detect_remote_default_branch(remote)
+        if not (branch and _remote_branch_exists(remote, branch)):
+            log("ERR", f"Official lane: could not detect the default branch on "
+                       f"'{remote}'. Set AIOS_OFFICIAL_BRANCH in aios_local.conf.")
+            sys.exit(1)
+        log("INFO", f"Official lane: auto-detected default branch '{branch}' on '{remote}'.")
+    elif not _remote_branch_exists(remote, branch):
+        detected = _detect_remote_default_branch(remote)
+        if detected and _remote_branch_exists(remote, detected):
+            log("WARN", f"Official lane: configured branch '{branch}' not found on "
+                        f"'{remote}'; falling back to its default '{detected}'. Set "
+                        f"AIOS_OFFICIAL_BRANCH={detected} in aios_local.conf to silence this.")
+            branch = detected
+        else:
+            log("ERR", f"Official lane: branch '{branch}' not found on '{remote}' and "
+                       f"its default could not be detected — nothing to sync from.")
+            sys.exit(1)
+    ref = f"{remote}/{branch}"
+    # Expose the resolved branch so the run summary reports the real branch.
+    config["AIOS_OFFICIAL_BRANCH"] = branch
+
+    # Branch guard: the hard-restore below overwrites the working tree + index
+    # for official paths on the CURRENT checkout. If we're not on the official
+    # branch, refuse and skip — a nightly run must never clobber a checked-out
+    # feature branch. Not a hard failure; housekeeping still runs.
+    current = _current_branch()
+    if current != branch:
+        log("WARN", f"Official lane: checked out on '{current}', not the official "
+                    f"branch '{branch}'; skipping the hard-restore to avoid clobbering it. "
+                    f"Check out '{branch}' to run the official lane.")
+        return 0
 
     # Scoped hard-restore: overwrite worktree+index for official paths only.
     checkout = run_git("checkout", ref, "--", *official_pathspec())
