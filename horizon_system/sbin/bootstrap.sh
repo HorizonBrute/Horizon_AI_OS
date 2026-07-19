@@ -20,9 +20,13 @@ YES_ALL=false
 #   --profile server|workstation   deployment profile (gates human enrollment)
 #   --humans <name> [<name>...]    human accounts to enroll into horizon_humans
 #   --add-human <name>             enroll one human and exit (management mode)
+#   --no-nightly                   opt out of the on-by-default nightly maintenance job
 PROFILE_VAL=""
 ADD_HUMAN_VAL=""
 HUMANS_LIST=()
+# Nightly maintenance (doctor report + harden re-assert) is installed by default;
+# --no-nightly opts out. Recorded in the deployment marker (nightly_maintenance).
+NIGHTLY_MAINTENANCE=true
 _collect_humans=false
 for arg in "$@"; do
   if [ "$_collect_humans" = true ]; then
@@ -33,6 +37,7 @@ for arg in "$@"; do
   fi
   case "$arg" in
     --yes|-y)     YES_ALL=true ;;
+    --no-nightly) NIGHTLY_MAINTENANCE=false ;;
     --profile=*)  PROFILE_VAL="${arg#*=}" ;;
     --profile)    _next_is=profile ;;
     --add-human=*) ADD_HUMAN_VAL="${arg#*=}" ;;
@@ -78,7 +83,7 @@ HORIZON_DOCS="$HORIZON_SYSTEM/documentation"
 HORIZON_SOUNDS="$HORIZON_SYSTEM/sounds"
 HORIZON_LOGS="$HORIZON_SYSTEM/logs"
 HORIZON_USRBIN="$HORIZON_ROOT/usrbin"
-HORIZON_PROJECTS="$HORIZON_ROOT/Projects"
+HORIZON_PROJECTS="$HORIZON_ROOT/projects"
 
 export HORIZON_SYSTEM HORIZON_ROOT HORIZON_BIN HORIZON_SBIN HORIZON_ETC HORIZON_DOCS HORIZON_SOUNDS HORIZON_LOGS HORIZON_USRBIN HORIZON_PROJECTS
 
@@ -148,6 +153,27 @@ enroll_human() {
   else
     warn "No usermod/dseditgroup available - cannot enroll '$member'."
   fi
+
+  # Per-user project workspace: create it IN-PLACE under the projects parent and
+  # chown to the human, chmod 700 (owner-only). Creating in-place (never moving a
+  # folder in) lets the parent's default ACL apply: because that default denies
+  # the horizon_humans group, the new folder is born isolated from other humans -
+  # no per-user setfacl needed. Idempotent: skip if it already exists.
+  local projects_parent="$HORIZON_ROOT/projects"
+  local user_dir="$projects_parent/$member"
+  if [ -d "$user_dir" ]; then
+    info "Project workspace already exists (leaving as-is): $user_dir"
+  else
+    mkdir -p "$projects_parent" 2>/dev/null || true
+    if mkdir "$user_dir" 2>/dev/null; then
+      chown "$member:$member" "$user_dir" 2>/dev/null \
+        || warn "Could not chown '$user_dir' to '$member' (does the account exist?)"
+      chmod 700 "$user_dir" 2>/dev/null || true
+      ok "Created per-user project workspace (owner-only, born isolated): $user_dir"
+    else
+      warn "Could not create project workspace: $user_dir"
+    fi
+  fi
 }
 
 write_deploy_marker() {
@@ -165,6 +191,7 @@ write_deploy_marker() {
   "profile": "$profile",
   "humans_group": "$HUMANS_GROUP",
   "humans": [$humans_json],
+  "nightly_maintenance": $NIGHTLY_MAINTENANCE,
   "updated_utc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
 EOF
@@ -175,12 +202,16 @@ EOF
 #     exits, without re-running the whole install. ---
 if [ -n "$ADD_HUMAN_VAL" ]; then
   banner "Add human operator to $HUMANS_GROUP"
+  # Preserve a prior nightly_maintenance opt-out across --add-human re-runs.
+  if [ -f "$DEPLOY_MARKER" ] && grep -q '"nightly_maintenance"[[:space:]]*:[[:space:]]*false' "$DEPLOY_MARKER"; then
+    NIGHTLY_MAINTENANCE=false
+  fi
   ensure_humans_group
   enroll_human "$ADD_HUMAN_VAL"
   # Marker reflects real group membership (all enrolled humans), not just the
   # one added this run - otherwise each --add-human would clobber the prior list.
   write_deploy_marker "workstation" $(list_humans_group_members)
-  info "Note: horizon_humans is Read-Only on brains/ by design (elevate or re-permission to write there)."
+  info "Note: horizon_humans is Read/Write on brains/ (near-admins), and each human is isolated to their own projects/<name> folder."
   exit 0
 fi
 
@@ -635,6 +666,29 @@ else
 fi
 
 # -----------------------------------------------------------------------------
+# Nightly maintenance schedule (ON BY DEFAULT) — a nightly job (doctor report +
+# harden re-assert) so routine drift self-corrects. Opt out with --no-nightly.
+# Non-fatal: a skipped/failed schedule install does not fail bootstrap. Separate
+# from the opt-in upstream-sync scheduler above.
+# -----------------------------------------------------------------------------
+MAINT_SCHED="$HORIZON_SYSTEM/sbin/horizon_aios_setup_maintenance_schedule.py"
+if [ "${AIOS_DEPLOY_MODE:-}" = "docker" ]; then
+    info "Docker mode: skipping nightly maintenance schedule (run maintenance at the container/host layer)."
+elif [ "$NIGHTLY_MAINTENANCE" != "true" ]; then
+    info "Nightly maintenance schedule opted out (--no-nightly). Enable later: python3 $MAINT_SCHED --yes"
+elif [ ! -f "$MAINT_SCHED" ]; then
+    warn "horizon_aios_setup_maintenance_schedule.py not found — skipping nightly maintenance setup."
+elif command -v python3 >/dev/null 2>&1; then
+    if python3 "$MAINT_SCHED" --yes; then
+        ok "Nightly maintenance schedule installed (doctor report + harden re-assert, ~03:00)."
+    else
+        warn "Nightly maintenance schedule install did not complete. Run later: python3 $MAINT_SCHED --yes"
+    fi
+else
+    warn "python3 not found — skipping nightly maintenance schedule. Run later: python3 $MAINT_SCHED --yes"
+fi
+
+# -----------------------------------------------------------------------------
 # SECTION 10: Onboarding - secure by implementation
 # There is no separate "hardening step": onboarding IS the security boundary.
 # It always creates the brains + horizon_humans groups and applies the uniform
@@ -706,7 +760,7 @@ if [ "$PROFILE_VAL" = "workstation" ]; then
   if [ "${#HUMANS_LIST[@]}" -eq 0 ]; then
     warn "Workstation profile but no humans enrolled yet. Add later: bootstrap.sh --add-human <name>"
   else
-    info "horizon_humans has Full-equivalent access to the tree but is Read-Only on brains/."
+    info "horizon_humans has Full-equivalent access to the tree, Read/Write on brains/, and per-user isolation on projects/ (each human sees only their own folder)."
   fi
 else
   info "Server profile: no humans enrolled. horizon_humans stays empty (only owner/root write)."

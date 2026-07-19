@@ -344,12 +344,12 @@ def _rights_block_write(rights_text):
     return ("write" in t) or ("fullcontrol" in t) or ("modify" in t)
 
 
-def check_humans_brains_readonly(horizon_root):
-    """Explicit horizon_humans Deny on brains/ that actually blocks writes (humans
-    are Read-Only there). FAIL if there is no Deny at all; WARN if a Deny exists but
-    is delete-only — that leaves modify allowed, so 'Read-Only' would be false
-    assurance and means the full no-write mask was never (re)applied."""
-    name = "brains/ humans Read-Only"
+def check_humans_brains_writable(horizon_root):
+    """horizon_humans must be able to WRITE brains/ — humans are near-admins who
+    modify brains/apps. FAIL if a write-blocking Deny ACE is present (it would lock
+    humans out), or if humans hold no write/modify Allow at all. WARN on a
+    delete-only Deny (modify still allowed, but deletes blocked)."""
+    name = "brains/ humans Read/Write"
     brains = Path(horizon_root) / "brains"
     if not brains.exists():
         warn(name, f"{brains} does not exist yet — created on first brain/onboarding")
@@ -357,17 +357,80 @@ def check_humans_brains_readonly(horizon_root):
     status, detail = _has_group_deny(brains, HUMANS_GROUP)
     if status == "deny":
         if _rights_block_write(detail):
-            ok(f"brains/ — explicit horizon_humans Deny blocks writes / Read-Only ({detail})")
+            fail(name, f"explicit '{HUMANS_GROUP}' Deny blocks writes on {brains} "
+                       f"({detail}) — humans must be able to modify brains/apps; "
+                       "re-run horizon_aios_harden.py")
         else:
-            warn(name, f"explicit '{HUMANS_GROUP}' Deny on {brains} is delete-only "
-                       f"({detail}), NOT write-blocking — humans can still MODIFY files "
-                       "in brains/. Re-run horizon_aios_harden.py to apply the full "
-                       "no-write mask (WD,AD,WEA,WA,DE,DC).")
-    elif status == "nodeny":
-        fail(name, f"no explicit Deny ACE for '{HUMANS_GROUP}' on {brains} — humans "
-                   "can write brains; re-run onboarding (horizon_aios_harden.py)")
-    else:
+            warn(name, f"delete-only '{HUMANS_GROUP}' Deny on {brains} ({detail}) — "
+                       "humans can modify files but not delete them; re-run "
+                       "horizon_aios_harden.py if full write is intended")
+        return
+    if status == "error":
         warn(name, f"could not evaluate: {detail}")
+        return
+    # No blocking Deny — confirm humans actually hold a write/modify Allow.
+    allow = _group_write_allow(brains, f"*{HUMANS_GROUP}*")
+    if allow is None:
+        warn(name, f"could not evaluate '{HUMANS_GROUP}' Allow on {brains}")
+    elif allow:
+        ok(f"brains/ — humans have Read/Write ({allow.splitlines()[0]})")
+    else:
+        fail(name, f"no write/modify Allow for '{HUMANS_GROUP}' on {brains} — humans "
+                   "cannot modify brains; re-run onboarding (horizon_aios_harden.py)")
+
+
+def _group_any_allow(path, identity_pattern):
+    """Return a detail string if ANY Allow ACE (any rights, read included) for an
+    identity matching `identity_pattern` exists on `path` (inherited or not), else
+    "" ; or None on error. Used to detect that a projects/<user> child is opaque
+    to the humans group (peer isolation)."""
+    ps = (
+        "$a=(Get-Acl -LiteralPath '{p}').Access | Where-Object {{ "
+        "$_.IdentityReference -like '{pat}' -and "
+        "$_.AccessControlType -eq 'Allow' }}; "
+        "if ($a) {{ $a | ForEach-Object {{ "
+        "$_.IdentityReference.ToString() + ' :: ' + $_.FileSystemRights }} }}"
+    ).format(p=str(path), pat=identity_pattern)
+    try:
+        result = subprocess.run(
+            ["powershell", "-NonInteractive", "-NoProfile", "-Command", ps],
+            capture_output=True, text=True, timeout=20,
+        )
+    except Exception:  # noqa: BLE001
+        return None
+    return result.stdout.strip()
+
+
+def check_projects_isolation(horizon_root):
+    """Windows: humans are isolated from each other on projects/. Each
+    projects/<user> child must be opaque to the horizon_humans group (no Allow
+    ACE — the folder is owner-only). FAIL if a child grants the group any access.
+    If projects has no children yet, PASS informationally (the parent's isolating
+    posture makes future folders born isolated)."""
+    name = "projects/ humans isolation"
+    projects = Path(horizon_root) / "projects"
+    if not projects.exists():
+        warn(name, f"{projects} does not exist yet — created on first --add-human")
+        return
+    children = [d for d in sorted(projects.iterdir()) if d.is_dir()]
+    if not children:
+        ok(f"{name} — no user folders yet (parent isolates future folders)")
+        return
+    leaks, errored = [], False
+    for child in children:
+        detail = _group_any_allow(child, f"*{HUMANS_GROUP}*")
+        if detail is None:
+            errored = True
+        elif detail:
+            leaks.append(f"{child.name}: {detail.splitlines()[0]}")
+    if leaks:
+        fail(name, f"peer project folder(s) grant '{HUMANS_GROUP}' access — humans "
+                   "must be isolated from each other: " + "; ".join(leaks) +
+                   " — run horizon_aios_harden.py")
+    elif errored:
+        warn(name, "could not fully evaluate projects children (Get-Acl error)")
+    else:
+        ok(f"{name} — {len(children)} child folder(s) opaque to '{HUMANS_GROUP}'")
 
 
 def _local_group_member_map(group):
@@ -577,6 +640,70 @@ def check_humans_readonly_system_unix(horizon_system, horizon_root):
         fail(cname, "; ".join(problems) + " — run horizon_aios_harden.py")
     else:
         ok(f"root canon Read-Only for humans ({checked} files, r-- + sticky parents)")
+
+
+def check_projects_isolation_unix(horizon_root):
+    """Unix: humans are isolated from each other on projects/. The parent must
+    grant the horizon_humans group traverse-only (--x: execute set, NO read/write),
+    and each projects/<user> child must give the group NO effective read/write
+    (owner-only). FAIL if the parent grants more than traverse, or if a child is
+    group-readable/writable. If projects has no children yet, PASS informationally
+    (the parent's isolating default ACL makes future folders born isolated).
+    Mirrors the projects block in horizon_aios_harden.py."""
+    name = "projects/ humans isolation"
+    if not horizon_root:
+        return
+    projects = Path(horizon_root) / "projects"
+    if not projects.exists():
+        warn(name, f"{projects} does not exist yet — created on first --add-human")
+        return
+    parent = _acl_group_effective(projects, HUMANS_GROUP)
+    if parent is not None and ("r" in parent or "w" in parent):
+        fail(name, f"'{HUMANS_GROUP}' has more than traverse ({parent}) on the "
+                   f"projects parent {projects} — should be --x only; run "
+                   "horizon_aios_harden.py")
+        return
+    children = [d for d in sorted(projects.iterdir()) if d.is_dir()]
+    if not children:
+        ok(f"{name} — parent traverse-only ({parent or 'no group ACE'}); no user "
+           "folders yet")
+        return
+    leaks = []
+    for child in children:
+        perms = _acl_group_effective(child, HUMANS_GROUP)
+        if perms and ("r" in perms or "w" in perms):
+            leaks.append(f"{child.name}: group-accessible ({perms})")
+    if leaks:
+        fail(name, f"peer project folder(s) reachable by '{HUMANS_GROUP}' — humans "
+                   "must be isolated from each other: " + "; ".join(leaks) +
+                   " — run horizon_aios_harden.py")
+    else:
+        ok(f"{name} — parent traverse-only, {len(children)} child folder(s) "
+           "owner-only (peers isolated)")
+
+
+def check_humans_brains_writable_unix(horizon_root):
+    """Unix: humans must be able to WRITE brains/ — they are near-admins who
+    modify brains/apps. The horizon_humans group must hold effective write (w) on
+    brains/. FAIL if the group has no write; WARN if brains/ has no group ACE at
+    all (harden never applied). Brain-to-brain isolation is a separate property
+    (ownership + per-brain group) and is not evaluated here. Mirrors the Windows
+    check_humans_brains_writable."""
+    name = "brains/ humans Read/Write"
+    if not horizon_root:
+        return
+    brains = Path(horizon_root) / "brains"
+    if not brains.exists():
+        warn(name, f"{brains} does not exist yet — created on first brain/onboarding")
+        return
+    perms = _acl_group_effective(brains, HUMANS_GROUP)
+    if perms is None:
+        warn(name, f"no '{HUMANS_GROUP}' ACE on {brains} — run horizon_aios_harden.py")
+    elif "w" in perms:
+        ok(f"{name} — humans have write ({perms})")
+    else:
+        fail(name, f"'{HUMANS_GROUP}' lacks write ({perms}) on {brains} — humans "
+                   "must be able to modify brains/apps; run horizon_aios_harden.py")
 
 
 # ---------------------------------------------------------------------------
@@ -919,14 +1046,18 @@ def main():
             if horizon_root:
                 # Human-operator boundary (secure-by-onboarding): no broad
                 # non-admin write; horizon_humans group present; humans
-                # Read-Only on brains/.
+                # Read/Write on brains/; humans isolated from each other on
+                # projects/.
                 check_no_broad_write(horizon_root, horizon_system)
                 check_humans_group(horizon_root)
-                check_humans_brains_readonly(horizon_root)
+                check_humans_brains_writable(horizon_root)
+                check_projects_isolation(horizon_root)
                 check_runtime_groups_no_humans(horizon_root)
         else:
             check_sbin_acl_unix(horizon_system)
             check_humans_readonly_system_unix(horizon_system, horizon_root)
+            check_humans_brains_writable_unix(horizon_root)
+            check_projects_isolation_unix(horizon_root)
         horizon_bin = env.get("HORIZON_BIN")
         if horizon_bin:
             check_monitor_status(horizon_bin)

@@ -41,9 +41,13 @@ ACL model applied:
                       .claude/CLAUDE.md)               -> humans: Read-Only
                                        (install-wide canon lives outside
                                        horizon_system but is still admin-owned).
-    $HORIZON_ROOT/brains               -> humans: Read-Only (explicit Deny-Write;
-                                       to write there a human elevates to admin
-                                       or changes permissions)
+    $HORIZON_ROOT/brains               -> humans: Read/Write (near-admins modify
+                                       brains/apps; brain-to-brain isolation
+                                       rides on ownership + per-brain group)
+    $HORIZON_ROOT/projects             -> humans: per-user isolation (traverse-only
+                                       on the parent, nothing on the owner-only
+                                       child folders; new folders born isolated
+                                       via the parent default ACL)
 
   owner + SYSTEM + Administrators -> Full control, always preserved. Root
   inheritance is broken and these are re-granted, so broad inherited grants
@@ -113,9 +117,10 @@ BRAINS_GROUP = 'brains'
 
 # The AIOS-managed group for flesh-and-blood human operators (secure-by-
 # onboarding: created on every install alongside `brains`, even when empty).
-# Members get Full control of the AIOS tree but are held Read-Only on brains/
-# (brain locations are for brains — to write there a human elevates to admin or
-# changes permissions). An EMPTY horizon_humans is harmless: an empty group
+# Members get Full control of the AIOS tree, Read/Write on brains/ (near-admins
+# who modify brains/apps), and are isolated from each other on projects/
+# (traverse-only parent, owner-only child folders). An EMPTY horizon_humans is
+# harmless: an empty group
 # granted Full grants nobody, so a server with no enrolled humans reduces to
 # "only owner/SYSTEM/Administrators write" without a separate code path.
 HUMANS_GROUP = 'horizon_humans'
@@ -224,8 +229,11 @@ def resolve_paths(horizon_root_arg):
         'skills_sbin':         os.path.join(horizon_system, 'skills_sbin'),
         'logs':                os.path.join(horizon_system, 'logs'),
         # brains/ lives under HORIZON_ROOT (not HORIZON_SYSTEM). The humans model
-        # holds this subtree Read-Only for the horizon_humans group.
+        # holds this subtree Read/Write for the horizon_humans group (near-admins).
         'brains':              os.path.join(horizon_root, 'brains'),
+        # projects/ lives under HORIZON_ROOT. Humans are isolated from each other:
+        # traverse-only on the parent, nothing on the (owner-only) child folders.
+        'projects':            os.path.join(horizon_root, 'projects'),
     }
 
 
@@ -401,20 +409,29 @@ def harden_windows(paths, owner, have_group, have_humans, dry_run, strict):
       4. Full Deny on sbin/skills_sbin/logs AFTER all grants.
 
     Humans-on-brains (C, after the humans grant):
-      C. Explicit horizon_humans Deny-Write on $HORIZON_ROOT/brains so human
-         operators are Read-Only there (brain locations are for brains). Reads
-         flow through the inherited humans Full; the deny removes write/delete.
-         Escape hatches by construction: Administrators are not in
-         horizon_humans (elevate-to-admin writes) and the mask omits WRITE_DAC
-         (a human retains the right to re-permission).
+      C. horizon_humans keep Read/Write on $HORIZON_ROOT/brains (they are
+         near-admins who modify brains/apps): no Deny-Write is applied, so the
+         inherited humans Full stands. Brain-to-brain isolation is not provided
+         by this ACE — a brain reaches only its own workspace via its per-brain
+         group + ownership (horizon_aios_create_brain.py).
+      C2. horizon_humans are isolated from EACH OTHER on $HORIZON_ROOT/projects:
+         traverse-only on the parent (this-folder-only), and NO humans ACE at all
+         on the child project folders (inheritance broken so grant B's Full stops
+         there). Each projects/<user> folder is OWNED by that user, so preserving
+         the folder OWNER's access (OWNER RIGHTS SID *S-1-3-4) lets the owner
+         read/write their own folder while the group has no grant — mirroring the
+         Unix owner-above-group evaluation. A group Deny is NOT used: on Windows a
+         group Deny has no owner-bypass, and because the owner is a member of
+         horizon_humans it would lock the owner out of their own folder.
 
     --strict additionally drops inherited ACEs on each privileged dir,
     re-establishing the must-have principals first. It never drops
     SYSTEM/Administrators.
     """
-    root   = paths['horizon_root']
-    system = paths['horizon_system']
-    brains = paths['brains']
+    root     = paths['horizon_root']
+    system   = paths['horizon_system']
+    brains   = paths['brains']
+    projects = paths['projects']
 
     # --- A. Controlled root ACL: break inheritance + re-grant known-good set. ---
     info(f'Establishing controlled root ACL (break inheritance + re-grant): {root}')
@@ -484,22 +501,96 @@ def harden_windows(paths, owner, have_group, have_humans, dry_run, strict):
                      f'{HUMANS_GROUP}:{BRAINS_NOWRITE_MASK}'], dry_run=dry_run)
                 deny(f'humans Read-Only on root canon: {HUMANS_GROUP} -> {canon}')
 
-    # --- C. horizon_humans Read-Only on brains/ (after the humans Full grant). --
+    # --- C. horizon_humans Read/Write on brains/ (near-admins modify brains/apps).
+    #     Humans keep the inherited Full from grant B (OI)(CI)F — no Deny-Write is
+    #     applied here, so they can write brains/. Brain-to-brain isolation is not
+    #     provided by this ACE (a brain reaches only its own workspace via its
+    #     per-brain group + ownership set in horizon_aios_create_brain.py). The
+    #     dir is still ensured so grant B's inheritance has a target.
     if have_humans:
         if not os.path.isdir(brains):
-            info(f'Creating brains dir so its humans deny can be applied: {brains}')
+            info(f'Creating brains dir so the humans Full grant reaches it: {brains}')
             if not dry_run:
                 try:
                     os.makedirs(brains, exist_ok=True)
                 except OSError as exc:
                     warn(f'Could not create brains dir {brains}: {exc}')
-        if os.path.isdir(brains) or dry_run:
-            run(['icacls', brains, '/deny',
-                 f'{HUMANS_GROUP}:(OI)(CI){BRAINS_NOWRITE_MASK}'], dry_run=dry_run)
-            deny(f'humans Read-Only on brains (DENY write/delete): {HUMANS_GROUP} '
-                 f'-> {brains}')
+        grant(f'humans Read/Write on brains (inherited Full from tree grant): '
+              f'{HUMANS_GROUP} -> {brains}')
+
+    # --- C2. horizon_humans isolated from each other on projects/. -------------
+    #     Grant B stamped (OI)(CI)F across the whole tree, projects/ included.
+    #     Here we override projects/ back down: humans get TRAVERSE only on the
+    #     parent (this-folder-only, non-inheriting), and NOTHING on the child
+    #     project folders, so each human reaches only their own (owned) folder
+    #     and siblings are opaque. Break inheritance on the parent so grant B's
+    #     inheritable Full stops flowing into the children, re-establish the
+    #     must-haves, then grant humans traverse-only.
+    #
+    #     Existing children are isolated WITHOUT a group Deny. Each projects/<user>
+    #     folder is OWNED by that user, and that user is a MEMBER of horizon_humans.
+    #     A `/deny horizon_humans` on the child would therefore lock the OWNER out
+    #     of their OWN folder: on Windows an explicit group Deny overrides Allow and
+    #     has NO owner-bypass (unlike POSIX, which evaluates the owner entry above
+    #     the named-group entry). We instead mirror the Unix intent — owner keeps
+    #     access, the group simply has no grant — by, per existing child:
+    #       1. breaking inheritance (/inheritance:r) so grant B's inheritable
+    #          humans Full does not flow in;
+    #       2. re-establishing the must-have principals (SYSTEM/Administrators/
+    #          invoking owner) as inheritable Full via _grant_must_have_full;
+    #       3. granting the well-known OWNER RIGHTS SID *S-1-3-4 inheritable Full so
+    #          that WHOEVER owns the folder retains Full (harden does not know each
+    #          child's username), while the horizon_humans GROUP has no ACE at all.
+    #     Result per child: SYSTEM + Administrators + owner(+OWNER RIGHTS) Full and
+    #     NO humans-group ACE (neither Allow nor Deny) -> peers have no access, the
+    #     owner keeps access.
+    if have_humans:
+        if not os.path.isdir(projects):
+            info(f'Creating projects dir so its isolation ACL can be applied: '
+                 f'{projects}')
+            if not dry_run:
+                try:
+                    os.makedirs(projects, exist_ok=True)
+                except OSError as exc:
+                    warn(f'Could not create projects dir {projects}: {exc}')
+        if os.path.isdir(projects) or dry_run:
+            # Stop grant B's inheritable Full from reaching the children, then
+            # re-establish the must-haves on the parent.
+            run(['icacls', projects, '/inheritance:r'], dry_run=dry_run)
+            _grant_must_have_full(projects, owner, dry_run)
+            # Traverse-only on the parent, this-folder-only (no OI/CI): humans can
+            # step through to their own folder but cannot list/read the parent and
+            # nothing is inherited by new children.
+            run(['icacls', projects, '/grant', f'{HUMANS_GROUP}:(X)'],
+                dry_run=dry_run)
+            grant(f'humans traverse-only on projects parent (no child inherit): '
+                  f'{HUMANS_GROUP} -> {projects}')
+            # Existing children: isolate WITHOUT a humans-group Deny (a group Deny
+            # would lock the owning human out of their own folder — no owner-bypass
+            # on Windows). Break inheritance, re-establish must-haves, and preserve
+            # the folder OWNER via OWNER RIGHTS (*S-1-3-4). No horizon_humans ACE is
+            # left on the child, so peers have no access while the owner keeps Full.
+            if not dry_run:
+                try:
+                    children = [os.path.join(projects, d)
+                                for d in os.listdir(projects)
+                                if os.path.isdir(os.path.join(projects, d))]
+                except OSError as exc:
+                    children = []
+                    warn(f'Could not enumerate projects children {projects}: {exc}')
+                for child in children:
+                    # 1. Stop grant B's inheritable humans Full from flowing in.
+                    run(['icacls', child, '/inheritance:r'], dry_run=dry_run)
+                    # 2. Re-establish SYSTEM/Administrators/invoking-owner Full.
+                    _grant_must_have_full(child, owner, dry_run)
+                    # 3. Preserve WHOEVER owns this child (the enrolled human) via
+                    #    the well-known OWNER RIGHTS SID, inheritable Full.
+                    run(['icacls', child, '/grant', '*S-1-3-4:(OI)(CI)F'],
+                        dry_run=dry_run)
+                    grant(f'owner (OWNER RIGHTS *S-1-3-4) Full on own project; '
+                          f'no {HUMANS_GROUP} ACE (peers opaque) -> {child}')
         else:
-            warn(f'brains dir missing, skipping humans read-only deny: {brains}')
+            warn(f'projects dir missing, skipping humans isolation ACL: {projects}')
 
 
 # ---------------------------------------------------------------------------
@@ -511,8 +602,10 @@ def harden_unix(paths, os_name, owner, have_group, have_humans, dry_run, strict)
     Apply the uniform ACL model on Linux/macOS.
 
       - horizon_humans => Full-equivalent (rwx) on user space, but Read-Only
-        (r-x) across $HORIZON_SYSTEM and on the root-level canon, and Read-Only
-        on brains/ — the Unix analogue of the Windows humans model. An empty
+        (r-x) across $HORIZON_SYSTEM and on the root-level canon; Read/Write
+        (rwx) on brains/ (near-admins modify brains/apps); and isolated from
+        each other on projects/ (traverse-only parent, nothing on the owner-only
+        child folders) — the Unix analogue of the Windows humans model. An empty
         group grants nobody, so a server reduces to owner-only write.
       - sbin / skills_sbin / logs => brains denied (setfacl g:brains:--- where
         available; 700 owner-only otherwise)
@@ -530,12 +623,14 @@ def harden_unix(paths, os_name, owner, have_group, have_humans, dry_run, strict)
     Privileged-dir denies are applied AFTER the brains rx grants so the grants
     can never cascade into them (mirrors horizon_aios_create_brain.py).
     """
-    system = paths['horizon_system']
-    root   = paths['horizon_root']
-    brains = paths['brains']
+    system   = paths['horizon_system']
+    root     = paths['horizon_root']
+    brains   = paths['brains']
+    projects = paths['projects']
     have_setfacl = shutil.which('setfacl') is not None
 
-    # --- horizon_humans model (tree Full-equivalent, brains/ Read-Only). ---
+    # --- horizon_humans model (tree Full-equivalent; brains/ Read/Write;
+    #     projects/ per-user isolated). ---
     # setfacl is the closest analogue to a named-group grant + brains deny.
     if have_humans and have_setfacl and os_name == 'Linux':
         # 1. Full-equivalent on user space (whole tree root, access + default).
@@ -570,13 +665,60 @@ def harden_unix(paths, os_name, owner, have_group, have_humans, dry_run, strict)
             if os.path.isdir(parent) or dry_run:
                 run(['chmod', '+t', parent], dry_run=dry_run, check=False)
                 grant(f'sticky bit (owner-only delete) on canon parent: {parent}')
-        # 4. brains/ Read-Only (unchanged).
+        # 4. brains/ Read/Write for humans (near-admins modify brains/apps).
+        #    Brain-to-brain isolation is preserved by ownership (each brains/<name>
+        #    is 0o770 <name>:<name> with g:brains:--- ); the humans grant here does
+        #    not open one brain to another.
         if os.path.isdir(brains) or dry_run:
-            run(['setfacl', '-R', '-m', f'g:{HUMANS_GROUP}:r-x', brains],
+            run(['setfacl', '-R', '-m', f'g:{HUMANS_GROUP}:rwx', brains],
                 dry_run=dry_run, check=False)
-            run(['setfacl', '-R', '-d', '-m', f'g:{HUMANS_GROUP}:r-x', brains],
+            run(['setfacl', '-R', '-d', '-m', f'g:{HUMANS_GROUP}:rwx', brains],
                 dry_run=dry_run, check=False)
-            deny(f'humans Read-Only on brains: {HUMANS_GROUP} -> {brains}')
+            grant(f'humans Read/Write on brains: {HUMANS_GROUP} -> {brains}')
+        # 5. projects/ humans-isolated. The blanket rwx grant on {root} above
+        #    (step 1, access + default) stamped rwx across the whole tree,
+        #    projects/ included; here we override it back down so each human
+        #    reaches only their own (owned) project folder and siblings are
+        #    opaque. Parent gets traverse-only (--x, NOT r); its default ACL
+        #    denies the group so NEW user folders are born isolated; each
+        #    existing child is stripped to --- (access + default).
+        info('setfacl horizon_humans: projects/ per-user isolation '
+             '(traverse parent, --- on children)')
+        if not os.path.isdir(projects) and not dry_run:
+            info(f'Creating projects dir (0710 root:root) so its isolation ACL '
+                 f'can be applied: {projects}')
+            try:
+                os.makedirs(projects, exist_ok=True)
+                os.chmod(projects, 0o710)
+            except OSError as exc:
+                warn(f'Could not create projects dir {projects}: {exc}')
+        if os.path.isdir(projects) or dry_run:
+            # Parent only (no -R): traverse without read/list; siblings opaque.
+            run(['setfacl', '-m', f'g:{HUMANS_GROUP}:--x', projects],
+                dry_run=dry_run, check=False)
+            # New children born isolated: default ACL denies the humans group.
+            run(['setfacl', '-d', '-m', f'g:{HUMANS_GROUP}:---', projects],
+                dry_run=dry_run, check=False)
+            grant(f'humans traverse-only on projects parent + isolating default: '
+                  f'{HUMANS_GROUP} -> {projects}')
+            # Existing children: strip the humans group to --- (access + default).
+            # Do NOT -R the parent itself, or its traverse ACE would be stripped.
+            if not dry_run:
+                try:
+                    children = [os.path.join(projects, d)
+                                for d in os.listdir(projects)
+                                if os.path.isdir(os.path.join(projects, d))]
+                except OSError as exc:
+                    children = []
+                    warn(f'Could not enumerate projects children {projects}: {exc}')
+                for child in children:
+                    run(['setfacl', '-R', '-m', f'g:{HUMANS_GROUP}:---', child],
+                        dry_run=dry_run, check=False)
+                    run(['setfacl', '-R', '-d', '-m', f'g:{HUMANS_GROUP}:---', child],
+                        dry_run=dry_run, check=False)
+                    deny(f'humans isolated from peer project: {HUMANS_GROUP} -> {child}')
+        else:
+            warn(f'projects dir missing, skipping humans isolation ACL: {projects}')
     elif have_humans:
         warn('horizon_humans model needs setfacl (Linux) to express a named-group '
              'grant + brains Read-Only. On this platform, enroll humans as the '
@@ -787,9 +929,10 @@ def main():
     print('    sbin, skills_sbin, logs -> DENY (explicit, full; after grants)')
     print('    rest of $HORIZON_SYSTEM -> no write (inheritable Deny-Write)')
     print(f'  {HUMANS_GROUP} group:')
-    print('    user space (outside horizon_system/) -> Full control (empty group = only admins write)')
+    print('    user space (outside horizon_system/, projects/) -> Full control (empty group = only admins write)')
     print('    $HORIZON_SYSTEM + root canon         -> Read-Only (read+execute, no write)')
-    print('    brains/                              -> Read-Only (DENY write/delete; elevate/re-perm to write)')
+    print('    brains/                              -> Read/Write (near-admins; brain-to-brain isolation via ownership + per-brain group)')
+    print('    projects/                            -> per-user isolation (traverse-only parent, owner-only child folders)')
     if os_name == 'Windows':
         print('  owner + SYSTEM + Administrators -> Full control (root inheritance broken).')
     else:

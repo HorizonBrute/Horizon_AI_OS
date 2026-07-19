@@ -274,8 +274,10 @@ snippets, aios-exec wrappers, AIOS registry, `aios_local.conf`, `.git/hooks/comm
 and `pre-commit`, `core.hooksPath` git config, system PATH entry
 (`$HORIZON_BIN` from Machine-scope PATH on Windows; `/etc/profile.d/horizon_aios.sh`
 and `/etc/paths.d/horizon-aios` on Linux/macOS), `$HORIZON_SYSTEM/logs/` /
-`handoffs/` / `objectives/` if empty, and brains-group ACEs from `$HORIZON_SYSTEM`
-subtrees. Offers optional deletion of `~/.claude/settings.json`.
+`handoffs/` / `objectives/` if empty, brains-group ACEs from `$HORIZON_SYSTEM`
+subtrees, and the on-by-default nightly maintenance schedule (best-effort, via
+`horizon_aios_setup_maintenance_schedule.py --remove`). Offers optional deletion of
+`~/.claude/settings.json`.
 
 Emits `[MANUAL]` advisories for the steps that cannot be automated: shell profile
 line, global gitconfig `include.path`, sync schedule/cron, `brains` OS group, and
@@ -501,6 +503,55 @@ in `aios_local.conf` and wanting the schedule re-registered.
 **Key flags:**
 
 - `--yes` — auto-confirm prompts (non-interactive install)
+
+**Referenced by a skill?** No.
+
+---
+
+## horizon_aios_setup_maintenance_schedule.py
+
+**Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_setup_maintenance_schedule.py`
+
+Installs (or removes) the **nightly maintenance** schedule that runs
+`horizon_aios_nightly_maintenance.py`: a Windows Scheduled Task
+(`HorizonAIOS_NightlyMaintenance`) or a Unix/macOS cron entry (marked
+`# HorizonAIOS_NightlyMaintenance`), defaulting to ~03:00. Idempotent — the
+marker comment / fixed task name prevents duplicate installs on re-run. Requires
+the privilege needed to register a system task (Administrator/root). Installed
+on by default at onboarding; opt out with bootstrap's `--no-nightly` /
+`-NoNightly`.
+
+**When to use it:** Automatically at bootstrap, or manually to (re-)install or
+uninstall the nightly job.
+
+**Key flags:**
+
+- `--yes` — auto-confirm prompts (non-interactive install)
+- `--time HH:MM` — override the nightly run time (default `03:00`)
+- `--remove` — uninstall the schedule (cron marker / scheduled task)
+
+**Referenced by a skill?** No.
+
+---
+
+## horizon_aios_nightly_maintenance.py
+
+**Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_nightly_maintenance.py`
+
+The unattended runner invoked by the nightly maintenance schedule. Runs, in
+order and non-interactively: (1) `horizon_aios_doctor.py` to report drift
+(the pass/warn/fail summary is captured to the log; a non-zero doctor result is
+recorded but does **not** abort the run), then (2) `horizon_aios_harden.py` to
+re-assert the brains-group ACL / permission model (idempotent). Logs each step
+to `$HORIZON_SYSTEM/logs/horizon_aios_nightly_maintenance.log` (honouring
+`AIOS_LOG_DIR`). Safe to run repeatedly; exits 0 unless the runner itself errors.
+
+**When to use it:** Automatically each night via the schedule; run manually
+(optionally `--dry-run`) to verify maintenance behaviour on demand.
+
+**Key flags:**
+
+- `--dry-run` — print the steps that would run without executing them
 
 **Referenced by a skill?** No.
 

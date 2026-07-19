@@ -68,6 +68,8 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   ├── horizon_aios_harden.py              # Apply brains-group ACLs to the AIOS layer (run from bootstrap)
 │   │   ├── horizon_aios_monitor.py             # Filesystem audit monitor
 │   │   ├── horizon_aios_maintain_logs.py            # Log pruning and rotation
+│   │   ├── horizon_aios_nightly_maintenance.py      # Nightly runner: doctor report + harden re-assert (unattended)
+│   │   ├── horizon_aios_setup_maintenance_schedule.py # Install/remove the on-by-default nightly maintenance schedule
 │   │   ├── horizon_aios_register_user_skills.py     # (Re)link usr_skills into skills_sbin (see Section 7)
 │   │   ├── horizon_aios_setup_sync_schedule.py      # Upstream sync scheduler
 │   │   ├── horizon_aios_switch.py              # AIOS named-registry switcher (see documentation/system/aios_switching.md)

@@ -176,7 +176,7 @@ invariant so no inherited permission can accidentally reach a privileged directo
 - No system-wide package installs (no `apt install`, `brew install`, `winget` runs are made by bootstrap).
 - No registry writes beyond the Machine-scope PATH entry on Windows.
 - No Windows services are installed or registered.
-- No scheduled tasks or cron jobs are created (the optional sync scheduler `horizon_aios_setup_sync_schedule.py` is a separate opt-in step).
+- One scheduled task / cron job is created by default: a **nightly maintenance job** (~03:00) that runs the health-check (`horizon_aios_doctor.py`) then re-asserts the permission model (`horizon_aios_harden.py`) so routine drift self-corrects. Installed at onboarding by `horizon_aios_setup_maintenance_schedule.py`; opt out with `--no-nightly` (bootstrap.sh) / `-NoNightly` (bootstrap.ps1). The optional upstream-sync scheduler (`horizon_aios_setup_sync_schedule.py`) remains a **separate opt-in** step.
 - `$HORIZON_ROOT/.claude/settings.json` (devroot project-level) is not modified; it is version-controlled and owns only devroot-scoped permissions. Only `~/.claude/settings.json` (global) is created/modified.
 - The OS repo's `settings.local.json` is never created by bootstrap — this file is machine-local and must be created manually per machine.
 

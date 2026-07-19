@@ -16,9 +16,9 @@ Creates and configures everything needed for a new AI brain:
                      still a member (their 770 write path; no Unix edit-source lock yet).
   - Brain folder:    $HORIZON_ROOT/brains/<brain-name>/
   - Permissions:     Windows — full-control for the brain user + runtime group + the human
-                     invoker (explicit ACE, independent of group); horizon_humans RX.
+                     invoker (explicit ACE, independent of group); horizon_humans Modify.
                      Unix — 770 owned brain:brain (human writes via runtime-group
-                     membership); horizon_humans read-only via setfacl.
+                     membership); horizon_humans read/write (rwx) via setfacl.
                      horizon_system/bin + skills_bin (group brains rx)
                      sbin/skills_sbin/logs locked to owner-only AFTER
                      all grants (security invariant)
@@ -115,11 +115,12 @@ BRAIN_NAME_RE = re.compile(r'^[a-z][a-z0-9_]{1,19}$')
 BRAINS_GROUP = 'brains'
 
 # The AIOS-managed group for flesh-and-blood human operators (see
-# horizon_aios_harden.py). Brain folders are Read-Only to humans: brain
-# locations are for brains — to write into one a human elevates to admin or
-# changes permissions. The brain folder has its inheritance stripped below, so
-# the humans grant must be applied EXPLICITLY here (the tree-level humans Full
-# from harden does not reach a broken-inheritance child).
+# horizon_aios_harden.py). Humans are near-admins with Read/Write on brain
+# folders (they modify brains/apps). The brain folder has its inheritance
+# stripped below, so the humans grant must be applied EXPLICITLY here (the
+# tree-level humans Full from harden does not reach a broken-inheritance child).
+# Brain-to-brain isolation is preserved separately by ownership + the private
+# per-brain group (the shared `brains` group gets no ACE on a brain folder).
 HUMANS_GROUP = 'horizon_humans'
 
 
@@ -676,13 +677,15 @@ def _phase3_windows(brain_name, invoking_user,
          '/grant', '*S-1-5-32-544:(OI)(CI)F'],
         dry_run=dry_run)
 
-    # -- Human operators: Read-Only on this brain folder (inheritance is
-    #    stripped above, so the tree-level humans Full does not reach here; grant
-    #    RX explicitly). To write, a human elevates to admin (Administrators keep
-    #    F above) or changes permissions. Mirrors the harden brains/ read-only. --
-    info(f'Granting {HUMANS_GROUP} Read-Only on brain folder: {brain_dir}')
+    # -- Human operators: Read/Write (Modify) on this brain folder (inheritance
+    #    is stripped above, so the tree-level humans Full does not reach here;
+    #    grant M explicitly). Humans are near-admins who modify brains/apps;
+    #    mirrors the harden brains/ rwx model. Owners/Administrators keep Full
+    #    above. Brain-to-brain isolation is unaffected: the shared BRAINS_GROUP
+    #    has no ACE here, only this brain's private brain_group does. --
+    info(f'Granting {HUMANS_GROUP} Read/Write (Modify) on brain folder: {brain_dir}')
     run(['icacls', brain_dir,
-         '/grant', f'{HUMANS_GROUP}:(OI)(CI)RX'],
+         '/grant', f'{HUMANS_GROUP}:(OI)(CI)M'],
         dry_run=dry_run, check=False)
 
     # -- horizon_system/bin: grant brains group RX --
@@ -736,15 +739,18 @@ def _phase3_unix(brain_name, invoking_user, os_name,
     run(['chown', '-R', f'{brain_name}:{brain_name}', brain_dir], dry_run=dry_run)
     run(['chmod', '770', brain_dir], dry_run=dry_run)
 
-    # -- Human operators: Read-Only on this brain folder (setfacl where
-    #    available). Mirrors the Windows humans RX grant / harden brains/
-    #    read-only. To write, a human uses the OS/identity tooling or elevates. --
+    # -- Human operators: Read/Write on this brain folder (setfacl where
+    #    available). Humans are near-admins who modify brains/apps; mirrors the
+    #    harden brains/ rwx model. Brain-to-brain isolation is NOT affected: the
+    #    folder is chown brain_name:brain_name + chmod 770 with no g:brains ACE,
+    #    so a sibling brain (in the shared `brains` group, not this brain's
+    #    private group) still cannot reach it. --
     import shutil as _shutil
     if _shutil.which('setfacl') is not None:
-        info(f'Granting {HUMANS_GROUP} Read-Only on brain folder: {brain_dir}')
-        run(['setfacl', '-R', '-m', f'g:{HUMANS_GROUP}:r-x', brain_dir],
+        info(f'Granting {HUMANS_GROUP} Read/Write on brain folder: {brain_dir}')
+        run(['setfacl', '-R', '-m', f'g:{HUMANS_GROUP}:rwx', brain_dir],
             dry_run=dry_run, check=False)
-        run(['setfacl', '-R', '-d', '-m', f'g:{HUMANS_GROUP}:r-x', brain_dir],
+        run(['setfacl', '-R', '-d', '-m', f'g:{HUMANS_GROUP}:rwx', brain_dir],
             dry_run=dry_run, check=False)
 
     # -- bin: set brains group and grant rx --

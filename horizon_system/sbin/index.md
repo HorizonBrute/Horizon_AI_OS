@@ -16,6 +16,7 @@ Privileged scripts for system administration. Requires elevation (Administrator 
 | [horizon_aios_harden.py](./horizon_aios_harden.py) | Layer hardening — applies the authoritative brains-group ACL model to $HORIZON_SYSTEM independent of brain creation |
 | [horizon_aios_maintain_logs.py](./horizon_aios_maintain_logs.py) | Log maintenance — prunes old logs and rotates oversized files per configured retention policy |
 | [horizon_aios_maintain_logs_runner.ps1](./horizon_aios_maintain_logs_runner.ps1) | PowerShell wrapper for horizon_aios_maintain_logs.py; resolves Python and delegates execution |
+| [horizon_aios_nightly_maintenance.py](./horizon_aios_nightly_maintenance.py) | Nightly maintenance runner — runs doctor (report drift) then harden (re-assert permission model) unattended; logs each step; --dry-run |
 | [horizon_aios_monitor.py](./horizon_aios_monitor.py) | AIOS filesystem integrity monitor — watches AIOS layer for unexpected file changes and logs events as JSON lines |
 | [horizon_aios_monitor_analyze.py](./horizon_aios_monitor_analyze.py) | Monitor log analyzer — reads horizon_aios_monitor.py JSON-line logs, checks for file changes and uptime gaps, writes security summary |
 | [horizon_aios_monitor_analyze_runner.ps1](./horizon_aios_monitor_analyze_runner.ps1) | PowerShell wrapper for horizon_aios_monitor_analyze.py; intended for periodic Task Scheduler or cron execution |
@@ -24,6 +25,7 @@ Privileged scripts for system administration. Requires elevation (Administrator 
 | [horizon_aios_register_user_skills.py](./horizon_aios_register_user_skills.py) | Aggregate the owner's skill view by linking brain-tier and machine-local skills into skills_sbin; idempotent and safe to re-run |
 | [horizon_aios_relocate.py](./horizon_aios_relocate.py) | Relocate an AIOS install to a new root path; auto-detects old root and rewrites machine-local instance pointers |
 | [horizon_aios_remove_brain.py](./horizon_aios_remove_brain.py) | Brain deprovisioning — reverses horizon_aios_create_brain.py by removing OS user, groups, workspace, profile, and credential |
+| [horizon_aios_setup_maintenance_schedule.py](./horizon_aios_setup_maintenance_schedule.py) | Install/remove the on-by-default nightly maintenance schedule (Windows Scheduled Task or Unix cron) running horizon_aios_nightly_maintenance.py |
 | [horizon_aios_setup_monitor_service.py](./horizon_aios_setup_monitor_service.py) | Install AIOS filesystem monitor as scheduled service (Windows Task Scheduler or Unix cron) |
 | [horizon_aios_setup_sync_schedule.py](./horizon_aios_setup_sync_schedule.py) | Install AIOS auto-sync scheduled task (Windows) or cron job (Unix) |
 | [horizon_aios_switch.py](./horizon_aios_switch.py) | Switch which AIOS this machine's local config points at via machine-global pointers |
