@@ -45,6 +45,7 @@ at the end of a session to save state. Start with the setup guide in
 ## system
 | ID (path) | Title | Purpose |
 |---|---|---|
+| `horizon_system/documentation/system/aios_options_packages.md` | Horizon AIOS — Options Packages | What an AIOS Options Package is, the standalone + installer/uninstaller contract, the deployed-packages registry, clone location, sync integration (protection gate + update pass + pull-only deployments), the build/install/maintain/uninstall lifecycle, and adopting a generic (non-AIOS) GitHub repo as a package. |
 | `horizon_system/documentation/system/aios_switching.md` | Switching between AIOSs | Run multiple AIOS installs on one machine and switch which one the local Claude config points at, via `horizon_aios_switch.py`. |
 | `horizon_system/documentation/system/distribution_and_updates.md` | Distribution, Updates, and Backing Up Your Data | The framework vs. user-space model: getting upstream updates without losing customizations, protecting your config, and backing up memory/handoffs/objectives to your own remote. |
 | `horizon_system/documentation/system/memory.md` | Harness Memory and Per-Project State | Where harness transcripts and agent memory live (`$HORIZON_ROOT/memory/` via the `~/.claude/projects` symlink), how the owner/brain redirects work, why it's centralized, and that uninstalling the AIOS destroys memory unless the user backs it up first. |
