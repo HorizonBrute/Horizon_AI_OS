@@ -22,6 +22,7 @@ Two-lane sync model:
 """
 
 import sys
+import json
 import argparse
 import platform
 import subprocess
@@ -41,6 +42,11 @@ CRON_MARKER = "# HorizonAIOS_Sync"
 
 # Path partition. Personal-owned dirs are never overwritten by the official lane.
 PERSONAL_PATHS = ["projects", "usrbin", "brains"]
+
+# Deployed-package registry (machine-local, written by each package's own installer).
+# Registered package clones are additionally protected from the official-overwrite lane so
+# a separately-versioned deployed package is never clobbered by an upstream sync.
+DEPLOYED_PACKAGES_REGISTRY = HORIZON_ETC / "horizon_deployed_packages.local.json"
 
 _log_file = None
 
@@ -112,9 +118,40 @@ def run_git(*args):
     return result
 
 
+def deployed_package_excludes():
+    """Clone paths of registered deployed packages (sync != false), relative to HORIZON_ROOT.
+
+    Read from the machine-local deployed-packages registry each package installer maintains
+    (DEPLOYED_PACKAGES_REGISTRY). These paths are EXCLUDED from the official (overwrite) lane
+    so an upstream sync never clobbers a separately-versioned deployed package that lives
+    inside an official-owned dir (e.g. horizon_system/deployed_packages/<name>).
+
+    Best-effort and fail-safe: a missing or malformed registry yields NO exclusions and never
+    fails the sync. Only in-tree relative paths (no drive, no '..', no leading '/') are honored.
+    """
+    reg = DEPLOYED_PACKAGES_REGISTRY
+    if not reg.exists():
+        return []
+    try:
+        data = json.loads(reg.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        log("WARN", f"deployed-packages registry unreadable: {reg}; ignoring")
+        return []
+    paths = []
+    for pkg in data.get("packages", []):
+        if pkg.get("sync", True) is False:
+            continue
+        clone = (pkg.get("clone_path") or "").strip().strip("/")
+        if clone and not clone.startswith("..") and ":" not in clone:
+            paths.append(clone)
+    return paths
+
+
 def official_pathspec():
-    """Pathspec matching all OFFICIAL-owned paths: everything except personal dirs."""
-    return ["."] + [f":(exclude){p}" for p in PERSONAL_PATHS]
+    """Pathspec matching all OFFICIAL-owned paths: everything except personal dirs and any
+    registered deployed-package clone (protected from upstream overwrite)."""
+    excludes = PERSONAL_PATHS + deployed_package_excludes()
+    return ["."] + [f":(exclude){p}" for p in excludes]
 
 
 def resolve_log_file(config):
@@ -232,6 +269,10 @@ def run_status(config):
     personal_remote = config["AIOS_PERSONAL_REMOTE"] or "(none configured)"
     print(f"Personal lane   : {personal_remote} "
           f"(local wins; pull {'on' if config['SYNC_PERSONAL_FROM_REMOTE'].lower() == 'yes' else 'off'})")
+    protected = deployed_package_excludes()
+    if protected:
+        print(f"Deployed pkgs   : {len(protected)} protected from official overwrite "
+              f"({', '.join(protected)})")
     if config["SYNC_AIOS_FROM_REMOTE"].lower() == "no":
         print("Config          : SYNC_AIOS_FROM_REMOTE=no (auto-sync disabled in aios_local.conf)")
     if installed and sched_run:
@@ -298,6 +339,11 @@ def sync_official(config):
     """
     remote = config["AIOS_OFFICIAL_REMOTE"]
     branch = config["AIOS_OFFICIAL_BRANCH"].strip()
+
+    protected = deployed_package_excludes()
+    if protected:
+        log("INFO", f"Official lane: protecting {len(protected)} deployed package(s) from "
+                    f"overwrite: {', '.join(protected)}")
 
     fetch = run_git("fetch", remote)
     if fetch.returncode != 0:
