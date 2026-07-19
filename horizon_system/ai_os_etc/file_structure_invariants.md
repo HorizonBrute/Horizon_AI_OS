@@ -17,7 +17,7 @@ Hardcoded paths are forbidden in committed files. Use these variables exclusivel
 | `$HORIZON_SOUNDS` | `$HORIZON_SYSTEM\sounds` | Sound files, maps, and vendor audio |
 | `$HORIZON_LOGS` | `$HORIZON_ROOT\horizon_system\logs` | Centralized audit and operational logs; brains: DENY |
 | `$HORIZON_USRBIN` | `$HORIZON_ROOT\usrbin` | Common application installs shared across brains and projects |
-| `$HORIZON_PROJECTS` | `$HORIZON_ROOT\Projects` | Primary user's personal project workspace |
+| `$HORIZON_PROJECTS` | `$HORIZON_ROOT\projects` | Human self-service project workspace (§8.2, §14) |
 | `$HORIZON_BRAIN_HOME` | Brain user's OS home directory | Brain user's home directory (set only within a brain session; not available in the owner session) |
 
 Rules:
@@ -49,9 +49,11 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   ├── CLAUDE.md                       # Thin pointer — imports ONLY its sibling ./agents.md (see §12)
 │   ├── CLAUDE.aios-dev.md              # Owner-only AIOS-dev directives; imported by the OWNER stub only, never by brains
 │   └── settings.json                   # Devroot-scoped permissions (no hooks, no statusLine)
-├── handoffs/                           # Default output directory for /handoff skill (see Section 7)
+├── handoffs/                           # Default output for /handoff; self-service per-user isolation (§14)
+│   └── shared/                         # Group-shared drop-zone (horizon_humans rwx, setgid+sticky) — cross-user handoff escape hatch (§14)
 ├── memory/                             # Redirected per-project harness state (transcripts + agent memory); gitignored; ~/.claude/projects symlinks here (see documentation/system/memory.md)
-├── objectives/                         # Default store for /objective skill — durable multi-session goals (see Section 7)
+├── objectives/                         # Default store for /objective skill — durable multi-session goals; self-service per-user isolation (§14)
+│   └── shared/                         # Group-shared drop-zone (horizon_humans rwx, setgid+sticky) — cross-user handoff escape hatch (§14)
 ├── horizon_system/                     # $HORIZON_SYSTEM — OS system directory
 │   ├── VERSION                         # Canonical version file (SemVer)
 │   ├── bin/                            # $HORIZON_BIN — user-callable executables; brains: R+X
@@ -65,7 +67,8 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   ├── bootstrap.sh                # Unix/Linux/macOS bootstrap
 │   │   ├── bootstrap_docker.sh         # Docker bootstrap wrapper
 │   │   ├── horizon_aios_doctor.py                   # System health check
-│   │   ├── horizon_aios_harden.py              # Apply brains-group ACLs to the AIOS layer (run from bootstrap)
+│   │   ├── horizon_aios_harden.py              # Apply the config-driven ACL posture to the AIOS layer (reads file_acl_hardening.toml via horizon_aios_acl_posture.py; §14)
+│   │   ├── horizon_aios_acl_posture.py         # Shared ACL-posture loader/deep-merge/fail-secure fallback/3-OS translator; used by harden.py + doctor.py (§14)
 │   │   ├── horizon_aios_monitor.py             # Filesystem audit monitor
 │   │   ├── horizon_aios_maintain_logs.py            # Log pruning and rotation
 │   │   ├── horizon_aios_nightly_maintenance.py      # Nightly runner: doctor report + harden re-assert (unattended)
@@ -95,7 +98,10 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   ├── file_structure_invariants.md
 │   │   ├── ai_os_personalizations.md
 │   │   ├── horizon_aios_agents.md      # Agent instructions (harness-agnostic)
-│   │   └── horizon_aios_model_prefs.md # User-editable agent model preferences
+│   │   ├── horizon_aios_model_prefs.md # User-editable agent model preferences
+│   │   ├── file_acl_hardening.toml     # Shipped ACL-hardening posture (default; tracked; see §14)
+│   │   ├── file_acl_hardening.local.toml.template # Tracked starter for the deployer override
+│   │   └── file_acl_hardening.local.toml # Gitignored deployer override, deep-merged over the default (§14; §5)
 │   ├── documentation/                  # $HORIZON_DOCS — user-facing docs (full catalog: documentation/index.md)
 │   │   ├── index.md                    # Documentation index — every doc, referenceable by path (CC-G4)
 │   │   ├── authoring/                  # Authoring guides (e.g. CLAUDE.md authoring)
@@ -121,7 +127,8 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │   │   └── profile_snippet.{ps1,sh}    # One-line profile include sourcing ~/.horizon/active_env.* (AIOS switcher)
 │   ├── harness_configs/                # Harness-specific config (sounds maps, etc.)
 │   └── logs/                           # $HORIZON_LOGS — canonical audit/operational logs; brains: DENY; scaffold tracked, content gitignored
-├── usrbin/                             # $HORIZON_USRBIN — tool repository; admin draws from here to provision brains (see Section 8)
+├── usrbin/                             # $HORIZON_USRBIN — tool repository; admin draws from here to provision brains (see Section 8); self-service per-user isolation (§14)
+│   ├── shared/                         # Group-shared drop-zone (horizon_humans rwx, setgid+sticky) — cross-user handoff escape hatch (§14)
 │   ├── usr_skills/                     # Machine-local user skills; gitignored; linked into skills_sbin (see Section 7)
 │   │   └── <skill-name>/SKILL.md
 │   └── [installed tools and apps]/     # Admin: full access. Brains: no default access — provisioned selectively per brain.
@@ -146,8 +153,9 @@ $HORIZON_ROOT/                          # OS repo root; primary user owns everyt
 │           ├── agents.local.md         # Machine-local agent overrides; @-imported by the brain's agents.md (NOT local.agents.md; §12.6)
 │           ├── local.agent_teams.md    # Machine-local team override for the brain scope (§13)
 │           └── settings.json           # Reference settings for apps consuming this config
-└── Projects/                           # $HORIZON_PROJECTS — primary user's project workspace (see Section 8)
-    └── [project folders]/              # Primary user sets filesystem permissions per project; no default convention
+└── projects/                           # $HORIZON_PROJECTS — human self-service isolated workspace (see §8.2); one of the four self-service areas (§14)
+    ├── shared/                         # Group-shared drop-zone (horizon_humans rwx, setgid+sticky) — cross-user handoff escape hatch (§14)
+    └── [per-human entries]/            # Born owner-only + creator's own private group (self-service isolation, §14); peers blind
         ├── aios_overrides.md           # Optional — project-level AIOS config overrides (see Section 7)
         ├── aios_sounds.conf            # Optional — per-project sound overrides (see Section 10)
         └── aios_statusline.conf        # Optional — per-project statusline config (see Section 11)
@@ -202,7 +210,7 @@ Tracks:
 The OS repo does not track (must be gitignored):
 
 - Brain folders and all their contents.
-- Local settings overrides (any `*.local.json` or `*.local` variants).
+- Local settings overrides (any `*.local.json` or `*.local` variants), including `ai_os_etc/file_acl_hardening.local.toml` — the deployer ACL-posture override (§14). Its `.template` and the shipped `file_acl_hardening.toml` default are tracked.
 - API keys, tokens, credentials, `.env` files.
 - Session data, conversation logs, cache directories — including `$HORIZON_ROOT/memory/`, where the owner's `~/.claude/projects` is symlinked (redirected per-project transcripts + agent memory; ships the mechanism, never content — see `documentation/system/memory.md`).
 - OS-specific generated files (`.DS_Store`, `Thumbs.db`, etc.).
@@ -295,7 +303,7 @@ The template file is fully annotated.
 
 ---
 
-## 8. usrbin and Projects
+## 8. usrbin and projects
 
 ### 8.1 usrbin — Shared Application Installs (`$HORIZON_USRBIN`)
 
@@ -307,11 +315,13 @@ The template file is fully annotated.
 
 `$HORIZON_USRBIN` is a tool repository for the administrative context to draw from when provisioning brains. Brains do not get blanket access to this directory. The administrative context selects specific tools and provisions them into each brain's environment (see `security_architecture_invariants.md §4`).
 
+`usrbin/` is also one of the four `horizon_humans` self-service isolated areas (§14): each human self-creates their own entries (born owner-only + their own private group; peers blind) via the parent's create-traverse (`-wx`) + sticky + isolating default ACL, and the `usrbin/shared/` drop-zone (mode 3770, group `horizon_humans`) is the group-shared handoff zone. The administrative context (owner/root/Administrators) retains full access by ownership/elevation, so the admin-provisioning role above is unaffected.
+
 Check `$HORIZON_USRBIN` before installing new tools.
 
-### 8.2 Projects — Primary User Workspace (`$HORIZON_PROJECTS`)
+### 8.2 projects — Human Self-Service Workspace (`$HORIZON_PROJECTS`)
 
-`$HORIZON_ROOT/Projects/` is the primary user's workspace for **non-agentic work** — the things you work on, not the machinery that does the working. The conceptual analogy: `brains/` is `C:\Program Files\` (installed agentic applications), `Projects/` is `My Documents` / `~/` (your personal workspace).
+`$HORIZON_ROOT/projects/` is the human workspace for **non-agentic work** — the things you work on, not the machinery that does the working. The conceptual analogy: `brains/` is `C:\Program Files\` (installed agentic applications), `projects/` is `My Documents` / `~/` (your personal workspace).
 
 What belongs here: code repositories, working copies, research, documents, and agentic workflow output locations. What does not: skills, brain configuration, or AIOS tooling — those belong in brains or the system layer.
 
@@ -319,7 +329,7 @@ Brains and projects are **not intrinsically linked**. Brain access to a project 
 
 Each project folder is independent and may be its own git repository. The OS repo pre-commit hook automatically drops nested `.git` folders from tracking — no manual `.gitignore` entry is needed.
 
-**Filesystem permissions:** No convention set at the `Projects/` level. The primary user sets permissions per project folder using OS tools. Brains are neither granted nor denied access by default.
+**Filesystem permissions:** `projects/` is one of the four self-service isolated human areas (§14). The `horizon_humans` group gets create-traverse (`-wx`: create + enter, **no list**) on the parent, plus sticky, NOT setgid, and an isolating default ACL, so each human self-creates entries owned by themselves and their own private group — invisible to and undeletable by peers. The per-area `shared/` subdir (mode 3770, group `horizon_humans`) is the explicit cross-user handoff drop-zone. Brains get **no** default access; brain access to a specific project is always an explicit administrative grant, never automatic. See `security_architecture_invariants.md` for the full ACL model.
 
 **Single-user model:** AIOS currently presumes one primary user. The multi-user extension is multiple OS accounts each with their own brain user profile, all sharing the same AIOS configuration layer. Common configuration == one OS across multiple users; per-user state lives in each account's profile, not in `$HORIZON_ROOT`.
 
@@ -430,7 +440,7 @@ Invariant: `aios_statusline.conf` is project-owned. Add it to `$HORIZON_ROOT/.gi
 `agents.md` is the cross-harness, open-standard configuration file (read by Claude Code, Codex, and any harness supporting it); `CLAUDE.md` is a Claude-Code-specific shim. The open-source agent ecosystem has converged on `agents.md` as its standard, and AIOS adopts it as the canonical, **vendor-neutral** instruction file. To keep ONE harness-agnostic source of truth — aligning with the BYOH (bring-your-own-harness) philosophy — every `CLAUDE.md` in the AIOS system layer is a thin pointer to its sibling `agents.md`. All real content lives in `agents.md`. Because each `agents.md` is git-tracked and can be overwritten on upstream sync, every one also carries a machine-local sibling `local.agents.md` (clause 6) — the git-safe seam for owner/machine overrides that must survive updates. (Brain scopes use an equivalent seam at `.aioscommon\agents.local.md` instead of a sibling `local.agents.md`; see clause 6.5.)
 
 1. **Scope.** This invariant governs the AIOS system layer only — every `CLAUDE.md` at or under `$HORIZON_ROOT` that AIOS owns (e.g., `$HORIZON_ROOT/CLAUDE.md`, `$HORIZON_ROOT/.claude/CLAUDE.md`).
-   1.1. Opted-out project folders that are their own git repositories (e.g., `Projects/*`, and external repos such as `GameDev\*`, `Horizon.AI.Apps\*`) are explicitly OUT OF SCOPE — they own their own config.
+   1.1. Opted-out project folders that are their own git repositories (e.g., `projects/*`, and external repos such as `GameDev\*`, `Horizon.AI.Apps\*`) are explicitly OUT OF SCOPE — they own their own config.
 2. **Sibling pairing.** Every directory that contains a `CLAUDE.md` MUST also contain a sibling `agents.md` in the same directory.
 3. **CLAUDE.md is a pointer only.** A `CLAUDE.md` MUST contain nothing but:
    3.1. An optional single title line (a level-1 heading), and
@@ -462,3 +472,15 @@ Named, reusable multi-agent workflows. Cascades alongside `agents.md` and model-
    4.3. Project/subfolder scopes — user-created; follow the same convention (drop `local.agent_teams.md.template`, add `@./local.agent_teams.md` to that scope's `agents.md`).
 5. **Cascade.** OS(root) → project-root → brain-root → subfolder; most-specific wins. Identical semantics to `horizon_aios_model_prefs.md` "Scope Precedence" — no new semantics introduced here.
 6. **Role-flag registry.** Role markers beyond label + model group (`if needed`, `if asked`, `parallel`, `wait`, `Loop`, and any custom flag) are cataloged in **`agent_team_flags.md`** (`$HORIZON_ETC`, TRACKED, shipped); user-added flags live in **`local.agent_team_flags.md`** (same dir, gitignored via the specific path, materialized by `aios setup` → `setup_agent_team_flags`). Both are @-imported by the root `agents.md` and read by `$HORIZON_BIN/resolve_agent_teams.py`, which parses flags **generically** (inline `(`#group`, <flag>)` tokens + `**Name:** …` annotations), labels them from the registry, lists them with `--flags`, and warns on flags not in the registry. Adding a flag needs no code change — append a registry row (or use `/agent-teams`) and use it.
+
+---
+
+## 14. ACL Hardening Posture (config-driven)
+
+The AIOS's on-disk permission posture is EXTERNALIZED to a deployer-customizable config, not hardcoded. `horizon_aios_harden.py` applies it and `horizon_aios_doctor.py` verifies it, both through one shared module so they cannot disagree. See the two 2026-07-19 ADR entries ("ACL posture externalized…" and "Self-service per-user isolation…") for the "why", and `security_architecture_invariants.md` for the full model.
+
+1. **Shipped default — `ai_os_etc/file_acl_hardening.toml`** (TRACKED). Declares the whole posture as ABSTRACT-INTENT rules (never platform ACL syntax): humans Full on user space / Read-Only on the install + canon / Read-Write on `brains/`; the four self-service areas; each area's `shared/` drop-zone; brains Read-Exec on `bin`/`skills_bin`; brains Deny on `sbin`/`skills_sbin`/`logs`; and a system-wide no-write catch-all. Never edit this file — the official-lane sync reclaims it. The schema notes at its foot are the authoritative field/rights vocabulary.
+2. **Deployer override — `ai_os_etc/file_acl_hardening.local.toml`** (GITIGNORED). Deep-merged over the default keyed by rule/group `name` — local wins: a matching name replaces that rule's fields, a new name adds a rule, `disabled = true` drops a rule. Ships as `file_acl_hardening.local.toml.template`; the deployer copies it (dropping `.template`) and puts ONLY overrides there. Sync-safe by construction: the official-lane hard-restore only touches tracked official paths, so the gitignored `.local.toml` survives every sync. This is the ACL analogue of the `local.agents.md` / `local.agent_teams.md` override seam (§12.6, §13) — same "tracked default + gitignored local-wins override" pattern — but it is OPTIONAL and NOT materialized by `aios setup` (the engine's fail-secure fallback hardens even when it is absent).
+3. **Shared engine — `sbin/horizon_aios_acl_posture.py`** (owner-only, in `sbin/`). TOML loader + deep-merge + a FAIL-SECURE embedded fallback (a missing or corrupt config still hardens from the built-in posture) + the three-OS translator. Consumed by both `horizon_aios_harden.py` and `horizon_aios_doctor.py` so apply and verify read from one source.
+4. **Cross-platform parity.** The translator emits native mechanisms from the same abstract rules: `setfacl` (Linux), `chmod +a` (macOS), `icacls` (Windows). Windows child isolation uses OWNER RIGHTS (`S-1-3-4`), never a group Deny (a Deny would lock out the owner, itself a `horizon_humans` member). On a non-native host the foreign-OS branch is dry-run only. A per-rule `[rules.raw]` block is the escape hatch for a genuine platform-specific need (verbatim per-OS args, deployer's responsibility).
+5. **Self-service areas + `shared/`.** The four human areas — `projects/`, `handoffs/`, `objectives/`, `usrbin/` — are self-service isolated: the parent grants `horizon_humans` create-traverse (`-wx`: create+enter, NO list) + sticky + NOT setgid + an isolating default ACL, so each human self-creates entries owned by themselves and their own private group, invisible and undeletable to peers. Each area also has one group-shared `shared/` subdir (mode 3770, group-owned by `horizon_humans`) as the explicit cross-user/utility handoff escape hatch. This supersedes the earlier `projects/`-only admin-pre-create model.

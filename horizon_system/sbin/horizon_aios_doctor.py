@@ -13,6 +13,49 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+# The ACL posture (areas + expected stance) is derived from the SAME loader the
+# enforcer uses (horizon_aios_acl_posture / file_acl_hardening.toml + .local
+# override), so doctor verifies the CONFIGURED stance — including any deployer
+# override — never a hardcoded copy. Import the sibling sbin module robustly.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    import horizon_aios_acl_posture as posture_engine
+except Exception:  # pragma: no cover — doctor still runs without ACL derivation
+    posture_engine = None
+
+_POSTURE_CACHE = {}
+
+
+def _load_posture(horizon_system, horizon_root):
+    """Load (and memoize) the ACL posture for verification, or None if the loader
+    is unavailable/failed. horizon_system/horizon_root are Path or str."""
+    if posture_engine is None or not horizon_system or not horizon_root:
+        return None
+    key = (str(horizon_root), str(horizon_system))
+    if key not in _POSTURE_CACHE:
+        paths = {'horizon_root': str(horizon_root),
+                 'horizon_system': str(horizon_system)}
+        try:
+            _POSTURE_CACHE[key] = posture_engine.load_posture(paths)
+        except Exception:
+            _POSTURE_CACHE[key] = None
+    return _POSTURE_CACHE[key]
+
+
+def _rights_want_rw(rights):
+    """Expected (want_read, want_write) for an abstract rights token — lets doctor
+    verify the CONFIGURED stance if a local override changes a rule."""
+    return {
+        'full':            (True, True),
+        'read-exec':       (True, False),
+        'read-only':       (True, False),
+        'read-write':      (True, True),
+        'create-traverse': (False, True),
+        'no-write':        (True, False),
+        'deny':            (False, False),
+        'none':            (False, False),
+    }.get(rights, (True, False))
+
 # Make stdout/stderr robust on legacy Windows code pages (e.g. cp1252) so the
 # tool never crashes with UnicodeEncodeError on non-ASCII output. Self-healing
 # regardless of PYTHONIOENCODING; guarded for Pythons without reconfigure().
@@ -206,6 +249,10 @@ def check_gitignore_user(horizon_root):
 # ---------------------------------------------------------------------------
 BRAINS_GROUP = "brains"
 HUMANS_GROUP = "horizon_humans"
+
+# The four human-facing areas under $HORIZON_ROOT that use the SELF-SERVICE
+# per-user isolation model (see horizon_aios_harden.py HUMAN_SHARED_DIRS).
+HUMAN_SHARED_DIRS = ("projects", "handoffs", "objectives", "usrbin")
 
 
 def _has_group_deny(path, group):
@@ -540,9 +587,16 @@ def check_sbin_acl_unix(horizon_system):
         warn("sbin ACL (Unix)", f"could not determine current user: {e}")
         return
 
-    for label, sub in (("sbin", "sbin"),
-                       ("skills_sbin", "skills_sbin"),
-                       ("logs", "logs")):
+    # Privileged-deny dirs derived from the posture (brains full-deny rules) so
+    # doctor and harden agree from one source; fall back to the shipped trio.
+    posture = _load_posture(horizon_system, horizon_system.parent)
+    if posture is not None and posture.brains_deny_dirs():
+        deny_dirs = [(os.path.basename(p), os.path.basename(p))
+                     for p in posture.brains_deny_dirs()]
+    else:
+        deny_dirs = (("sbin", "sbin"), ("skills_sbin", "skills_sbin"),
+                     ("logs", "logs"))
+    for label, sub in deny_dirs:
         path = horizon_system / sub
         name = f"{label} ACL (Unix owner-only 700)"
         if not path.exists():
@@ -616,9 +670,14 @@ def check_humans_readonly_system_unix(horizon_system, horizon_root):
     if not horizon_root:
         return
     cname = "root canon Read-Only for humans"
-    canon_rel = ("agents.md", "CLAUDE.md",
-                 os.path.join(".claude", "agents.md"),
-                 os.path.join(".claude", "CLAUDE.md"))
+    posture = _load_posture(horizon_system, horizon_root)
+    if posture is not None and posture.canon_relpaths():
+        canon_rel = tuple(os.path.join(*rel.replace("\\", "/").split("/"))
+                          for rel in posture.canon_relpaths())
+    else:
+        canon_rel = ("agents.md", "CLAUDE.md",
+                     os.path.join(".claude", "agents.md"),
+                     os.path.join(".claude", "CLAUDE.md"))
     problems, checked = [], 0
     for rel in canon_rel:
         cpath = Path(horizon_root) / rel
@@ -642,44 +701,125 @@ def check_humans_readonly_system_unix(horizon_system, horizon_root):
         ok(f"root canon Read-Only for humans ({checked} files, r-- + sticky parents)")
 
 
-def check_projects_isolation_unix(horizon_root):
-    """Unix: humans are isolated from each other on projects/. The parent must
-    grant the horizon_humans group traverse-only (--x: execute set, NO read/write),
-    and each projects/<user> child must give the group NO effective read/write
-    (owner-only). FAIL if the parent grants more than traverse, or if a child is
-    group-readable/writable. If projects has no children yet, PASS informationally
-    (the parent's isolating default ACL makes future folders born isolated).
-    Mirrors the projects block in horizon_aios_harden.py."""
-    name = "projects/ humans isolation"
+def check_human_shared_isolation_unix(horizon_root, horizon_system=None):
+    """Unix: SELF-SERVICE per-user isolation on the human-facing areas. Both the
+    AREA LIST and the EXPECTED STANCE are DERIVED from the loaded posture (the
+    *-selfservice rules and their sibling *-shared rules), so a deployer's local
+    override — e.g. relaxing projects to read-write, or clearing setgid — is
+    verified as CONFIGURED rather than against a hardcoded shipped stance. Falls
+    back to the built-in HUMAN_SHARED_DIRS + shipped stance if the loader is
+    unavailable. FAIL on any violation. Mirrors the harden self-service block."""
+    import stat as _stat
     if not horizon_root:
         return
-    projects = Path(horizon_root) / "projects"
-    if not projects.exists():
-        warn(name, f"{projects} does not exist yet — created on first --add-human")
-        return
-    parent = _acl_group_effective(projects, HUMANS_GROUP)
-    if parent is not None and ("r" in parent or "w" in parent):
-        fail(name, f"'{HUMANS_GROUP}' has more than traverse ({parent}) on the "
-                   f"projects parent {projects} — should be --x only; run "
-                   "horizon_aios_harden.py")
-        return
-    children = [d for d in sorted(projects.iterdir()) if d.is_dir()]
-    if not children:
-        ok(f"{name} — parent traverse-only ({parent or 'no group ACE'}); no user "
-           "folders yet")
-        return
-    leaks = []
-    for child in children:
-        perms = _acl_group_effective(child, HUMANS_GROUP)
-        if perms and ("r" in perms or "w" in perms):
-            leaks.append(f"{child.name}: group-accessible ({perms})")
-    if leaks:
-        fail(name, f"peer project folder(s) reachable by '{HUMANS_GROUP}' — humans "
-                   "must be isolated from each other: " + "; ".join(leaks) +
-                   " — run horizon_aios_harden.py")
-    else:
-        ok(f"{name} — parent traverse-only, {len(children)} child folder(s) "
-           "owner-only (peers isolated)")
+
+    posture = _load_posture(horizon_system, horizon_root)
+    # Build the per-area verification spec: (area_name, principal, want_read,
+    # want_write, want_sticky, want_setgid, isolate_children, exclude, shared_rule)
+    specs = []
+    if posture is not None:
+        selfservice = [r for r in posture.rules if r.is_selfservice_parent()]
+        shared_by_parent = {}
+        for r in posture.rules:
+            if r.is_shared_dropzone():
+                shared_by_parent[os.path.dirname(r.path)] = r
+        for r in selfservice:
+            want_read, want_write = _rights_want_rw(r.rights)
+            specs.append({
+                'area_name': os.path.basename(r.path), 'path': r.path,
+                'principal': r.principal, 'want_read': want_read,
+                'want_write': want_write, 'sticky': r.sticky,
+                'setgid': r.setgid, 'isolate': r.isolate_children,
+                'exclude': set(r.exclude_children) | {'shared'},
+                'shared_rule': shared_by_parent.get(r.path),
+            })
+    if not specs:
+        # FAIL-SECURE fallback: shipped four-area stance.
+        for area_name in HUMAN_SHARED_DIRS:
+            specs.append({
+                'area_name': area_name,
+                'path': str(Path(horizon_root) / area_name),
+                'principal': HUMANS_GROUP, 'want_read': False,
+                'want_write': True, 'sticky': True, 'setgid': False,
+                'isolate': True, 'exclude': {'shared'}, 'shared_rule': True,
+            })
+
+    for spec in specs:
+        area_name = spec['area_name']
+        principal = spec['principal']
+        name = f"{area_name}/ humans self-service isolation"
+        area = Path(spec['path'])
+        if not area.exists():
+            warn(name, f"{area} does not exist yet — run horizon_aios_harden.py")
+            continue
+        problems = []
+        # Parent stance (read/write) per the CONFIGURED rights.
+        parent = _acl_group_effective(area, principal)
+        if parent is None:
+            problems.append(f"no '{principal}' ACE on parent (self-service broken)")
+        else:
+            if spec['want_read'] and "r" not in parent:
+                problems.append(f"parent not group-readable ({parent}) — expected read")
+            if not spec['want_read'] and "r" in parent:
+                problems.append(f"parent group-READABLE ({parent}) — peers can enumerate")
+            if spec['want_write'] and "w" not in parent:
+                problems.append(f"parent not group-writable ({parent}) — self-service broken")
+        try:
+            mode = area.stat().st_mode
+            if spec['sticky'] and not (mode & _stat.S_ISVTX):
+                problems.append("parent not sticky (peers can delete each other's entries)")
+            if spec['setgid'] is False and (mode & _stat.S_ISGID):
+                problems.append("parent IS setgid (new entries wrongly group-owned by parent)")
+            if spec['setgid'] is True and not (mode & _stat.S_ISGID):
+                problems.append("parent not setgid (configured setgid missing)")
+        except OSError as e:
+            problems.append(f"parent stat error ({e})")
+        # Existing non-excluded children: group must have no read/write (only when
+        # the rule isolates children).
+        children = []
+        if spec['isolate']:
+            try:
+                children = [d for d in sorted(area.iterdir())
+                            if d.is_dir() and d.name not in spec['exclude']]
+            except OSError as e:
+                problems.append(f"cannot enumerate children ({e})")
+            for child in children:
+                perms = _acl_group_effective(child, principal)
+                if perms and ("r" in perms or "w" in perms):
+                    problems.append(f"peer entry {child.name} group-accessible ({perms})")
+        # shared/ drop-zone: verified only if the posture defines one for this area.
+        srule = spec['shared_rule']
+        if srule:
+            want_sgid = getattr(srule, 'setgid', True) if srule is not True else True
+            want_sticky = getattr(srule, 'sticky', True) if srule is not True else True
+            want_group = getattr(srule, 'group_owner', HUMANS_GROUP) if srule is not True else HUMANS_GROUP
+            shared = area / "shared"
+            if not shared.is_dir():
+                problems.append("shared/ drop-zone missing")
+            else:
+                sperms = _acl_group_effective(shared, principal)
+                if not sperms or not all(p in sperms for p in ("r", "w", "x")):
+                    problems.append(f"shared/ not group-rwx for humans ({sperms})")
+                try:
+                    smode = shared.stat().st_mode
+                    if want_sgid and not (smode & _stat.S_ISGID):
+                        problems.append("shared/ not setgid")
+                    if want_sticky and not (smode & _stat.S_ISVTX):
+                        problems.append("shared/ not sticky")
+                    if want_group:
+                        try:
+                            import grp
+                            if grp.getgrgid(shared.stat().st_gid).gr_name != want_group:
+                                problems.append(f"shared/ group is not {want_group}")
+                        except (OSError, KeyError):
+                            pass
+                except OSError as e:
+                    problems.append(f"shared/ stat error ({e})")
+        if problems:
+            fail(name, "; ".join(problems) + " — run horizon_aios_harden.py")
+        else:
+            ok(f"{name} — parent stance verified (configured), {len(children)} "
+               f"child(ren) owner-only, shared/ ok")
 
 
 def check_humans_brains_writable_unix(horizon_root):
@@ -1051,13 +1191,18 @@ def main():
                 check_no_broad_write(horizon_root, horizon_system)
                 check_humans_group(horizon_root)
                 check_humans_brains_writable(horizon_root)
+                # TODO(windows-parity): the Unix twin now verifies SELF-SERVICE
+                #   isolation across all four HUMAN_SHARED_DIRS + shared/ drop-zone
+                #   (check_human_shared_isolation_unix). This Windows check still
+                #   covers projects/ only, traverse-only, no shared/. Bring to
+                #   parity as a follow-up; left intact (untestable on Linux host).
                 check_projects_isolation(horizon_root)
                 check_runtime_groups_no_humans(horizon_root)
         else:
             check_sbin_acl_unix(horizon_system)
             check_humans_readonly_system_unix(horizon_system, horizon_root)
             check_humans_brains_writable_unix(horizon_root)
-            check_projects_isolation_unix(horizon_root)
+            check_human_shared_isolation_unix(horizon_root, horizon_system)
         horizon_bin = env.get("HORIZON_BIN")
         if horizon_bin:
             check_monitor_status(horizon_bin)

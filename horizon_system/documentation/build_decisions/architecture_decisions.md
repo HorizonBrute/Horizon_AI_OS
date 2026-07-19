@@ -69,6 +69,64 @@ Entries are in reverse-chronological order at the top (newest first). Each entry
 
 ---
 
+### 2026-07-19 — ACL posture externalized to config + full cross-platform (Linux/macOS/Windows) parity
+
+**Status:** Accepted. **Owner:** HorizonBrute (package developer).
+
+**Refines:** the 2026-07-19 "Self-service per-user isolation + per-area `shared/` drop-zone on the four human shared areas" entry (immediately below). That entry defined WHAT the posture guarantees on the four human areas; this entry records WHERE the posture now lives (an externalized, deployer-customizable config) and that all three OSes now implement it from that single source. The guarantees themselves are unchanged.
+
+**Decision A — Externalize the whole ACL posture to a deployer-customizable config.** The complete hardening stance — previously hardcoded in `horizon_aios_harden.py` — is now declared as abstract-intent rules in a git-tracked TOML file, deep-merged with a gitignored local override:
+
+1. `horizon_system/ai_os_etc/file_acl_hardening.toml` — the shipped default (git-tracked). Encodes the entire posture: humans full / system-read-only / canon-read-only / brains-read-write, the four self-service areas, each area's `shared/` drop-zone, brains read-exec on `bin`/`skills_bin`, brains deny on `sbin`/`skills_sbin`/`logs`, and the system-wide no-write catch-all. Rules are ABSTRACT INTENT, never platform syntax; the schema notes at the file's foot are the authoritative field/rights vocabulary.
+1. `horizon_system/ai_os_etc/file_acl_hardening.local.toml` — a GITIGNORED deployer override, deep-merged over the default keyed by rule/group `name` (local wins: a matching name replaces that rule's fields, a new name adds a rule, `disabled = true` drops a rule). It ships as `file_acl_hardening.local.toml.template`. It is sync-safe by construction: the two-lane sync's official-lane hard-restore only reclaims official tracked paths, so the gitignored `.local.toml` is never overwritten.
+1. `horizon_system/sbin/horizon_aios_acl_posture.py` — a NEW shared module: TOML loader + deep-merge + a FAIL-SECURE embedded fallback (a missing or corrupt config still hardens from the built-in posture) + the three-OS translator. Both `horizon_aios_harden.py` (apply) and `horizon_aios_doctor.py` (verify) consume this one module, so they can never disagree about the posture.
+
+**Decision B — Full cross-platform parity driven by the same posture.** The translator emits native mechanisms from the same abstract rules on every OS — `setfacl` (Linux), `chmod +a` (macOS), `icacls` (Windows). Windows and macOS now reach parity with the previously Linux-first self-service/isolation model:
+
+1. Windows child isolation uses OWNER RIGHTS (`S-1-3-4`), never a group Deny — a Deny would lock out the owner, who is itself a `horizon_humans` member.
+1. macOS uses `chmod +a` ACEs for the same guarantees.
+1. On a non-native host the foreign-OS branch is dry-run only.
+
+**Rationale:** Hardcoding the posture made every stance tweak a code edit to a privileged script, and the framework-vs-user-space contract forbids local edits to tracked framework files (they are reclaimed on the next official-lane sync). Externalizing to a tracked default plus a gitignored, local-wins override gives deployers a durable, sync-safe customization seam that needs no code change, while the fail-secure embedded fallback guarantees the machine still hardens if the config is missing or malformed. Sharing one posture module between the applier and the verifier eliminates the classic drift where `harden.py` grants one thing and `doctor.py` checks another. Abstract-intent rules keep single-OS deployers out of platform ACL syntax and let one declaration harden all three OSes identically.
+
+**Implications:**
+
+1. The stance is customized by editing `file_acl_hardening.local.toml` (copied from the `.template`), never by editing `file_acl_hardening.toml` or the Python — direct edits to the tracked default are reclaimed on the next official-lane sync.
+1. Any future rule / field / rights-vocabulary change lives in the TOML schema and the shared posture module; `harden.py` and `doctor.py` inherit it automatically from the one source.
+1. A genuine platform-specific need uses a per-rule `[rules.raw]` escape hatch (verbatim per-OS args), applied at the deployer's responsibility.
+1. `security_invariants.md`, `file_structure_invariants.md §14`, and this log now describe a config-driven posture; the authoritative field vocabulary is the schema notes in `file_acl_hardening.toml`.
+
+---
+
+### 2026-07-19 — Self-service per-user isolation + per-area `shared/` drop-zone on the four human shared areas
+
+**Status:** Accepted. **Owner:** HorizonBrute (package developer).
+
+**Supersedes:** the earlier `projects/`-only isolation approach (commit `9a26089`), which made the `projects/` parent traverse-only (`--x`, no write) and therefore BLOCKED self-service creation — a user's `projects/<user>` folder had to be pre-created by an admin (`bootstrap --add-human`). This entry reverses that for all four areas: creation is now self-service, no admin or enrollment tooling required.
+
+**Note:** This entry records the decision. The `horizon_aios_harden.py` / `horizon_aios_doctor.py` code changes that implement and guard the model are being made separately (in progress at time of writing); the ADR is not gated on the implementation status of every check.
+
+**Decision A — Self-service per-user isolation on shared human areas.** The four human-facing shared areas — `projects/`, `handoffs/`, `objectives/`, `usrbin/` — adopt a uniform "self-service isolation" model: any member of the `horizon_humans` group can create their own folders/files directly, while being unable to see, read, enter, or delete another user's entries. On Linux/Unix this is set by `setfacl` in `horizon_aios_harden.py`:
+
+1. The parent grants `horizon_humans` `-wx` (write + traverse, NO read) — members self-create but cannot enumerate the parent listing.
+1. The sticky bit (`+t`) on the parent is mandatory — without it a group member could delete or rename another member's entry in a group-writable dir.
+1. NO setgid — so a newly created entry's group is the CREATOR'S PRIVATE GROUP (e.g. `lvcol:lvcol`), satisfying the requirement that both the owner and the group of a creation are the creating user and that user's own user-group.
+1. A default ACL makes every new entry born owner-only: `default:group:horizon_humans:---`, `default:other::---`. Other humans are denied on the entry itself.
+
+Windows parity: broken inheritance plus OWNER RIGHTS (`S-1-3-4`) on children — NOT a group Deny, because a Deny would lock the owner out (the owner is itself a `horizon_humans` member).
+
+**Decision B — Per-area `shared/` drop-zone.** Full per-user isolation would prevent genuine cross-user / cross-utility handoffs, so each of the four areas also contains a single `shared/` subdirectory that is group-readable/writable by `horizon_humans` (setgid so shared content is group-owned; sticky so members can't clobber each other's shared files). Default per-user isolation applies to everything else; `shared/` is the explicit escape hatch for A→B handoffs between utilities.
+
+**Rationale:** The prior admin-pre-create model added enrollment friction and a privileged step for what is fundamentally self-service scratch space. A flat shared namespace with `-wx` (write+traverse, no read) on the parent plus sticky-bit and a born-owner-only default ACL lets each human own their own subtree with zero tooling, while structurally denying visibility into peers' entries. Dropping setgid is deliberate: it is what makes a creation land under the creator's private group rather than a shared group, which is the ownership invariant we want for isolated entries. The single `shared/` per area preserves the one legitimate need the isolation would otherwise break — deliberate cross-utility handoff — behind an explicit, group-owned, clobber-safe directory rather than by weakening the default.
+
+**Implications:**
+
+1. Users cannot `ls` the top of these four dirs (no read on the parent) — they must know/keep their own paths. This is the inherent cost of a flat shared namespace with per-entry isolation.
+1. The model is enforced by `horizon_system/sbin/horizon_aios_harden.py` (applied by onboarding and nightly maintenance) and guarded by `horizon_system/sbin/horizon_aios_doctor.py` checks.
+1. Windows and Unix diverge in mechanism (OWNER RIGHTS vs. sticky + default ACL) but converge on the same guarantee: a creation is owned by its creator, invisible to peers, and undeletable by peers; `shared/` is the sole group-visible exception.
+
+---
+
 ### 2026-06-23 — Standardized on symlinks across all platforms; junction terminology retired
 
 **Decision:** The AIOS now uses symbolic links (symlinks) exclusively across all platforms — Windows, macOS, and Linux — for skills discovery (`~/.claude/skills/`), memory redirect (`~/.claude/projects/`), and brain `.claude` home wiring (`<brain-home>/.claude`). The previous Windows-specific NTFS directory junction approach is retired. All documentation terminology updated from "junction" (or "junction/symlink") to "symlink."

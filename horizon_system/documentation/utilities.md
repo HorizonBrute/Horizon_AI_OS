@@ -49,7 +49,11 @@ environment variables are set and point to real directories, the skills symlink
 (`~/.claude/skills/`) resolves to `skills_sbin/`, git hooks are installed, the
 local config file exists, the AIOS registry is valid and its active entry
 points to a real AIOS root, and ACLs on `sbin/`, `skills_sbin/`, and `logs/`
-include an explicit Deny for the `brains` group. Also checks monitor status
+include an explicit Deny for the `brains` group. The ACL checks read the same
+config-driven posture the enforcer applies (via `horizon_aios_acl_posture.py` /
+`file_acl_hardening.toml` + `.local` override), so verifier and enforcer can
+never disagree; the four `horizon_humans` self-service areas and their `shared/`
+drop-zones are verified from the same source. Also checks monitor status
 (advisory — a stopped monitor is a warning, not a failure).
 
 **When to use it:** After initial bootstrap, after pulling an upstream update
@@ -107,13 +111,22 @@ and log consumption guidance see `$HORIZON_DOCS/security/audit_logging.md`.
 
 **Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_harden.py`
 
-Applies the authoritative brains-group ACL model to the AIOS layer. Grants
-the `brains` group Read+Execute on `bin/` and `skills_bin/`, applies a broad
-no-write Deny across `$HORIZON_SYSTEM`, and adds an explicit full Deny on
-`sbin/`, `skills_sbin/`, and `logs/`. On Windows it uses `icacls`; on Linux it
-uses `setfacl` when available and falls back to `chmod`; on macOS it uses
-`chmod`. Requires Administrator/root. Run by bootstrap (Section 9); re-run
-after structural changes to `$HORIZON_SYSTEM`.
+Applies the authoritative AIOS ACL posture. The posture is **config-driven**:
+it is declared as abstract-intent rules in `$HORIZON_ETC/file_acl_hardening.toml`
+(shipped default) deep-merged with the gitignored
+`$HORIZON_ETC/file_acl_hardening.local.toml` (deployer override, local wins), and
+translated to the native mechanism per OS by the shared
+`horizon_aios_acl_posture.py` engine — `icacls` (Windows), `setfacl` (Linux),
+`chmod +a` (macOS). The posture grants the `brains` group Read+Execute on `bin/`
+and `skills_bin/`, a broad no-write Deny across `$HORIZON_SYSTEM`, and an explicit
+full Deny on `sbin/`, `skills_sbin/`, and `logs/`; it also enforces the
+`horizon_humans` self-service isolation on the four human areas (`projects/`,
+`handoffs/`, `objectives/`, `usrbin/`) plus each area's group-shared `shared/`
+drop-zone. If the config is missing or corrupt the engine FAILs SECURE to an
+embedded copy of the shipped posture, so hardening never silently no-ops.
+Requires Administrator/root. Run by bootstrap (Section 9); re-run after structural
+changes to `$HORIZON_SYSTEM`. Customize the stance by editing
+`file_acl_hardening.local.toml`, never the tracked default (the sync reclaims it).
 
 **When to use it:** Initial bootstrap, after adding or removing directories
 under `$HORIZON_SYSTEM`, or when `horizon_aios_doctor.py` reports a missing Deny ACE.
@@ -128,6 +141,38 @@ under `$HORIZON_SYSTEM`, or when `horizon_aios_doctor.py` reports a missing Deny
   script's own location
 
 **Referenced by a skill?** No.
+
+---
+
+## horizon_aios_acl_posture.py
+
+**Path:** `$HORIZON_SYSTEM/sbin/horizon_aios_acl_posture.py`
+
+The shared ACL-posture engine consumed by **both** `horizon_aios_harden.py`
+(apply) and `horizon_aios_doctor.py` (verify), so enforcer and verifier can never
+disagree about the stance. It (1) loads the shipped default
+`$HORIZON_ETC/file_acl_hardening.toml`, (2) deep-merges the gitignored deployer
+override `$HORIZON_ETC/file_acl_hardening.local.toml` over it keyed by rule/group
+`name` (local wins; `disabled = true` drops a rule), (3) FAILs SECURE to an
+embedded copy of the shipped posture if the default is missing/corrupt or
+`tomllib` is unavailable, and (4) translates each abstract-intent rule to native
+ops per OS — `setfacl` (Linux), `chmod +a` (macOS), `icacls` with OWNER RIGHTS
+`S-1-3-4` for child isolation (Windows). Not normally run directly; it is a
+library. Standalone it offers a self-check and a translated-command dump for
+review.
+
+**Key flags:**
+
+- `--self-check` — verify the embedded fail-secure fallback still matches the
+  shipped `file_acl_hardening.toml`, then exit (non-zero on drift)
+- `--os {Linux,Darwin,Windows}` — force an OS for the translated-command dump
+  (defaults to the host OS)
+- `--owner NAME` — owner principal used in the Windows dump
+- `--horizon-root PATH` — explicit root; otherwise derived from the script's
+  own location
+
+**Referenced by a skill?** No (indirectly, via `/harden` and `/doctor`, which
+drive the two consumers).
 
 ---
 

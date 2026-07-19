@@ -1,0 +1,48 @@
+# =============================================================================
+# file_acl_hardening.local.toml  —  DEPLOYER ACL posture override  (STARTER)
+# =============================================================================
+# Copy this file to  file_acl_hardening.local.toml  (drop the .template) and put
+# ONLY your overrides here. horizon_aios_harden.py deep-merges this over the
+# shipped file_acl_hardening.toml, keyed by rule/group `name` — LOCAL WINS.
+#
+# This file (the .local.toml, not the .template) is gitignored, so the nightly
+# AIOS sync never overwrites it. The shipped default IS overwritten by sync, so
+# never edit file_acl_hardening.toml directly — put changes here.
+#
+# See the SCHEMA NOTES at the bottom of file_acl_hardening.toml for the full
+# field vocabulary. Everything below is commented out — uncomment to activate.
+# =============================================================================
+
+# schema_version must match the default you are overriding.
+# schema_version = 1
+
+# --- Example 1: change a shipped rule (same name = merge over default) --------
+# Give humans the ability to LIST the projects parent (relax the no-read stance):
+# [[rules]]
+# name = "humans-projects-selfservice"
+# rights = "read-write"      # was "create-traverse" (-wx); rwx also allows list
+
+# --- Example 2: disable a shipped rule ---------------------------------------
+# [[rules]]
+# name = "humans-usrbin-shared"
+# disabled = true
+
+# --- Example 3: add a brand-new isolated area --------------------------------
+# [[rules]]
+# name = "humans-scratch-selfservice"
+# path = "$HORIZON_ROOT/scratch"
+# principal = "horizon_humans"
+# rights = "create-traverse"
+# sticky = true
+# setgid = false
+# isolate_children = true
+# exclude_children = ["shared"]
+
+# --- Example 4: platform-specific escape hatch -------------------------------
+# [[rules]]
+# name = "my-custom-grant"
+# path = "$HORIZON_ROOT/whatever"
+# [rules.raw]
+# linux   = ["g:somegroup:r-x"]
+# macos   = ["group:somegroup allow read,execute"]
+# windows = ["somegroup:(RX)"]
