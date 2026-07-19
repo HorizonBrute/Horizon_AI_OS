@@ -64,6 +64,9 @@ DEFAULTS = {
     "AIOS_PERSONAL_BRANCH": "main",
     "SYNC_PERSONAL_FROM_REMOTE": "no",
     "AIOS_LOG_DIR": "",
+    # Options packages: after the official lane, update each registered deployed options package
+    # from its own upstream (see the deployed-packages registry). "no" disables the pass.
+    "UPDATE_OPTIONS_PACKAGES": "yes",
     # Deprecated aliases -- mapped onto the official lane when the new keys are absent.
     "AIOS_REPO_REMOTE": "origin",
     "AIOS_REPO_BRANCH": "",  # blank = auto-detect (see AIOS_OFFICIAL_BRANCH)
@@ -152,6 +155,58 @@ def official_pathspec():
     registered deployed-package clone (protected from upstream overwrite)."""
     excludes = PERSONAL_PATHS + deployed_package_excludes()
     return ["."] + [f":(exclude){p}" for p in excludes]
+
+
+def deployed_package_entries():
+    """Full registry entries for deployed options packages. Best-effort; [] on absent/malformed."""
+    reg = DEPLOYED_PACKAGES_REGISTRY
+    if not reg.exists():
+        return []
+    try:
+        data = json.loads(reg.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    return data.get("packages", [])
+
+
+def update_options_packages(config):
+    """Update every registered options package by invoking that package's OWN installer `update`
+    entrypoint (`python <clone>/<install_entrypoint> update`). This is how the AIOS sync task keeps
+    options packages current: a package's installer REGISTERS it (with clone_path + install_entrypoint),
+    and that registration is what adds the package to this pass — no per-package sync code.
+
+    Each package's `update` is responsible for its own semantics (typically: pull from its upstream,
+    push to a fork if one exists, then redeploy). Best-effort and fail-safe: a package with sync=false
+    is skipped, and a failing package is logged and skipped — it never fails the OS sync.
+    Returns (updated, failed).
+    """
+    if config.get("UPDATE_OPTIONS_PACKAGES", "yes").lower() == "no":
+        log("INFO", "Options packages: UPDATE_OPTIONS_PACKAGES=no; skipping")
+        return (0, 0)
+    updated = failed = 0
+    for pkg in deployed_package_entries():
+        name = pkg.get("name", "?")
+        if pkg.get("sync", True) is False:
+            log("INFO", f"Options package '{name}': sync=false; skipped")
+            continue
+        clone = (pkg.get("clone_path") or "").strip().strip("/")
+        entry = (pkg.get("install_entrypoint") or "").strip().strip("/")
+        if not clone or not entry:
+            log("WARN", f"Options package '{name}': no clone_path/install_entrypoint; skipped")
+            continue
+        script = HORIZON_ROOT / clone / entry
+        if not script.exists():
+            log("WARN", f"Options package '{name}': entrypoint not found ({script}); skipped")
+            continue
+        res = subprocess.run([sys.executable, str(script), "update"], capture_output=True, text=True)
+        if res.returncode == 0:
+            updated += 1
+            log("OK", f"Options package '{name}': updated from upstream")
+        else:
+            failed += 1
+            log("WARN", f"Options package '{name}': update failed: "
+                        f"{(res.stderr or res.stdout).strip().splitlines()[-1] if (res.stderr or res.stdout).strip() else 'unknown'}")
+    return (updated, failed)
 
 
 def resolve_log_file(config):
@@ -510,6 +565,12 @@ def run_sync(force_personal, lane):
     log("OK", f"Synced to {config['AIOS_OFFICIAL_REMOTE']}/{config['AIOS_OFFICIAL_BRANCH']}: "
               f"official={official_changed} file(s), personal={personal_state}")
 
+    # Options packages: keep every registered deployed options package current from its upstream.
+    if lane in ("official", "both"):
+        pkg_updated, pkg_failed = update_options_packages(config)
+        if pkg_updated or pkg_failed:
+            log("OK", f"Options packages: updated={pkg_updated}, failed={pkg_failed}")
+
     # A sync may have refreshed skills_sbin and dropped the untracked symlinks
     # that register machine-local user skills. Rebuild them from usr_skills (the
     # source of truth). Best-effort: a failure here must not fail the sync.
@@ -546,10 +607,22 @@ def main():
         help="DANGER: overwrite local personal paths (projects/, usrbin/, brains/) "
              "from the personal remote. Default personal-lane behavior is local-wins.",
     )
+    parser.add_argument(
+        "--update-packages", action="store_true",
+        help="Run ONLY the options-package update pass: update every registered options package "
+             "from its upstream, then exit. Does not run the OS sync lanes.",
+    )
     args = parser.parse_args()
 
     if args.status:
         run_status(read_config())
+    elif args.update_packages:
+        global _log_file
+        cfg = read_config()
+        _log_file = resolve_log_file(cfg)
+        up, fp = update_options_packages(cfg)
+        log("OK", f"Options packages: updated={up}, failed={fp}")
+        sys.exit(0 if fp == 0 else 2)
     else:
         run_sync(args.force_personal, args.lane)
 
