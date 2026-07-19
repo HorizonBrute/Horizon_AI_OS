@@ -121,6 +121,19 @@ ensure_humans_group() {
   fi
 }
 
+list_humans_group_members() {
+  # Echo space-separated current members of $HUMANS_GROUP from the OS - the
+  # source of truth for the deploy marker, so enrollment order never matters
+  # and the marker self-heals if it ever drifts from real group membership.
+  local raw=""
+  if getent group "$HUMANS_GROUP" >/dev/null 2>&1; then
+    raw="$(getent group "$HUMANS_GROUP" | awk -F: '{print $4}')"
+  elif command -v dscl >/dev/null 2>&1; then
+    raw="$(dscl . -read "/Groups/$HUMANS_GROUP" GroupMembership 2>/dev/null | sed 's/^GroupMembership://')"
+  fi
+  printf '%s\n' "$raw" | tr ',' ' ' | xargs -n1 2>/dev/null | sort -u | xargs
+}
+
 enroll_human() {
   # $1 = account name. (Unix has no cloud-SID enrollment analogue.)
   local member="$1"
@@ -164,7 +177,9 @@ if [ -n "$ADD_HUMAN_VAL" ]; then
   banner "Add human operator to $HUMANS_GROUP"
   ensure_humans_group
   enroll_human "$ADD_HUMAN_VAL"
-  write_deploy_marker "workstation" "$ADD_HUMAN_VAL"
+  # Marker reflects real group membership (all enrolled humans), not just the
+  # one added this run - otherwise each --add-human would clobber the prior list.
+  write_deploy_marker "workstation" $(list_humans_group_members)
   info "Note: horizon_humans is Read-Only on brains/ by design (elevate or re-permission to write there)."
   exit 0
 fi
