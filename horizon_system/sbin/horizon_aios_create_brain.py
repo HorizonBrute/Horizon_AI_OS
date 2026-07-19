@@ -600,7 +600,7 @@ def _macos_next_uid():
 
 def phase3_folders_and_permissions(ctx, dry_run=False):
     """
-    Create folders and set all permissions per security_invariants.md §2 table.
+    Create folders and set all permissions per security_architecture_invariants.md §2 table.
 
     Order matters on Windows — explicit Deny on sbin/skills_sbin/logs MUST
     come AFTER the brains-group RX grants, so that Deny takes precedence

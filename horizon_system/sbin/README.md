@@ -14,7 +14,7 @@ Scripts belong in sbin when they:
 - Install or remove system-wide tools or dependencies.
 - Perform any action that requires elevation (admin/root) or acts on behalf of the primary user.
 
-Current sbin scripts follow the `horizon_aios_` naming convention (see `security_invariants.md §8`). Examples: `horizon_aios_create_brain.py`, `horizon_aios_remove_brain.py`, `horizon_aios_harden.py`. See `$HORIZON_DOCS/utilities.md` for the full catalog.
+Current sbin scripts follow the `horizon_aios_` naming convention (see `security_architecture_invariants.md §8`). Examples: `horizon_aios_create_brain.py`, `horizon_aios_remove_brain.py`, `horizon_aios_harden.py`. See `$HORIZON_DOCS/utilities.md` for the full catalog.
 
 ## What Does NOT Belong Here
 

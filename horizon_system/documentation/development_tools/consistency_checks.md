@@ -142,7 +142,7 @@ skills, hooks, and templates.
   behavior.
 - **CC-E4 — Branding & identification.** Admin-visible artifacts AIOS creates
   self-identify as Horizon AIOS per the Branding & Identification invariant
-  (`security_invariants.md §8`): log records carry `source: Horizon.AIOS`; log
+  (`security_architecture_invariants.md §8`): log records carry `source: Horizon.AIOS`; log
   files/dirs and privileged `sbin/` scripts use the `horizon_aios_` prefix; OS
   user/group descriptions and the Windows Event source carry the `Horizon.AIOS`
   token. Exempt functional identifiers (public entry points, the `brains` group,
