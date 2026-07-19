@@ -83,7 +83,7 @@ AIOS-wide rules, `@`-import of `agents.md`, and prose pointers to the invariant 
 Harness-agnostic agent instructions: orchestration model, session-start checklist, skills conventions, commit rules. This file is consumed by Claude Code and other harnesses (Codex, OpenHands). It `@`-imports its sibling `local.agents.md` last — the machine-local override seam (see §12.6 of `$HORIZON_ETC/file_structure_invariants.md`). `local.agents.md` is gitignored, materialized by `aios setup`, and is the right place for owner/machine-specific instructions that must not ship. Do not put `@`-imports here with the intent that they will be inlined — they will not be. If you need a file inlined, `@`-import it from a `CLAUDE.md`.
 
 **Brain config (`brains/<name>/`)**
-A brain's identity lives in its **workspace root**, not in `.claude/`. `brains/<name>/CLAUDE.md` is a thin entry that `@`-imports the brain's `agents.md`, `brain_invariants.md` (hard rules), and `brain_core.md` (persona, role, knowledge locations, behaviors). Brains also load the AIOS base layers above via ancestor-directory auto-loading, since a brain session's cwd is its workspace root. Keep these files short: token economy applies to brain sessions too. See `$HORIZON_ETC/security_invariants.md §2` for why brain sessions are isolated from the owner's config.
+A brain's identity lives in its **workspace root**, not in `.claude/`. `brains/<name>/CLAUDE.md` is a thin entry that `@`-imports the brain's `agents.md`, `brain_invariants.md` (hard rules), and `brain_core.md` (persona, role, knowledge locations, behaviors). Brains also load the AIOS base layers above via ancestor-directory auto-loading, since a brain session's cwd is its workspace root. Keep these files short: token economy applies to brain sessions too. See `$HORIZON_DOCS/security_architecture_invariants.md §2` for why brain sessions are isolated from the owner's config.
 
 **`CLAUDE.local.md` (any level)**
 Machine-local overrides: paths that differ by machine, API keys, local-only conventions. Must not be committed. Add to `.gitignore`. This is the right way to override an AIOS config without touching committed files.
@@ -131,5 +131,5 @@ python "$HORIZON_SYSTEM/bin/context_cost.py" [path] --json
 |---|---|
 | `documentation/authoring/claude_md_authoring.md` | Detailed authoring rules and the @-import unconditional-load clarification |
 | `documentation/utilities.md` | Full utility reference including `context_cost.py` |
-| `$HORIZON_ETC/security_invariants.md` | Why brain `CLAUDE.md` files are scoped — brain isolation model |
+| `$HORIZON_DOCS/security_architecture_invariants.md` | Why brain `CLAUDE.md` files are scoped — brain isolation model (§2) |
 | `$HORIZON_ETC/file_structure_invariants.md` | Canonical file locations for every AIOS path |

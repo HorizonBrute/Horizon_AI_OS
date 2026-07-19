@@ -64,7 +64,7 @@ Harness-specific configuration lives in `$HORIZON_SYSTEM/harness_configs/<vendor
 
 The implication: **the security model is the same regardless of which harness the brain runs.** A brain running Claude Code and a brain running Codex have the same filesystem restrictions. The harness governs what the AI can do within those bounds; the OS governs what the account can touch.
 
-See `$HORIZON_DOCS/philosophy.md` §7 (BYOH) and `$HORIZON_ETC/security_invariants.md` §5 (the harness-is-bounded-by-the-OS invariant).
+See `$HORIZON_DOCS/philosophy.md` §7 (BYOH) and `$HORIZON_DOCS/security_architecture_invariants.md` §5 (the harness-is-bounded-by-the-OS invariant).
 
 ### 1.4 The Human Operator Boundary — Secure by Onboarding
 

@@ -794,7 +794,7 @@ The script prints a summary and next-steps reminder at the end of every run.
 
 The script runs in four phases (Preflight → User/Groups → Folders/Permissions → Verify) and wraps each phase in a try/except block. If a phase fails, it prints what completed, what failed, and manual cleanup instructions. **There is no automatic rollback** — this is by design, to avoid silently destroying partially-created state. Follow the printed cleanup instructions if you need to remove a partially provisioned brain.
 
-See `$HORIZON_ETC/security_invariants.md` for the full ownership and ACL model, and `$HORIZON_ETC/ai_os_personalizations.md` Section 4 for the brain persona configuration protocol.
+See `$HORIZON_DOCS/security_architecture_invariants.md` for the full ownership and ACL model, and `$HORIZON_ETC/ai_os_personalizations.md` Section 4 for the brain persona configuration protocol.
 
 ---
 

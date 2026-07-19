@@ -228,7 +228,7 @@ Examples:
 
 This convention applies to all vendor-scoped subdirectories in $HORIZON_SYSTEM, not just sounds. If a new category of vendor-specific asset is added, the subdirectory name follows the same `<vendor>_<category>/` pattern.
 
-**Horizon AIOS artifact naming (branding).** AIOS's own admin-visible artifacts — privileged utility scripts in `sbin/` and the audit/operational log files and directories under `logs/` — carry the `horizon_aios_` filename prefix (lowercase, underscores) so a process listing or a loose log file self-identifies as Horizon AIOS. Stable functional identifiers are exempt (public entry points `bootstrap.*`/`uninstall.*`, the `aios` wrapper, the `brains` group, `aios_*.conf`, `AIOS_*` env vars, scheduled-task names). This is the filename half of the **Branding & Identification invariant** — see `security_invariants.md §8`, which is authoritative and also covers the `Horizon.AIOS` token in log records, OS-object descriptions, and event channels.
+**Horizon AIOS artifact naming (branding).** AIOS's own admin-visible artifacts — privileged utility scripts in `sbin/` and the audit/operational log files and directories under `logs/` — carry the `horizon_aios_` filename prefix (lowercase, underscores) so a process listing or a loose log file self-identifies as Horizon AIOS. Stable functional identifiers are exempt (public entry points `bootstrap.*`/`uninstall.*`, the `aios` wrapper, the `brains` group, `aios_*.conf`, `AIOS_*` env vars, scheduled-task names). This is the filename half of the **Branding & Identification invariant** — see `security_architecture_invariants.md §8`, which is authoritative and also covers the `Horizon.AIOS` token in log records, OS-object descriptions, and event channels.
 
 ---
 
@@ -303,7 +303,7 @@ The template file is fully annotated.
 - Administrative context: read, write, execute
 - Brain accounts: no default access
 
-`$HORIZON_USRBIN` is a tool repository for the administrative context to draw from when provisioning brains. Brains do not get blanket access to this directory. The administrative context selects specific tools and provisions them into each brain's environment (see `security_invariants.md §4`).
+`$HORIZON_USRBIN` is a tool repository for the administrative context to draw from when provisioning brains. Brains do not get blanket access to this directory. The administrative context selects specific tools and provisions them into each brain's environment (see `security_architecture_invariants.md §4`).
 
 Check `$HORIZON_USRBIN` before installing new tools.
 
@@ -313,7 +313,7 @@ Check `$HORIZON_USRBIN` before installing new tools.
 
 What belongs here: code repositories, working copies, research, documents, and agentic workflow output locations. What does not: skills, brain configuration, or AIOS tooling — those belong in brains or the system layer.
 
-Brains and projects are **not intrinsically linked**. Brain access to a project is always an explicit grant (see `security_invariants.md §4`) — never automatic.
+Brains and projects are **not intrinsically linked**. Brain access to a project is always an explicit grant (see `security_architecture_invariants.md §4`) — never automatic.
 
 Each project folder is independent and may be its own git repository. The OS repo pre-commit hook automatically drops nested `.git` folders from tracking — no manual `.gitignore` entry is needed.
 

@@ -58,7 +58,7 @@ that cannot reference env vars at copy time use substitution placeholders (e.g.,
 
 Do not include real names, email addresses, GPG key fingerprints, hostnames, or
 machine-specific paths in any committed file. This mirrors the security invariants
-documented in `horizon_system/ai_os_etc/security_invariants.md` (section 6).
+documented in `horizon_system/documentation/security_architecture_invariants.md` (section 6).
 
 ## How to Contribute
 

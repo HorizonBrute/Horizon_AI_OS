@@ -94,7 +94,7 @@ A brain's harness runs as the brain OS user and is therefore bounded by the brai
 
 The implication: **the security model is the same regardless of which harness the brain runs.** A brain running Claude Code and a brain running Codex have the same filesystem restrictions. The harness governs what the AI can do within those bounds; the OS governs what the account can touch.
 
-See `$HORIZON_DOCS/philosophy.md` §7 (BYOH) and `$HORIZON_ETC/security_invariants.md` §5 (the harness-is-bounded-by-the-OS invariant).
+See `$HORIZON_DOCS/philosophy.md` §7 (BYOH) and `$HORIZON_DOCS/security_architecture_invariants.md` §5 (the harness-is-bounded-by-the-OS invariant).
 
 ### 1.4 Deployment Baseline and Multiple Horizon.AIOS Instances
 
