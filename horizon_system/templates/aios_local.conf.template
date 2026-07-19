@@ -17,8 +17,10 @@ AIOS_SYNC_TIME=03:00
 # Remote name or URL to sync from.
 AIOS_REPO_REMOTE=origin
 
-# Branch to sync from.
-AIOS_REPO_BRANCH=main
+# Branch to sync from. Leave blank to auto-detect the remote's default branch
+# (main, master, ...) — recommended, so the sync can't break if the default
+# doesn't match. Set an explicit branch only to pin a non-default one.
+AIOS_REPO_BRANCH=
 
 # ---------------------------------------------------------------------------
 # Sync — unattended mode notes
