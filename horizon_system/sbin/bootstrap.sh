@@ -517,34 +517,42 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# SECTION 7: System PATH
-# Adds $HORIZON_BIN to the system PATH via /etc/profile.d/horizon_aios.sh so
-# brain accounts and new login shells can run AIOS commands without manually
-# editing PATH. Removes stale horizon_system/bin entries first (AIOS switching).
+# SECTION 7: System PATH + HORIZON_* environment
+# Adds $HORIZON_BIN to the system PATH AND registers HORIZON_ROOT + all derived
+# HORIZON_* vars via /etc/profile.d/horizon_aios.sh so brain accounts and new
+# login shells inherit the full AIOS environment (system-wide baseline, at
+# parity with the Windows Machine-scope registration in bootstrap.ps1).
+# The whole file is regenerated each run so it is idempotent and switch-safe
+# (a re-run or an AIOS switch fully replaces stale HORIZON_* / PATH entries).
 # On macOS, also writes to /etc/paths.d/horizon-aios for zsh via path_helper.
 # -----------------------------------------------------------------------------
-banner "SECTION 7: System PATH"
+banner "SECTION 7: System PATH + HORIZON_* environment"
 
 PROFILE_D_FILE="/etc/profile.d/horizon_aios.sh"
 EXPANDED_BIN="$HORIZON_BIN"
 
-# Remove any stale horizon_system/bin line from /etc/profile.d/horizon_aios.sh
-if [ -f "$PROFILE_D_FILE" ]; then
-  # Strip lines that export PATH with a horizon_system/bin component
-  sed -i '/horizon_system\/bin/d' "$PROFILE_D_FILE"
-  ok "Removed stale horizon_system/bin entry from $PROFILE_D_FILE (if any)."
-fi
-
-# Append the current HORIZON_BIN to PATH in /etc/profile.d/horizon_aios.sh
-# Use the expanded path — /etc/profile.d/ files are sourced before HORIZON_BIN
-# is in scope, so variable references would not resolve correctly.
+# Regenerate /etc/profile.d/horizon_aios.sh with the full HORIZON_* environment.
+# Use expanded absolute paths — /etc/profile.d/ files are sourced before any
+# HORIZON_* var is in scope, so unresolved variable references would be empty.
+# A full rewrite (not append) keeps this idempotent and clears stale entries
+# from a prior install or a different active AIOS (AIOS switching).
 mkdir -p /etc/profile.d
 {
   echo "# Horizon AIOS — managed by bootstrap.sh (do not edit manually)"
+  echo "export HORIZON_ROOT=\"$HORIZON_ROOT\""
+  echo "export HORIZON_SYSTEM=\"$HORIZON_SYSTEM\""
+  echo "export HORIZON_BIN=\"$HORIZON_BIN\""
+  echo "export HORIZON_SBIN=\"$HORIZON_SBIN\""
+  echo "export HORIZON_ETC=\"$HORIZON_ETC\""
+  echo "export HORIZON_DOCS=\"$HORIZON_DOCS\""
+  echo "export HORIZON_SOUNDS=\"$HORIZON_SOUNDS\""
+  echo "export HORIZON_LOGS=\"$HORIZON_LOGS\""
+  echo "export HORIZON_USRBIN=\"$HORIZON_USRBIN\""
+  echo "export HORIZON_PROJECTS=\"$HORIZON_PROJECTS\""
   echo "export PATH=\"$EXPANDED_BIN:\$PATH\""
-} >> "$PROFILE_D_FILE"
+} > "$PROFILE_D_FILE"
 chmod 644 "$PROFILE_D_FILE"
-ok "Added $EXPANDED_BIN to system PATH via $PROFILE_D_FILE"
+ok "Registered HORIZON_* env + added $EXPANDED_BIN to system PATH via $PROFILE_D_FILE"
 
 # macOS: also write to /etc/paths.d/ for zsh (path_helper reads this)
 case "$(uname -s)" in
