@@ -1,0 +1,71 @@
+site_name: "Horizon AIOS"
+site_description: "Documentation for Horizon AIOS — a centralized, syncable AI operating-system config layer."
+docs_dir: horizon_system/documentation
+theme:
+  name: material
+  palette:
+    scheme: slate
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - search.suggest
+    - search.highlight
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Overview: getting_started/getting_started.index.md
+      - Setup Guide: getting_started/ReadMeToSetupYourSystem.md
+      - Dependencies & Footprint: getting_started/dependencies_and_footprint.md
+      - Updating: getting_started/updating.md
+      - Lifecycle Test: getting_started/lifecycle_test.md
+  - User Guides:
+      - Overview: user_guides/user_guides.index.md
+      - Using Your AIOS: user_guides/using_your_aios.md
+      - Using Horizon.AIOS: user_guides/using_Horizon.AIOS.md
+      - Deployment How-Tos: user_guides/deployment_howtos.md
+  - System:
+      - Overview: system/system.index.md
+      - Options Packages: system/aios_options_packages.md
+      - AIOS Switching: system/aios_switching.md
+      - Distribution & Updates: system/distribution_and_updates.md
+      - Memory: system/memory.md
+      - Configuration Reference: system/system_configuration_reference.md
+      - Model Preferences: system/model_preferences.md
+      - Agent Teams: system/agent_teams.md
+      - Skill Model Groups: system/skill_model_groups.md
+      - Uninstall: system/uninstall.md
+  - Deployment:
+      - Overview: deployment/deployment.index.md
+      - Desktop: deployment/desktop.md
+      - Server: deployment/server.md
+      - Docker: deployment/docker.md
+      - Multi-Brain Deployment: deployment/multi_brain_deployment.md
+      - Brain Automation: deployment/brain_automation.md
+  - Security:
+      - Overview: security/security.index.md
+      - Audit Logging: security/audit_logging.md
+      - Brain Isolation Test: security/brain_isolation_test.md
+      - Security Architecture Invariants: security_architecture_invariants.md
+  - Authoring:
+      - Overview: authoring/authoring.index.md
+      - CLAUDE.md Authoring: authoring/claude_md_authoring.md
+  - Build Decisions:
+      - Overview: build_decisions/build_decisions.index.md
+      - Architecture Decisions: build_decisions/architecture_decisions.md
+  - Development Tools:
+      - Overview: development_tools/development_tools.index.md
+      - Consistency Checks: development_tools/consistency_checks.md
+      - Windows Install/Switch/Uninstall Test: development_tools/windows_install_switch_uninstall_test_prompt.md
+  - Reference:
+      - Philosophy: philosophy.md
+      - Development Values: dev_values.md
+      - Development Pipeline: development_pipeline.md
+      - Context Loading: context_loading.md
+      - Model Preferences Details: model_prefs_details.md
+      - Skills Reference: skills.md
+      - Utilities Reference: utilities.md
+      - Sync Setup: sync_setup.md
+      - Cloud Sync Exclusions: cloud_sync_exclusions.md
+      - Tested Configurations: tested_configurations.md
+      - Terseness Contract Index: terseness_contract_index.md
+      - Branding Invariants: branding_invariants.md
