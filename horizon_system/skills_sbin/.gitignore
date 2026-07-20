@@ -45,3 +45,5 @@
 !convert-prompt-to-saill/**
 !doc-check/
 !doc-check/**
+!post-update/
+!post-update/**
