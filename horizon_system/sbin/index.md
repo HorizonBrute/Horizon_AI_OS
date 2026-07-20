@@ -19,8 +19,6 @@ Privileged scripts for system administration. Requires elevation (Administrator 
 | [horizon_aios_nightly_maintenance.py](./horizon_aios_nightly_maintenance.py) | Nightly maintenance runner — runs doctor (report drift) then harden (re-assert permission model) unattended; logs each step; --dry-run |
 | [horizon_aios_monitor.py](./horizon_aios_monitor.py) | AIOS filesystem integrity monitor — watches AIOS layer for unexpected file changes and logs events as JSON lines |
 | [horizon_aios_monitor_analyze.py](./horizon_aios_monitor_analyze.py) | Monitor log analyzer — reads horizon_aios_monitor.py JSON-line logs, checks for file changes and uptime gaps, writes security summary |
-| [horizon_aios_monitor_analyze_runner.ps1](./horizon_aios_monitor_analyze_runner.ps1) | PowerShell wrapper for horizon_aios_monitor_analyze.py; intended for periodic Task Scheduler or cron execution |
-| [horizon_aios_monitor_runner.ps1](./horizon_aios_monitor_runner.ps1) | PowerShell launcher for horizon_aios_monitor.py; for manual use or service wrapper |
 | [horizon_aios_redirect_memory.py](./horizon_aios_redirect_memory.py) | Redirect the harness's per-project state (memory) into the AIOS under $HORIZON_ROOT/memory/ for centralized governance |
 | [horizon_aios_register_user_skills.py](./horizon_aios_register_user_skills.py) | Aggregate the owner's skill view by linking brain-tier and machine-local skills into skills_sbin; idempotent and safe to re-run |
 | [horizon_aios_relocate.py](./horizon_aios_relocate.py) | Relocate an AIOS install to a new root path; auto-detects old root and rewrites machine-local instance pointers |

@@ -767,7 +767,7 @@ if (-not (Test-Path $MonitorSetup)) {
             if ($LASTEXITCODE -eq 0) {
                 Ok "Filesystem monitor installed (AIOSMonitor at startup; hourly AIOSMonitorWatchdog restarts it if stopped)."
             } else {
-                Warn "Monitor service install did not complete (exit $LASTEXITCODE). A service-account credential may be needed. Run later: python $MonitorSetup install"
+                Warn "Monitor service install did not complete (exit $LASTEXITCODE). Run later (elevated): python $MonitorSetup install"
             }
         } else {
             Warn "python not found - skipping monitor service. Run later: python $MonitorSetup install"

@@ -177,26 +177,25 @@ your existing collector already ingests.
 2. Register the service:
 
 ```powershell
-nssm install AIOSMonitor powershell -File "$HORIZON_SYSTEM\sbin\horizon_aios_monitor_runner.ps1"
+nssm install AIOSMonitor "<python-dir>\pythonw.exe" "$HORIZON_SYSTEM\sbin\horizon_aios_monitor.py"
 nssm set AIOSMonitor AppDirectory $HORIZON_SYSTEM\sbin
-nssm set AIOSMonitor ObjectName ".\<admin-account>" "<password>"
+nssm set AIOSMonitor ObjectName LocalSystem
 nssm start AIOSMonitor
 ```
 
-3. Set log directory ownership so the service account can write but brain
-   accounts cannot:
-
-```powershell
-icacls "$HORIZON_SYSTEM\logs\horizon_aios_monitor" /grant "<admin-account>:(OI)(CI)F" /inheritance:r
-```
+3. Log directory access is already correct under the harden posture: SYSTEM has
+   FullControl on `$HORIZON_SYSTEM\logs` and the `horizon_humans` group is denied
+   write there, so a SYSTEM-run monitor can write while human/brain accounts cannot.
+   No extra `icacls` step is needed. (This is why the service runs as SYSTEM rather
+   than a human account, which the humans-write DENY would block.)
 
 ### Windows — Task Scheduler (no extra dependency)
 
 ```powershell
-$action = New-ScheduledTaskAction -Execute "powershell" `
-    -Argument "-File `"$HORIZON_SYSTEM\sbin\horizon_aios_monitor_runner.ps1`""
+$action = New-ScheduledTaskAction -Execute "<python-dir>\pythonw.exe" `
+    -Argument "`"$HORIZON_SYSTEM\sbin\horizon_aios_monitor.py`""
 $trigger = New-ScheduledTaskTrigger -AtStartup
-$principal = New-ScheduledTaskPrincipal -UserId "<admin-account>" -RunLevel Highest
+$principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -RunLevel Highest
 Register-ScheduledTask -TaskName "AIOSMonitor" -Action $action -Trigger $trigger -Principal $principal
 ```
 
@@ -264,10 +263,10 @@ The security log records:
 
 Windows Task Scheduler:
 ```powershell
-$action = New-ScheduledTaskAction -Execute "powershell" `
-    -Argument "-File `"$HORIZON_SYSTEM\sbin\horizon_aios_monitor_analyze_runner.ps1`""
+$action = New-ScheduledTaskAction -Execute "<python-dir>\pythonw.exe" `
+    -Argument "`"$HORIZON_SYSTEM\sbin\horizon_aios_monitor_analyze.py`""
 $trigger = New-ScheduledTaskTrigger -Daily -At "06:00"
-$principal = New-ScheduledTaskPrincipal -UserId "<admin-account>" -RunLevel Highest
+$principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -RunLevel Highest
 Register-ScheduledTask -TaskName "AIOSMonitorAnalyzer" -Action $action `
     -Trigger $trigger -Principal $principal
 ```

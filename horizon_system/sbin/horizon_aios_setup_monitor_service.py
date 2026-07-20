@@ -2,34 +2,32 @@
 """
 Install the Horizon AIOS filesystem monitor as a scheduled service.
 
-Windows — three Task Scheduler tasks:
-  AIOSMonitor         — at STARTUP (survives reboot), elevated, runs horizon_aios_monitor_runner.ps1
-  AIOSMonitorAnalyzer — daily at 06:00, elevated, runs horizon_aios_monitor_analyze_runner.ps1
-  AIOSMonitorWatchdog — hourly, elevated, runs horizon_aios_monitor_watchdog_runner.ps1;
-                        restarts AIOSMonitor if the monitor process is not running
+Windows — three Task Scheduler tasks, all run as SYSTEM (/RL HIGHEST):
+  AIOSMonitor         — at STARTUP (survives reboot); runs pythonw horizon_aios_monitor.py directly
+  AIOSMonitorAnalyzer — daily at 06:00; runs pythonw horizon_aios_monitor_analyze.py directly
+  AIOSMonitorWatchdog — hourly; runs horizon_aios_monitor_watchdog_runner.ps1, which restarts
+                        AIOSMonitor if the monitor process is not running
 
-The service account password is stored in the OS keyring (Windows Credential Manager /
-macOS Keychain / Linux Secret Service) under:
-  service  = "horizon_aios"
-  username = "monitor_account:<account-name>"
+Running as SYSTEM is deliberate: the monitor is a system audit service that must (a) write its
+log under the hardened $HORIZON_SYSTEM/logs tree — where the harden posture DENIES write to the
+horizon_humans group, so a human-owned task cannot write there — and (b) read across the whole
+install. SYSTEM satisfies both and needs no stored password, so there is no service-account
+credential to manage.
 
-Mirrors the brain credential pattern (horizon_aios_brain_credential.py).
+The monitor requires the third-party 'watchdog' package. Install ensures it is present in the
+GLOBAL site-packages of the interpreter used here (a --user install would be invisible to the
+SYSTEM-run task), so bootstrap must run this elevated.
 
-Linux/macOS — three cron entries for the current user (no password/keyring needed):
+Linux/macOS — three cron entries for the current user (no elevation/service account needed):
   monitor  @reboot (survives reboot), analyzer daily 06:00, and an hourly
   watchdog that restarts the monitor if its process is not running.
 
 Usage:
-  python horizon_aios_setup_monitor_service.py install          [--user NAME] [--yes]
+  python horizon_aios_setup_monitor_service.py install   [--yes]
   python horizon_aios_setup_monitor_service.py uninstall
   python horizon_aios_setup_monitor_service.py status
-  python horizon_aios_setup_monitor_service.py credential get   [--show]
-  python horizon_aios_setup_monitor_service.py credential store [--user NAME]
-  python horizon_aios_setup_monitor_service.py credential delete
 """
 
-import getpass
-import os
 import platform
 import subprocess
 import sys
@@ -39,89 +37,53 @@ SCRIPT_DIR     = Path(__file__).resolve().parent   # horizon_system/sbin/
 HORIZON_SYSTEM = SCRIPT_DIR.parent                 # horizon_system/
 HORIZON_ROOT   = HORIZON_SYSTEM.parent             # repo root
 
-MONITOR_RUNNER  = SCRIPT_DIR / "horizon_aios_monitor_runner.ps1"
-ANALYZER_RUNNER = SCRIPT_DIR / "horizon_aios_monitor_analyze_runner.ps1"
+MONITOR_SCRIPT  = SCRIPT_DIR / "horizon_aios_monitor.py"
+ANALYZER_SCRIPT = SCRIPT_DIR / "horizon_aios_monitor_analyze.py"
 WATCHDOG_RUNNER = SCRIPT_DIR / "horizon_aios_monitor_watchdog_runner.ps1"
 MONITOR_TASK    = "AIOSMonitor"
 ANALYZER_TASK   = "AIOSMonitorAnalyzer"
 WATCHDOG_TASK   = "AIOSMonitorWatchdog"
 
-KEYRING_SERVICE  = "horizon_aios"
-KEYRING_USERNAME = "monitor_account:{user}"
-
 
 # ---------------------------------------------------------------------------
-# Keyring helpers  (same pattern as horizon_aios_brain_credential.py)
+# Dependency
 # ---------------------------------------------------------------------------
 
-_kr = None
-try:
-    import keyring as _kr
-except ImportError:
-    pass
+def ensure_watchdog() -> bool:
+    """Ensure the 'watchdog' package is importable by THIS interpreter.
 
-
-def _kr_key(user: str) -> str:
-    return KEYRING_USERNAME.format(user=user)
-
-
-def _store_credential(user: str, password: str) -> bool:
-    if _kr is None:
-        print("[WARN] keyring not installed — credential not stored. pip install keyring", file=sys.stderr)
-        return False
+    Installs into the interpreter's own (global, when elevated) site-packages so a
+    SYSTEM-run task can import it. A --user install would land in the invoking user's
+    site-packages and be invisible to SYSTEM, so we deliberately do not pass --user.
+    """
     try:
-        _kr.set_password(KEYRING_SERVICE, _kr_key(user), password)
+        import watchdog  # noqa: F401
         return True
-    except Exception as exc:
-        print(f"[WARN] keyring store failed: {exc}", file=sys.stderr)
+    except ImportError:
+        pass
+    print("[INFO] Installing required 'watchdog' package ...")
+    r = subprocess.run([sys.executable, "-m", "pip", "install", "watchdog"],
+                       capture_output=True, text=True)
+    if r.returncode != 0:
+        print(f"[ERR] pip install watchdog failed: {r.stderr.strip()}", file=sys.stderr)
         return False
-
-
-def _get_credential(user: str) -> str | None:
-    if _kr is None:
-        return None
-    try:
-        return _kr.get_password(KEYRING_SERVICE, _kr_key(user))
-    except Exception:
-        return None
-
-
-def _delete_credential(user: str) -> bool:
-    if _kr is None:
-        print("[WARN] keyring not installed.", file=sys.stderr)
-        return False
-    try:
-        _kr.delete_password(KEYRING_SERVICE, _kr_key(user))
-        return True
-    except Exception:
-        return True   # treat missing entry as success
-
-
-# ---------------------------------------------------------------------------
-# Password prompt
-# ---------------------------------------------------------------------------
-
-def _prompt_password(user: str, yes: bool) -> str | None:
-    """Return a password: from keyring if stored, otherwise prompt interactively."""
-    stored = _get_credential(user)
-    if stored:
-        print(f"[INFO] Using stored credential for monitor_account:{user}")
-        return stored
-    if yes:
-        print(f"[ERR] No stored credential for monitor_account:{user} and --yes given — run 'credential store' first.", file=sys.stderr)
-        return None
-    pw = getpass.getpass(f"Password for '{user}' (stored in keyring, not echoed): ")
-    if not pw:
-        print("[ERR] Empty password — aborted.", file=sys.stderr)
-        return None
-    if _store_credential(user, pw):
-        print(f"[OK]  Credential stored in keyring as monitor_account:{user}")
-    return pw
+    print("[OK]  watchdog installed.")
+    return True
 
 
 # ---------------------------------------------------------------------------
 # Windows Task Scheduler helpers
 # ---------------------------------------------------------------------------
+
+def _pythonw() -> str:
+    """Windowless interpreter alongside the current one; fall back to python.exe.
+
+    Using pythonw avoids a console window for the boot/scheduled task while keeping the
+    task's Last Result tied to the real process exit code (no PowerShell wrapper to swallow it).
+    """
+    cand = Path(sys.executable).with_name("pythonw.exe")
+    return str(cand) if cand.exists() else sys.executable
+
 
 def _task_exists(task_name: str) -> bool:
     r = subprocess.run(["schtasks", "/Query", "/TN", task_name],
@@ -129,14 +91,13 @@ def _task_exists(task_name: str) -> bool:
     return r.returncode == 0
 
 
-def _schtasks_create(task_name: str, runner: Path, schedule_args: list[str],
-                     user: str, password: str) -> bool:
+def _schtasks_create(task_name: str, run_cmd: str, schedule_args: list[str]) -> bool:
+    """Create a scheduled task that runs as SYSTEM (no password), highest privileges."""
     cmd = [
         "schtasks", "/Create",
         "/TN", task_name,
-        "/TR", f'powershell.exe -NonInteractive -File "{runner}"',
-        "/RU", f".\\{user}",
-        "/RP", password,
+        "/TR", run_cmd,
+        "/RU", "SYSTEM",
         "/RL", "HIGHEST",
         "/F",
     ] + schedule_args
@@ -157,30 +118,35 @@ def _schtasks_delete(task_name: str) -> bool:
 # Install / uninstall / status
 # ---------------------------------------------------------------------------
 
-def install_windows(user: str, yes: bool) -> int:
-    pw = _prompt_password(user, yes)
-    if pw is None:
+def install_windows(yes: bool) -> int:
+    if not ensure_watchdog():
         return 1
 
+    pythonw = _pythonw()
+    tasks = [
+        (MONITOR_TASK,
+         f'"{pythonw}" "{MONITOR_SCRIPT}"',
+         ["/SC", "ONSTART"],
+         "at startup (survives reboot)"),
+        (ANALYZER_TASK,
+         f'"{pythonw}" "{ANALYZER_SCRIPT}"',
+         ["/SC", "DAILY", "/ST", "06:00"],
+         "daily at 06:00"),
+        (WATCHDOG_TASK,
+         f'powershell.exe -NonInteractive -ExecutionPolicy Bypass -File "{WATCHDOG_RUNNER}"',
+         ["/SC", "HOURLY", "/MO", "1"],
+         "hourly (watchdog: restarts monitor if stopped)"),
+    ]
+
     ok = True
-    labels = {
-        "ONSTART": "at startup (survives reboot)",
-        "DAILY":   "daily at 06:00",
-        "HOURLY":  "hourly (watchdog: restarts monitor if stopped)",
-    }
-    for task, runner, sched in [
-        (MONITOR_TASK,  MONITOR_RUNNER,  ["/SC", "ONSTART"]),
-        (ANALYZER_TASK, ANALYZER_RUNNER, ["/SC", "DAILY", "/ST", "06:00"]),
-        (WATCHDOG_TASK, WATCHDOG_RUNNER, ["/SC", "HOURLY", "/MO", "1"]),
-    ]:
+    for task, run_cmd, sched, label in tasks:
         if _task_exists(task) and not yes:
             ans = input(f"Task '{task}' already exists. Overwrite? [y/N] ").strip().lower()
             if ans not in ("y", "yes"):
                 print(f"[INFO] Skipped '{task}'.")
                 continue
-        if _schtasks_create(task, runner, sched, user, pw):
-            label = next((labels[k] for k in labels if k in sched), "scheduled")
-            print(f"[OK]  Task '{task}' registered — runs {label}, elevated as {user}")
+        if _schtasks_create(task, run_cmd, sched):
+            print(f"[OK]  Task '{task}' registered — runs {label}, as SYSTEM")
         else:
             ok = False
 
@@ -211,13 +177,13 @@ def status_windows() -> int:
         exists = _task_exists(task)
         tag = "[OK] " if exists else "[--]"
         print(f"{tag} Task Scheduler: {task} {'registered' if exists else 'NOT registered'}")
-    stored_user = getpass.getuser()
-    cred = _get_credential(stored_user)
-    print(f"{'[OK] ' if cred else '[--]'} Keyring: monitor_account:{stored_user} {'stored' if cred else 'NOT stored'}")
     return 0
 
 
-def install_unix(user: str) -> int:
+def install_unix() -> int:
+    if not ensure_watchdog():
+        return 1
+
     monitor_script  = SCRIPT_DIR / "horizon_aios_monitor.py"
     analyzer_script = SCRIPT_DIR / "horizon_aios_monitor_analyze.py"
     py = sys.executable
@@ -316,16 +282,7 @@ def usage() -> None:
 def main() -> int:
     args = sys.argv[1:]
     yes  = "--yes" in args
-    show = "--show" in args
-    args = [a for a in args if a not in ("--yes", "--show")]
-
-    user_flag = None
-    for i, a in enumerate(args):
-        if a == "--user" and i + 1 < len(args):
-            user_flag = args[i + 1]
-    if user_flag:
-        idx = args.index("--user")
-        args = args[:idx] + args[idx + 2:]
+    args = [a for a in args if a != "--yes"]
 
     if not args:
         usage()
@@ -334,45 +291,10 @@ def main() -> int:
     cmd = args[0]
     system = platform.system()
 
-    # --- credential sub-commands (cross-platform) ---
-    if cmd == "credential":
-        if len(args) < 2:
-            usage()
-            return 1
-        sub = args[1]
-        user = user_flag or getpass.getuser()
-
-        if sub == "get":
-            pw = _get_credential(user)
-            if pw is None:
-                print(f"[ERR] No credential stored for monitor_account:{user}", file=sys.stderr)
-                return 1
-            if show:
-                print(pw)
-            else:
-                print(f"[OK]  Credential found for monitor_account:{user}  (pass --show to reveal)")
-            return 0
-
-        if sub == "store":
-            pw = getpass.getpass(f"Password for '{user}': ")
-            if not pw:
-                print("[ERR] Empty password — aborted.", file=sys.stderr)
-                return 1
-            return 0 if _store_credential(user, pw) else 1
-
-        if sub == "delete":
-            return 0 if _delete_credential(user) else 1
-
-        print(f"[ERR] Unknown credential sub-command: {sub}", file=sys.stderr)
-        return 1
-
-    # --- install / uninstall / status ---
-    user = user_flag or getpass.getuser()
-
     if cmd == "install":
         if system == "Windows":
-            return install_windows(user, yes)
-        return install_unix(user)
+            return install_windows(yes)
+        return install_unix()
 
     if cmd == "uninstall":
         if system == "Windows":
