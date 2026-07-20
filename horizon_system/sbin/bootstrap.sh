@@ -734,9 +734,12 @@ if [ -z "$PROFILE_VAL" ]; then
     info "Non-interactive: deployment profile = workstation (override with --profile server|workstation)."
   else
     echo ""
-    echo "  Is this primarily a SERVER, or an active-use WORKSTATION with human users?"
-    echo "    [S] Server      - no non-admin humans; horizon_humans stays empty (only root writes)"
-    echo "    [W] Workstation - enroll human operator accounts into horizon_humans"
+    echo "  Who uses this machine? (Gates human enrollment, NOT the ACL model.)"
+    echo "    [S] Server / single-user desktop - enroll no humans. You, the owner/admin,"
+    echo "        keep full control by ownership (incl. write to horizon_system). Pick this"
+    echo "        if you administer this box - do NOT enroll yourself as an operator."
+    echo "    [W] Workstation - enroll OTHER non-admin human operator accounts (not yourself)."
+    echo "        Operators get the tree but stay Read-Only on horizon_system, isolated."
     printf "  Enter S or W [W]: "
     read -r _prof_ans
     case "$_prof_ans" in [Ss]*) PROFILE_VAL="server" ;; *) PROFILE_VAL="workstation" ;; esac
@@ -746,7 +749,8 @@ fi
 if [ "$PROFILE_VAL" = "workstation" ]; then
   if [ "${#HUMANS_LIST[@]}" -eq 0 ] && [ "$YES_ALL" != "true" ] && [ "${AIOS_DEPLOY_MODE:-}" != "docker" ]; then
     echo ""
-    echo "  Enter the human account(s) to grant AIOS access - space-separated."
+    echo "  Enter the OTHER human operator account(s) to grant AIOS access - space-separated."
+    echo "  Do NOT enter your own admin account - you already have full control as owner."
     echo "  Leave blank to skip (add later: bootstrap.sh --add-human <name>)."
     printf "  Humans: "
     read -r _humans_raw
@@ -756,7 +760,17 @@ if [ "$PROFILE_VAL" = "workstation" ]; then
     fi
   fi
   ensure_humans_group
-  for _h in "${HUMANS_LIST[@]}"; do enroll_human "$_h"; done
+  _owner="${SUDO_USER:-$(id -un)}"
+  for _h in "${HUMANS_LIST[@]}"; do
+    # Guard: never enroll the owner/admin. The horizon_humans deny on horizon_system
+    # overrides the owner grant, so self-enrollment locks the owner out of their own
+    # install. The owner already has full control by ownership.
+    if [ "$_h" = "$_owner" ]; then
+      warn "Skipping '$_h': that is the owner/admin account. Enrolling it would make you Read-Only on horizon_system. You already have full control as owner."
+      continue
+    fi
+    enroll_human "$_h"
+  done
   if [ "${#HUMANS_LIST[@]}" -eq 0 ]; then
     warn "Workstation profile but no humans enrolled yet. Add later: bootstrap.sh --add-human <name>"
   else

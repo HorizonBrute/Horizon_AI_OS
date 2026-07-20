@@ -709,9 +709,13 @@ if (-not $ProfileVal) {
         Info "Non-interactive: deployment profile = $ProfileVal (override with --profile server|workstation)."
     } else {
         Write-Host ""
-        Write-Host "  Is this primarily a SERVER, or an active-use WORKSTATION with human users?"
-        Write-Host "    [S] Server      - no non-admin humans; horizon_humans stays empty (only admins write)"
-        Write-Host "    [W] Workstation - enroll human operator accounts into horizon_humans"
+        Write-Host "  Who uses this machine? (Gates human enrollment, NOT the ACL model.)"
+        Write-Host "    [S] Server / single-user desktop - enroll no humans. You, the owner/admin,"
+        Write-Host "        keep full control by ownership (incl. write to horizon_system). Pick this"
+        Write-Host "        if you administer this box - do NOT enroll yourself as an operator."
+        Write-Host "    [W] Workstation - enroll OTHER non-admin human operator accounts into"
+        Write-Host "        horizon_humans (not yourself). Operators get the tree but stay Read-Only"
+        Write-Host "        on horizon_system and isolated from each other."
         $ans = Read-Host "  Enter S or W [W]"
         $ProfileVal = if ($ans -match '^[Ss]') { "server" } else { "workstation" }
     }
@@ -725,14 +729,24 @@ if ($HumansList.Count -gt 0) { $humansToEnroll += $HumansList }
 if ($ProfileVal -eq "workstation") {
     if ($humansToEnroll.Count -eq 0 -and -not $YesAll) {
         Write-Host ""
-        Write-Host "  Enter the human account(s) to grant AIOS access - names or SIDs,"
-        Write-Host "  space-separated. Cloud/AzureAD users appear as SIDs. Leave blank to skip."
+        Write-Host "  Enter the OTHER human operator account(s) to grant AIOS access - names or"
+        Write-Host "  SIDs, space-separated. Cloud/AzureAD users appear as SIDs. Leave blank to skip."
+        Write-Host "  Do NOT enter your own admin account - you already have full control as owner."
         $raw = Read-Host "  Humans"
         if ($raw.Trim()) { $humansToEnroll += ($raw -split '[\s,]+' | Where-Object { $_ }) }
     }
     $humansToEnroll = @($humansToEnroll | Select-Object -Unique)
     Ensure-HumansGroup
-    foreach ($h in $humansToEnroll) { Enroll-Human $h | Out-Null }
+    foreach ($h in $humansToEnroll) {
+        # Guard: never enroll the owner/admin. The horizon_humans DENY on horizon_system
+        # overrides owner/Administrators allow, so self-enrollment locks the owner out of
+        # their own install. The owner already has full control by ownership.
+        if ($h -ieq $env:USERNAME -or $h -ieq "$env:USERDOMAIN\$env:USERNAME") {
+            Warn "Skipping '$h': that is the owner/admin account. Enrolling it would make you Read-Only on horizon_system. You already have full control as owner."
+            continue
+        }
+        Enroll-Human $h | Out-Null
+    }
     if ($humansToEnroll.Count -eq 0) {
         Warn "Workstation profile but no humans enrolled yet. Add later: bootstrap.ps1 --add-human <name|sid>"
     } else {

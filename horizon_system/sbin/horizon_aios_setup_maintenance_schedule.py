@@ -84,7 +84,13 @@ def install_windows(hour, minute, yes_flag):
     cmd = [
         "schtasks", "/Create",
         "/TN", TASK_NAME,
-        "/TR", f'python "{RUNNER}"',
+        # Run as SYSTEM: the nightly runner (doctor + harden re-assert) must write
+        # under the horizon_humans-denied logs/ dir and needs privilege for the ACL
+        # re-assert. SYSTEM satisfies both with no stored credential. (Sync is never
+        # scheduled this way -- it needs the human's git/SSH creds, so it stays
+        # owner-run.) Absolute interpreter path: SYSTEM's PATH may not include python.
+        "/TR", f'"{sys.executable}" "{RUNNER}"',
+        "/RU", "SYSTEM",
         "/SC", "DAILY",
         "/MO", "1",
         "/ST", start_time,
