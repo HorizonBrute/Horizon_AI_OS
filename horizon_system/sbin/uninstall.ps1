@@ -607,6 +607,18 @@ if (Test-Path $HORIZON_LOGS) {
     Skip "logs/ directory not found - nothing to remove."
 }
 
+# Remove the on-by-default nightly maintenance schedule (installed by bootstrap).
+# Best-effort: the installer's --remove deletes the scheduled task idempotently.
+$MaintSched = Join-Path $HORIZON_SYSTEM "sbin\horizon_aios_setup_maintenance_schedule.py"
+if ((Test-Path $MaintSched) -and (Get-Command python -ErrorAction SilentlyContinue)) {
+    python $MaintSched --remove
+    if ($LASTEXITCODE -eq 0) { Ok "Removed nightly maintenance schedule (if it was installed)." }
+    else { Advisory "Could not auto-remove nightly maintenance schedule. Remove manually: schtasks /Delete /TN 'HorizonAIOS_NightlyMaintenance' /F" }
+} else {
+    Advisory "Nightly maintenance schedule (if installed): remove manually with:"
+    Advisory "  schtasks /Delete /TN 'HorizonAIOS_NightlyMaintenance' /F"
+}
+
 Advisory "If you set up a sync schedule with horizon_aios_setup_sync_schedule.py, remove the scheduled tasks manually:"
 Advisory "  schtasks /Delete /TN 'HorizonAIOS_Sync' /F"
 Advisory "  schtasks /Delete /TN 'HorizonAIOS_MaintainLogs' /F"

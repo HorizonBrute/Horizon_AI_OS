@@ -72,6 +72,7 @@ The scripts mirror `bootstrap` section by section:
 | 8  | Shell profile `active_env` source line + the two global `git include.path` entries `aios setup` writes (framework gitconfig and machine-local identity gitconfig) — stripped automatically from PowerShell `$PROFILE` and global gitconfig |
 | 9  | `$HORIZON_ETC/aios_local.conf`; `$HORIZON_SYSTEM/logs/` — **only if empty** |
 | 10 | `brains`-group ACEs across `$HORIZON_SYSTEM` subtrees — `icacls /remove` (not `/remove:g`) so both grant **and** harden's DENY ACEs are stripped |
+| 10b | Nightly maintenance schedule (Windows Scheduled Task `HorizonAIOS_NightlyMaintenance` / Unix cron marker) — best-effort auto-remove via `horizon_aios_setup_maintenance_schedule.py --remove`; a `[MANUAL]` fallback advisory prints if it cannot |
 
 ## What it does NOT remove (manual — printed as `[MANUAL]` advisories)
 

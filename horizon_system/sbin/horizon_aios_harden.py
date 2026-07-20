@@ -7,6 +7,14 @@ Applies the authoritative brains-group ACL model to the AIOS layer
 ($HORIZON_SYSTEM) INDEPENDENT of brain creation, so a freshly bootstrapped
 machine is protected before any brain account exists.
 
+The ACL POSTURE (which principal gets which rights on which path) is no longer
+hardcoded here: it is sourced from ai_os_etc/file_acl_hardening.toml — deep-merged
+with an optional ai_os_etc/file_acl_hardening.local.toml deployer override —
+loaded and translated to native ops (setfacl / chmod +a / icacls) by
+horizon_aios_acl_posture.py. harden_unix / harden_windows now LOOP over those
+rules. horizon_aios_doctor.py verifies the SAME loaded posture, so enforcer and
+verifier can never disagree. This script remains the enforcement point.
+
 This is the real enforcement point for the ACL model documented in
 documentation/security_architecture_invariants.md §2/§3/§5 (the terse,
 context-loaded ai_os_etc/security_invariants.md is the operator-facing summary): the
@@ -41,9 +49,17 @@ ACL model applied:
                       .claude/CLAUDE.md)               -> humans: Read-Only
                                        (install-wide canon lives outside
                                        horizon_system but is still admin-owned).
-    $HORIZON_ROOT/brains               -> humans: Read-Only (explicit Deny-Write;
-                                       to write there a human elevates to admin
-                                       or changes permissions)
+    $HORIZON_ROOT/brains               -> humans: Read/Write (near-admins modify
+                                       brains/apps; brain-to-brain isolation
+                                       rides on ownership + per-brain group)
+    $HORIZON_ROOT/{projects,handoffs,objectives,usrbin}
+                                       -> humans: SELF-SERVICE per-user isolation.
+                                       Each parent grants create-traverse (-wx:
+                                       create+enter, NO list) + sticky + no setgid;
+                                       new entries born owner-only + creator's own
+                                       private group via the isolating default ACL.
+                                       Peers cannot enumerate/read/delete them. Each
+                                       area has one group-shared shared/ drop-zone.
 
   owner + SYSTEM + Administrators -> Full control, always preserved. Root
   inheritance is broken and these are re-granted, so broad inherited grants
@@ -103,6 +119,15 @@ import shutil
 import subprocess
 import sys
 
+# The ACL posture (WHAT is granted/denied on each path) is now sourced from
+# ai_os_etc/file_acl_hardening.toml (+ optional file_acl_hardening.local.toml
+# override) and translated to native ops by horizon_aios_acl_posture. This
+# module remains the enforcement point; the posture module is the single source
+# of truth shared with horizon_aios_doctor.py. Ensure the sibling module is
+# importable even when this script is invoked by absolute path.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import horizon_aios_acl_posture as posture_engine  # noqa: E402
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -113,13 +138,21 @@ BRAINS_GROUP = 'brains'
 
 # The AIOS-managed group for flesh-and-blood human operators (secure-by-
 # onboarding: created on every install alongside `brains`, even when empty).
-# Members get Full control of the AIOS tree but are held Read-Only on brains/
-# (brain locations are for brains — to write there a human elevates to admin or
-# changes permissions). An EMPTY horizon_humans is harmless: an empty group
+# Members get Full control of the AIOS tree, Read/Write on brains/ (near-admins
+# who modify brains/apps), and are self-service isolated from each other on the
+# four human areas (create-traverse parent, entries born owner-only). An EMPTY horizon_humans is
+# harmless: an empty group
 # granted Full grants nobody, so a server with no enrolled humans reduces to
 # "only owner/SYSTEM/Administrators write" without a separate code path.
 HUMANS_GROUP = 'horizon_humans'
 HUMANS_GROUP_DESC = 'Horizon.AIOS Actual Humans'
+
+# The human-facing areas directly under $HORIZON_ROOT that share ONE model:
+# SELF-SERVICE per-user isolation. Any horizon_humans member creates their OWN
+# entries directly (owner + own private group; no admin/enrollment tooling),
+# peers cannot enumerate/read them, and each area carries one group-shared
+# `shared/` drop-zone. Shared by harden + doctor so both agree on the set.
+HUMAN_SHARED_DIRS = ['projects', 'handoffs', 'objectives', 'usrbin']
 
 # Install-wide canon at the AIOS root that governs agent behavior but lives
 # OUTSIDE $HORIZON_SYSTEM (so the tree-wide humans Full grant would otherwise
@@ -224,9 +257,21 @@ def resolve_paths(horizon_root_arg):
         'skills_sbin':         os.path.join(horizon_system, 'skills_sbin'),
         'logs':                os.path.join(horizon_system, 'logs'),
         # brains/ lives under HORIZON_ROOT (not HORIZON_SYSTEM). The humans model
-        # holds this subtree Read-Only for the horizon_humans group.
+        # holds this subtree Read/Write for the horizon_humans group (near-admins).
         'brains':              os.path.join(horizon_root, 'brains'),
+        # projects/ lives under HORIZON_ROOT. One of the four self-service human
+        # areas (create-traverse parent, entries born owner-only); see the posture
+        # config file_acl_hardening.toml and horizon_aios_acl_posture.py.
+        'projects':            os.path.join(horizon_root, 'projects'),
     }
+
+
+def human_shared_dirs(paths):
+    """Absolute paths of the four self-service human areas under HORIZON_ROOT
+    (see HUMAN_SHARED_DIRS). Kept as a helper so harden and doctor share the
+    concept without each area needing its own resolve_paths key."""
+    root = paths['horizon_root']
+    return [os.path.join(root, name) for name in HUMAN_SHARED_DIRS]
 
 
 def root_canon_files(paths, dry_run=False):
@@ -366,320 +411,203 @@ def _grant_must_have_full(path, owner, dry_run):
         grant(f'{label} Full control (preserved)')
 
 
+def _run_ops(ops, dry_run):
+    """Execute a list of translator Ops (from horizon_aios_acl_posture): run each
+    op.argv (argv-style, never a shell; check=False so a single failing ACL
+    command does not abort the pass — the historical behavior) and emit its
+    house-style log line via the matching logger. Ops with argv=None are
+    log-only; ops with msg=None run silently."""
+    _LOG = {'grant': grant, 'deny': deny, 'ok': ok, 'info': info, 'warn': warn}
+    for op in ops:
+        if op.argv:
+            run(list(op.argv), dry_run=dry_run, check=False)
+        if op.msg:
+            _LOG.get(op.kind, info)(op.msg)
+
+
+def _rule_allowed(rule, have_group, have_humans):
+    """Guard: skip a rule whose principal's group is unavailable (mirrors the
+    original have_group / have_humans gating). Returns (ok, warn_msg)."""
+    if rule.principal == BRAINS_GROUP and not have_group:
+        return (False, f'{rule.name}: brains group unavailable — skipping')
+    if rule.principal == HUMANS_GROUP and not have_humans:
+        return (False, f'{rule.name}: horizon_humans group unavailable — skipping')
+    return (True, None)
+
+
 def harden_windows(paths, owner, have_group, have_humans, dry_run, strict):
     """
-    Apply the uniform ACL model on Windows with icacls.
+    Apply the ACL model on Windows with icacls, LOOPING over the loaded posture
+    (horizon_aios_acl_posture) instead of hardcoded steps. Structure preserved:
 
-    Secure-by-onboarding baseline (always applied):
-      A. Establish a CONTROLLED ROOT ACL on $HORIZON_ROOT: break inheritance
-         (/inheritance:r) and re-grant only the known-good principals. This is
-         what removes the human-side write hole — broad inherited grants from the
-         volume root (Authenticated Users:Modify, sandbox groups, stray cloud
-         SIDs) no longer reach the tree. owner + SYSTEM + Administrators are
-         re-granted FIRST (never collateral; re-granted by well-known SID so this
-         is locale-independent).
-      B. Grant the horizon_humans group Full control across the tree. An EMPTY
-         horizon_humans grants nobody, so a server with no enrolled humans
-         reduces to "only owner/SYSTEM/Administrators write" with no separate
-         code path. Human operators are enrolled by onboarding (bootstrap).
-      B2. Hold horizon_humans Read-Only on the install itself: an inheritable
-         Deny-Write (BRAINS_NOWRITE_MASK) across $HORIZON_SYSTEM plus a per-file
-         Deny-Write on the root-level canon (agents.md/CLAUDE.md/.claude/*). The
-         explicit Deny beats the inherited humans Allow-Full from B, so humans
-         keep Full on user space but only read+execute the install. Install-wide
-         config/canon/tooling is admin-authored; humans configure via scope-local
-         overrides outside horizon_system. (Administrators are not enrolled in
-         horizon_humans, so admins still write via elevation.)
+      A.  Controlled root ACL: break inheritance (/inheritance:r) at $HORIZON_ROOT
+          and re-grant must_have_full (owner + SYSTEM S-1-5-18 + Administrators
+          S-1-5-32-544). Removes broad inherited grants (Authenticated Users, etc.)
+          from the tree.
+      1.  Ensure must_have_full on $HORIZON_SYSTEM; --strict also strips its
+          inheritance first.
+      GRANT then DENY phase over the posture rules (grant-before-deny invariant):
+        * humans-userspace-full  -> humans (OI)(CI)F across the tree (grant B).
+        * humans-system-readonly / root canon -> explicit Deny-Write (a broad-Full
+          holder is reduced to Read-Only via Deny, never an Allow) — see
+          windows_rule_ops(broad_allow=...).
+        * humans-brains-readwrite -> humans keep inherited Full (Modify grant).
+        * humans-*-selfservice -> SELF-SERVICE isolation on ALL FOUR areas
+          (projects/, handoffs/, objectives/, usrbin/): break inheritance, re-grant
+          must-haves, grant create-but-not-list (WD,AD,X) this-folder-only, and
+          isolate existing children via OWNER RIGHTS (*S-1-3-4) — NOT a group Deny
+          (a Deny would lock the owner out; the owner is a horizon_humans member).
+        * humans-*-shared -> group-accessible drop-zone (Modify).
+        * brains-bin/skills_bin -> brains (OI)(CI)RX (positive grant).
+        * brains-system-nowrite -> inheritable brains Deny-Write across the install.
+        * brains-sbin/skills_sbin/logs -> full brains Deny (after all grants;
+          --strict strips inheritance + re-grants must-haves first).
 
-    Brain model (unchanged, scoped to $HORIZON_SYSTEM):
-      1. owner + SYSTEM + Administrators Full (idempotent under the inherited
-         root ACEs; strict additionally strips system inheritance).
-      2. Inheritable brains Deny-Write across $HORIZON_SYSTEM (write/delete only;
-         reads stay allowed). An explicit/inherited Deny beats any Allow.
-      3. brains Read+Execute on bin and skills_bin (explicit Allow satisfies a
-         read/exec request before the Deny-Write is consulted).
-      4. Full Deny on sbin/skills_sbin/logs AFTER all grants.
-
-    Humans-on-brains (C, after the humans grant):
-      C. Explicit horizon_humans Deny-Write on $HORIZON_ROOT/brains so human
-         operators are Read-Only there (brain locations are for brains). Reads
-         flow through the inherited humans Full; the deny removes write/delete.
-         Escape hatches by construction: Administrators are not in
-         horizon_humans (elevate-to-admin writes) and the mask omits WRITE_DAC
-         (a human retains the right to re-permission).
-
-    --strict additionally drops inherited ACEs on each privileged dir,
-    re-establishing the must-have principals first. It never drops
-    SYSTEM/Administrators.
+    This replaces the former TODO(windows-parity) block: self-service write +
+    per-area shared/ now covers all four areas, matching the Unix model. Windows
+    is DRY-RUN PRINT ONLY on this Linux host — never applied live here.
     """
     root   = paths['horizon_root']
     system = paths['horizon_system']
-    brains = paths['brains']
 
-    # --- A. Controlled root ACL: break inheritance + re-grant known-good set. ---
+    posture = posture_engine.load_posture(paths)
+    info(f'ACL posture source: {posture.source} ({len(posture.rules)} rules)')
+    broad = frozenset(r.principal for r in posture.rules if r.rights == 'full')
+
+    # --- A. Controlled root ACL: break inheritance + re-grant must-haves. ---
     info(f'Establishing controlled root ACL (break inheritance + re-grant): {root}')
     run(['icacls', root, '/inheritance:r'], dry_run=dry_run)
-    _grant_must_have_full(root, owner, dry_run)
-
-    # --- B. horizon_humans Full control across the tree (empty group = no-op). --
-    if have_humans:
-        run(['icacls', root, '/grant', f'{HUMANS_GROUP}:(OI)(CI)F'], dry_run=dry_run)
-        grant(f'humans Full control on AIOS tree: {HUMANS_GROUP} -> {root}')
-    else:
-        warn('horizon_humans group unavailable — skipping humans grant. Re-run '
-             'after the group exists to grant human operators tree access.')
+    _run_ops(posture_engine.windows_must_have_grants(root, owner), dry_run)
 
     # --- 1. System: ensure must-haves; strict additionally strips inheritance. --
     if strict:
         info(f'STRICT: dropping inherited ACEs on AIOS system dir: {system}')
         run(['icacls', system, '/inheritance:r'], dry_run=dry_run)
-    _grant_must_have_full(system, owner, dry_run)
+    _run_ops(posture_engine.windows_must_have_grants(system, owner), dry_run)
 
-    if have_group:
-        # 2. Broad invariant: brains never WRITE/DELETE anywhere in $HORIZON_SYSTEM.
-        run(['icacls', system, '/deny', f'{BRAINS_GROUP}:(OI)(CI){BRAINS_NOWRITE_MASK}'],
-            dry_run=dry_run)
-        deny(f'brains DENY write/delete across $HORIZON_SYSTEM: {system}')
+    if not have_group:
+        warn('brains group unavailable — brains grant/deny ACEs will be skipped.')
+    if not have_humans:
+        warn('horizon_humans group unavailable — humans ACEs will be skipped.')
 
-        # 3. Explicit RX grants for brains on bin and skills_bin (before any deny).
-        for label, key in (('bin', 'bin'), ('skills_bin', 'skills_bin')):
-            path = paths[key]
-            if os.path.isdir(path):
-                run(['icacls', path, '/grant', f'{BRAINS_GROUP}:(OI)(CI)RX'],
-                    dry_run=dry_run)
-                grant(f'brains Read+Execute on {label}: {path}')
-            else:
-                warn(f'{label} missing, skipping grant: {path}')
-
-        # 4. Full Deny on privileged dirs — MUST come after all grants above.
-        for label, key in (('sbin', 'sbin'),
-                           ('skills_sbin', 'skills_sbin'),
-                           ('logs', 'logs')):
-            path = paths[key]
-            if not os.path.isdir(path):
-                warn(f'{label} missing, skipping deny: {path}')
+    # --- GRANT phase then DENY phase (grant-before-deny). -------------------
+    for phase, rules in (('grant', posture.grant_rules()),
+                         ('deny', posture.deny_rules())):
+        for rule in rules:
+            allowed, why = _rule_allowed(rule, have_group, have_humans)
+            if not allowed:
+                warn(why)
                 continue
-            if strict:
-                run(['icacls', path, '/inheritance:r'], dry_run=dry_run)
-                _grant_must_have_full(path, owner, dry_run)
-            run(['icacls', path, '/deny', f'{BRAINS_GROUP}:(OI)(CI)F'],
-                dry_run=dry_run)
-            deny(f'brains DENY (full) on {label}: {path}')
-    else:
-        warn('brains group unavailable — skipping all brains grant/deny ACEs. '
-             'owner/SYSTEM/Administrators/humans control is ensured; re-run '
-             'after the group exists to apply the brains restrictions.')
+            _run_ops(posture_engine.windows_rule_ops(
+                rule, paths, owner=owner, strict=strict, dry_run=dry_run,
+                broad_allow=broad), dry_run)
 
-    # --- B2. horizon_humans Read-Only across $HORIZON_SYSTEM + root canon. ------
-    #     Humans get Full on user space (grant B) but only read+execute on the
-    #     install itself. Explicit Deny-Write beats the inherited humans Allow.
-    if have_humans:
-        run(['icacls', system, '/deny',
-             f'{HUMANS_GROUP}:(OI)(CI){BRAINS_NOWRITE_MASK}'], dry_run=dry_run)
-        deny(f'humans Read-Only across $HORIZON_SYSTEM (DENY write/delete): '
-             f'{HUMANS_GROUP} -> {system}')
-        for canon in root_canon_files(paths, dry_run):
-            if os.path.isfile(canon) or dry_run:
-                run(['icacls', canon, '/deny',
-                     f'{HUMANS_GROUP}:{BRAINS_NOWRITE_MASK}'], dry_run=dry_run)
-                deny(f'humans Read-Only on root canon: {HUMANS_GROUP} -> {canon}')
-
-    # --- C. horizon_humans Read-Only on brains/ (after the humans Full grant). --
-    if have_humans:
-        if not os.path.isdir(brains):
-            info(f'Creating brains dir so its humans deny can be applied: {brains}')
-            if not dry_run:
-                try:
-                    os.makedirs(brains, exist_ok=True)
-                except OSError as exc:
-                    warn(f'Could not create brains dir {brains}: {exc}')
-        if os.path.isdir(brains) or dry_run:
-            run(['icacls', brains, '/deny',
-                 f'{HUMANS_GROUP}:(OI)(CI){BRAINS_NOWRITE_MASK}'], dry_run=dry_run)
-            deny(f'humans Read-Only on brains (DENY write/delete): {HUMANS_GROUP} '
-                 f'-> {brains}')
-        else:
-            warn(f'brains dir missing, skipping humans read-only deny: {brains}')
-
-
-# ---------------------------------------------------------------------------
-# Unix / macOS hardening (chown / chmod / setfacl)
-# ---------------------------------------------------------------------------
 
 def harden_unix(paths, os_name, owner, have_group, have_humans, dry_run, strict):
     """
-    Apply the uniform ACL model on Linux/macOS.
+    Apply the ACL model on Linux/macOS by LOOPING over the loaded posture
+    (horizon_aios_acl_posture) rather than hardcoded steps.
 
-      - horizon_humans => Full-equivalent (rwx) on user space, but Read-Only
-        (r-x) across $HORIZON_SYSTEM and on the root-level canon, and Read-Only
-        on brains/ — the Unix analogue of the Windows humans model. An empty
-        group grants nobody, so a server reduces to owner-only write.
-      - sbin / skills_sbin / logs => brains denied (setfacl g:brains:--- where
-        available; 700 owner-only otherwise)
-      - bin / skills_bin          => brains Read+Execute
-      - everything else in $HORIZON_SYSTEM => brains/non-owners have no write,
-        satisfying "no write anywhere in $HORIZON_SYSTEM".
+    Additive Linux (setfacl present): the posture is realized verbatim via the
+    setfacl translator — humans rules (userspace Full, system Read-Only, root
+    canon, brains/ Read/Write, and the four SELF-SERVICE areas with their shared/
+    drop-zones), then brains grants (bin/skills_bin Read+Execute), a Linux-only
+    brains traverse (--x) reachability step, then brains denies (system no-write
+    r-x, and full --- + owner-only 700 on sbin/skills_sbin/logs). This is the
+    branch this host runs and the one the getfacl oracle pins.
 
-    Default (additive) preserves existing ownership and ACLs: it uses POSIX.1e
-    ACLs (setfacl) to add a brains entry without rewriting owner/group/other or
-    recursively chowning the tree — the analogue of the Windows additive mode.
-    --strict takes ownership of the subtree (chown -R) and uses mode bits
-    (go-w / 700), the heavier standalone posture. There is no SYSTEM/
-    Administrators analogue on Unix; the owner is the must-have principal.
-
-    Privileged-dir denies are applied AFTER the brains rx grants so the grants
-    can never cascade into them (mirrors horizon_aios_create_brain.py).
+    --strict / no-setfacl: the mode-bit DELIVERY MECHANISM (chown -R + go-w + 700)
+    the TOML schema notes carve out as orthogonal to the posture. The humans
+    self-service model still needs setfacl (named-group ACEs) and is applied
+    whenever setfacl is present, in both modes; strict adds ownership + mode-bit
+    lockdown for the brains side. Target dir lists are DERIVED from the posture
+    (privileged-deny dirs, read-exec dirs, self-service areas) so nothing is
+    hardcoded that the posture also defines.
     """
-    system = paths['horizon_system']
-    root   = paths['horizon_root']
-    brains = paths['brains']
+    system   = paths['horizon_system']
+    root     = paths['horizon_root']
+    brains   = paths['brains']
     have_setfacl = shutil.which('setfacl') is not None
+    linux_acls = (have_setfacl and os_name == 'Linux')
 
-    # --- horizon_humans model (tree Full-equivalent, brains/ Read-Only). ---
-    # setfacl is the closest analogue to a named-group grant + brains deny.
-    if have_humans and have_setfacl and os_name == 'Linux':
-        # 1. Full-equivalent on user space (whole tree root, access + default).
-        info('setfacl horizon_humans: rwx on user space, r-x on $HORIZON_SYSTEM')
-        run(['setfacl', '-R', '-m', f'g:{HUMANS_GROUP}:rwx', root],
-            dry_run=dry_run, check=False)
-        run(['setfacl', '-R', '-d', '-m', f'g:{HUMANS_GROUP}:rwx', root],
-            dry_run=dry_run, check=False)
-        grant(f'humans Full-equivalent on user space: {HUMANS_GROUP} -> {root}')
-        # 2. Read-Only (read+execute, NO write) across the install itself.
-        #    Applied AFTER the tree-wide rwx so it overrides it for the
-        #    horizon_system subtree; the privileged-dir owner-only lockdowns
-        #    below run later still and further reduce sbin/skills_sbin/logs.
-        run(['setfacl', '-R', '-m', f'g:{HUMANS_GROUP}:r-x', system],
-            dry_run=dry_run, check=False)
-        run(['setfacl', '-R', '-d', '-m', f'g:{HUMANS_GROUP}:r-x', system],
-            dry_run=dry_run, check=False)
-        deny(f'humans Read-Only across $HORIZON_SYSTEM: {HUMANS_GROUP} -> {system}')
-        # 3. Root-level canon (outside horizon_system) held Read-Only too.
-        for canon in root_canon_files(paths, dry_run):
-            run(['setfacl', '-m', f'g:{HUMANS_GROUP}:r--', canon],
-                dry_run=dry_run, check=False)
-            deny(f'humans Read-Only on root canon: {HUMANS_GROUP} -> {canon}')
-        # 3b. The canon files live in human-writable dirs (user space), so the
-        #     r-- ACL alone would still let a human unlink+recreate them via the
-        #     writable parent. Set the sticky bit on the canon parent dirs so
-        #     only the file owner (root) can delete/rename files there, while
-        #     humans keep creating/deleting their OWN files (local overrides).
-        canon_parents = sorted({os.path.dirname(c)
-                                for c in root_canon_files(paths, dry_run)})
-        for parent in canon_parents:
-            if os.path.isdir(parent) or dry_run:
-                run(['chmod', '+t', parent], dry_run=dry_run, check=False)
-                grant(f'sticky bit (owner-only delete) on canon parent: {parent}')
-        # 4. brains/ Read-Only (unchanged).
-        if os.path.isdir(brains) or dry_run:
-            run(['setfacl', '-R', '-m', f'g:{HUMANS_GROUP}:r-x', brains],
-                dry_run=dry_run, check=False)
-            run(['setfacl', '-R', '-d', '-m', f'g:{HUMANS_GROUP}:r-x', brains],
-                dry_run=dry_run, check=False)
-            deny(f'humans Read-Only on brains: {HUMANS_GROUP} -> {brains}')
+    posture = posture_engine.load_posture(paths)
+    info(f'ACL posture source: {posture.source} ({len(posture.rules)} rules)')
+
+    # --- horizon_humans model via setfacl (applied in BOTH additive & strict; a
+    #     named-group grant + isolating defaults can only be expressed with ACLs). ---
+    if have_humans and linux_acls:
+        info('Applying horizon_humans posture rules via setfacl translator')
+        for rule in posture.rules:
+            if rule.principal != HUMANS_GROUP:
+                continue
+            _run_ops(posture_engine.linux_rule_ops(rule, paths, dry_run=dry_run),
+                     dry_run)
     elif have_humans:
         warn('horizon_humans model needs setfacl (Linux) to express a named-group '
              'grant + brains Read-Only. On this platform, enroll humans as the '
              'owner or manage their access with the OS/identity tooling directly.')
 
-    if not strict and have_group and have_setfacl and os_name == 'Linux':
-        # Additive: add a brains ACL entry (read+exec, no write) across the tree
-        # plus a default ACL so new files inherit it. Owner/group/other and any
-        # existing ACLs are left intact.
-        info('ADDITIVE: setfacl brains r-x (no write) across $HORIZON_SYSTEM')
-        run(['setfacl', '-R', '-m', f'g:{BRAINS_GROUP}:r-x', system],
-            dry_run=dry_run, check=False)
-        run(['setfacl', '-R', '-d', '-m', f'g:{BRAINS_GROUP}:r-x', system],
-            dry_run=dry_run, check=False)
-        ok('brains have read+execute but no write under $HORIZON_SYSTEM')
-        # Brains must TRAVERSE the AIOS root and the brains/ parent to reach both
-        # their granted paths (bin/skills_bin) and their own workspace
-        # (brains/<name>/, 0o770 <name>:<name>). Grant execute-only (--x; not
-        # recursive, no default) so a brain can traverse to a known path but
-        # cannot enumerate the root or its siblings. Without this the brains r-x
-        # grant above is unreachable on Linux (the root dir denies non-owners).
-        for trav in (root, brains):
-            if os.path.isdir(trav) or dry_run:
-                run(['setfacl', '-m', f'g:{BRAINS_GROUP}:--x', trav],
-                    dry_run=dry_run, check=False)
-        grant(f'brains traverse (--x) on AIOS root + brains/: {BRAINS_GROUP}')
-        for label, key in (('sbin', 'sbin'), ('skills_sbin', 'skills_sbin'),
-                           ('logs', 'logs')):
-            path = paths[key]
-            if not os.path.isdir(path):
-                warn(f'{label} missing, skipping deny: {path}')
+    # --- brains model, ADDITIVE Linux (setfacl): grants, traverse, denies. -----
+    if not strict and have_group and linux_acls:
+        info('Applying brains posture rules via setfacl translator (additive)')
+        # Grant phase: bin/skills_bin Read+Execute.
+        for rule in posture.grant_rules():
+            if rule.principal != BRAINS_GROUP:
                 continue
-            run(['setfacl', '-R', '-m', f'g:{BRAINS_GROUP}:---', path],
-                dry_run=dry_run, check=False)
-            run(['setfacl', '-R', '-d', '-m', f'g:{BRAINS_GROUP}:---', path],
-                dry_run=dry_run, check=False)
-            # Also enforce owner-only base mode bits. The setfacl deny alone
-            # leaves the stat mode at 0o770; doctor --post-setup asserts 0o700
-            # on sbin/skills_sbin/logs, so tighten the base permissions too.
-            run(['chmod', '-R', 'u=rwX,go=', path], dry_run=dry_run, check=False)
-            deny(f'brains DENY (setfacl --- + owner-only 700) on {label}: {path}')
+            _run_ops(posture_engine.linux_rule_ops(rule, paths, dry_run=dry_run),
+                     dry_run)
+        # Linux-only reachability: brains traverse (--x) on root + brains/.
+        _run_ops(posture_engine.linux_traverse_ops(posture, paths), dry_run)
+        # Deny phase: system no-write, then full deny on privileged dirs.
+        for rule in posture.deny_rules():
+            if rule.principal != BRAINS_GROUP:
+                continue
+            _run_ops(posture_engine.linux_rule_ops(rule, paths, dry_run=dry_run),
+                     dry_run)
         return
 
-    if not strict and not (have_group and have_setfacl):
+    if not strict and not (have_group and linux_acls):
         warn('Additive Unix hardening needs the brains group + setfacl (Linux). '
              'Falling back to mode-bit hardening; existing ownership is '
              'preserved (no recursive chown in additive mode).')
 
-    # Strict (or additive fallback without setfacl): mode-bit hardening.
-    # Only strict takes ownership of the whole subtree.
+    # --- Strict (or additive fallback without setfacl): mode-bit delivery. ------
+    # Dir lists derived from the posture so harden + the posture agree.
     if strict and owner:
         info(f'STRICT: ensuring owner ({owner}) owns $HORIZON_SYSTEM subtree')
         run(['chown', '-R', f'{owner}:', system], dry_run=dry_run, check=False)
         grant(f'owner ownership on $HORIZON_SYSTEM: {owner}')
 
-    # No group/other WRITE anywhere in $HORIZON_SYSTEM (the broad invariant).
     info('Removing group/other write across $HORIZON_SYSTEM (go-w)')
     run(['chmod', '-R', 'go-w', system], dry_run=dry_run, check=False)
     ok('brains (and all non-owners) have no write under $HORIZON_SYSTEM')
 
     if have_group:
-        # Read+Execute for brains on bin and skills_bin (explicit per path).
-        for label, key in (('bin', 'bin'), ('skills_bin', 'skills_bin')):
-            path = paths[key]
+        for path in posture.brains_readexec_dirs():
+            label = os.path.basename(path)
             if os.path.isdir(path):
                 run(['chown', '-R', f':{BRAINS_GROUP}', path],
                     dry_run=dry_run, check=False)
                 run(['chmod', '-R', 'g+rX', path], dry_run=dry_run, check=False)
                 grant(f'brains Read+Execute on {label}: {path}')
-
-                # Prefer an explicit ACL deny on privileged dirs if setfacl exists;
-                # otherwise rely on 700 below. (setfacl is the closer analogue to
-                # the Windows explicit-Deny model.)
             else:
                 warn(f'{label} missing, skipping grant: {path}')
     else:
         warn('brains group unavailable — skipping brains rx grants on bin/skills_bin. '
              'Owner-side hardening (go-w + 700 on privileged dirs) is applied.')
 
-    # Brains traverse (--x) on AIOS root + brains/ so their bin/skills_bin grant
-    # and their own workspace (brains/<name>/) are reachable -- same fix as the
-    # additive branch. Execute-only: traverse without listing, preserving
-    # inter-brain isolation. Requires setfacl; mode bits alone cannot express a
-    # named-group traverse ACE without opening the dir to all "other".
-    if have_group and have_setfacl and os_name == 'Linux':
-        for trav in (root, brains):
-            if os.path.isdir(trav):
-                run(['setfacl', '-m', f'g:{BRAINS_GROUP}:--x', trav],
-                    dry_run=dry_run, check=False)
-        grant(f'brains traverse (--x) on AIOS root + brains/: {BRAINS_GROUP}')
+    # Brains traverse (--x) on AIOS root + brains/ (needs setfacl on Linux).
+    if have_group and linux_acls:
+        _run_ops(posture_engine.linux_traverse_ops(posture, paths), dry_run)
 
-    # Privileged dirs: owner-only 700 — applied AFTER the grants above.
-    for label, key in (('sbin', 'sbin'),
-                       ('skills_sbin', 'skills_sbin'),
-                       ('logs', 'logs')):
-        path = paths[key]
+    # Privileged dirs: owner-only 700 — AFTER the grants above.
+    for path in posture.brains_deny_dirs():
+        label = os.path.basename(path)
         if not os.path.isdir(path):
             warn(f'{label} missing, skipping deny: {path}')
             continue
         run(['chmod', '-R', 'u=rwX,go=', path], dry_run=dry_run, check=False)
-        # Optional explicit group deny via ACL (Linux setfacl) to mirror the
-        # Windows explicit-Deny posture, on top of the 700 mode bits.
-        if have_group and have_setfacl and os_name == 'Linux':
+        if have_group and linux_acls:
             run(['setfacl', '-R', '-m', f'g:{BRAINS_GROUP}:---', path],
                 dry_run=dry_run, check=False)
         deny(f'brains DENY (owner-only 700) on {label}: {path}')
@@ -787,9 +715,10 @@ def main():
     print('    sbin, skills_sbin, logs -> DENY (explicit, full; after grants)')
     print('    rest of $HORIZON_SYSTEM -> no write (inheritable Deny-Write)')
     print(f'  {HUMANS_GROUP} group:')
-    print('    user space (outside horizon_system/) -> Full control (empty group = only admins write)')
+    print('    user space (outside horizon_system/, projects/) -> Full control (empty group = only admins write)')
     print('    $HORIZON_SYSTEM + root canon         -> Read-Only (read+execute, no write)')
-    print('    brains/                              -> Read-Only (DENY write/delete; elevate/re-perm to write)')
+    print('    brains/                              -> Read/Write (near-admins; brain-to-brain isolation via ownership + per-brain group)')
+    print('    projects/, handoffs/, objectives/, usrbin/ -> self-service per-user isolation (create-traverse parent, entries born owner-only; per-area shared/ drop-zone)')
     if os_name == 'Windows':
         print('  owner + SYSTEM + Administrators -> Full control (root inheritance broken).')
     else:

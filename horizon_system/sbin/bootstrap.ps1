@@ -31,11 +31,16 @@ $YesAll = $ScriptArgs -contains "--yes" -or $ScriptArgs -contains "-y"
 $ProfileVal  = $null
 $AddHumanVal = $null
 $HumansList  = @()
+# Nightly maintenance (doctor report + harden re-assert) is installed by default;
+# -NoNightly opts out. Recorded in the deployment marker (nightly_maintenance).
+$NightlyMaintenance = $true
 for ($i = 0; $i -lt $ScriptArgs.Count; $i++) {
     switch ($ScriptArgs[$i]) {
         "--profile"   { if ($i + 1 -lt $ScriptArgs.Count) { $ProfileVal  = $ScriptArgs[$i + 1]; $i++ } }
         "--add-human" { if ($i + 1 -lt $ScriptArgs.Count) { $AddHumanVal = $ScriptArgs[$i + 1]; $i++ } }
         "--humans"    { while ($i + 1 -lt $ScriptArgs.Count -and $ScriptArgs[$i + 1] -notlike "-*") { $HumansList += $ScriptArgs[$i + 1]; $i++ } }
+        "-NoNightly"  { $NightlyMaintenance = $false }
+        "--no-nightly" { $NightlyMaintenance = $false }
     }
 }
 
@@ -69,7 +74,7 @@ $HORIZON_SBIN     = Join-Path $HORIZON_SYSTEM "sbin"
 $HORIZON_ETC      = Join-Path $HORIZON_SYSTEM "ai_os_etc"
 $HORIZON_DOCS     = Join-Path $HORIZON_SYSTEM "documentation"
 $HORIZON_USRBIN   = Join-Path $HORIZON_ROOT "usrbin"
-$HORIZON_PROJECTS = Join-Path $HORIZON_ROOT "Projects"
+$HORIZON_PROJECTS = Join-Path $HORIZON_ROOT "projects"
 $HORIZON_LOGS     = Join-Path $HORIZON_SYSTEM "logs"
 $HORIZON_SOUNDS   = Join-Path $HORIZON_SYSTEM "sounds"
 
@@ -150,6 +155,7 @@ function Write-DeploymentMarker([string]$profile, [string[]]$humans) {
         profile      = $profile
         humans_group = $HUMANS_GROUP
         humans       = @($humans)
+        nightly_maintenance = [bool]$NightlyMaintenance
         updated_utc  = (Get-Date).ToUniversalTime().ToString("o")
     }
     ($obj | ConvertTo-Json) | Set-Content -Path $DeployMarker -Encoding UTF8
@@ -168,6 +174,10 @@ if ($AddHumanVal) {
         $humans   = @()
         if ($existing -and $existing.humans) { $humans += $existing.humans }
         if ($humans -notcontains $AddHumanVal) { $humans += $AddHumanVal }
+        # Preserve a prior nightly_maintenance opt-out across --add-human re-runs.
+        if ($existing -and ($existing.PSObject.Properties.Name -contains 'nightly_maintenance')) {
+            $NightlyMaintenance = [bool]$existing.nightly_maintenance
+        }
         Write-DeploymentMarker $profile $humans
         Info "Note: horizon_humans is Read-Only on brains/ by design (elevate to admin or change permissions to write there)."
         exit 0
@@ -628,6 +638,27 @@ if ($env:AIOS_DEPLOY_MODE -eq "docker") {
     } else {
         Write-Host "Skipped. Run later: python $HORIZON_SYSTEM\sbin\horizon_aios_setup_sync_schedule.py"
     }
+}
+
+# -----------------------------------------------------------------------------
+# Nightly maintenance schedule (ON BY DEFAULT) - a nightly task (doctor report +
+# harden re-assert) so routine drift self-corrects. Opt out with -NoNightly.
+# Non-fatal: a skipped/failed schedule install does not fail bootstrap. Separate
+# from the opt-in upstream-sync scheduler above.
+# -----------------------------------------------------------------------------
+$MaintSched = Join-Path $HORIZON_SYSTEM "sbin\horizon_aios_setup_maintenance_schedule.py"
+if ($env:AIOS_DEPLOY_MODE -eq "docker") {
+    Info "Docker mode: skipping nightly maintenance schedule (run maintenance at the container/host layer)."
+} elseif (-not $NightlyMaintenance) {
+    Info "Nightly maintenance schedule opted out (-NoNightly). Enable later: python $MaintSched --yes"
+} elseif (-not (Test-Path $MaintSched)) {
+    Warn "horizon_aios_setup_maintenance_schedule.py not found - skipping nightly maintenance setup."
+} elseif (Get-Command python -ErrorAction SilentlyContinue) {
+    python $MaintSched --yes
+    if ($LASTEXITCODE -eq 0) { Ok "Nightly maintenance schedule installed (doctor report + harden re-assert, ~03:00)." }
+    else { Warn "Nightly maintenance schedule install did not complete. Run later: python $MaintSched --yes" }
+} else {
+    Warn "python not found - skipping nightly maintenance schedule. Run later: python $MaintSched --yes"
 }
 
 # -----------------------------------------------------------------------------

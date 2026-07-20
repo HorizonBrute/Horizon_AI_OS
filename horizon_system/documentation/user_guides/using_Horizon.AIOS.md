@@ -70,14 +70,14 @@ See `$HORIZON_DOCS/philosophy.md` §7 (BYOH) and `$HORIZON_DOCS/security_archite
 
 There is no separate "hardening" step. Onboarding (bootstrap) is the single secure entry point: it always creates the AIOS OS groups and applies the ACL model, so the tree is locked down from the first run. On Windows it breaks inheritance at `$HORIZON_ROOT` and re-grants only owner + SYSTEM + Administrators + the `horizon_humans` group, which removes broad inherited write grants (e.g. Authenticated Users) from the AIOS tree.
 
-`horizon_humans` ("Horizon.AIOS Actual Humans") is an AIOS-managed OS group created on every install. Its members get **Full control of the AIOS tree** but are **Read-Only on `brains/`** — to write into a brain folder a human elevates to administrator or changes the permissions. This keeps humans out of brain workspaces by default, mirroring the brain-side isolation from the other direction.
+`horizon_humans` ("Horizon.AIOS Actual Humans") is an AIOS-managed OS group created on every install. Its members get **Full control of the AIOS tree** and **Read/Write on `brains/`** — they are near-admins who maintain the brains and apps. Brain-to-brain isolation is preserved separately, riding on folder ownership plus each brain's private group, so humans having write access does not weaken it. Humans are instead **isolated from each other on `projects/`** — traverse-only on the parent, owner-only on each `projects/<user>` child — which is the isolation that now mirrors the brain-side isolation from the other direction.
 
 Onboarding asks whether the machine is primarily a server or an active-use workstation:
 
 | Profile | Humans enrolled | Effect |
 |---|---|---|
 | Server | None — group left empty | Only owner / SYSTEM / Administrators write; a bare server reduces to admin-only write |
-| Workstation | The human operator account(s) | Enrolled humans get full day-to-day control of the tree without admin; brains stay Read-Only |
+| Workstation | The human operator account(s) | Enrolled humans get full day-to-day control of the tree without admin; Read/Write on `brains/`, isolated per-user on `projects/` |
 
 Human accounts are supplied by name or SID (cloud / Azure AD accounts are SIDs). Non-interactive runs must pass `--yes` or `--profile server|workstation [--humans <name|sid> ...]`. Enroll a human later without re-onboarding with `bootstrap --add-human <name|sid>`. The chosen profile and enrolled humans are recorded in the gitignored marker `$HORIZON_ROOT/.horizon_aios_deployment.json`.
 
@@ -1251,7 +1251,7 @@ The AIOS security model is built on OS user accounts and filesystem group member
 The Horizon.AIOS group primitives are:
 - `brains` — shared group; all brain accounts are members; grants `RX` on `$HORIZON_BIN` and `skills_bin`
 - `<brain-name>_group` — per-brain group; the brain account and the owner are members; grants full control on the brain's workspace
-- `horizon_humans` — the human-operator group created at onboarding; members get full control of the AIOS tree but are Read-Only on `brains/`. Enroll accounts by name or SID (Azure AD / Entra ID accounts are SIDs) via `--humans` at onboarding or `bootstrap --add-human <name|sid>` later
+- `horizon_humans` — the human-operator group created at onboarding; members get full control of the AIOS tree and Read/Write on `brains/` (near-admins), isolated from each other per-user on `projects/`. Enroll accounts by name or SID (Azure AD / Entra ID accounts are SIDs) via `--humans` at onboarding or `bootstrap --add-human <name|sid>` later
 
 These can be AD security groups rather than local groups. The brain OS account can be a domain account rather than a local account:
 

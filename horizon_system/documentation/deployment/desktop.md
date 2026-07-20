@@ -55,9 +55,9 @@ bash /path/to/horizon_system/sbin/bootstrap.sh    # macOS / Linux
 Onboarding asks whether this machine is **primarily a server, or an active-use workstation with human users**, and creates an AIOS-managed OS group **horizon_humans** ("Horizon.AIOS Actual Humans") on every install:
 
 - **Server** — enroll no humans. The group is left empty; only the owner, SYSTEM, and Administrators can write to the AIOS tree. A bare server reduces to admin-only write.
-- **Workstation** — enroll the human operator account(s) supplied by name or SID (cloud / Azure AD accounts are SIDs). Members of `horizon_humans` get **Full control of the AIOS tree** but are **Read-Only on `brains/`** — to write into a brain folder a human elevates to administrator or changes the permissions.
+- **Workstation** — enroll the human operator account(s) supplied by name or SID (cloud / Azure AD accounts are SIDs). Members of `horizon_humans` get **Full control of the AIOS tree** and **Read/Write on `brains/`** (they are near-admins who maintain the brains/apps; brain-to-brain isolation is preserved separately by folder ownership + each brain's private group). They are isolated from each other on `projects/` — traverse-only on the parent, owner-only on each `projects/<user>` child.
 
-The desktop is the workstation case: enroll yourself so you have full day-to-day control of the tree without admin, while brains stay protected.
+The desktop is the workstation case: enroll yourself so you have full day-to-day control of the tree without admin — including read/write on `brains/` to maintain your apps — while the install layer (`horizon_system/`) stays read-only and brains stay isolated from each other.
 
 Non-interactive runs must state the choice explicitly:
 
@@ -77,7 +77,7 @@ bootstrap.ps1 --add-human S-1-12-1-...  # by SID (cloud / Azure AD)
 ```
 
 Bootstrap sets up:
-- The AIOS OS groups and the full ACL model (owner + SYSTEM + Administrators + `horizon_humans` on the tree; humans Read-Only on `brains/`). On Windows it breaks inheritance at `$HORIZON_ROOT` and re-grants only those principals, removing broad inherited write grants (e.g. Authenticated Users) from the AIOS tree
+- The AIOS OS groups and the full ACL model (owner + SYSTEM + Administrators + `horizon_humans` on the tree; humans Read/Write on `brains/`). On Windows it breaks inheritance at `$HORIZON_ROOT` and re-grants only those principals, removing broad inherited write grants (e.g. Authenticated Users) from the AIOS tree
 - A gitignored deployment marker `$HORIZON_ROOT/.horizon_aios_deployment.json` recording the profile + enrolled humans
 - The AIOS registry + indirection layer (`~/.horizon/`: `aios_registry.json`, `active_env.{ps1,sh}`, `bin/aios-exec.{ps1,sh}`) via `horizon_aios_switch.py init`
 - Generates `~/.horizon/active_env.*` and prints the one-line profile include to add — it sets `HORIZON_ROOT` + derived vars for the active AIOS (see `system/aios_switching.md`)

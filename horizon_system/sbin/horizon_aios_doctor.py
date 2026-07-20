@@ -13,6 +13,49 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+# The ACL posture (areas + expected stance) is derived from the SAME loader the
+# enforcer uses (horizon_aios_acl_posture / file_acl_hardening.toml + .local
+# override), so doctor verifies the CONFIGURED stance — including any deployer
+# override — never a hardcoded copy. Import the sibling sbin module robustly.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    import horizon_aios_acl_posture as posture_engine
+except Exception:  # pragma: no cover — doctor still runs without ACL derivation
+    posture_engine = None
+
+_POSTURE_CACHE = {}
+
+
+def _load_posture(horizon_system, horizon_root):
+    """Load (and memoize) the ACL posture for verification, or None if the loader
+    is unavailable/failed. horizon_system/horizon_root are Path or str."""
+    if posture_engine is None or not horizon_system or not horizon_root:
+        return None
+    key = (str(horizon_root), str(horizon_system))
+    if key not in _POSTURE_CACHE:
+        paths = {'horizon_root': str(horizon_root),
+                 'horizon_system': str(horizon_system)}
+        try:
+            _POSTURE_CACHE[key] = posture_engine.load_posture(paths)
+        except Exception:
+            _POSTURE_CACHE[key] = None
+    return _POSTURE_CACHE[key]
+
+
+def _rights_want_rw(rights):
+    """Expected (want_read, want_write) for an abstract rights token — lets doctor
+    verify the CONFIGURED stance if a local override changes a rule."""
+    return {
+        'full':            (True, True),
+        'read-exec':       (True, False),
+        'read-only':       (True, False),
+        'read-write':      (True, True),
+        'create-traverse': (False, True),
+        'no-write':        (True, False),
+        'deny':            (False, False),
+        'none':            (False, False),
+    }.get(rights, (True, False))
+
 # Make stdout/stderr robust on legacy Windows code pages (e.g. cp1252) so the
 # tool never crashes with UnicodeEncodeError on non-ASCII output. Self-healing
 # regardless of PYTHONIOENCODING; guarded for Pythons without reconfigure().
@@ -207,6 +250,10 @@ def check_gitignore_user(horizon_root):
 BRAINS_GROUP = "brains"
 HUMANS_GROUP = "horizon_humans"
 
+# The four human-facing areas under $HORIZON_ROOT that use the SELF-SERVICE
+# per-user isolation model (see horizon_aios_harden.py HUMAN_SHARED_DIRS).
+HUMAN_SHARED_DIRS = ("projects", "handoffs", "objectives", "usrbin")
+
 
 def _has_group_deny(path, group):
     """
@@ -344,12 +391,12 @@ def _rights_block_write(rights_text):
     return ("write" in t) or ("fullcontrol" in t) or ("modify" in t)
 
 
-def check_humans_brains_readonly(horizon_root):
-    """Explicit horizon_humans Deny on brains/ that actually blocks writes (humans
-    are Read-Only there). FAIL if there is no Deny at all; WARN if a Deny exists but
-    is delete-only — that leaves modify allowed, so 'Read-Only' would be false
-    assurance and means the full no-write mask was never (re)applied."""
-    name = "brains/ humans Read-Only"
+def check_humans_brains_writable(horizon_root):
+    """horizon_humans must be able to WRITE brains/ — humans are near-admins who
+    modify brains/apps. FAIL if a write-blocking Deny ACE is present (it would lock
+    humans out), or if humans hold no write/modify Allow at all. WARN on a
+    delete-only Deny (modify still allowed, but deletes blocked)."""
+    name = "brains/ humans Read/Write"
     brains = Path(horizon_root) / "brains"
     if not brains.exists():
         warn(name, f"{brains} does not exist yet — created on first brain/onboarding")
@@ -357,17 +404,80 @@ def check_humans_brains_readonly(horizon_root):
     status, detail = _has_group_deny(brains, HUMANS_GROUP)
     if status == "deny":
         if _rights_block_write(detail):
-            ok(f"brains/ — explicit horizon_humans Deny blocks writes / Read-Only ({detail})")
+            fail(name, f"explicit '{HUMANS_GROUP}' Deny blocks writes on {brains} "
+                       f"({detail}) — humans must be able to modify brains/apps; "
+                       "re-run horizon_aios_harden.py")
         else:
-            warn(name, f"explicit '{HUMANS_GROUP}' Deny on {brains} is delete-only "
-                       f"({detail}), NOT write-blocking — humans can still MODIFY files "
-                       "in brains/. Re-run horizon_aios_harden.py to apply the full "
-                       "no-write mask (WD,AD,WEA,WA,DE,DC).")
-    elif status == "nodeny":
-        fail(name, f"no explicit Deny ACE for '{HUMANS_GROUP}' on {brains} — humans "
-                   "can write brains; re-run onboarding (horizon_aios_harden.py)")
-    else:
+            warn(name, f"delete-only '{HUMANS_GROUP}' Deny on {brains} ({detail}) — "
+                       "humans can modify files but not delete them; re-run "
+                       "horizon_aios_harden.py if full write is intended")
+        return
+    if status == "error":
         warn(name, f"could not evaluate: {detail}")
+        return
+    # No blocking Deny — confirm humans actually hold a write/modify Allow.
+    allow = _group_write_allow(brains, f"*{HUMANS_GROUP}*")
+    if allow is None:
+        warn(name, f"could not evaluate '{HUMANS_GROUP}' Allow on {brains}")
+    elif allow:
+        ok(f"brains/ — humans have Read/Write ({allow.splitlines()[0]})")
+    else:
+        fail(name, f"no write/modify Allow for '{HUMANS_GROUP}' on {brains} — humans "
+                   "cannot modify brains; re-run onboarding (horizon_aios_harden.py)")
+
+
+def _group_any_allow(path, identity_pattern):
+    """Return a detail string if ANY Allow ACE (any rights, read included) for an
+    identity matching `identity_pattern` exists on `path` (inherited or not), else
+    "" ; or None on error. Used to detect that a projects/<user> child is opaque
+    to the humans group (peer isolation)."""
+    ps = (
+        "$a=(Get-Acl -LiteralPath '{p}').Access | Where-Object {{ "
+        "$_.IdentityReference -like '{pat}' -and "
+        "$_.AccessControlType -eq 'Allow' }}; "
+        "if ($a) {{ $a | ForEach-Object {{ "
+        "$_.IdentityReference.ToString() + ' :: ' + $_.FileSystemRights }} }}"
+    ).format(p=str(path), pat=identity_pattern)
+    try:
+        result = subprocess.run(
+            ["powershell", "-NonInteractive", "-NoProfile", "-Command", ps],
+            capture_output=True, text=True, timeout=20,
+        )
+    except Exception:  # noqa: BLE001
+        return None
+    return result.stdout.strip()
+
+
+def check_projects_isolation(horizon_root):
+    """Windows: humans are isolated from each other on projects/. Each
+    projects/<user> child must be opaque to the horizon_humans group (no Allow
+    ACE — the folder is owner-only). FAIL if a child grants the group any access.
+    If projects has no children yet, PASS informationally (the parent's isolating
+    posture makes future folders born isolated)."""
+    name = "projects/ humans isolation"
+    projects = Path(horizon_root) / "projects"
+    if not projects.exists():
+        warn(name, f"{projects} does not exist yet — created on first --add-human")
+        return
+    children = [d for d in sorted(projects.iterdir()) if d.is_dir()]
+    if not children:
+        ok(f"{name} — no user folders yet (parent isolates future folders)")
+        return
+    leaks, errored = [], False
+    for child in children:
+        detail = _group_any_allow(child, f"*{HUMANS_GROUP}*")
+        if detail is None:
+            errored = True
+        elif detail:
+            leaks.append(f"{child.name}: {detail.splitlines()[0]}")
+    if leaks:
+        fail(name, f"peer project folder(s) grant '{HUMANS_GROUP}' access — humans "
+                   "must be isolated from each other: " + "; ".join(leaks) +
+                   " — run horizon_aios_harden.py")
+    elif errored:
+        warn(name, "could not fully evaluate projects children (Get-Acl error)")
+    else:
+        ok(f"{name} — {len(children)} child folder(s) opaque to '{HUMANS_GROUP}'")
 
 
 def _local_group_member_map(group):
@@ -477,9 +587,16 @@ def check_sbin_acl_unix(horizon_system):
         warn("sbin ACL (Unix)", f"could not determine current user: {e}")
         return
 
-    for label, sub in (("sbin", "sbin"),
-                       ("skills_sbin", "skills_sbin"),
-                       ("logs", "logs")):
+    # Privileged-deny dirs derived from the posture (brains full-deny rules) so
+    # doctor and harden agree from one source; fall back to the shipped trio.
+    posture = _load_posture(horizon_system, horizon_system.parent)
+    if posture is not None and posture.brains_deny_dirs():
+        deny_dirs = [(os.path.basename(p), os.path.basename(p))
+                     for p in posture.brains_deny_dirs()]
+    else:
+        deny_dirs = (("sbin", "sbin"), ("skills_sbin", "skills_sbin"),
+                     ("logs", "logs"))
+    for label, sub in deny_dirs:
         path = horizon_system / sub
         name = f"{label} ACL (Unix owner-only 700)"
         if not path.exists():
@@ -553,9 +670,14 @@ def check_humans_readonly_system_unix(horizon_system, horizon_root):
     if not horizon_root:
         return
     cname = "root canon Read-Only for humans"
-    canon_rel = ("agents.md", "CLAUDE.md",
-                 os.path.join(".claude", "agents.md"),
-                 os.path.join(".claude", "CLAUDE.md"))
+    posture = _load_posture(horizon_system, horizon_root)
+    if posture is not None and posture.canon_relpaths():
+        canon_rel = tuple(os.path.join(*rel.replace("\\", "/").split("/"))
+                          for rel in posture.canon_relpaths())
+    else:
+        canon_rel = ("agents.md", "CLAUDE.md",
+                     os.path.join(".claude", "agents.md"),
+                     os.path.join(".claude", "CLAUDE.md"))
     problems, checked = [], 0
     for rel in canon_rel:
         cpath = Path(horizon_root) / rel
@@ -577,6 +699,151 @@ def check_humans_readonly_system_unix(horizon_system, horizon_root):
         fail(cname, "; ".join(problems) + " — run horizon_aios_harden.py")
     else:
         ok(f"root canon Read-Only for humans ({checked} files, r-- + sticky parents)")
+
+
+def check_human_shared_isolation_unix(horizon_root, horizon_system=None):
+    """Unix: SELF-SERVICE per-user isolation on the human-facing areas. Both the
+    AREA LIST and the EXPECTED STANCE are DERIVED from the loaded posture (the
+    *-selfservice rules and their sibling *-shared rules), so a deployer's local
+    override — e.g. relaxing projects to read-write, or clearing setgid — is
+    verified as CONFIGURED rather than against a hardcoded shipped stance. Falls
+    back to the built-in HUMAN_SHARED_DIRS + shipped stance if the loader is
+    unavailable. FAIL on any violation. Mirrors the harden self-service block."""
+    import stat as _stat
+    if not horizon_root:
+        return
+
+    posture = _load_posture(horizon_system, horizon_root)
+    # Build the per-area verification spec: (area_name, principal, want_read,
+    # want_write, want_sticky, want_setgid, isolate_children, exclude, shared_rule)
+    specs = []
+    if posture is not None:
+        selfservice = [r for r in posture.rules if r.is_selfservice_parent()]
+        shared_by_parent = {}
+        for r in posture.rules:
+            if r.is_shared_dropzone():
+                shared_by_parent[os.path.dirname(r.path)] = r
+        for r in selfservice:
+            want_read, want_write = _rights_want_rw(r.rights)
+            specs.append({
+                'area_name': os.path.basename(r.path), 'path': r.path,
+                'principal': r.principal, 'want_read': want_read,
+                'want_write': want_write, 'sticky': r.sticky,
+                'setgid': r.setgid, 'isolate': r.isolate_children,
+                'exclude': set(r.exclude_children) | {'shared'},
+                'shared_rule': shared_by_parent.get(r.path),
+            })
+    if not specs:
+        # FAIL-SECURE fallback: shipped four-area stance.
+        for area_name in HUMAN_SHARED_DIRS:
+            specs.append({
+                'area_name': area_name,
+                'path': str(Path(horizon_root) / area_name),
+                'principal': HUMANS_GROUP, 'want_read': False,
+                'want_write': True, 'sticky': True, 'setgid': False,
+                'isolate': True, 'exclude': {'shared'}, 'shared_rule': True,
+            })
+
+    for spec in specs:
+        area_name = spec['area_name']
+        principal = spec['principal']
+        name = f"{area_name}/ humans self-service isolation"
+        area = Path(spec['path'])
+        if not area.exists():
+            warn(name, f"{area} does not exist yet — run horizon_aios_harden.py")
+            continue
+        problems = []
+        # Parent stance (read/write) per the CONFIGURED rights.
+        parent = _acl_group_effective(area, principal)
+        if parent is None:
+            problems.append(f"no '{principal}' ACE on parent (self-service broken)")
+        else:
+            if spec['want_read'] and "r" not in parent:
+                problems.append(f"parent not group-readable ({parent}) — expected read")
+            if not spec['want_read'] and "r" in parent:
+                problems.append(f"parent group-READABLE ({parent}) — peers can enumerate")
+            if spec['want_write'] and "w" not in parent:
+                problems.append(f"parent not group-writable ({parent}) — self-service broken")
+        try:
+            mode = area.stat().st_mode
+            if spec['sticky'] and not (mode & _stat.S_ISVTX):
+                problems.append("parent not sticky (peers can delete each other's entries)")
+            if spec['setgid'] is False and (mode & _stat.S_ISGID):
+                problems.append("parent IS setgid (new entries wrongly group-owned by parent)")
+            if spec['setgid'] is True and not (mode & _stat.S_ISGID):
+                problems.append("parent not setgid (configured setgid missing)")
+        except OSError as e:
+            problems.append(f"parent stat error ({e})")
+        # Existing non-excluded children: group must have no read/write (only when
+        # the rule isolates children).
+        children = []
+        if spec['isolate']:
+            try:
+                children = [d for d in sorted(area.iterdir())
+                            if d.is_dir() and d.name not in spec['exclude']]
+            except OSError as e:
+                problems.append(f"cannot enumerate children ({e})")
+            for child in children:
+                perms = _acl_group_effective(child, principal)
+                if perms and ("r" in perms or "w" in perms):
+                    problems.append(f"peer entry {child.name} group-accessible ({perms})")
+        # shared/ drop-zone: verified only if the posture defines one for this area.
+        srule = spec['shared_rule']
+        if srule:
+            want_sgid = getattr(srule, 'setgid', True) if srule is not True else True
+            want_sticky = getattr(srule, 'sticky', True) if srule is not True else True
+            want_group = getattr(srule, 'group_owner', HUMANS_GROUP) if srule is not True else HUMANS_GROUP
+            shared = area / "shared"
+            if not shared.is_dir():
+                problems.append("shared/ drop-zone missing")
+            else:
+                sperms = _acl_group_effective(shared, principal)
+                if not sperms or not all(p in sperms for p in ("r", "w", "x")):
+                    problems.append(f"shared/ not group-rwx for humans ({sperms})")
+                try:
+                    smode = shared.stat().st_mode
+                    if want_sgid and not (smode & _stat.S_ISGID):
+                        problems.append("shared/ not setgid")
+                    if want_sticky and not (smode & _stat.S_ISVTX):
+                        problems.append("shared/ not sticky")
+                    if want_group:
+                        try:
+                            import grp
+                            if grp.getgrgid(shared.stat().st_gid).gr_name != want_group:
+                                problems.append(f"shared/ group is not {want_group}")
+                        except (OSError, KeyError):
+                            pass
+                except OSError as e:
+                    problems.append(f"shared/ stat error ({e})")
+        if problems:
+            fail(name, "; ".join(problems) + " — run horizon_aios_harden.py")
+        else:
+            ok(f"{name} — parent stance verified (configured), {len(children)} "
+               f"child(ren) owner-only, shared/ ok")
+
+
+def check_humans_brains_writable_unix(horizon_root):
+    """Unix: humans must be able to WRITE brains/ — they are near-admins who
+    modify brains/apps. The horizon_humans group must hold effective write (w) on
+    brains/. FAIL if the group has no write; WARN if brains/ has no group ACE at
+    all (harden never applied). Brain-to-brain isolation is a separate property
+    (ownership + per-brain group) and is not evaluated here. Mirrors the Windows
+    check_humans_brains_writable."""
+    name = "brains/ humans Read/Write"
+    if not horizon_root:
+        return
+    brains = Path(horizon_root) / "brains"
+    if not brains.exists():
+        warn(name, f"{brains} does not exist yet — created on first brain/onboarding")
+        return
+    perms = _acl_group_effective(brains, HUMANS_GROUP)
+    if perms is None:
+        warn(name, f"no '{HUMANS_GROUP}' ACE on {brains} — run horizon_aios_harden.py")
+    elif "w" in perms:
+        ok(f"{name} — humans have write ({perms})")
+    else:
+        fail(name, f"'{HUMANS_GROUP}' lacks write ({perms}) on {brains} — humans "
+                   "must be able to modify brains/apps; run horizon_aios_harden.py")
 
 
 # ---------------------------------------------------------------------------
@@ -919,14 +1186,23 @@ def main():
             if horizon_root:
                 # Human-operator boundary (secure-by-onboarding): no broad
                 # non-admin write; horizon_humans group present; humans
-                # Read-Only on brains/.
+                # Read/Write on brains/; humans isolated from each other on
+                # projects/.
                 check_no_broad_write(horizon_root, horizon_system)
                 check_humans_group(horizon_root)
-                check_humans_brains_readonly(horizon_root)
+                check_humans_brains_writable(horizon_root)
+                # TODO(windows-parity): the Unix twin now verifies SELF-SERVICE
+                #   isolation across all four HUMAN_SHARED_DIRS + shared/ drop-zone
+                #   (check_human_shared_isolation_unix). This Windows check still
+                #   covers projects/ only, traverse-only, no shared/. Bring to
+                #   parity as a follow-up; left intact (untestable on Linux host).
+                check_projects_isolation(horizon_root)
                 check_runtime_groups_no_humans(horizon_root)
         else:
             check_sbin_acl_unix(horizon_system)
             check_humans_readonly_system_unix(horizon_system, horizon_root)
+            check_humans_brains_writable_unix(horizon_root)
+            check_human_shared_isolation_unix(horizon_root, horizon_system)
         horizon_bin = env.get("HORIZON_BIN")
         if horizon_bin:
             check_monitor_status(horizon_bin)

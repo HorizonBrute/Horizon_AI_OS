@@ -623,6 +623,13 @@ horizon_system/ai_os_etc/git_identity.local.gitconfig
 # in horizon_aios_model_prefs.md and never overwritten by AIOS updates)
 horizon_system/ai_os_etc/horizon_aios_model_prefs.local.md
 
+# Deployer-local ACL hardening posture override. horizon_aios_harden.py deep-merges
+# this over the shipped file_acl_hardening.toml (local wins) so a deployer can
+# customize the harden stance without editing the tracked default. Ships as
+# file_acl_hardening.local.toml.template; gitignored so the nightly AIOS sync
+# (official-lane hard-restore) never clobbers it. See file_structure_invariants (ACL hardening posture, §14).
+horizon_system/ai_os_etc/file_acl_hardening.local.toml
+
 # Machine-local agent-instruction override. Every agents.md @-imports its sibling
 # local.agents.md; it ships as local.agents.md.template, is materialized by
 # `aios setup`, and is never tracked or clobbered by upstream sync. Bare pattern =

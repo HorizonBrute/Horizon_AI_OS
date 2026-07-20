@@ -130,7 +130,7 @@ Onboarding is the single secure entry point: bootstrap always creates the AIOS O
 Onboarding creates the AIOS-managed OS group **horizon_humans** ("Horizon.AIOS Actual Humans") on every install and asks whether the machine is primarily a server or an active-use workstation:
 
 - **Server** — no humans enrolled; the group stays empty, so only the owner, SYSTEM, and Administrators can write to the AIOS tree.
-- **Workstation** — enroll the human operator account(s) supplied by name or SID (cloud / Azure AD accounts are SIDs). Members of `horizon_humans` get Full control of the AIOS tree but are Read-Only on `brains/` (to write into a brain folder a human elevates to administrator or changes the permissions).
+- **Workstation** — enroll the human operator account(s) supplied by name or SID (cloud / Azure AD accounts are SIDs). Members of `horizon_humans` get Full control of the AIOS tree and Read/Write on `brains/` (they are near-admins who maintain the brains/apps; brain-to-brain isolation is preserved separately by ownership + each brain's private group), and are isolated from each other on `projects/` (traverse-only parent, owner-only `projects/<user>` children).
 
 On Windows, onboarding breaks inheritance at `$HORIZON_ROOT` and re-grants only owner + SYSTEM + Administrators + `horizon_humans`, removing broad inherited write grants (e.g. Authenticated Users). Non-interactive runs must pass `--yes` or `--profile server|workstation [--humans <name|sid> ...]`. Enroll a human later with `bootstrap --add-human <name|sid>`. The chosen profile and enrolled humans are recorded in the gitignored marker `$HORIZON_ROOT/.horizon_aios_deployment.json`.
 

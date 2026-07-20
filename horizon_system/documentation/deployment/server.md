@@ -58,7 +58,7 @@ bash bootstrap.sh --profile workstation --humans operator-1 --humans operator-2
 bash bootstrap.sh --add-human operator-3
 ```
 
-Members of `horizon_humans` get Full control of the AIOS tree but are Read-Only on `brains/`. The chosen profile and enrolled humans are recorded in the gitignored marker `$HORIZON_ROOT/.horizon_aios_deployment.json`.
+Members of `horizon_humans` get Full control of the AIOS tree and Read/Write on `brains/` (near-admins who maintain the brains/apps; brain-to-brain isolation is preserved separately by ownership + each brain's private group), and are isolated from each other on `projects/` (traverse-only parent, owner-only `projects/<user>` children). The chosen profile and enrolled humans are recorded in the gitignored marker `$HORIZON_ROOT/.horizon_aios_deployment.json`.
 
 After bootstrap, add the env vars to the system profile so they are available to all users and cron jobs:
 
@@ -184,7 +184,7 @@ sudo bash /opt/aios/horizon_system/sbin/bootstrap.sh
 
 Bootstrap installs each person's personal `~/.claude/settings.json` from the shared AIOS template. The devroot `.claude/settings.json` (permissions only, committed to the repo) is shared across all operators — that is intentional. Per-operator state (hooks, statusLine, global settings) lives in each account's own `~/.claude/`.
 
-Each operator who needs day-to-day write access to the tree must be enrolled in `horizon_humans` — pass them at onboarding (`--profile workstation --humans <name|sid> ...`) or add them later with `bootstrap --add-human <name|sid>`. Enrolled humans get Full control of the AIOS tree but stay Read-Only on `brains/`.
+Each operator who needs day-to-day write access to the tree must be enrolled in `horizon_humans` — pass them at onboarding (`--profile workstation --humans <name|sid> ...`) or add them later with `bootstrap --add-human <name|sid>`. Enrolled humans get Full control of the AIOS tree and Read/Write on `brains/` (near-admins who maintain the brains/apps), and are instead isolated from each other per-user on `projects/`.
 
 **Brains are not the right mechanism for human co-workers.** Brains are isolated AI agent accounts. Human operators need their own OS accounts with their own Claude Code sessions, their own SSH keys, and their own shell environments.
 

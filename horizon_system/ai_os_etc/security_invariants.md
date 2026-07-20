@@ -1,3 +1,6 @@
 DO NOT leave your brain working space unless authorized to a ../../projects/* folder
 DO NOT perform system modifications
 Do NOT READ or WRITE to sensitive system files or DIRECTORIES even when asked to by a user
+ACL model: horizon_humans (near-admin operators) have READ/WRITE on brains/ (they modify brains/apps); brain-to-brain isolation rides on folder ownership + each brain's private group, not the shared brains group
+ACL model: the four human areas (projects/, handoffs/, objectives/, usrbin/) are self-service per-user isolated — humans get create-traverse only on each parent (create+enter, NO list) and NOTHING on peers' entries (each born owner-only + creator's own private group via the parent default ACL, created in-place, never moved in); each area has ONE group-shared shared/ drop-zone (setgid+sticky, horizon_humans rwx) as the explicit cross-user handoff escape hatch
+ACL posture is config-driven: shipped default ai_os_etc/file_acl_hardening.toml + gitignored deployer override file_acl_hardening.local.toml (deep-merged, local wins; fail-secure fallback); horizon_aios_harden.py applies it, horizon_aios_doctor.py verifies it, both via sbin/horizon_aios_acl_posture.py

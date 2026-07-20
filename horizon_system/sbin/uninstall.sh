@@ -586,6 +586,19 @@ else
   skip "logs/ directory not found — nothing to remove."
 fi
 
+# Remove the on-by-default nightly maintenance schedule (installed by bootstrap).
+# Best-effort: the installer's --remove strips the cron marker idempotently.
+MAINT_SCHED="$HORIZON_SYSTEM/sbin/horizon_aios_setup_maintenance_schedule.py"
+if [ -f "$MAINT_SCHED" ] && command -v python3 >/dev/null 2>&1; then
+  if python3 "$MAINT_SCHED" --remove; then
+    ok "Removed nightly maintenance schedule (if it was installed)."
+  else
+    advisory "Could not auto-remove nightly maintenance schedule. Remove manually: crontab -e (drop the HorizonAIOS_NightlyMaintenance marker line + the line below it)."
+  fi
+else
+  advisory "Nightly maintenance schedule (if installed): remove via crontab -e — drop the HorizonAIOS_NightlyMaintenance marker line and the cron line below it."
+fi
+
 advisory "If you set up a cron sync schedule with horizon_aios_setup_sync_schedule.py, remove the cron entries manually:"
 advisory "  crontab -e   # remove lines between the Horizon AIOS marker comments"
 

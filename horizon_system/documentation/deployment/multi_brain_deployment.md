@@ -97,7 +97,7 @@ $HORIZON_ROOT/shared/<project-name>/    ← not a default; provisioned explicitl
 
 The grant is additive and scoped: only the specific brains involved receive access, and only to the specific path. `horizon_aios_harden.py`'s broad no-write Deny does not apply to explicitly provisioned per-path grants — explicit Allow ACEs on a subdirectory are evaluated before the inherited Deny.
 
-**Do not use `$HORIZON_PROJECTS/` as a shared drop-folder without deliberate scoping.** The security invariants impose no default convention on `$HORIZON_PROJECTS/`; that is a feature, not a gap. Decide access per project.
+**Do not use `$HORIZON_PROJECTS/` as a shared drop-folder without deliberate scoping.** *Brains* get no default access to any project folder — decide brain access per project (the explicit per-path grant above). *Humans* are isolated from each other by convention: the `projects/` parent is human-traverse-only and each `projects/<user>` is owner-only, so one human cannot read another's project folder. New user folders are born isolated by the parent's default ACL (`horizon_aios_harden.py`), provided they are created in-place under the parent (never moved in).
 
 ---
 
