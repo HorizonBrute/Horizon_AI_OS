@@ -62,6 +62,7 @@ at the end of a session to save state. Start with the setup guide in
 | `horizon_system/documentation/deployment/desktop.md` | Horizon AIOS — Desktop Deployment | The primary local always-on deployment model: AIOS and brains run as OS accounts on the user's own machine. |
 | `horizon_system/documentation/deployment/docker.md` | Horizon AIOS — Docker Deployment | Deploying the AIOS layer as a Linux-based Docker container with brains as sub-containers or OS users. |
 | `horizon_system/documentation/deployment/server.md` | Horizon AIOS — Server / Headless Deployment | Running AIOS headless on a remote/always-on machine, accessed via SSH with the audit log as the operational interface. |
+| `horizon_system/documentation/deployment/deployable_modules.md` | Horizon AIOS — Installing Deployable Modules | How to install a deployable_module (standalone git repo shipping its own installer) into an AIOS instance: the clone-under-`deployed_packages` + registry + skill + context-pointer + admin-guide model, `HORIZON_*` prerequisites, placement/role effects, sync durability, lifecycle (install/uninstall/update/status), verification, and troubleshooting. |
 
 ## build_decisions
 | ID (path) | Title | Purpose |
