@@ -1,9 +1,15 @@
-# Horizon AIOS — Installing Deployable Modules
+# Horizon AIOS — Installing & Troubleshooting AIOS Options Packages
 
-A **deployable_module** is a standalone git repo that plugs into the AIOS platform. It ships its own
+The install-and-troubleshoot how-to for **AIOS options packages**. For the concept — the contract,
+registry schema, sync integration, and lifecycle — see `../system/aios_options_packages.md`; this doc
+is the hands-on companion (prerequisites, commands, verification, troubleshooting).
+
+An **AIOS options package** is a standalone git repo that plugs into the AIOS platform. It ships its own
 cross-platform, standard-library-only Python installer (`install` / `uninstall` / `update` / `status`).
 The reference implementation is the Lightweight Agentic Project Plans (LAPP) package; the steps below
-generalize to any module built on that model. See `philosophy.md` for the framework-vs-user-space model.
+generalize to any package built on that model. See `philosophy.md` for the framework-vs-user-space model.
+
+A **deployed** options package lives under `horizon_system/deployed_packages/<name>/`.
 
 ---
 
@@ -13,7 +19,7 @@ A canonical deploy is:
 
 1. A **git clone** under `$HORIZON_SYSTEM/deployed_packages/<name>/` (so it can pull its own updates).
 2. A machine-local **registry entry** in `$HORIZON_ETC/horizon_deployed_packages.local.json`.
-3. The module's **skill payload** copied into `$HORIZON_SKILLS_BIN/<skill>/` (+ a registration row in `$HORIZON_SKILLS_BIN/index.md`).
+3. The package's **skill payload** copied into `$HORIZON_SKILLS_BIN/<skill>/` (+ a registration row in `$HORIZON_SKILLS_BIN/index.md`).
 4. A terse, marker-delimited **context pointer** appended to `$HORIZON_ROOT/projects/agents.md` so project-scope agents discover the feature.
 5. A `.local.` **admin override guide** materialized in `$HORIZON_ETC` (admin-editable, never overwritten by updates).
 
@@ -39,10 +45,10 @@ If the vars are not set, pass `--horizon-root PATH` explicitly.
 
 ## Install
 
-Clone the module to its deployed home, then run its installer from there:
+Clone the package to its deployed home, then run its installer from there:
 
 ```bash
-git clone <module-remote> "$HORIZON_SYSTEM/deployed_packages/<name>"
+git clone <package-remote> "$HORIZON_SYSTEM/deployed_packages/<name>"
 python "$HORIZON_SYSTEM/deployed_packages/<name>/aios/install/<installer>.py" install
 ```
 
@@ -58,7 +64,7 @@ python "$env:HORIZON_SYSTEM\deployed_packages\<name>\aios\install\<installer>.py
 2. **`--horizon-root /path/to/aios`** — explicit override; use when the vars are not exported.
 
 Options: `--force` (overwrite an existing deploy). After install, **restart the harness** (skills load at
-session start), then invoke the module's skill.
+session start), then invoke the package's skill.
 
 ### Placement matters
 
@@ -67,14 +73,14 @@ session start), then invoke the module's skill.
 | Under `$HORIZON_SYSTEM/deployed_packages/<name>/` | `role=deployment`, `pull_only=true` | Push URL neutered to a sentinel (fetch/pull only), `clone_path` relative-inside-root, **sync-protected**. |
 | Anywhere else | `role=development-canon` | Prints a warning that the clone is outside `$HORIZON_ROOT` (no sync coverage). |
 
-Deploy under `deployed_packages/` unless you are the module's developer working from canon.
+Deploy under `deployed_packages/` unless you are the package's developer working from canon.
 
 ---
 
 ## Sync durability
 
 The AIOS two-lane sync's **official lane** overwrites everything except `projects/usrbin/brains` from
-upstream. A module under `horizon_system/` is protected only if the installed
+upstream. A package under `horizon_system/` is protected only if the installed
 `horizon_system/sbin/horizon_aios_sync.py` is a version whose `official_pathspec()` excludes registered
 clones (it reads the deployed-packages registry). Verify:
 
@@ -110,7 +116,7 @@ python .../aios/install/<installer>.py status
 grep '<skill>' "$HORIZON_SKILLS_BIN/index.md"
 
 # 3. Context pointer in projects/agents.md
-grep -n '<module-marker>' "$HORIZON_ROOT/projects/agents.md"
+grep -n '<package-marker>' "$HORIZON_ROOT/projects/agents.md"
 
 # 4. Registry entry (role, pull_only, clone_path, sync, payload)
 cat "$HORIZON_ETC/horizon_deployed_packages.local.json"

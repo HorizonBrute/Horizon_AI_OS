@@ -16,6 +16,8 @@ install without it being part of the OS core. Options packages are how the AIOS 
 ships its own repository, is cloned into the install, registers itself, and is thereafter kept current,
 protected, and backed up by the AIOS sync — while the OS core stays lean and neither owns nor ships it.
 
+> **See also:** the install & troubleshooting how-to — `../deployment/aios_options_packages.md`.
+
 The first options package is **Horizon Lightweight Agentic Project Plans (LAPP)**
 (`horizon_agentic_project_planning`), which adds the `/project-plan` skill. It is used as the worked
 example throughout.
