@@ -435,6 +435,95 @@ def _rule_allowed(rule, have_group, have_humans):
     return (True, None)
 
 
+def _enumerate_child_dirs(area, exclude):
+    """Existing immediate child dirs of a self-service area to re-assert as
+    owner-only, EXCLUDING `shared` and any exclude_children. Prefers scanning the
+    filesystem (the authoritative set of what actually exists on disk); the
+    horizon_humans membership list is only an advisory hint of *who* may have
+    created entries, not of which dirs exist. Returns [] on any enumeration error
+    (fail-soft — a missing/opaque area must not abort the pass)."""
+    try:
+        skip = set(exclude or ()) | {'shared'}
+        return sorted(
+            os.path.join(area, d) for d in os.listdir(area)
+            if d not in skip and os.path.isdir(os.path.join(area, d)))
+    except OSError as exc:
+        warn(f'Cannot enumerate children of {area}: {exc}')
+        return []
+
+
+def assert_repair_selfservice(paths, os_name, have_humans, dry_run,
+                              projects_root=None):
+    """ASSERT & REPAIR the self-service posture on EVERY harden run (not just
+    APPLY). Runs AFTER the grant/deny loops in both harden_unix and harden_windows.
+
+    Target invariants re-asserted here (see security_architecture_invariants.md):
+      - the self-service ROOT (projects/) is stripped of EVERYTHING not in config
+        (Linux setfacl -b / macOS chmod -N / Windows /reset + /inheritance:r) and
+        re-established as exactly: base owner/group/other, horizon_humans at its
+        configured perm (shipped -wx: create+traverse, NO read), the mask, and the
+        isolating default — so a stray named-principal ACE (u:someone / g:other)
+        cannot survive and no class leaks a read bit;
+      - each existing projects/<user> child is owner-only (owner rwx,
+        horizon_humans:---, other:---), re-asserted even if it drifted (someone
+        chmod 755'd it or added a horizon_humans ACE).
+
+    Respects dry_run (prints intended ops, executes nothing) and the fail-soft
+    convention (one failing ACL op does not abort — _run_ops runs check=False).
+    Each repair is logged via grant()/deny()/warn().
+
+    `projects_root` overrides the resolved $HORIZON_ROOT/projects so the pass can
+    be pointed at a disposable test fixture WITHOUT touching live state; the same
+    override is threaded onto the posture so its rule paths resolve under the
+    fixture. When None (production), the live paths are used unchanged."""
+    if not have_humans:
+        warn('horizon_humans group unavailable — skipping self-service assert+repair.')
+        return
+
+    # Resolve the posture against either live paths or a fixture root. Pointing
+    # projects_root at a fixture rewrites BOTH horizon_root and horizon_system so
+    # every $HORIZON_* path in the rules resolves under the fixture — nothing can
+    # accidentally touch the live tree.
+    if projects_root:
+        fixture_root = os.path.dirname(os.path.abspath(projects_root))
+        rp = dict(paths)
+        rp['horizon_root'] = fixture_root
+        rp['horizon_system'] = os.path.join(fixture_root, 'horizon_system')
+    else:
+        rp = paths
+
+    posture = posture_engine.load_posture(rp)
+    ss_rules = [r for r in posture.rules
+                if r.is_selfservice_parent() and r.principal == HUMANS_GROUP]
+    if not ss_rules:
+        info('No self-service rules in posture — nothing to assert.')
+        return
+
+    have_setfacl = shutil.which('setfacl') is not None
+    linux_acls = have_setfacl and os_name == 'Linux'
+    if os_name in ('Linux', 'Darwin') and not (linux_acls or os_name == 'Darwin'):
+        warn('Self-service assert+repair needs setfacl on Linux — skipping.')
+        return
+
+    info('ASSERT & REPAIR self-service posture (projects/ root + children)')
+    for rule in ss_rules:
+        area = rule.path
+        if not (os.path.isdir(area) or dry_run):
+            warn(f'{rule.name}: area missing, skipping repair: {area}')
+            continue
+        # Children enumerated only outside dry-run (deterministic plan).
+        children = ([] if dry_run
+                    else _enumerate_child_dirs(area, rule.exclude_children))
+        if os_name == 'Windows':
+            ops = posture_engine.windows_selfservice_repair_ops(
+                rule, rp, children, owner=current_user(os_name))
+        elif os_name == 'Darwin':
+            ops = posture_engine.macos_selfservice_repair_ops(rule, children)
+        else:
+            ops = posture_engine.linux_selfservice_repair_ops(rule, children)
+        _run_ops(ops, dry_run)
+
+
 def harden_windows(paths, owner, have_group, have_humans, dry_run, strict):
     """
     Apply the ACL model on Windows with icacls, LOOPING over the loaded posture
@@ -502,6 +591,11 @@ def harden_windows(paths, owner, have_group, have_humans, dry_run, strict):
                 rule, paths, owner=owner, strict=strict, dry_run=dry_run,
                 broad_allow=broad), dry_run)
 
+    # AFTER the grant/deny loops: assert & repair the self-service posture so a
+    # drifted projects/ root or an existing child (chmod'd or ACE'd) is repaired,
+    # not merely re-applied.
+    assert_repair_selfservice(paths, 'Windows', have_humans, dry_run)
+
 
 def harden_unix(paths, os_name, owner, have_group, have_humans, dry_run, strict):
     """
@@ -564,6 +658,8 @@ def harden_unix(paths, os_name, owner, have_group, have_humans, dry_run, strict)
                 continue
             _run_ops(posture_engine.linux_rule_ops(rule, paths, dry_run=dry_run),
                      dry_run)
+        # AFTER the grant/deny loops: assert & repair the self-service posture.
+        assert_repair_selfservice(paths, os_name, have_humans, dry_run)
         return
 
     if not strict and not (have_group and linux_acls):
@@ -611,6 +707,10 @@ def harden_unix(paths, os_name, owner, have_group, have_humans, dry_run, strict)
             run(['setfacl', '-R', '-m', f'g:{BRAINS_GROUP}:---', path],
                 dry_run=dry_run, check=False)
         deny(f'brains DENY (owner-only 700) on {label}: {path}')
+
+    # AFTER the grant/deny work: assert & repair the self-service posture
+    # (strict / no-setfacl fallback path).
+    assert_repair_selfservice(paths, os_name, have_humans, dry_run)
 
 
 # ---------------------------------------------------------------------------

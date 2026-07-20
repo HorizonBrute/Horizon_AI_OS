@@ -669,6 +669,149 @@ def linux_traverse_ops(posture, paths):
     return ops
 
 
+# ---------------------------------------------------------------------------
+# Self-service ASSERT & REPAIR (per-OS ops).
+#
+# The rule translators (above) APPLY the posture; they clobber the named-group
+# ACE on the self-service parent to -wx and add a --- ACE to existing children,
+# so a drifted READ bit on the horizon_humans ACE itself is already re-clamped.
+# What they do NOT catch, and what these repair generators additionally assert:
+#   - a STRAY named-principal ACE on the PARENT (e.g. `u:someone:r-x` or
+#     `g:othergroup:rwx`, access OR default) — the translator only re-pins the
+#     horizon_humans ACE and clamps `other::`, so an added third-party ACE would
+#     survive. Repair STRIPS EVERYTHING not in config (Linux `setfacl -b`, macOS
+#     `chmod -N`, Windows `/reset` + `/inheritance:r`) then re-establishes exactly
+#     the configured entries, so the root can carry ONLY the base owner/group/other,
+#     the configured horizon_humans ACE (no read), the mask, and the isolating
+#     default — plus the sticky bit (mode bits are left untouched by the strip);
+#   - a child whose BASE MODE drifted (e.g. `chmod 755 projects/alice`) — the
+#     translator's `g:...:---` ACE leaves `other::r-x` and the group mode bits
+#     intact, so peers could still read the child. Repair re-asserts `chmod 700`
+#     (owner rwx, group ---, other ---) and REMOVES any horizon_humans ACE
+#     outright (owner-only means no residual named ACE), not just clamps it.
+# These are idempotent: on a clean tree they set what is already set.
+# ---------------------------------------------------------------------------
+
+def _selfservice_perm(rule):
+    """Configured parent access perm for the self-service group ACE (shipped:
+    create-traverse -> -wx; a deployer override e.g. read-write -> rwx)."""
+    return _LINUX_PERM.get(rule.rights, '-wx')
+
+
+def linux_selfservice_repair_ops(rule, children):
+    """Assert+repair ops (Linux) for ONE self-service area:
+      a. Parent: STRIP EVERYTHING not in the harden config, then re-establish
+         exactly the configured entries. `setfacl -b` removes ALL extended ACEs —
+         so a stray `u:someone:r-x` / `g:othergroup:rwx` (access OR default) that
+         drifted onto the root is GONE — then re-pin the configured group ACE
+         (shipped -wx), clamp `other::---`, and re-apply the isolating defaults.
+      b. For each existing (non-excluded) child: re-assert owner-only —
+         `chmod 700` (repairs a drifted base mode like 755), REMOVE any
+         horizon_humans named-group ACE (access + default) so the child carries
+         no residual group ACE, and clamp `other::---`.
+    `children` is the caller-enumerated list of absolute child dirs (empty in
+    dry-run, matching the translators' deterministic-plan convention)."""
+    ops = []
+    area = rule.path
+    grp = _g(rule.principal)
+    perm = _selfservice_perm(rule)
+    # a. Parent: STRIP EVERYTHING not in config, then re-establish exactly the
+    # configured entries (posture rule: the root may carry ONLY the base
+    # owner/group/other, the horizon_humans ACE, the mask, and the isolating
+    # default). `setfacl -b` removes ALL extended ACEs — the access ACL's named
+    # principals + mask AND the entire default ACL — so a stray `u:someone:r-x`
+    # or `g:othergroup:rwx` (access or default) injected on the root is gone. `-b`
+    # leaves the base mode bits (incl. the sticky bit) untouched. We then re-add
+    # exactly the configured entries: re-adding a named group ACE makes setfacl
+    # auto-recompute the access mask, and re-adding a default entry makes setfacl
+    # copy the default base entries (default:user::/group::/other::) from the
+    # access base, so the resulting default ACL is complete and getfacl-clean.
+    ops.append(Op(['setfacl', '-b', area], None, None))
+    ops.append(Op(['setfacl', '-m', f'{grp}:{perm}', area], None, None))
+    ops.append(Op(['setfacl', '-m', 'o::---', area], None, None))
+    if rule.isolate_children:
+        ops.append(Op(['setfacl', '-d', '-m', f'{grp}:---', area], None, None))
+        ops.append(Op(['setfacl', '-d', '-m', 'o::---', area], None, None))
+    ops.append(Op(None, 'grant',
+                  f'{rule.name}: REPAIR parent -> setfacl -b (strip stray ACEs), '
+                  f'then group={perm}, other=---, isolating default re-asserted -> {area}'))
+    # b. Children: owner-only. `setfacl -b` strips ALL extended ACLs (the stray
+    # horizon_humans ACE AND any widened mask/group-class the drift left behind —
+    # a bare `-x g:P` would remove the named ACE but leave `mask::r-x` /
+    # `group::r-x` from a `chmod 755`, still exposing the child to the owning
+    # group). With no extended ACL, `chmod 700` fully expresses owner-only:
+    # owner rwx, group ---, other ---. Order: strip ACLs, THEN clamp the mode
+    # (so chmod acts on the real group class, not a residual mask).
+    for child in children:
+        ops.append(Op(['setfacl', '-R', '-b', child], None, None))
+        ops.append(Op(['chmod', '-R', 'u=rwX,go=', child], None, None))
+        ops.append(Op(None, 'deny',
+                      f'{rule.name}: REPAIR child owner-only (setfacl -b + '
+                      f'chmod 700; {rule.principal} ACE removed) -> {child}'))
+    return ops
+
+
+def macos_selfservice_repair_ops(rule, children):
+    """Assert+repair ops (macOS). Parent: STRIP the entire ACL (`chmod -N` removes
+    ALL ACEs, incl. stray named principals) then re-establish exactly the config:
+    re-add the isolating inherited group deny + clamp other via mode bits. Children:
+    owner-only mode + strip the horizon_humans ACE. DRY-RUN PRINT ONLY on a Linux
+    host."""
+    ops = []
+    area = rule.path
+    grp = f'group:{rule.principal}'
+    # Parent: remove the entire ACL first (strips any stray named-principal ACE),
+    # then re-add ONLY the configured isolating deny + clamp other. `chmod -N`
+    # leaves the base mode bits (incl. sticky) intact.
+    ops.append(Op(['chmod', '-N', area], 'grant',
+                  f'{rule.name}: REPAIR strip ACL / stray ACEs on parent -> {area}'))
+    if rule.isolate_children:
+        ops.append(Op(['chmod', '+a', f'{grp} deny list,search,{_MACOS_INHERIT}',
+                       area], 'grant',
+                      f'{rule.name}: REPAIR isolating inherited deny -> {area}'))
+    ops.append(Op(['chmod', 'o-rwx', area], 'grant',
+                  f'{rule.name}: REPAIR parent other=--- -> {area}'))
+    for child in children:
+        ops.append(Op(['chmod', '-R', 'go=', child], 'deny',
+                      f'{rule.name}: REPAIR child owner-only mode -> {child}'))
+        ops.append(Op(['chmod', '-R', '-a#', '0', child], 'deny',
+                      f'{rule.name}: REPAIR strip inherited/group ACEs -> {child}'))
+    return ops
+
+
+def windows_selfservice_repair_ops(rule, paths, children, *, owner=None):
+    """Assert+repair ops (Windows). Parent: STRIP EVERYTHING not in config, then
+    re-establish exactly the config principals. `/reset` drops ALL explicit ACEs
+    (incl. any stray non-config principal) and re-enables inheritance; `/inheritance:r`
+    then removes the just-inherited ACEs — critically the root's horizon_humans
+    (OI)(CI)F, which would otherwise flow down as INHERITED READ on projects/
+    (the (WD,AD,X) this-folder grant cannot subtract an inherited read). Net parent
+    end state: must-haves + horizon_humans create-but-not-list only — no read, no
+    strays — at read-parity with Linux -wx. Children: break inheritance, re-grant
+    owner/SYSTEM/Administrators + OWNER RIGHTS Full, and REMOVE the horizon_humans
+    ACE. DRY-RUN PRINT ONLY on a Linux host."""
+    ops = []
+    area = rule.path
+    grp = rule.principal
+    ops.append(Op(['icacls', area, '/reset'], 'info',
+                  f'{rule.name}: REPAIR strip stray ACEs on parent (/reset) -> {area}'))
+    ops.append(Op(['icacls', area, '/inheritance:r'], 'info',
+                  f'{rule.name}: REPAIR drop inherited read (root {grp} Full) -> {area}'))
+    ops.extend(windows_must_have_grants(area, owner))
+    ops.append(Op(['icacls', area, '/grant', f'{grp}:(WD,AD,X)'], 'grant',
+                  f'{rule.name}: REPAIR {grp} create-but-not-list (no read) -> {area}'))
+    for child in children:
+        ops.append(Op(['icacls', child, '/inheritance:r'], 'info',
+                      f'{rule.name}: REPAIR break inheritance on child -> {child}'))
+        ops.extend(windows_must_have_grants(child, owner))
+        ops.append(Op(['icacls', child, '/grant',
+                       f'{WINDOWS_WELL_KNOWN_SIDS["OWNER_RIGHTS"]}:(OI)(CI)F'],
+                      'grant', f'{rule.name}: REPAIR OWNER RIGHTS Full -> {child}'))
+        ops.append(Op(['icacls', child, '/remove:g', grp], 'deny',
+                      f'{rule.name}: REPAIR remove {grp} ACE (owner-only) -> {child}'))
+    return ops
+
+
 # --- macOS (chmod +a) -------------------------------------------------------
 # IMPLEMENTED but DRY-RUN PRINT ONLY on a Linux host. macOS ACLs are ordered and
 # support allow+deny ACEs and inheritance flags (file_inherit/directory_inherit).

@@ -69,6 +69,43 @@ Entries are in reverse-chronological order at the top (newest first). Each entry
 
 ---
 
+### 2026-07-20 — Human `projects/` isolation: mount-view rejected; self-healing harden + land-in-own-dir on the self-service model
+
+**Status:** Accepted. **Owner:** HorizonBrute (package developer).
+
+**Refines:** the two 2026-07-19 entries below. The self-service isolation guarantees (`-wx` create-traverse parent, born-owner-only children, per-area `shared/` drop-zone) are UNCHANGED. This entry records (A) why a per-user mount view was rejected in favour of the POSIX home-directory model, (B) that `horizon_aios_harden.py` now ASSERTS & REPAIRS the posture on every run rather than only applying it, and (C) the per-user provisioning + landing affordance that makes the "you cannot `ls` the parent" cost (2026-07-19 Implications #1) ergonomic without weakening isolation. It does NOT return to the pre-`9a26089` admin-precreate model — self-service creation via `-wx` still stands; provisioning is additive convenience.
+
+**Context.** A human could write into `projects/` but got `Permission denied` on `ls` of the root — correct by design (`horizon_humans` has `-wx`, no read). The intent "let me `ls` and see only MY folders, never anyone else's, with zero metadata leak" runs into a hard POSIX constraint: directory `read` is all-or-nothing over entries — a listing cannot be filtered by per-entry ownership. The three-way tradeoff (shared dir listable at its root / see only yours / zero leak) admits at most two; only a per-user mount view satisfies all three.
+
+**Decision A — Reject the mount-view; keep the POSIX home-directory model.** A per-user `pam_namespace` / bind-mount view of `projects/` (so the root resolves to only the caller's subtree) was considered and rejected:
+
+1. No clean cross-platform parity — Windows has no `pam_namespace`; matching it would need per-user junctions / FSLogix-style machinery, breaking the single-posture, three-OS symmetry the ACL engine is built on.
+1. Operational risk — it depends on a login-time mount (`session required pam_namespace.so`); a misconfigured `namespace.conf` can block ALL logins, including console.
+1. The home-directory model already delivers the intent with pure ACLs: each human's working root is their own owner-only `projects/<user>` (they `ls` that, like `ls ~`, never the shared parent). Zero metadata leak, identical on Linux/macOS/Windows. Traverse (`x`) on the parent does not expose siblings — it only resolves a path to the caller's own dir; each sibling is independently owner-only, and listing still needs read, which the group never gets.
+
+**Decision B — `harden` is self-healing: assert & repair, not just apply.** Previously `horizon_aios_harden.py` applied grants blindly and only `horizon_aios_doctor.py` READ and reported drift (never repairing). A new `assert_repair_selfservice` pass now runs AFTER the grant/deny loops on all three OSes:
+
+1. Parent: STRIP everything not in the config, then re-establish exactly the configured entries — Linux `setfacl -b`, macOS `chmod -N`, Windows `icacls /reset` + `/inheritance:r` — so a stray named-principal ACE (e.g. someone adding `u:x:r-x` to the root) cannot survive. The shipped `-wx` + isolating default are re-pinned; `other::---` clamped; sticky preserved.
+1. Children: each existing `projects/<user>` forced back to owner-only (`setfacl -R -b` + `chmod 700`; `icacls` owner/SYSTEM/Administrators + OWNER RIGHTS, `horizon_humans` removed), repairing a drifted mode (`chmod 755`) or an added group ACE. `shared/` and any `exclude_children` are excluded.
+
+`doctor` still verifies; `harden` now also corrects, so the two never diverge and drift self-heals on every onboarding + nightly maintenance run.
+
+**Decision C — Per-user provisioning parity + land-in-own-dir.** So a human lands where `ls` shows only their own entries:
+
+1. Per-user `projects/<user>` is provisioned owner-only at enrollment and RE-ASSERTED every run (self-heals drift). `bootstrap.sh` already did this on Linux; `bootstrap.ps1` was MISSING it entirely and now provisions with `icacls` parity (break inheritance; Full to owner + SYSTEM + Administrators via well-known SIDs; nothing to `horizon_humans`).
+1. An idempotent, interactive-only, fail-soft landing hook (`~/.bashrc` managed block on Linux; PowerShell profile managed block on Windows, sentinel-guarded) starts a human's interactive shell in their own `projects/<user>` if not already under it. Non-interactive shells, missing dirs, and unresolved profiles all fail soft and never abort enrollment.
+
+**Finding (Windows latent inherited read — follow-up).** The root `humans-userspace-full` grant is `horizon_humans (OI)(CI)F` inheritable at `$HORIZON_ROOT`, which inherits READ down onto `projects/`; the this-folder-only `(WD,AD,X)` create-traverse grant cannot subtract an inherited allow. Both the apply path and the new repair close this by breaking inheritance (`/inheritance:r`) at the parent, reaching no-read parity with Linux `-wx` without an explicit Deny. A permanent defense-in-depth fix — an explicit no-read posture on `projects/` itself, or narrowing the root grant — is deferred as a follow-up so the guarantee does not depend on the repair having run.
+
+**Implications:**
+
+1. Isolation guarantees are unchanged; humans still cannot `ls` the shared parent (by design) — the landing hook makes that ergonomic rather than a friction point, and the shared parent stays non-listable.
+1. Drift in the self-service posture now self-heals on every `harden` run; `doctor` remains the read-only verifier.
+1. The mount-view option is closed; revisiting it would reopen the cross-platform-parity and login-lockout costs recorded here.
+1. Windows carries a tracked follow-up for the latent inherited-read hole above.
+
+---
+
 ### 2026-07-19 — ACL posture externalized to config + full cross-platform (Linux/macOS/Windows) parity
 
 **Status:** Accepted. **Owner:** HorizonBrute (package developer).

@@ -125,15 +125,135 @@ function Ensure-HumansGroup {
     }
 }
 
+function Provision-HumanWorkspace([string]$member) {
+    # Windows parity for the Linux per-user projects/<member> workspace. Owner-only
+    # (peer isolation): break inheritance, grant Full to the human owner + SYSTEM +
+    # Administrators via well-known SIDs (locale-independent, matching acl_posture).
+    # horizon_humans gets NOTHING here - that is the isolation. Idempotent: perms are
+    # re-asserted every run (create AND --add-human re-run) so drift self-heals.
+    $projectsParent = Join-Path $HORIZON_ROOT "projects"
+    $userDir        = Join-Path $projectsParent $member
+    try {
+        if (-not (Test-Path $projectsParent)) {
+            New-Item -ItemType Directory -Path $projectsParent -Force | Out-Null
+        }
+        if (Test-Path $userDir) {
+            Info "Project workspace already exists (re-asserting owner-only ACL): $userDir"
+        } else {
+            New-Item -ItemType Directory -Path $userDir -Force | Out-Null
+            Ok "Created per-user project workspace (owner-only, isolated): $userDir"
+        }
+        # $member may be an account name or a raw SID; icacls accepts a name, and a
+        # SID prefixed with '*'. Detect a bare SID (starts with S-1-) and prefix it.
+        $ownerPrincipal = if ($member -match '^S-1-') { "*$member" } else { $member }
+        icacls $userDir /inheritance:r 2>&1 | Out-Null
+        icacls $userDir /grant "$($ownerPrincipal):(OI)(CI)F" 2>&1 | Out-Null   # human owner
+        icacls $userDir /grant "*S-1-5-18:(OI)(CI)F"          2>&1 | Out-Null   # SYSTEM
+        icacls $userDir /grant "*S-1-5-32-544:(OI)(CI)F"      2>&1 | Out-Null   # Administrators
+        Ok "Applied owner-only ACL (no horizon_humans grant): $userDir"
+    } catch {
+        Warn "Could not provision workspace '$userDir': $($_.Exception.Message)"
+    }
+    # Convenience: land the human's interactive PowerShell sessions in their own
+    # workspace. Isolation already holds without this; keep it fail-soft.
+    Install-LandingHook $member
+}
+
+function Install-LandingHook([string]$member) {
+    # Windows parity for the Linux landing hook: make the human's INTERACTIVE
+    # PowerShell sessions start in projects\<member> so they see only their own
+    # work. Convenience only - the projects ACL model already isolates humans.
+    # Idempotent (sentinel-guarded managed block appended to the member's
+    # PowerShell profile) + fail-soft (try/catch + Warn, never aborts enrollment).
+    # $member may be an account name OR a raw SID (cloud/AzureAD identities are
+    # SIDs); resolve the profile dir via the SID's ProfileImagePath and skip
+    # gracefully if a SID-only identity has no local profile.
+    $landing = Join-Path (Join-Path $HORIZON_ROOT "projects") $member
+    try {
+        # Resolve the member's SID: a raw SID passes through; a name is translated.
+        $sid = if ($member -match '^S-1-') {
+            $member
+        } else {
+            try {
+                (New-Object System.Security.Principal.NTAccount($member)).Translate(
+                    [System.Security.Principal.SecurityIdentifier]).Value
+            } catch { $null }
+        }
+        if (-not $sid) {
+            Warn "Could not resolve SID for '$member' - skipping landing hook."
+            return
+        }
+
+        # Authoritative profile directory from the OS profile list (not `$HOME`,
+        # which is the caller's). A SID with no ProfileImagePath (cloud identity
+        # that has never logged on) is skipped gracefully.
+        $profileList = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$sid"
+        $userHome = (Get-ItemProperty -Path $profileList -Name ProfileImagePath `
+                        -ErrorAction SilentlyContinue).ProfileImagePath
+        if (-not $userHome -or -not (Test-Path $userHome)) {
+            Warn "No resolvable profile directory for '$member' (SID-only cloud identity?) - skipping landing hook."
+            return
+        }
+
+        # PowerShell profile path; create the containing dir if absent.
+        $profileDir  = Join-Path $userHome "Documents\PowerShell"
+        $profilePath = Join-Path $profileDir "Microsoft.PowerShell_profile.ps1"
+        if (-not (Test-Path $profileDir)) {
+            New-Item -ItemType Directory -Path $profileDir -Force | Out-Null
+        }
+
+        $begin = "# >>> horizon-aios landing >>>"
+        $end   = "# <<< horizon-aios landing <<<"
+
+        # Managed block. Guards, in order:
+        #   [Environment]::UserInteractive + host name -> interactive hosts only,
+        #     so non-interactive/automation runspaces are untouched.
+        #   Test-Path -> missing workspace fails soft (no Set-Location).
+        #   -ne / -notlike '\*' -> already inside the workspace? leave the user put.
+        $block = @(
+            $begin,
+            "# Managed by Horizon AIOS bootstrap - do not edit inside this block.",
+            "if ([Environment]::UserInteractive -and `$Host.Name -match 'ConsoleHost|ISE|Visual Studio Code Host') {",
+            "    `$__hzLanding = '$landing'",
+            "    if ((Test-Path `$__hzLanding) -and `$PWD.Path -ne `$__hzLanding -and (`$PWD.Path -notlike (`$__hzLanding + '\*'))) {",
+            "        Set-Location `$__hzLanding -ErrorAction SilentlyContinue",
+            "    }",
+            "    Remove-Variable __hzLanding -ErrorAction SilentlyContinue",
+            "}",
+            $end
+        ) -join "`r`n"
+
+        # Idempotent: strip any prior managed block, then append the fresh one.
+        # Content outside the sentinels is preserved verbatim.
+        if (Test-Path $profilePath) {
+            $existing = Get-Content $profilePath -Raw -ErrorAction SilentlyContinue
+            if ($existing -and $existing -match [regex]::Escape($begin)) {
+                $pattern  = "(?s)\r?\n?" + [regex]::Escape($begin) + ".*?" + [regex]::Escape($end)
+                $existing = [regex]::Replace($existing, $pattern, "").TrimEnd()
+                Set-Content -Path $profilePath -Value $existing -Encoding UTF8
+            }
+            Add-Content -Path $profilePath -Value ("`r`n" + $block) -Encoding UTF8
+        } else {
+            Set-Content -Path $profilePath -Value $block -Encoding UTF8
+        }
+        Ok "Installed landing hook (interactive sessions start in projects\$member): $profilePath"
+    } catch {
+        Warn "Could not install landing hook for '$member': $($_.Exception.Message)"
+    }
+}
+
 function Enroll-Human([string]$member) {
     # $member = account name OR raw SID (cloud/AzureAD identities are SIDs).
     try {
         Add-LocalGroupMember -Group $HUMANS_GROUP -Member $member -ErrorAction Stop
         Ok "Enrolled human into ${HUMANS_GROUP}: $member"
+        Provision-HumanWorkspace $member
         return $true
     } catch {
         if ($_.Exception.Message -match "already a member") {
-            Info "Already enrolled in ${HUMANS_GROUP}: $member"; return $true
+            Info "Already enrolled in ${HUMANS_GROUP}: $member"
+            Provision-HumanWorkspace $member   # still re-assert the workspace on re-run
+            return $true
         }
         Warn "Could not enroll '$member' into ${HUMANS_GROUP}: $($_.Exception.Message)"
         return $false

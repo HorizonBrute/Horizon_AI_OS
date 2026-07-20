@@ -161,19 +161,91 @@ enroll_human() {
   # no per-user setfacl needed. Idempotent: skip if it already exists.
   local projects_parent="$HORIZON_ROOT/projects"
   local user_dir="$projects_parent/$member"
+  mkdir -p "$projects_parent" 2>/dev/null || true
   if [ -d "$user_dir" ]; then
-    info "Project workspace already exists (leaving as-is): $user_dir"
+    info "Project workspace already exists (re-asserting owner-only perms): $user_dir"
+  elif ! mkdir "$user_dir" 2>/dev/null; then
+    warn "Could not create project workspace: $user_dir"
+    return
   else
-    mkdir -p "$projects_parent" 2>/dev/null || true
-    if mkdir "$user_dir" 2>/dev/null; then
-      chown "$member:$member" "$user_dir" 2>/dev/null \
-        || warn "Could not chown '$user_dir' to '$member' (does the account exist?)"
-      chmod 700 "$user_dir" 2>/dev/null || true
-      ok "Created per-user project workspace (owner-only, born isolated): $user_dir"
-    else
-      warn "Could not create project workspace: $user_dir"
-    fi
+    ok "Created per-user project workspace (owner-only, born isolated): $user_dir"
   fi
+  # Re-assert owner-only every run (create AND --add-human re-run) so a workspace
+  # whose perms drifted self-heals: owner rwx, no horizon_humans grant. This is the
+  # peer-isolation guarantee - never leave it to first-creation only.
+  chown "$member:$member" "$user_dir" 2>/dev/null \
+    || warn "Could not chown '$user_dir' to '$member' (does the account exist?)"
+  chmod 700 "$user_dir" 2>/dev/null || true
+
+  # Convenience: land the human's interactive shells in their own workspace so
+  # `ls` shows only their stuff. Isolation already holds without this.
+  install_landing_hook "$member"
+}
+
+install_landing_hook() {
+  # $1 = account name. Give the human's INTERACTIVE shells a soft landing in
+  # their own projects/<member> folder. Convenience only - the projects/ ACL
+  # model already isolates humans; this just puts them where they can see their
+  # own work. Non-destructive + idempotent: we manage only a sentinel-guarded
+  # block in the member's shell rc and never touch content outside it. Fail-soft:
+  # a landing-hook problem warns and returns - it never aborts enrollment.
+  local member="$1"
+  local landing="$HORIZON_ROOT/projects/$member"
+
+  # Resolve the member's real home via passwd (authoritative; not ~ expansion,
+  # which would resolve against the caller running bootstrap).
+  local home
+  home="$(getent passwd "$member" 2>/dev/null | awk -F: '{print $6}')"
+  if [ -z "$home" ] || [ ! -d "$home" ]; then
+    warn "No home directory for '$member' - skipping landing hook."
+    return
+  fi
+
+  # Target the interactive-shell rc. Prefer .bashrc; fall back to .profile only
+  # if .bashrc is absent but .profile exists; otherwise default to .bashrc.
+  local rc="$home/.bashrc"
+  if [ ! -e "$rc" ] && [ -e "$home/.profile" ]; then
+    rc="$home/.profile"
+  fi
+
+  # Writability: the rc file if it exists, else its parent dir (we'd create it).
+  if { [ -e "$rc" ] && [ ! -w "$rc" ]; } || { [ ! -e "$rc" ] && [ ! -w "$home" ]; }; then
+    warn "Cannot write '$rc' - skipping landing hook for '$member'."
+    return
+  fi
+
+  local begin="# >>> horizon-aios landing >>>"
+  local end="# <<< horizon-aios landing <<<"
+
+  # Idempotent: strip any prior managed block before re-appending, so re-runs
+  # replace rather than duplicate. Only lines between (and incl.) the sentinels
+  # are removed - user content outside them is untouched.
+  if [ -f "$rc" ] && grep -qF "$begin" "$rc" 2>/dev/null; then
+    sed -i "/$begin/,/$end/d" "$rc" 2>/dev/null || true
+  fi
+
+  # Append a fresh managed block. Guards, in order:
+  #   [[ $- == *i* ]]     -> interactive shells only; scp/rsync/cron untouched.
+  #   [ -d "$__hz_landing" ] -> missing dir fails soft (no error, no cd).
+  #   case "$PWD/" ...    -> already inside the workspace? leave the user put so
+  #                          we never yank them around mid-session.
+  {
+    printf '%s\n' "$begin"
+    printf '%s\n' "# Managed by Horizon AIOS bootstrap - do not edit inside this block."
+    printf '%s\n' "if [[ \$- == *i* ]]; then"
+    printf '%s\n' "  __hz_landing=\"$landing\""
+    printf '%s\n' "  if [ -d \"\$__hz_landing\" ]; then"
+    printf '%s\n' "    case \"\$PWD/\" in"
+    printf '%s\n' "      \"\$__hz_landing\"/*) : ;;   # already inside - leave the user put"
+    printf '%s\n' "      *) cd \"\$__hz_landing\" 2>/dev/null || true ;;"
+    printf '%s\n' "    esac"
+    printf '%s\n' "  fi"
+    printf '%s\n' "  unset __hz_landing"
+    printf '%s\n' "fi"
+    printf '%s\n' "$end"
+  } >> "$rc" 2>/dev/null \
+    && ok "Installed landing hook (interactive shells start in projects/$member): $rc" \
+    || warn "Could not write landing hook to '$rc' for '$member'."
 }
 
 write_deploy_marker() {
