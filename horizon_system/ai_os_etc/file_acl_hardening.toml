@@ -122,8 +122,11 @@ rights = "read-write"
 recursive = true
 default = true
 # Humans are near-admins who maintain brains/apps. Brain-to-brain isolation is a
-# SEPARATE property (each brains/<name> is 0770 <name>:<name> with g:brains:---)
-# and is not expressed here; this grant does not open one brain to another.
+# SEPARATE property (each brains/<name> is 0770 <name>:<name> with g:brains:---):
+# a per-owner chown cannot be expressed in the abstract, mode-bit rule set, so it
+# is enforced by the Linux-only step linux_brains_workspace_ops() in
+# horizon_aios_acl_posture.py (twin of linux_traverse_ops), self-healing on every
+# harden pass. This humans grant does not open one brain to another.
 
 # ---- horizon_humans: the four self-service areas (SELF-SERVICE ISOLATION) ----
 # One rule-pair per area. Parent = create-traverse (-wx): any human self-creates

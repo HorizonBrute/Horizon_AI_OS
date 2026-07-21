@@ -669,6 +669,68 @@ def linux_traverse_ops(posture, paths):
     return ops
 
 
+def linux_brains_workspace_ops(posture, paths):
+    """Linux-only per-brain workspace OWNERSHIP (NOT an abstract rule): the twin of
+    linux_traverse_ops. A brain's staged tree at brains/<name>/ is created
+    root-owned by the deploy's root copytree, so the brain account (supplementary
+    group `brains`, never `root`) cannot read its OWN workspace to copy the gateway
+    stack into its home — the deploy's `cp` runs AS the brain and fails silently,
+    leaving compose with no file. The traverse ACE (linux_traverse_ops) only lets a
+    brain ENTER brains/; on a root:root child it still lands on other=--- .
+
+    This realizes the workspace model the posture DOCUMENTS but cannot express
+    (file_acl_hardening.toml: 'each brains/<name> is 0770 <name>:<name> with
+    g:brains:---'): for every immediate child of brains/ whose basename matches an
+    EXISTING same-named user AND group (the brain-name == account-name ==
+    private-group convention that create_brain establishes), the child is chowned
+    to <name>:<name>, set 0770, and given an explicit g:brains:--- ACE (access +
+    default) so a PEER brain — group `brains`, landing on other=--- — cannot read
+    it. Brain <name> owns its tree, so it reads/writes it; inter-brain isolation is
+    preserved. Self-healing: idempotent, re-asserted on every harden pass.
+
+    A child with no matching user+group is a stray dir, not a provisioned brain —
+    left UNTOUCHED and logged (never chown to a principal that does not exist). A
+    per-owner chown cannot be expressed in the abstract, mode-bit rule set, so this
+    lives outside it, exactly like linux_traverse_ops."""
+    if 'brains' not in posture.group_names():
+        return []
+    brains_dir = paths['brains']
+    if not os.path.isdir(brains_dir):
+        return []
+    try:
+        import pwd  # noqa: PLC0415 — Linux-only; guarded (Windows dry-run has no pwd/grp)
+        import grp  # noqa: PLC0415
+    except ImportError:
+        return []
+    try:
+        children = sorted(d for d in os.listdir(brains_dir)
+                          if os.path.isdir(os.path.join(brains_dir, d)))
+    except OSError as exc:
+        return [Op(None, 'warn', f'brains workspace: cannot enumerate {brains_dir}: {exc}')]
+    ops = []
+    for name in children:
+        child = os.path.join(brains_dir, name)
+        try:
+            pwd.getpwnam(name)
+            grp.getgrnam(name)
+        except KeyError:
+            ops.append(Op(None, 'warn',
+                          f'brains workspace: {name} has no matching user+group — '
+                          f'not chowning {child} (not a provisioned brain?)'))
+            continue
+        ops.append(Op(['chown', '-R', f'{name}:{name}', child], None, None))
+        ops.append(Op(['chmod', '0770', child], None, None))
+        # Explicit peer isolation (belt-and-braces over dir-group=<name> + other=---):
+        # brains group members are denied even if a future mode/ownership drift
+        # widened the group class. Default ACE so new children stay peer-isolated.
+        ops.append(Op(['setfacl', '-m', 'g:brains:---', child], None, None))
+        ops.append(Op(['setfacl', '-d', '-m', 'g:brains:---', child], None, None))
+        ops.append(Op(None, 'grant',
+                      f'brains workspace: {name} owns brains/{name} '
+                      f'(chown {name}:{name}, 0770, g:brains:---) -> {child}'))
+    return ops
+
+
 # ---------------------------------------------------------------------------
 # Self-service ASSERT & REPAIR (per-OS ops).
 #

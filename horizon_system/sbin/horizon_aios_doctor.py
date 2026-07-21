@@ -846,6 +846,63 @@ def check_humans_brains_writable_unix(horizon_root):
                    "must be able to modify brains/apps; run horizon_aios_harden.py")
 
 
+def check_brains_workspace_ownership_unix(horizon_root):
+    """Unix: each provisioned brain must OWN its own workspace so it can read the
+    staged tree it copies its runtime from, while peers stay locked out. Verifies
+    the model linux_brains_workspace_ops() enforces: for every brains/<name> whose
+    basename matches an existing user+group, owner==group==<name>, other has no
+    bits, and the `brains` group carries a --- (deny) ACE. FAIL surfaces the exact
+    regression that leaves a brain unable to deploy (root-owned workspace). A dir
+    with no matching user/group is a stray, not a brain — skipped."""
+    name = "brains/<name> workspace ownership"
+    if not horizon_root or sys.platform == "win32":
+        return
+    try:
+        import pwd
+        import grp
+    except ImportError:
+        return
+    brains = Path(horizon_root) / "brains"
+    if not brains.exists():
+        warn(name, f"{brains} does not exist yet — created on first brain/onboarding")
+        return
+    try:
+        children = sorted(p for p in brains.iterdir() if p.is_dir())
+    except OSError as exc:
+        warn(name, f"cannot enumerate {brains}: {exc}")
+        return
+    checked = 0
+    for child in children:
+        b = child.name
+        try:
+            pwd.getpwnam(b)
+            grp.getgrnam(b)
+        except KeyError:
+            continue  # stray dir, not a provisioned brain
+        checked += 1
+        st = child.stat()
+        owner = pwd.getpwuid(st.st_uid).pw_name
+        group = grp.getgrgid(st.st_gid).gr_name
+        other_bits = st.st_mode & 0o007
+        brains_ace = _acl_group_effective(child, BRAINS_GROUP)
+        problems = []
+        if owner != b:
+            problems.append(f"owner={owner} (want {b})")
+        if group != b:
+            problems.append(f"group={group} (want {b})")
+        if other_bits:
+            problems.append(f"other={other_bits:#o} (want 0)")
+        if brains_ace not in (None, "---") and brains_ace.replace("-", "") != "":
+            problems.append(f"g:{BRAINS_GROUP}={brains_ace} (want ---)")
+        if problems:
+            fail(name, f"brains/{b}: {', '.join(problems)} — a brain cannot deploy "
+                       "from a workspace it does not own; run horizon_aios_harden.py")
+        else:
+            ok(f"{name} — brains/{b} owned {b}:{b}, peers isolated")
+    if checked == 0:
+        ok(f"{name} — no provisioned brains to check")
+
+
 # ---------------------------------------------------------------------------
 # 8. Monitor status
 # Calls monitor_status.py ($HORIZON_BIN/monitor_status.py) and reports
@@ -1202,6 +1259,7 @@ def main():
             check_sbin_acl_unix(horizon_system)
             check_humans_readonly_system_unix(horizon_system, horizon_root)
             check_humans_brains_writable_unix(horizon_root)
+            check_brains_workspace_ownership_unix(horizon_root)
             check_human_shared_isolation_unix(horizon_root, horizon_system)
         horizon_bin = env.get("HORIZON_BIN")
         if horizon_bin:

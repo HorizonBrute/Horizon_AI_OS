@@ -652,6 +652,9 @@ def harden_unix(paths, os_name, owner, have_group, have_humans, dry_run, strict)
                      dry_run)
         # Linux-only reachability: brains traverse (--x) on root + brains/.
         _run_ops(posture_engine.linux_traverse_ops(posture, paths), dry_run)
+        # Linux-only per-brain ownership: brains/<name> -> <name>:<name> 0770
+        # g:brains:--- so a brain can read its OWN staged workspace (peers cannot).
+        _run_ops(posture_engine.linux_brains_workspace_ops(posture, paths), dry_run)
         # Deny phase: system no-write, then full deny on privileged dirs.
         for rule in posture.deny_rules():
             if rule.principal != BRAINS_GROUP:
@@ -695,6 +698,8 @@ def harden_unix(paths, os_name, owner, have_group, have_humans, dry_run, strict)
     # Brains traverse (--x) on AIOS root + brains/ (needs setfacl on Linux).
     if have_group and linux_acls:
         _run_ops(posture_engine.linux_traverse_ops(posture, paths), dry_run)
+        # Per-brain ownership so a brain can read its own staged workspace.
+        _run_ops(posture_engine.linux_brains_workspace_ops(posture, paths), dry_run)
 
     # Privileged dirs: owner-only 700 — AFTER the grants above.
     for path in posture.brains_deny_dirs():
