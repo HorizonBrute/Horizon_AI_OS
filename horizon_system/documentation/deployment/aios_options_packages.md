@@ -19,7 +19,7 @@ A canonical deploy is:
 
 1. A **git clone** under `$HORIZON_SYSTEM/deployed_packages/<name>/` (so it can pull its own updates).
 2. A machine-local **registry entry** in `$HORIZON_ETC/horizon_deployed_packages.local.json`.
-3. The package's **skill payload** copied into `$HORIZON_SKILLS_BIN/<skill>/` (+ a registration row in `$HORIZON_SKILLS_BIN/index.md`).
+3. The package's **skill payload** copied into `$HORIZON_SKILLS_BIN/<skill>/` (+ a catalog row in the machine-local `$HORIZON_SKILLS_BIN/index.local.md` — untracked, so it survives OS/official-lane updates; the tracked `index.md` lists core skills only).
 4. A terse, marker-delimited **context pointer** appended to `$HORIZON_ROOT/projects/agents.md` so project-scope agents discover the feature.
 5. A `.local.` **admin override guide** materialized in `$HORIZON_ETC` (admin-editable, never overwritten by updates).
 

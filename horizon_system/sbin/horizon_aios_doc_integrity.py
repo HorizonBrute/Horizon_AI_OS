@@ -273,8 +273,16 @@ def _verify_skills_index(tier: str, index_path: Path, skills_dir: Path) -> List[
     indexed = _parse_skills_index(index_path)
     on_disk = _on_disk_skills(skills_dir)
 
-    # WARN: on disk but not in index
-    for name in sorted(on_disk - set(indexed)):
+    # Machine-local catalog: options packages register their catalog row in a sibling
+    # index.local.md (untracked — the official lane never reverts it). Rows there count
+    # as valid catalog entries. Absent in the common case.
+    local_index = index_path.with_name("index.local.md")
+    local_indexed: Dict[str, int] = {}
+    if local_index.exists():
+        local_indexed = _parse_skills_index(local_index)
+
+    # WARN: on disk but not in either index (tracked or machine-local)
+    for name in sorted(on_disk - set(indexed) - set(local_indexed)):
         findings.append(Finding("WARN", "index", tier, f"{name} — on disk but missing from index"))
 
     # FAIL or WARN: in index but SKILL.md not found
@@ -296,6 +304,27 @@ def _verify_skills_index(tier: str, index_path: Path, skills_dir: Path) -> List[
                 findings.append(Finding(
                     "FAIL", "index",
                     f"{_rel(index_path)}:{lineno}",
+                    f"{name} — indexed but SKILL.md not found",
+                ))
+
+    # Same SKILL.md validation for machine-local index rows, but report the local
+    # file's path:line so a finding points at where the row actually lives.
+    for name, lineno in local_indexed.items():
+        skill_md = skills_dir / name / "SKILL.md"
+        if not skill_md.exists():
+            other_tier = "skills_bin" if "sbin" in str(skills_dir) else "skills_sbin"
+            other_skill_md = sys_ / other_tier / name / "SKILL.md"
+            if other_skill_md.exists():
+                findings.append(Finding(
+                    "WARN", "index",
+                    f"{_rel(local_index)}:{lineno}",
+                    f"{name} — indexed in {tier} but symlink not registered"
+                    f" (canonical home: {other_tier}/{name})",
+                ))
+            else:
+                findings.append(Finding(
+                    "FAIL", "index",
+                    f"{_rel(local_index)}:{lineno}",
                     f"{name} — indexed but SKILL.md not found",
                 ))
 

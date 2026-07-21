@@ -601,6 +601,8 @@ usrbin/usr_skills/*
 
 # Machine-local config overrides (configured from templates; never committed)
 *.local.json
+# Machine-local options-package skills catalog — untracked so the official (overwrite) lane never reverts it
+horizon_system/skills_bin/index.local.md
 # settings.local.json contains real machine paths — must never be committed (security_invariants §6)
 .claude/settings.local.json
 **/.claude/settings.local.json

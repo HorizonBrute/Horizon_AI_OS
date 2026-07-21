@@ -51,7 +51,10 @@ standalone part, and the AIOS layer only wires discovery, installation, and sync
 ```
 
 The installer copies whatever the package deploys (a skill, a tool, config) into the appropriate AIOS
-location, injects any discovery context, and registers the package.
+location, injects any discovery context, and registers the package. A package's catalog row is
+machine-local: it is written to `$HORIZON_SKILLS_BIN/index.local.md` (untracked) plus the
+deployed-packages registry, so the registration survives OS/official-lane updates; the tracked
+`$HORIZON_SKILLS_BIN/index.md` lists core skills only.
 
 ## The deployed-packages registry
 

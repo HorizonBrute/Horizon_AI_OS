@@ -144,9 +144,16 @@ def deployed_package_excludes():
     for pkg in data.get("packages", []):
         if pkg.get("sync", True) is False:
             continue
-        clone = (pkg.get("clone_path") or "").strip().strip("/")
-        if clone and not clone.startswith("..") and ":" not in clone:
-            paths.append(clone)
+        # Exclude both the package clone AND its deployed skill dir so the official
+        # (overwrite) lane never clobbers a separately-deployed options package.
+        candidates = [
+            pkg.get("clone_path"),
+            pkg.get("payload", {}).get("skill_dir"),
+        ]
+        for raw in candidates:
+            val = (raw or "").strip().strip("/")
+            if val and not val.startswith("..") and ":" not in val:
+                paths.append(val)
     return paths
 
 
