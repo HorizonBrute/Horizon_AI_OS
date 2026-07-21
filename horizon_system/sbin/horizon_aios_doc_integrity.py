@@ -263,6 +263,29 @@ def _on_disk_skills(skills_dir: Path) -> Set[str]:
     return result
 
 
+def _options_package_skill_names() -> Set[str]:
+    """Skill names of registered options packages (basename of each payload.skill_dir in the
+    deployed-packages registry). These skills are deployed by a package installer and cataloged
+    in the machine-local index.local.md, so being on disk without a tracked-index row is expected
+    — exempt them from the orphan WARN in EVERY tier (they also aggregate into skills_sbin).
+    Fail-safe: empty set on an absent or malformed registry; never raises."""
+    import json
+    reg = _vars["HORIZON_SYSTEM"] / "ai_os_etc" / "horizon_deployed_packages.local.json"
+    if not reg.exists():
+        return set()
+    try:
+        data = json.loads(reg.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return set()
+    names: Set[str] = set()
+    for pkg in data.get("packages", []):
+        skill_dir = ((pkg.get("payload") or {}).get("skill_dir") or "").rstrip("/")
+        base = skill_dir.rsplit("/", 1)[-1].strip()
+        if base:
+            names.add(base)
+    return names
+
+
 def _verify_skills_index(tier: str, index_path: Path, skills_dir: Path) -> List[Finding]:
     findings: List[Finding] = []
 
@@ -281,8 +304,11 @@ def _verify_skills_index(tier: str, index_path: Path, skills_dir: Path) -> List[
     if local_index.exists():
         local_indexed = _parse_skills_index(local_index)
 
-    # WARN: on disk but not in either index (tracked or machine-local)
-    for name in sorted(on_disk - set(indexed) - set(local_indexed)):
+    # WARN: on disk but not in either index (tracked or machine-local). Options-package skills
+    # (deployed by a package installer; cataloged in index.local.md, and aggregated into
+    # skills_sbin) are expected on disk without a tracked-index row — exempt them in every tier.
+    options_skills = _options_package_skill_names()
+    for name in sorted(on_disk - set(indexed) - set(local_indexed) - options_skills):
         findings.append(Finding("WARN", "index", tier, f"{name} — on disk but missing from index"))
 
     # FAIL or WARN: in index but SKILL.md not found
