@@ -1,0 +1,3828 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for Horizon AIOS — a centralized, syncable AI operating-system config layer.">
+      
+      
+      
+      
+        <link rel="prev" href="../getting_started.index/">
+      
+      
+        <link rel="next" href="../dependencies_and_footprint/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Setup Guide - Horizon AIOS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#horizon-aios-system-setup-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Horizon AIOS" class="md-header__button md-logo" aria-label="Horizon AIOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Horizon AIOS
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Setup Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../getting_started.index/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../user_guides/user_guides.index/" class="md-tabs__link">
+          
+  
+  
+  User Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../system/system.index/" class="md-tabs__link">
+          
+  
+  
+  System
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../deployment/deployment.index/" class="md-tabs__link">
+          
+  
+  
+  Deployment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../security/security.index/" class="md-tabs__link">
+          
+  
+  
+  Security
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../authoring/authoring.index/" class="md-tabs__link">
+          
+  
+  
+  Authoring
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../build_decisions/build_decisions.index/" class="md-tabs__link">
+          
+  
+  
+  Build Decisions
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../development_tools/development_tools.index/" class="md-tabs__link">
+          
+  
+  
+  Development Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../philosophy/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Horizon AIOS" class="md-nav__button md-logo" aria-label="Horizon AIOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Horizon AIOS
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting_started.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup Guide
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start-aios-setup-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start — aios setup (Recommended)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#agent-setup-protocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AGENT SETUP PROTOCOL
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#presumptions-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Presumptions / Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites-elevated-privileges-required" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites — Elevated Privileges Required
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-what-is-horizon_root" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. What Is $HORIZON_ROOT
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-clone-the-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Clone the Repository
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-set-environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Set Environment Variables
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Set Environment Variables">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#44-switching-aios" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 Switching AIOS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-run-the-bootstrap-script-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Run the Bootstrap Script (Recommended)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-bootstrap-the-claude-code-global-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Bootstrap the Claude Code Global Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-skills-redirect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Skills Redirect
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-update-path-sensitive-strings-in-the-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Update Path-Sensitive Strings in the Repository
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-apply-the-portable-git-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Apply the Portable Git Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-initialize-the-os-git-repo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Initialize the OS Git Repo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-personal-ignore-layer-gitignoreuser" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Personal Ignore Layer — .gitignore.user
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-create-a-machine-local-settingslocaljson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Create a Machine-Local settings.local.json
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-project-isolation-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. Project Isolation Pattern
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14-verify-the-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14. Verify the Installation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#15-configure-model-preferences-post-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15. Configure Model Preferences (post-install)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#16-machine-local-agent-instructions-localagentsmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16. Machine-Local Agent Instructions (local.agents.md)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-new-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a New Project
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-new-ai-harness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a New AI Harness
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-brain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a Brain
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding a Brain">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-the-script-creates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the script creates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invocation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Invocation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#brain-name-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Brain name rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#after-provisioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        After provisioning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-handling-and-rollback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error handling and rollback
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-file-locations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key File Locations
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dependencies_and_footprint/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dependencies & Footprint
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../updating/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Updating
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lifecycle_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lifecycle Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guides/user_guides.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guides/using_your_aios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using Your AIOS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guides/using_Horizon.AIOS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using Horizon.AIOS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guides/deployment_howtos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment How-Tos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    System
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/system.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/aios_options_packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Options Packages
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/aios_switching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AIOS Switching
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/distribution_and_updates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Distribution & Updates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/system_configuration_reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/model_preferences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Preferences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/agent_teams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Teams
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/skill_model_groups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skill Model Groups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/uninstall/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Uninstall
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/deployment.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/desktop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Desktop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/multi_brain_deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Brain Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/brain_automation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Brain Automation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Security
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/security.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/audit_logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit Logging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/brain_isolation_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Brain Isolation Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security_architecture_invariants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security Architecture Invariants
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Authoring
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authoring/authoring.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authoring/claude_md_authoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLAUDE.md Authoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build Decisions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Build Decisions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../build_decisions/build_decisions.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../build_decisions/architecture_decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Tools
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development_tools/development_tools.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development_tools/consistency_checks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consistency Checks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development_tools/windows_install_switch_uninstall_test_prompt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Windows Install/Switch/Uninstall Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../philosophy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Philosophy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_values/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Values
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development_pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../context_loading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Context Loading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../model_prefs_details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Preferences Details
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utilities Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sync_setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sync Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cloud_sync_exclusions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloud Sync Exclusions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tested_configurations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tested Configurations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../terseness_contract_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Terseness Contract Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../branding_invariants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Branding Invariants
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start-aios-setup-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start — aios setup (Recommended)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#agent-setup-protocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AGENT SETUP PROTOCOL
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#presumptions-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Presumptions / Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites-elevated-privileges-required" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites — Elevated Privileges Required
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-what-is-horizon_root" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. What Is $HORIZON_ROOT
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-clone-the-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Clone the Repository
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-set-environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Set Environment Variables
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Set Environment Variables">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#44-switching-aios" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 Switching AIOS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-run-the-bootstrap-script-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Run the Bootstrap Script (Recommended)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-bootstrap-the-claude-code-global-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Bootstrap the Claude Code Global Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-skills-redirect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Skills Redirect
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-update-path-sensitive-strings-in-the-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Update Path-Sensitive Strings in the Repository
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-apply-the-portable-git-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Apply the Portable Git Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-initialize-the-os-git-repo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Initialize the OS Git Repo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-personal-ignore-layer-gitignoreuser" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Personal Ignore Layer — .gitignore.user
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-create-a-machine-local-settingslocaljson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Create a Machine-Local settings.local.json
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-project-isolation-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. Project Isolation Pattern
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14-verify-the-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14. Verify the Installation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#15-configure-model-preferences-post-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15. Configure Model Preferences (post-install)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#16-machine-local-agent-instructions-localagentsmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16. Machine-Local Agent Instructions (local.agents.md)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-new-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a New Project
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-new-ai-harness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a New AI Harness
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-brain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a Brain
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding a Brain">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-the-script-creates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the script creates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invocation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Invocation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#brain-name-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Brain name rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#after-provisioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        After provisioning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-handling-and-rollback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error handling and rollback
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-file-locations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key File Locations
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="horizon-aios-system-setup-guide">Horizon AIOS — System Setup Guide</h1>
+<p>Horizon AIOS is a portable, Git-versioned Claude Code "operating system." The repository functions as an OS layer: it version-controls all Claude Code configuration, hooks, sounds, statusline scripts, and AI behavior instructions in one place. Any project folder placed inside <code>$HORIZON_ROOT</code> automatically inherits the full AIOS environment — Claude Code settings, sounds, statusline, and global instructions — with no per-project wiring required. Projects that need their own independent Git history simply run <code>git init</code> inside their folder, which causes Git to exclude them from the OS repo automatically. The entire environment is reproducible on a new machine by cloning the repo and running a small bootstrap sequence.</p>
+<p>This document serves two purposes simultaneously:</p>
+<ol>
+<li><strong>Human SOP</strong> — step-by-step instructions a person can follow.</li>
+<li><strong>Agent-executable</strong> — structured precisely enough that an AI agent can read it and implement each step without ambiguity.</li>
+</ol>
+<hr />
+<h2 id="quick-start-aios-setup-recommended">Quick Start — <code>aios setup</code> (Recommended)</h2>
+<p><code>aios setup</code> is the one-shot installer. It orchestrates the entire procedure below — it does not replace your understanding of it, but it automates every step. Run it from a clone of the AIOS repo (or standalone, in which case it offers to clone for you):</p>
+<pre><code class="language-bash">python &quot;$HORIZON_SYSTEM/sbin/horizon_aios_switch.py&quot; setup      # or: aios setup
+</code></pre>
+<p>What it does, idempotently and re-run safe:</p>
+<ol>
+<li><strong>Preflight</strong> — probes prerequisites (hard-fails on missing <code>git</code>/<code>claude</code>; warns on <code>jq</code>/<code>gpg</code>/<code>ssh</code>; gives SSH/GPG guidance — never generates keys).</li>
+<li><strong>Root + clone</strong> — prompts for <code>$HORIZON_ROOT</code>; inside an existing tree it skips cloning, standalone it offers to clone to the chosen root.</li>
+<li><strong>Relocate</strong> — if the chosen root differs from the current tree, calls <code>horizon_aios_relocate.py --apply</code>.</li>
+<li><strong>Profile line</strong> — idempotently adds the <code>active_env</code> source line to your shell profile.</li>
+<li><strong>Bootstrap</strong> — shells out to the <strong>elevated</strong> platform bootstrap (Windows: UAC relaunch; Unix: <code>sudo</code>) for sections 2–10 below.</li>
+<li><strong>Git identity</strong> — writes <code>user.name</code>/<code>user.email</code>/<code>user.signingkey</code> to a machine-local, gitignored include file (<code>ai_os_etc/git_identity.local.gitconfig</code>) wired via <code>git config --global include.path</code> (never edits the tracked gitconfig, never shows in <code>git status</code>); also ensures the §9 framework-gitconfig include.</li>
+<li><strong>Git init</strong>, <strong>settings.local.json</strong> stub, <strong>model-prefs</strong> and <strong><code>local.agents.md</code></strong> template materialization. First commit is opt-in (<code>--first-commit</code>; off by default so <code>--yes</code> completes without a GPG key).</li>
+<li><strong>Verify gate</strong> — runs <code>horizon_aios_doctor.py --post-setup</code> (non-fatal summary).</li>
+</ol>
+<p>Add <code>--yes</code> for a non-interactive run (accepts defaults, mirrors bootstrap's <code>--yes</code>). Onboarding asks whether this machine is primarily a server or an active-use workstation, and (workstation) which human accounts to enroll in the <code>horizon_humans</code> group; a non-interactive run must therefore pass <code>--yes</code> or <code>--profile server|workstation [--humans &lt;name|sid&gt; ...]</code>. See "Prerequisites — Elevated Privileges Required" below.</p>
+<p><code>aios setup</code> decouples the first signed commit from <code>--yes</code>. By default (and with <code>--yes</code>) no commit is created — GPG is not required for an unattended install. To create the first commit in the same pass, add <code>--first-commit</code>; to explicitly suppress it, use <code>--no-first-commit</code>. Run the commit manually later with <code>git commit -s</code> once a signing key is ready.</p>
+<p><strong>The remainder of this document is the authoritative manual procedure</strong> — the fallback when you cannot run <code>aios setup</code>, want to understand each step, or need to do one step by hand.</p>
+<hr />
+<h2 id="agent-setup-protocol">AGENT SETUP PROTOCOL</h2>
+<blockquote>
+<p>This section is addressed to any agent reading this file to perform setup on behalf of a user.
+Follow these steps exactly and in order. Do not proceed past step A.2 until the user has confirmed.</p>
+</blockquote>
+<p><strong>A.1</strong> Before doing anything else, ask the user:</p>
+<blockquote>
+<p>"Where would you like to place your $HORIZON_ROOT directory on this system? This is the folder the Horizon AIOS repository will be cloned into — for example <code>C:\devroot</code> on Windows or <code>/home/username/devroot</code> on Linux/Mac. Please provide the full absolute path."</p>
+</blockquote>
+<p><strong>A.2</strong> Wait for the user's answer. Store it as <code>$HORIZON_ROOT</code>. Confirm back:</p>
+<blockquote>
+<p>"I'll use <code>{the path they gave}</code> as $HORIZON_ROOT. Proceeding with setup."</p>
+</blockquote>
+<p><strong>A.3</strong> Substitute <code>$HORIZON_ROOT</code> with the confirmed path in every command and file edit that follows in this document. Do not use <code>C:\devroot</code> or any other hardcoded path — only the path the user provided.</p>
+<p><strong>A.4</strong> Work through sections 1 through 11 of this document in order, completing each step before moving to the next.</p>
+<hr />
+<h2 id="presumptions-dependencies">Presumptions / Dependencies</h2>
+<p>The following are required for Horizon AIOS to function. Verify each before beginning setup.</p>
+<p><strong>Software</strong></p>
+<p>P.1 <strong>Git 2.9 or later</strong> — version 2.9 introduced <code>core.hooksPath</code>, which is how the version-controlled pre-commit hook is wired in. Earlier versions will silently ignore the hook.</p>
+<p>Verify: <code>git --version</code> — must return <code>2.9.0</code> or higher.</p>
+<p>P.2 <strong>Claude Code CLI</strong> — the application this system configures. Must be installed before bootstrap.</p>
+<p>Verify: <code>claude --version</code></p>
+<p>P.3 <strong>Bash environment</strong> — required for hook scripts and statusline dispatch. On Windows, Git Bash satisfies this requirement. On Linux and macOS, the native shell is used.</p>
+<p>Verify: <code>bash --version</code></p>
+<p>P.4 <strong>jq</strong> — required by some statusline scripts for JSON parsing.</p>
+<p>Verify: <code>jq --version</code></p>
+<p>Install if missing: <code>winget install jqlang.jq</code> (Windows) or <code>brew install jq</code> (macOS) or <code>apt install jq</code> (Debian/Ubuntu).</p>
+<p>P.5 <strong>PowerShell</strong> — required on Windows only. The Windows statusline script (<code>statusline-context-alerts.ps1</code>) and sound player both use PowerShell, which is built-in on Windows. On Linux and macOS, the bash statusline script and <code>play_sound.sh</code> are used instead — <code>pwsh</code> is not required on those platforms.</p>
+<p>P.5.1 <strong><code>watchdog</code> Python library</strong> — required only if you intend to use the AIOS filesystem monitor (<code>sbin/horizon_aios_monitor.py</code>). The monitor is opt-in and not auto-started. Install when ready to use it: <code>pip install watchdog</code>.</p>
+<p>P.6 <strong>GPG</strong> — required for commit signing. <code>commit.gpgsign = true</code> is set globally, so all commits on the machine will be GPG-signed. A key must exist in the local keyring before the first commit.</p>
+<p>P.7 <strong>SSH client</strong> — required for all remote Git operations. No HTTPS and no <code>gh</code> CLI are used anywhere in this system.</p>
+<p><strong>Authentication</strong></p>
+<p>P.8 An <strong>SSH key pair</strong> must exist (default: <code>~/.ssh/id_ed25519</code>) and the public key must be registered with the GitHub account (or other host) where the AIOS repo lives.</p>
+<p>Verify: <code>ssh -T git@github.com</code> — should return an authentication acknowledgement (not a permission denied error).</p>
+<p>P.9 A <strong>GPG key</strong> must be generated and available in the local keyring. The key fingerprint must be entered in <code>$HORIZON_SYSTEM/harness_configs/git/gitconfig</code> during setup.</p>
+<p>Verify: <code>gpg --list-secret-keys --keyid-format LONG</code> — must show at least one secret key.</p>
+<p><strong>Platform</strong></p>
+<p>P.10 Horizon AIOS supports <strong>Windows, Linux, and macOS</strong>. Platform routing is handled automatically:</p>
+<p>P.10.1 <strong>Sound playback</strong> uses <code>$HORIZON_SOUNDS/play_sound.sh</code> (<code>horizon_system/sounds/play_sound.sh</code>), which detects the OS at runtime and calls <code>Media.SoundPlayer</code> (Windows), <code>afplay</code> (macOS), or the first available Linux player from: <code>paplay</code> (PulseAudio), <code>aplay</code> (ALSA), <code>ffplay</code> (ffmpeg), <code>mpg123</code>. Hooks fail silently if no player is found.</p>
+<p>P.10.2 <strong>Statusline</strong> uses <code>$HORIZON_BIN/statusline/statusline.sh</code>, a bash dispatcher that calls <code>statusline-context-alerts.ps1</code> (PowerShell, Windows) or <code>statusline-command.sh</code> (bash, Linux/macOS) depending on OS. Both scripts include threshold audio alerts.</p>
+<p>P.10.3 <strong>Linux audio dependency</strong>: at least one of <code>paplay</code>, <code>aplay</code>, <code>ffplay</code>, or <code>mpg123</code> must be installed for sounds to play on Linux. Sounds are skipped silently if none are present.</p>
+<p>P.11 <strong>No administrator privileges are required for the Claude config wiring</strong>. <code>~/.claude/settings.json</code> is a plain file copy of the template (no special permissions needed), and <code>~/.claude/skills/</code> is a directory symlink — neither requires elevation. (The full <code>bootstrap</code> script's ACL-hardening step does require admin/root, but the config wiring itself does not.)</p>
+<p>P.12 <strong>Developer Mode is not required</strong>.</p>
+<p><strong>Runtime</strong></p>
+<p>P.13 <strong><code>$HORIZON_ROOT</code> is written into the machine-local config on first setup.</strong> If you later need to move the repo to a new location, run <code>horizon_aios_relocate.py</code> to update all machine-local instance pointers automatically (see <code>$HORIZON_DOCS/system/system_configuration_reference.md</code> Section 3). Choose the path before bootstrap to avoid this step.</p>
+<p>P.14 An <strong>audio output device</strong> must be present for sound hooks to play. If no device is available, the hooks fail silently — Claude Code operation is unaffected.</p>
+<p>P.15 <strong><code>~/.claude/</code> must exist</strong> before the bootstrap commands are run. Claude Code creates this directory on first launch. If it does not exist, run <code>claude</code> once and exit before proceeding with setup.</p>
+<p>P.16 <strong><code>.git/info/exclude</code></strong> in the OS repo is managed automatically by the pre-commit hook (synced from <code>.gitignore.user</code>). Do not edit this file manually — changes will be overwritten on the next commit.</p>
+<hr />
+<h2 id="prerequisites-elevated-privileges-required">Prerequisites — Elevated Privileges Required</h2>
+<p>Onboarding is the single secure entry point: bootstrap always creates the AIOS OS groups and applies the ACL model (there is no separate hardening step). Both bootstrap and brain provisioning run <code>horizon_aios_harden.py</code>, which sets OS-level filesystem ACLs. This requires administrator or root privileges. <strong>Bootstrap will exit immediately with an error if not run elevated.</strong></p>
+<p>Onboarding creates the AIOS-managed OS group <strong>horizon_humans</strong> ("Horizon.AIOS Actual Humans") on every install and asks whether the machine is primarily a server or an active-use workstation:</p>
+<ul>
+<li><strong>Server</strong> — no humans enrolled; the group stays empty, so only the owner, SYSTEM, and Administrators can write to the AIOS tree.</li>
+<li><strong>Workstation</strong> — enroll the human operator account(s) supplied by name or SID (cloud / Azure AD accounts are SIDs). Members of <code>horizon_humans</code> get Full control of the AIOS tree and Read/Write on <code>brains/</code> (they are near-admins who maintain the brains/apps; brain-to-brain isolation is preserved separately by ownership + each brain's private group), and are isolated from each other on <code>projects/</code> (traverse-only parent, owner-only <code>projects/&lt;user&gt;</code> children).</li>
+</ul>
+<p>On Windows, onboarding breaks inheritance at <code>$HORIZON_ROOT</code> and re-grants only owner + SYSTEM + Administrators + <code>horizon_humans</code>, removing broad inherited write grants (e.g. Authenticated Users). Non-interactive runs must pass <code>--yes</code> or <code>--profile server|workstation [--humans &lt;name|sid&gt; ...]</code>. Enroll a human later with <code>bootstrap --add-human &lt;name|sid&gt;</code>. The chosen profile and enrolled humans are recorded in the gitignored marker <code>$HORIZON_ROOT/.horizon_aios_deployment.json</code>.</p>
+<ul>
+<li><strong>Windows:</strong> Open PowerShell by right-clicking the Start button (or the PowerShell icon) and choosing <strong>Run as administrator</strong>. Then run:
+  <code>powershell
+  &amp; "$env:HORIZON_SYSTEM\sbin\bootstrap.ps1"</code></li>
+<li><strong>Linux:</strong> Run bootstrap with <code>sudo</code>:
+  <code>bash
+  sudo bash horizon_system/sbin/bootstrap.sh</code></li>
+<li><strong>macOS:</strong> Same <code>sudo</code> model as Linux. <code>horizon_aios_harden.py</code> adapts its hardening to macOS ACL semantics automatically:
+  <code>bash
+  sudo bash horizon_system/sbin/bootstrap.sh</code></li>
+</ul>
+<p>All other bootstrap steps (CLAUDE.md redirect, skills symlink, git hooks, settings.json copy) are non-destructive and idempotent. The privilege requirement is solely for the OS-group creation and ACL steps that onboarding always applies.</p>
+<hr />
+<h2 id="1-what-is-horizon_root">1. What Is $HORIZON_ROOT</h2>
+<p><code>$HORIZON_ROOT</code> is the root folder of the Horizon AIOS installation on this machine. It is the absolute path where the Horizon AIOS repository lives. Every path reference inside the repository — in settings, scripts, and config files — is expressed relative to this root. When setting up a new machine, this path is chosen once and substituted everywhere.</p>
+<p><code>$HORIZON_ROOT</code> is itself a Git repository (the OS repo). It tracks the config and asset layer. Individual project folders placed inside it are expected to have their own Git repos and are automatically excluded from OS repo tracking the moment they are <code>git init</code>'d.</p>
+<p>The following environment variables derive from <code>$HORIZON_ROOT</code> and must be set in your shell profile before proceeding:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Points To</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>$HORIZON_ROOT</code></td>
+<td>The repo root (e.g., <code>C:\devroot</code>)</td>
+<td>Anchor for all other paths</td>
+</tr>
+<tr>
+<td><code>$HORIZON_SYSTEM</code></td>
+<td><code>$HORIZON_ROOT/horizon_system</code></td>
+<td>Full AIOS system directory (mirrors Unix <code>/usr</code>)</td>
+</tr>
+<tr>
+<td><code>$HORIZON_BIN</code></td>
+<td><code>$HORIZON_SYSTEM/bin</code></td>
+<td>User-callable executables</td>
+</tr>
+<tr>
+<td><code>$HORIZON_ETC</code></td>
+<td><code>$HORIZON_SYSTEM/ai_os_etc</code></td>
+<td>OS configuration documents and invariants</td>
+</tr>
+<tr>
+<td><code>$HORIZON_DOCS</code></td>
+<td><code>$HORIZON_SYSTEM/documentation</code></td>
+<td>User-facing documentation</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-prerequisites">2. Prerequisites</h2>
+<p>Complete all prerequisites before beginning setup. Each must be true before proceeding.</p>
+<p>2.1 <strong>Git 2.9 or later</strong> is installed and available on <code>PATH</code>. Version 2.9+ is required for <code>core.hooksPath</code>, which wires the version-controlled pre-commit hook. Verify: <code>git --version</code></p>
+<p>2.2 <strong>SSH key</strong> exists at <code>~/.ssh/id_ed25519</code> (or another key of your choice) and the corresponding public key is registered with your GitHub account (or whichever Git host the Horizon AIOS repo is on). Verify: <code>ssh -T git@github.com</code> should return an authentication success message.</p>
+<p>2.3 <strong>GPG key</strong> is generated and available in your keyring. Commit signing is enabled globally. Verify: <code>gpg --list-secret-keys --keyid-format LONG</code> should show at least one secret key. Note the full fingerprint — you will need it in step 6.3.</p>
+<p>2.4 <strong>Claude Code</strong> is installed. Verify: <code>claude --version</code></p>
+<p>2.5 <strong>Bash</strong> is available. On Windows, Git Bash satisfies this requirement. Verify: <code>bash --version</code></p>
+<p>2.6 <strong>jq</strong> is installed. Verify: <code>jq --version</code>. Install if missing: <code>winget install jqlang.jq</code> (Windows), <code>brew install jq</code> (macOS), <code>apt install jq</code> (Debian/Ubuntu).</p>
+<p>2.7 <strong>PowerShell</strong> is available (Windows: built-in; Linux/Mac: install <code>pwsh</code>). The statusline script requires PowerShell.</p>
+<hr />
+<h2 id="3-clone-the-repository">3. Clone the Repository</h2>
+<p>3.1 Decide the absolute path where Horizon AIOS will live on this machine. This is <code>$HORIZON_ROOT</code>. Example: <code>C:\devroot</code> on Windows, <code>/home/username/devroot</code> on Linux/macOS. If you later move the repo, run <code>horizon_aios_relocate.py</code> to update machine-local pointers.</p>
+<p>3.2 Create the parent directory if it does not already exist:</p>
+<p>Windows (PowerShell):</p>
+<pre><code class="language-powershell">New-Item -ItemType Directory -Force &quot;$HORIZON_ROOT&quot;
+</code></pre>
+<p>Linux / macOS (bash):</p>
+<pre><code class="language-bash">mkdir -p &quot;$HORIZON_ROOT&quot;
+</code></pre>
+<p>3.3 Clone the Horizon AIOS repository into <code>$HORIZON_ROOT</code>:</p>
+<pre><code class="language-bash">git clone git@github.com:HorizonBrute/Horizon_AI_OS.git &quot;$HORIZON_ROOT&quot;
+</code></pre>
+<p>3.4 Confirm the clone succeeded by verifying these paths exist:</p>
+<pre><code>$HORIZON_ROOT/.claude/settings.json
+$HORIZON_ROOT/.claude/CLAUDE.md
+$HORIZON_BIN/statusline/statusline-context-alerts.ps1
+$HORIZON_SYSTEM/harness_configs/git/hooks/pre-commit
+$HORIZON_ROOT/.gitignore.user
+</code></pre>
+<hr />
+<h2 id="4-set-environment-variables">4. Set Environment Variables</h2>
+<p>AIOS scripts and documentation reference <code>$HORIZON_ROOT</code>, <code>$HORIZON_SYSTEM</code>, <code>$HORIZON_BIN</code>, <code>$HORIZON_ETC</code>, and <code>$HORIZON_DOCS</code> (plus derived vars). Rather than hardcoding these in your profile, add <strong>one line</strong> that sources the active AIOS's generated environment file. This is what lets <code>aios switch &lt;name&gt;</code> repoint every new shell without editing your profile.</p>
+<p>4.1 Add the source line to your shell profile (see <code>templates/profile_snippet.{ps1,sh}</code> for a copy-paste version).</p>
+<p><strong>Windows (PowerShell <code>$PROFILE</code>):</strong></p>
+<pre><code class="language-powershell">if (Test-Path &quot;$HOME\.horizon\active_env.ps1&quot;) { . &quot;$HOME\.horizon\active_env.ps1&quot; }
+</code></pre>
+<p><strong>Linux/macOS (<code>~/.bashrc</code>, <code>~/.zshrc</code>):</strong></p>
+<pre><code class="language-bash">[ -f &quot;$HOME/.horizon/active_env.sh&quot; ] &amp;&amp; . &quot;$HOME/.horizon/active_env.sh&quot;
+</code></pre>
+<p>4.2 The <code>active_env.*</code> file is generated by the bootstrap script (Section 5, which runs <code>horizon_aios_switch.py init</code>) or manually via <code>python "$HORIZON_SYSTEM/sbin/horizon_aios_switch.py" init</code>. The <code>Test-Path</code> / <code>-f</code> guard makes the line a harmless no-op until then.</p>
+<p>4.3 After bootstrap, reload your profile (<code>. $PROFILE</code> or <code>source ~/.bashrc</code>, or open a new terminal) and verify: <code>$env:HORIZON_ROOT</code> (PowerShell) or <code>echo $HORIZON_ROOT</code> (bash) should print the active AIOS root.</p>
+<h3 id="44-switching-aios">4.4 Switching AIOS</h3>
+<p>The <code>HORIZON_*</code> values follow whichever AIOS is active. To switch, run <code>aios switch &lt;name&gt;</code> (which regenerates <code>active_env.*</code>) and open a new shell to pick up the change. The registry of known AIOSs lives at <code>~/.horizon/aios_registry.json</code>. See <code>$HORIZON_DOCS/system/aios_switching.md</code> for the full model.</p>
+<p><strong>Optional — default terminal working directory:</strong> Add <code>Set-Location $env:HORIZON_ROOT</code> (PowerShell) or <code>cd "$HORIZON_ROOT"</code> (bash/zsh) at the end of your profile so every new terminal opens at the active AIOS root. This is personal preference and does not affect AIOS operation.</p>
+<hr />
+<h2 id="5-run-the-bootstrap-script-recommended">5. Run the Bootstrap Script (Recommended)</h2>
+<p>The bootstrap script automates Steps 6–8 below. Run it once after cloning. It is safe to run multiple times.</p>
+<p><strong>Git Bash / macOS / Linux:</strong></p>
+<pre><code class="language-bash">bash &quot;$HORIZON_SYSTEM/sbin/bootstrap.sh&quot;
+</code></pre>
+<p><strong>PowerShell (Windows):</strong></p>
+<pre><code class="language-powershell">&amp; &quot;$env:HORIZON_SYSTEM\sbin\bootstrap.ps1&quot;
+</code></pre>
+<p>The script will:
+- Create <code>~/.claude/CLAUDE.md</code> with the <code>@</code> redirect (Step 6)
+- Create <code>~/.claude/skills/</code> as a symlink pointing to <code>$HORIZON_SYSTEM/skills_sbin/</code> (Step 7)
+- Register machine-local user skills (<code>usrbin/usr_skills/</code> → <code>skills_sbin/</code> symlinks) via <code>horizon_aios_register_user_skills.py</code> (best-effort; see Step 7)
+- Initialize the AIOS registry + indirection layer (<code>horizon_aios_switch.py init</code>) and offer to copy <code>settings.json</code> from the template, pointed at the <code>aios-exec</code> wrapper (Step 6.2)
+- Create <code>$HORIZON_ROOT/handoffs/</code> and <code>$HORIZON_SYSTEM/logs/</code>
+- Wire git <code>core.hooksPath</code> and install DCO hooks
+- Run a verification pass and print PASS/FAIL for each check</p>
+<p>If you prefer to run each step manually (or the bootstrap script fails), follow Steps 6–8 individually below.</p>
+<hr />
+<h2 id="6-bootstrap-the-claude-code-global-configuration">6. Bootstrap the Claude Code Global Configuration</h2>
+<p>Claude Code always reads its global configuration from <code>~/.claude/</code>. These two bootstrap steps redirect that global configuration into the repository so it is version-controlled.</p>
+<p>6.1 <strong>Bootstrap <code>~/.claude/CLAUDE.md</code></strong></p>
+<p>Create the file <code>~/.claude/CLAUDE.md</code> with a single line that includes the repository's CLAUDE.md.</p>
+<p>Windows (PowerShell):</p>
+<pre><code class="language-powershell">Set-Content -Path &quot;$HOME\.claude\CLAUDE.md&quot; -Value &quot;@$HORIZON_ROOT\.claude\CLAUDE.md&quot;
+</code></pre>
+<p>Linux / macOS (bash):</p>
+<pre><code class="language-bash">echo &quot;@$HORIZON_ROOT/.claude/CLAUDE.md&quot; &gt; &quot;$HOME/.claude/CLAUDE.md&quot;
+</code></pre>
+<p>This file must contain only that one line. Claude Code will follow the <code>@</code> include and load the full instructions from the repository. The canonical instructions live at <code>$HORIZON_ROOT/.claude/CLAUDE.md</code>.</p>
+<p>6.2 <strong>Bootstrap <code>~/.claude/settings.json</code></strong></p>
+<p>The global <code>~/.claude/settings.json</code> and the devroot <code>$HORIZON_ROOT/.claude/settings.json</code> serve different purposes and must remain separate files:</p>
+<ul>
+<li><code>~/.claude/settings.json</code> (global) owns hooks, statusLine, and global permissions. It points at the machine-local <code>aios-exec</code> wrapper and must not be committed.</li>
+<li><code>$HORIZON_ROOT/.claude/settings.json</code> (devroot project-level) owns only devroot-scoped permissions and is committed to the OS repo.</li>
+</ul>
+<p>First generate the indirection layer (registry + <code>active_env</code> + wrappers), then copy the template and substitute the <code>AIOS_EXEC_WRAPPER</code> placeholder with the path to your <code>aios-exec</code> wrapper. On Windows use <strong>forward slashes</strong> — backslashes are invalid inside a JSON string, and <code>powershell.exe -File</code> accepts forward slashes.</p>
+<p>Windows (PowerShell):</p>
+<pre><code class="language-powershell">python &quot;$env:HORIZON_SYSTEM\sbin\horizon_aios_switch.py&quot; init        # generates ~/.horizon/bin/aios-exec.ps1
+$wrapper = (&quot;$HOME\.horizon\bin\aios-exec.ps1&quot;) -replace '\\','/'
+Copy-Item &quot;$HORIZON_SYSTEM\templates\claude_code\settings.json&quot; &quot;$HOME\.claude\settings.json&quot;
+(Get-Content &quot;$HOME\.claude\settings.json&quot;) -replace &quot;AIOS_EXEC_WRAPPER&quot;, $wrapper | Set-Content &quot;$HOME\.claude\settings.json&quot;
+</code></pre>
+<p>Linux / macOS (bash) — note the Unix template (<code>settings_unix.json</code>):</p>
+<pre><code class="language-bash">python3 &quot;$HORIZON_SYSTEM/sbin/horizon_aios_switch.py&quot; init           # generates ~/.horizon/bin/aios-exec.sh
+cp &quot;$HORIZON_SYSTEM/templates/claude_code/settings_unix.json&quot; &quot;$HOME/.claude/settings.json&quot;
+sed -i &quot;s|AIOS_EXEC_WRAPPER|$HOME/.horizon/bin/aios-exec.sh|g&quot; &quot;$HOME/.claude/settings.json&quot;
+</code></pre>
+<p>Because settings.json points at the wrapper (which resolves the active AIOS at run time), it is AIOS-independent and never needs to change when you <code>aios switch</code>. The bootstrap script (Section 5) does all of this automatically. Do not link or copy <code>$HORIZON_ROOT/.claude/settings.json</code> to <code>~/.claude/settings.json</code> — they are different files with different owners.</p>
+<p>6.3 Verify both files are in place.</p>
+<p>Windows:</p>
+<pre><code class="language-powershell">Test-Path &quot;$HOME\.claude\CLAUDE.md&quot;
+Test-Path &quot;$HOME\.claude\settings.json&quot;
+</code></pre>
+<p>Linux / macOS:</p>
+<pre><code class="language-bash">test -f &quot;$HOME/.claude/CLAUDE.md&quot; &amp;&amp; echo &quot;OK&quot; || echo &quot;MISSING&quot;
+test -f &quot;$HOME/.claude/settings.json&quot; &amp;&amp; echo &quot;OK&quot; || echo &quot;MISSING&quot;
+</code></pre>
+<p>Both should confirm the files exist.</p>
+<hr />
+<h2 id="7-skills-redirect">7. Skills Redirect</h2>
+<p>AIOS skills live in <code>$HORIZON_SYSTEM/skills_sbin/</code> (primary user) and <code>$HORIZON_SYSTEM/skills_bin/</code> (brain users). Claude Code reads skills from <code>~/.claude/skills/</code>. Bootstrap wires this by creating <code>~/.claude/skills/</code> as a symlink pointing directly to the source directory — there is no copy step. Skills are live on disk as soon as the repo is updated; only a session restart is needed to pick up changes.</p>
+<p>7.1 The bootstrap script (Step 5) handles this automatically. To verify or create the redirect manually:</p>
+<p>Windows (PowerShell — run as administrator; AIOS requires admin installation):</p>
+<pre><code class="language-powershell"># Remove existing directory if empty
+Remove-Item &quot;$HOME\.claude\skills&quot; -ErrorAction SilentlyContinue
+New-Item -ItemType SymbolicLink -Path &quot;$HOME\.claude\skills&quot; -Target &quot;$env:HORIZON_SYSTEM\skills_sbin&quot;
+</code></pre>
+<p>Linux / macOS (bash):</p>
+<pre><code class="language-bash">rm -rf ~/.claude/skills
+ln -s &quot;$HORIZON_SYSTEM/skills_sbin&quot; ~/.claude/skills
+</code></pre>
+<p>7.2 Verify the redirect:</p>
+<pre><code class="language-bash"># Should show the symlink target, not a real directory listing
+ls -la ~/.claude/skills
+</code></pre>
+<p>On Windows: <code>Get-Item "$HOME\.claude\skills" | Select-Object LinkType, Target</code></p>
+<p>7.3 Verify a skill is present: <code>ls ~/.claude/skills/handoff/SKILL.md</code></p>
+<p>7.4 <strong>Skills load at session start, not hot-reloaded.</strong> Start a new session after changes.</p>
+<p>7.5 <strong>Machine-local user skills.</strong> Personal skills you want kept out of the OS repo (and safe from upstream syncs) live in <code>$HORIZON_USRBIN/usr_skills/&lt;name&gt;/SKILL.md</code>. <code>horizon_aios_register_user_skills.py</code> symlinks each into <code>skills_sbin/</code>, so they surface flat through the same <code>~/.claude/skills/</code> symlink alongside OS skills. Bootstrap runs it automatically (and it re-runs after each successful sync, since a sync can refresh <code>skills_sbin</code>). Run it manually any other time you add or remove a user skill:</p>
+<pre><code class="language-bash">python &quot;$HORIZON_SYSTEM/sbin/horizon_aios_register_user_skills.py&quot;   # or invoke /resync-user-skills
+</code></pre>
+<p>It is idempotent, prunes stale links, and refuses to shadow an OS skill of the same name. User skills are gitignored and never indexed. To author one, use <code>/skill-creation</code> (user tier).</p>
+<p>7.6 Troubleshooting — if a skill is not recognized:</p>
+<ol>
+<li>Confirm the symlink exists: <code>Get-Item "$HOME\.claude\skills"</code> (Windows) or <code>ls -la ~/.claude/skills</code> (Unix)</li>
+<li>Start a <strong>fresh</strong> Claude Code session. Long-running sessions can miss newly available skills.</li>
+<li>Confirm the <code>SKILL.md</code> has valid YAML frontmatter (<code>name:</code> and <code>description:</code> fields).</li>
+<li>Run <code>horizon_aios_doctor.py</code>: <code>python "$env:HORIZON_SYSTEM\sbin\horizon_aios_doctor.py"</code></li>
+</ol>
+<hr />
+<h2 id="8-update-path-sensitive-strings-in-the-repository">8. Update Path-Sensitive Strings in the Repository</h2>
+<p>Some files require per-machine values (user identity, GPG key). The global <code>~/.claude/settings.json</code> uses the AIOS-independent <code>aios-exec</code> wrapper and needs no path substitution. Update the items below.</p>
+<p>8.1 <strong><code>$HORIZON_ROOT/.claude/settings.json</code></strong> — no per-machine path substitution required.</p>
+<p>The committed devroot file (<code>$HORIZON_ROOT/.claude/settings.json</code>) contains only devroot-scoped
+permissions with no hardcoded paths. The machine-local global file (<code>~/.claude/settings.json</code>,
+copied from the template during bootstrap) routes hooks and statusline through the stable
+<code>~/.horizon/bin/aios-exec.{ps1,sh}</code> wrapper — a home-relative path that does not embed
+<code>$HORIZON_ROOT</code>. No manual substitution is needed for either file.</p>
+<p>If you are copying this AIOS install to a new root location after initial setup, use
+<code>horizon_aios_relocate.py</code> to update the machine-local instance pointers automatically:</p>
+<pre><code class="language-powershell">python &quot;$HORIZON_SYSTEM\sbin\horizon_aios_relocate.py&quot; --new-root &quot;C:\new\path&quot; --apply
+</code></pre>
+<p>Run without <code>--apply</code> first to preview what would change.</p>
+<p>8.2 <strong><code>$HORIZON_SYSTEM/harness_configs/git/gitconfig</code></strong> — the <code>excludesfile</code> field and user identity:</p>
+<p>Open the file and set:</p>
+<pre><code>[user]
+    name = Your Name
+    email = your@email.com
+    signingkey = YOUR_GPG_KEY_FINGERPRINT
+
+[core]
+    excludesfile = $HORIZON_ROOT/.gitignore_global
+</code></pre>
+<p>8.3 See <code>$HORIZON_DOCS/system/system_configuration_reference.md</code> Section 3 for the full Path Dependencies Catalog — every file that contains hardcoded paths.</p>
+<hr />
+<h2 id="9-apply-the-portable-git-configuration">9. Apply the Portable Git Configuration</h2>
+<p>9.1 Include the repository's gitconfig from your global git config:</p>
+<pre><code class="language-bash">git config --global include.path &quot;$HORIZON_SYSTEM/harness_configs/git/gitconfig&quot;
+</code></pre>
+<p>9.2 Verify git picks up the settings:</p>
+<pre><code class="language-bash">git config --global user.email
+git config --global commit.gpgsign
+</code></pre>
+<p>Both should return the values from the repository's gitconfig.</p>
+<hr />
+<h2 id="10-initialize-the-os-git-repo">10. Initialize the OS Git Repo</h2>
+<p>The OS repo at <code>$HORIZON_ROOT</code> tracks the AIOS config layer. This step initializes it on the new machine, wires the version-controlled pre-commit hook, and creates the first commit.</p>
+<p>10.1 Initialize the repository:</p>
+<pre><code class="language-bash">cd &quot;$HORIZON_ROOT&quot;
+git init
+</code></pre>
+<p>10.2 Wire the version-controlled hooks directory. This tells Git to use the hooks stored in the repository rather than <code>.git/hooks/</code>, so hook changes are committed and portable:</p>
+<pre><code class="language-bash">git config --local core.hooksPath ./horizon_system/harness_configs/git/hooks
+</code></pre>
+<p>10.3 Stage the OS layer files:</p>
+<pre><code class="language-bash">git add .claude/CLAUDE.md .claude/settings.json horizon_system/ handoffs/ .gitignore .gitignore.user.template
+</code></pre>
+<p>Do not stage <code>settings.local.json</code> or <code>.gitignore.user</code> — both are machine-local and excluded by <code>.gitignore</code> (only the tracked <code>.gitignore.user.template</code> is committed).</p>
+<p>10.4 Create the initial commit. GPG signing fires automatically because <code>commit.gpgsign = true</code> is set in the global gitconfig:</p>
+<pre><code class="language-bash">git commit -m &quot;Initial Horizon AIOS OS layer commit&quot;
+</code></pre>
+<p>10.5 Verify the commit is GPG-signed:</p>
+<pre><code class="language-bash">git log --show-signature -1
+</code></pre>
+<p>The output should include a <code>gpg: Good signature</code> line.</p>
+<hr />
+<h2 id="11-personal-ignore-layer-gitignoreuser">11. Personal Ignore Layer — <code>.gitignore.user</code></h2>
+<p><code>$HORIZON_ROOT/.gitignore.user</code> is a machine-local file for user-personal ignore patterns. It is itself git-ignored (only <code>.gitignore.user.template</code> is tracked) and is separate from the system <code>.gitignore</code> so personal exclusions do not intermingle with OS-managed patterns. Bootstrap auto-creates it from the template on a fresh install (idempotent — never overwriting an existing file), so no manual copy is needed.</p>
+<p>11.1 The pre-commit hook automatically syncs <code>.gitignore.user</code> to <code>.git/info/exclude</code> on every commit, so Git always respects the current contents. Changes made to <code>.gitignore.user</code> take effect at the next commit — there is no manual sync step.</p>
+<p>11.2 To exclude a personal folder, add it to <code>.gitignore.user</code>:</p>
+<pre><code>MyPersonalNotes/
+scratch/
+</code></pre>
+<p>The pre-commit hook picks the changes up on the next commit — no <code>git add</code> is needed (the file is git-ignored and intentionally never committed):</p>
+<pre><code class="language-bash">git commit -m &quot;Some OS-layer change&quot;   # any commit re-syncs .gitignore.user
+</code></pre>
+<p>Git will respect the new patterns from that commit forward.</p>
+<p>11.3 <code>.gitignore.user</code> is <strong>not</strong> version-controlled — it is git-ignored and machine-local, so it does not travel with a clone. On a new machine, bootstrap recreates it from <code>.gitignore.user.template</code> automatically (only <code>.gitignore.user.template</code> is cloned with the repository). The pre-commit hook then activates its patterns on the first commit.</p>
+<hr />
+<h2 id="12-create-a-machine-local-settingslocaljson">12. Create a Machine-Local <code>settings.local.json</code></h2>
+<p><code>settings.local.json</code> is not version-controlled. It holds permission overrides that are specific to this machine. Create it fresh on each machine:</p>
+<p>12.1 Create the file at <code>$HORIZON_ROOT/.claude/settings.local.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;permissions&quot;: {
+    &quot;allow&quot;: []
+  }
+}
+</code></pre>
+<p>12.2 Add machine-specific permission entries to the <code>allow</code> array as needed during normal use. Claude Code will prompt for permission on first use of any tool not yet in the list — approve it and it will be added automatically.</p>
+<hr />
+<h2 id="13-project-isolation-pattern">13. Project Isolation Pattern</h2>
+<p>Any folder inside <code>$HORIZON_ROOT</code> that needs its own independent Git history is isolated from the OS repo by running <code>git init</code> inside it. This is the universal opt-out mechanism — no <code>.gitignore</code> entry is required.</p>
+<p>13.1 <strong>How it works natively</strong>: Git does not descend into subdirectories that contain their own <code>.git</code> folder. Once a subfolder is git-initted, its contents become invisible to the parent OS repo.</p>
+<p>13.2 <strong>The pre-commit hook handles the race condition</strong>: If a folder was tracked by the OS repo and then later <code>git init</code>'d, its files remain in the OS index until removed. The pre-commit hook detects any tracked subdirectory that has acquired a <code>.git</code> folder and runs <code>git rm -r --cached</code> on it automatically before the commit completes. No manual cleanup is needed.</p>
+<p>13.3 <strong>Recursive exclusion</strong>: The exclusion is recursive. If <code>ProjectParent/</code> contains <code>SubProject/</code> which gets <code>git init</code>'d, <code>SubProject/</code> is excluded. If <code>ProjectParent/</code> itself later gets <code>git init</code>'d, the entire <code>ProjectParent/</code> tree is excluded from that point forward.</p>
+<p>13.4 <strong>Excluding a parent folder with no direct <code>.git</code></strong>: To exclude an entire parent folder (such as a <code>RedTeam/</code> directory that will hold multiple independent projects), run <code>git init</code> inside the parent folder itself. This makes the parent a nested repo and excludes the entire subtree:</p>
+<pre><code class="language-bash">git init &quot;$HORIZON_ROOT/RedTeam&quot;
+</code></pre>
+<p>No remote is needed. The local <code>.git</code> is sufficient to trigger exclusion.</p>
+<p>13.5 <strong>Config inheritance</strong>: Projects inside <code>$HORIZON_ROOT</code> automatically inherit the AIOS Claude Code environment — the global <code>settings.json</code> (hooks, sounds, statusline, permissions) and <code>CLAUDE.md</code> instructions apply in every subdirectory because Claude Code reads global config from <code>~/.claude/</code>, which is bootstrapped to point into the OS repo. No per-project configuration is needed to get the full AIOS experience.</p>
+<hr />
+<h2 id="14-verify-the-installation">14. Verify the Installation</h2>
+<p>14.1 Launch Claude Code from any directory:</p>
+<pre><code class="language-bash">claude
+</code></pre>
+<p>14.2 Confirm the statusline appears at the bottom of the terminal showing the current directory name, git branch (if in a repo), and a context usage bar. If the statusline is absent, check that <code>settings.json</code> <code>statusLine.command</code> points to the correct path.</p>
+<p>14.3 Run the <code>/handoff</code> skill to confirm skills are loaded. Type <code>/handoff</code> in the Claude Code session. Claude should execute the handoff skill and write a file to <code>$HORIZON_ROOT/handoffs/</code>. If the skill is not recognized, see Section 7.6 troubleshooting — the most common cause is testing in the same long-running session used during setup rather than starting a fresh session.</p>
+<p>14.4 Exit Claude Code cleanly. Confirm the WorkComplete sound plays. If no sound plays, verify the path in <code>hooks.Stop[0].hooks[0].command</code> in <code>settings.json</code>.</p>
+<p>14.5 Trigger a permission request (run any tool not in the allow list). Confirm the InputNeeded sound plays.</p>
+<p>14.6 Verify the OS repo commit is GPG-signed:</p>
+<pre><code class="language-bash">cd &quot;$HORIZON_ROOT&quot;
+git log --show-signature -1
+</code></pre>
+<p>Confirm a <code>gpg: Good signature</code> line appears.</p>
+<p>14.7 Verify the pre-commit hook is active:</p>
+<pre><code class="language-bash">git config --local core.hooksPath
+</code></pre>
+<p>Should return <code>./horizon_system/harness_configs/git/hooks</code>.</p>
+<p>Setup is complete when all verification points pass.</p>
+<hr />
+<h2 id="15-configure-model-preferences-post-install">15. Configure Model Preferences (post-install)</h2>
+<p>AIOS ships a BYO-model preference layer that routes agent spawns and task work
+to the right model — cheap models for mechanical edits, capable ones for
+architecture — without you naming a model every time.</p>
+<p>15.1 Copy the tracked template to your gitignored extend file:</p>
+<p>Windows (PowerShell):</p>
+<pre><code class="language-powershell">Copy-Item &quot;$env:HORIZON_ETC\horizon_aios_model_prefs.local.template.md&quot; `
+          &quot;$env:HORIZON_ETC\horizon_aios_model_prefs.local.md&quot;
+</code></pre>
+<p>Linux / macOS (bash):</p>
+<pre><code class="language-bash">cp &quot;$HORIZON_ETC/horizon_aios_model_prefs.local.template.md&quot; \
+   &quot;$HORIZON_ETC/horizon_aios_model_prefs.local.md&quot;
+</code></pre>
+<p>15.2 Run <code>/model-catalog-refresh</code> in a Claude Code session to fetch current
+model ids and pricing from Anthropic, OpenAI, Gemini, and Ollama.</p>
+<p>15.3 Fill in your group members (e.g. <code>#lowcost</code>, <code>#highcap</code>) and any
+task-class routing rules using the ids from the catalog. Run <code>/model-prefs</code>
+to edit or inspect the extend file interactively.</p>
+<p>The extend file is gitignored and machine-local — no commit needed.</p>
+<p>See <code>$HORIZON_DOCS/system/model_preferences.md</code> for the full reference
+(member grammar, runtime qualification, fallback order, reliability notes).</p>
+<p>If you are authoring skills, see <code>$HORIZON_DOCS/system/skill_model_groups.md</code> for
+how skills declare their preferred model group.</p>
+<hr />
+<h2 id="16-machine-local-agent-instructions-localagentsmd">16. Machine-Local Agent Instructions (<code>local.agents.md</code>)</h2>
+<p><code>aios setup</code> materializes <code>local.agents.md</code> alongside every <code>agents.md</code> in the repo
+(see <code>$HORIZON_ETC/file_structure_invariants.md</code> §12.6). This is the git-safe seam for
+owner/machine-specific instructions that must not ship to other users.</p>
+<p>16.1 Two files are created (if absent):
+1. <code>$HORIZON_ROOT/local.agents.md</code>
+2. <code>$HORIZON_ROOT/.claude/local.agents.md</code></p>
+<p>Each is copied from its sibling <code>local.agents.md.template</code> (tracked). The <code>local.agents.md</code>
+files are gitignored and never overwritten by a sync.</p>
+<p>16.2 <strong>What belongs here:</strong> owner identity, machine-specific rules, development
+directives you do not want on other machines, or anything that applies to this install
+only. Shipped, version-controlled defaults live in <code>agents.md</code>; personal overrides live
+in <code>local.agents.md</code>. Keep it short — it loads into context every session.</p>
+<p>16.3 Each <code>agents.md</code> <code>@</code>-imports its sibling <code>local.agents.md</code> last, so local content
+overrides shipped content. <code>CLAUDE.md</code> is unaffected (it imports only its sibling
+<code>agents.md</code> per §12 invariant).</p>
+<p>16.4 To customize: edit <code>$HORIZON_ROOT/local.agents.md</code> or <code>$HORIZON_ROOT/.claude/local.agents.md</code>
+directly. Never commit these files; add patterns to <code>$HORIZON_ROOT/.gitignore.user</code> if needed.</p>
+<hr />
+<h2 id="adding-a-new-project">Adding a New Project</h2>
+<p>Projects are folders inside <code>$HORIZON_ROOT</code>. They automatically inherit the full AIOS environment — no per-project wiring is needed.</p>
+<ol>
+<li>
+<p>Create the project folder:
+   <code>bash
+   mkdir "$HORIZON_ROOT/MyProject"</code></p>
+</li>
+<li>
+<p>If the project needs its own independent git history, initialize it:
+   <code>bash
+   cd "$HORIZON_ROOT/MyProject"
+   git init</code>
+   Once <code>git init</code>'d, the folder is invisible to the OS repo. No <code>.gitignore</code> entry is needed — Git does not descend into subdirectories with their own <code>.git</code>.</p>
+</li>
+<li>
+<p>Optionally copy the <code>aios_overrides.md</code> template to the project root for project-specific AIOS configuration:
+   <code>bash
+   cp "$HORIZON_SYSTEM/templates/aios_overrides.md" "$HORIZON_ROOT/MyProject/aios_overrides.md"</code>
+   Edit the file to set <code>handoffs_dir</code>, <code>objectives_dir</code>, <code>project_display_name</code>, or other overrides. See the template for documentation of all supported keys.</p>
+</li>
+<li>
+<p>Optionally create a <code>.claude/CLAUDE.md</code> inside the project for project-specific AI instructions:
+   <code>bash
+   mkdir -p "$HORIZON_ROOT/MyProject/.claude"
+   # Edit $HORIZON_ROOT/MyProject/.claude/CLAUDE.md with project context</code>
+   Project-level CLAUDE.md is loaded by Claude Code on top of the global CLAUDE.md when working inside that project.</p>
+</li>
+</ol>
+<hr />
+<h2 id="adding-a-new-ai-harness">Adding a New AI Harness</h2>
+<p>Horizon AIOS supports multiple AI harnesses. To add support for a new harness (e.g., Cursor, Windsurf, Ollama):</p>
+<ol>
+<li>Create a harness config directory: <code>$HORIZON_SYSTEM/harness_configs/&lt;harness_name&gt;/</code> (for runtime config: sounds map, hooks, README) and/or <code>$HORIZON_SYSTEM/templates/&lt;harness_name&gt;/</code> (for setup templates copied at bootstrap).</li>
+<li>Add a config template using <code>$HORIZON_SYSTEM</code> (and other runtime env vars) instead of hardcoded paths. Document all env vars used in a <code>README.md</code> in the same directory.</li>
+<li>Wire event hooks to sounds in <code>$HORIZON_SYSTEM/sounds/</code>. Use root-level generic sounds for cross-harness compatibility. If the harness has vendor-voiced audio, add it to <code>$HORIZON_SYSTEM/sounds/&lt;vendor&gt;_event_sounds/</code>.</li>
+<li>Add a statusline script to <code>$HORIZON_BIN/statusline/</code> if the harness supports one.</li>
+<li>Document the harness in <code>$HORIZON_DOCS/</code>.</li>
+</ol>
+<p>See <code>$HORIZON_ETC/ai_os_personalizations.md</code> Section 3 for the full harness addition protocol.</p>
+<hr />
+<h2 id="adding-a-brain">Adding a Brain</h2>
+<p>A brain is an isolated AI persona running under a separate OS user account, scoped to its own directory subtree. All OS-level provisioning (user, groups, folder, permissions) is handled by <code>$HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py</code>.</p>
+<h3 id="dependencies">Dependencies</h3>
+<ul>
+<li><strong>Python 3.6 or later</strong> must be installed and on <code>PATH</code>. The script uses stdlib only — no third-party packages required.</li>
+<li>The script <strong>must be run as Administrator</strong> (Windows) or <strong>root</strong> (Unix). It creates OS user accounts and modifies ACLs, both of which require elevated privileges.</li>
+</ul>
+<blockquote>
+<p><strong>Harness installation is the Brain's own prerequisite — AIOS does not handle it.</strong>
+A brain runs under a <strong>separate OS user account</strong>, and the default Claude Code install
+is <strong>per-user</strong>. A harness installed only for the owner is not guaranteed to be
+available to the brain user. Before a brain can actually run, that brain user must
+independently have a harness installed whose executable is on a <code>PATH</code> it can run with
+valid permissions — either its own per-user install or a system-/all-users install.
+<code>horizon_aios_create_brain.py</code> wires the brain's <em>config</em> (<code>.claude/CLAUDE.md</code>,
+<code>settings.json</code>, skills symlink) but does <strong>not</strong> install the brain's harness and does
+<strong>not</strong> verify the harness is pointed at the AIOS-redirected config. Both of those are
+deliberately left as operator responsibilities for now and may be automated for common
+harnesses in a future release. See <code>getting_started/dependencies_and_footprint.md</code> →
+"Harness installation is a per-user (and per-Brain) responsibility."</p>
+</blockquote>
+<h3 id="what-the-script-creates">What the script creates</h3>
+<p>Running <code>horizon_aios_create_brain.py</code> for a brain named <code>&lt;brain-name&gt;</code> produces:</p>
+<ol>
+<li><strong>OS user account</strong> <code>&lt;brain-name&gt;</code> — a local account with a password you provide interactively. On Linux the shell is set to <code>/bin/bash</code>.</li>
+<li><strong>Group <code>brains</code></strong> (created once, shared by all brains) — members of this group receive read+execute access to <code>$HORIZON_BIN</code>. This is the "can use AIOS tooling" gate.</li>
+<li><strong>Per-brain runtime group</strong> <code>&lt;brain-name&gt;_group</code> (Windows) / <code>&lt;brain-name&gt;</code> (Unix) — the set of accounts that run <em>as</em> the brain; it receives full control on the brain's folder ("owns this brain's data"). The brain user is a member. The invoking primary user is a member <strong>on Unix only</strong> (there, group membership is the human's write path to the 770 folder). On <strong>Windows the human is deliberately NOT a member</strong> — the human gets folder full control via an explicit per-user ACE instead, so the security model can hold the runtime group read-only on the brain's edit-source (code + policy) without locking the human out. This is the writer≠runner rule; see <code>brains/&lt;brain-name&gt;/brain_bin/brain_security_model.md</code> §7.</li>
+<li><strong>Brain folder</strong> <code>$HORIZON_ROOT/brains/&lt;brain-name&gt;/</code> — created with parents. Permissions: owner+group full control, no access for others (mode 770 on Unix; <code>icacls</code> with <code>/inheritance:r</code> on Windows).</li>
+<li><strong>Permissions on <code>$HORIZON_BIN</code></strong> — <code>brains</code> group is granted RX (additive; existing ACEs are not disturbed).</li>
+<li><strong>Permissions on <code>$HORIZON_SYSTEM/sbin</code></strong> — explicitly set to owner-only (<code>chmod 700</code> on Unix; <code>icacls /inheritance:r /grant &lt;primary-user&gt;:(OI)(CI)F</code> on Windows) <em>after</em> the <code>$HORIZON_BIN</code> group grant, so that no inherited ACE can accidentally reach <code>sbin</code>. This step always runs last in Phase 3.</li>
+</ol>
+<h3 id="invocation">Invocation</h3>
+<pre><code class="language-bash"># Standard run (will prompt for password interactively)
+python $HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py &lt;brain-name&gt;
+
+# With an explicit HORIZON_ROOT (if running the script from outside the repo)
+python $HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py &lt;brain-name&gt; --horizon-root /path/to/devroot
+
+# Preview every action without executing (no changes made)
+python $HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py &lt;brain-name&gt; --dry-run
+</code></pre>
+<p>On Windows, open an <strong>Administrator</strong> PowerShell or Command Prompt first:</p>
+<pre><code class="language-powershell">python &quot;$env:HORIZON_SYSTEM\sbin\horizon_aios_create_brain.py&quot; &lt;brain-name&gt;
+</code></pre>
+<p>On Unix:</p>
+<pre><code class="language-bash">sudo python &quot;$HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py&quot; &lt;brain-name&gt;
+</code></pre>
+<h3 id="brain-name-rules">Brain name rules</h3>
+<p>Brain names must match <code>^[a-z][a-z0-9_]{1,31}$</code>: start with a lowercase letter, followed by 1 to 31 lowercase letters, digits, or underscores. Total length: 2–32 characters. The script validates this and exits with a clear message if the name is invalid.</p>
+<h3 id="after-provisioning">After provisioning</h3>
+<p>The script handles the following automatically:
+- Generates a cryptographically random 64-character account password and stores it in the OS native keystore (Windows Credential Manager / macOS Keychain / Linux Secret Service) via <code>horizon_aios_brain_credential.py</code> in sbin. The password is never written to any file and is never printed to the terminal.
+- Deploys <code>.claude/CLAUDE.md</code> and <code>.claude/settings.json</code> from <code>.aioscommon</code> templates into the brain's folder.
+- Writes a shell profile for the brain user that sets all <code>HORIZON_*</code> environment variables and changes the working directory to the brain's folder on interactive login.</p>
+<p>Complete the brain's configuration manually after provisioning:</p>
+<ol>
+<li>Customize <code>$HORIZON_ROOT/brains/&lt;brain-name&gt;/.claude/CLAUDE.md</code> to define the brain's persona and operational scope.</li>
+<li>Customize <code>$HORIZON_ROOT/brains/&lt;brain-name&gt;/.claude/settings.json</code> to scope allowed tools.</li>
+<li>Place any credentials this brain needs in the brain's own folder or the OS credential store.</li>
+</ol>
+<p><strong>Account password:</strong> Required for Windows <code>runas</code> invocations and Task Scheduler. Retrieve it from the OS keystore: <code>python $HORIZON_SYSTEM/sbin/horizon_aios_brain_credential.py get &lt;brain-name&gt;</code> (must be run as Administrator / root). To rotate the password (updates both the OS account and keystore): <code>python $HORIZON_SYSTEM/sbin/horizon_aios_brain_credential.py rotate &lt;brain-name&gt;</code>.</p>
+<p><strong>Scheduled tasks and cron jobs:</strong>
+- Windows: Task Scheduler → "Run as user" → enter <code>&lt;brain-name&gt;</code> and retrieve password via <code>horizon_aios_brain_credential.py get &lt;brain-name&gt;</code> (run as Administrator).
+- Linux/macOS: <code>sudo crontab -u &lt;brain-name&gt; -e</code> — no password needed when using sudo.</p>
+<p>The script prints a summary and next-steps reminder at the end of every run.</p>
+<h3 id="error-handling-and-rollback">Error handling and rollback</h3>
+<p>The script runs in four phases (Preflight → User/Groups → Folders/Permissions → Verify) and wraps each phase in a try/except block. If a phase fails, it prints what completed, what failed, and manual cleanup instructions. <strong>There is no automatic rollback</strong> — this is by design, to avoid silently destroying partially-created state. Follow the printed cleanup instructions if you need to remove a partially provisioned brain.</p>
+<p>See <code>$HORIZON_DOCS/security_architecture_invariants.md</code> for the full ownership and ACL model, and <code>$HORIZON_ETC/ai_os_personalizations.md</code> Section 4 for the brain persona configuration protocol.</p>
+<hr />
+<h2 id="key-file-locations">Key File Locations</h2>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Path</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OS repo root</td>
+<td><code>$HORIZON_ROOT</code></td>
+</tr>
+<tr>
+<td>All OS tooling and assets</td>
+<td><code>$HORIZON_BIN</code></td>
+</tr>
+<tr>
+<td>OS invariant documents</td>
+<td><code>$HORIZON_ETC</code></td>
+</tr>
+<tr>
+<td>User-facing documentation</td>
+<td><code>$HORIZON_DOCS</code></td>
+</tr>
+<tr>
+<td>Global AI instructions (canonical)</td>
+<td><code>$HORIZON_ROOT/.claude/CLAUDE.md</code></td>
+</tr>
+<tr>
+<td>Global settings (canonical)</td>
+<td><code>$HORIZON_ROOT/.claude/settings.json</code></td>
+</tr>
+<tr>
+<td>Skills (primary user source)</td>
+<td><code>$HORIZON_SYSTEM/skills_sbin/</code></td>
+</tr>
+<tr>
+<td>Skills (brain user source)</td>
+<td><code>$HORIZON_SYSTEM/skills_bin/</code></td>
+</tr>
+<tr>
+<td>Skills (machine-local user tier)</td>
+<td><code>$HORIZON_USRBIN/usr_skills/</code></td>
+</tr>
+<tr>
+<td>Skills (Claude Code reads here — symlink)</td>
+<td><code>~/.claude/skills/</code> → <code>skills_sbin/</code></td>
+</tr>
+<tr>
+<td>Handoffs (default output)</td>
+<td><code>$HORIZON_ROOT/handoffs/</code></td>
+</tr>
+<tr>
+<td>Objectives (default store)</td>
+<td><code>$HORIZON_ROOT/objectives/</code></td>
+</tr>
+<tr>
+<td>Operational logs</td>
+<td><code>$HORIZON_SYSTEM/logs/</code></td>
+</tr>
+<tr>
+<td>Sounds (generic)</td>
+<td><code>$HORIZON_SYSTEM/sounds/*.wav</code></td>
+</tr>
+<tr>
+<td>Sounds (vendor-voiced)</td>
+<td><code>$HORIZON_SYSTEM/sounds/&lt;vendor&gt;_event_sounds/</code></td>
+</tr>
+<tr>
+<td>Statusline scripts</td>
+<td><code>$HORIZON_BIN/statusline/</code></td>
+</tr>
+<tr>
+<td>Harness config templates</td>
+<td><code>$HORIZON_SYSTEM/templates/</code></td>
+</tr>
+<tr>
+<td>aios_overrides.md template</td>
+<td><code>$HORIZON_SYSTEM/templates/aios_overrides.md</code></td>
+</tr>
+<tr>
+<td>Git hooks</td>
+<td><code>$HORIZON_SYSTEM/harness_configs/git/hooks/</code></td>
+</tr>
+<tr>
+<td>Git config (portable)</td>
+<td><code>$HORIZON_SYSTEM/harness_configs/git/gitconfig</code></td>
+</tr>
+<tr>
+<td>Full setup guide</td>
+<td><code>$HORIZON_DOCS/getting_started/ReadMeToSetupYourSystem.md</code></td>
+</tr>
+<tr>
+<td>System config reference</td>
+<td><code>$HORIZON_DOCS/system/system_configuration_reference.md</code></td>
+</tr>
+<tr>
+<td>File structure invariants</td>
+<td><code>$HORIZON_ETC/file_structure_invariants.md</code></td>
+</tr>
+<tr>
+<td>Security invariants</td>
+<td><code>$HORIZON_ETC/security_invariants.md</code></td>
+</tr>
+<tr>
+<td>Personalization model</td>
+<td><code>$HORIZON_ETC/ai_os_personalizations.md</code></td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "search.suggest", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

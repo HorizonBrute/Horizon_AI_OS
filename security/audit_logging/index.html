@@ -1,0 +1,3119 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for Horizon AIOS — a centralized, syncable AI operating-system config layer.">
+      
+      
+      
+      
+        <link rel="prev" href="../security.index/">
+      
+      
+        <link rel="next" href="../brain_isolation_test/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Audit Logging - Horizon AIOS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#audit-logging-aios-filesystem-monitor" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Horizon AIOS" class="md-header__button md-logo" aria-label="Horizon AIOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Horizon AIOS
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Audit Logging
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting_started/getting_started.index/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../user_guides/user_guides.index/" class="md-tabs__link">
+          
+  
+  
+  User Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../system/system.index/" class="md-tabs__link">
+          
+  
+  
+  System
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../deployment/deployment.index/" class="md-tabs__link">
+          
+  
+  
+  Deployment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../security.index/" class="md-tabs__link">
+          
+  
+  
+  Security
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../authoring/authoring.index/" class="md-tabs__link">
+          
+  
+  
+  Authoring
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../build_decisions/build_decisions.index/" class="md-tabs__link">
+          
+  
+  
+  Build Decisions
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../development_tools/development_tools.index/" class="md-tabs__link">
+          
+  
+  
+  Development Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../philosophy/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Horizon AIOS" class="md-nav__button md-logo" aria-label="Horizon AIOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Horizon AIOS
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/getting_started.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/ReadMeToSetupYourSystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/dependencies_and_footprint/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dependencies & Footprint
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/updating/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Updating
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/lifecycle_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lifecycle Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guides/user_guides.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guides/using_your_aios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using Your AIOS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guides/using_Horizon.AIOS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using Horizon.AIOS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guides/deployment_howtos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment How-Tos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    System
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/system.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/aios_options_packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Options Packages
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/aios_switching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AIOS Switching
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/distribution_and_updates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Distribution & Updates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/system_configuration_reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/model_preferences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Preferences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/agent_teams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Teams
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/skill_model_groups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skill Model Groups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/uninstall/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Uninstall
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/deployment.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/desktop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Desktop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/multi_brain_deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Brain Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/brain_automation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Brain Automation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Security
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit Logging
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit Logging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#default-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default State
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-watched" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Is Watched
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extending-to-additional-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extending to Additional Paths
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration File
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#log-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log Format
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consuming-the-logs-administrators-siem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consuming the Logs (Administrators / SIEM)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-as-a-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running as a Service
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running as a Service">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#windows-nssm-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Windows — NSSM (recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#windows-task-scheduler-no-extra-dependency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Windows — Task Scheduler (no extra dependency)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linux-systemd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linux — systemd
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#log-analysis-and-alerting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log Analysis and Alerting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logging-coverage-and-existing-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging Coverage and Existing Infrastructure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modifying-or-disabling-the-monitor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modifying or Disabling the Monitor
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../brain_isolation_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Brain Isolation Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security_architecture_invariants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security Architecture Invariants
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Authoring
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authoring/authoring.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authoring/claude_md_authoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLAUDE.md Authoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build Decisions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Build Decisions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../build_decisions/build_decisions.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../build_decisions/architecture_decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Tools
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development_tools/development_tools.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development_tools/consistency_checks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consistency Checks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development_tools/windows_install_switch_uninstall_test_prompt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Windows Install/Switch/Uninstall Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../philosophy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Philosophy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_values/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Values
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development_pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../context_loading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Context Loading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../model_prefs_details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Preferences Details
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utilities Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sync_setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sync Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cloud_sync_exclusions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloud Sync Exclusions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tested_configurations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tested Configurations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../terseness_contract_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Terseness Contract Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../branding_invariants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Branding Invariants
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#default-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default State
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-watched" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Is Watched
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extending-to-additional-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extending to Additional Paths
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration File
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#log-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log Format
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consuming-the-logs-administrators-siem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consuming the Logs (Administrators / SIEM)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-as-a-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running as a Service
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running as a Service">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#windows-nssm-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Windows — NSSM (recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#windows-task-scheduler-no-extra-dependency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Windows — Task Scheduler (no extra dependency)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linux-systemd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linux — systemd
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#log-analysis-and-alerting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log Analysis and Alerting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logging-coverage-and-existing-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging Coverage and Existing Infrastructure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modifying-or-disabling-the-monitor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modifying or Disabling the Monitor
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="audit-logging-aios-filesystem-monitor">Audit Logging — AIOS Filesystem Monitor</h1>
+<p>The AIOS filesystem monitor (<code>$HORIZON_SYSTEM/sbin/horizon_aios_monitor.py</code>) watches the
+AIOS <strong>system directories</strong> for unexpected file changes and logs events as JSON
+lines. It runs as the administrative context; brain accounts must not have write
+access to the log directory (enforced by <code>horizon_aios_harden.py</code>).</p>
+<hr />
+<h2 id="default-state">Default State</h2>
+<p><strong>AIOS ships with write logging to all AIOS system directories enabled by default.</strong> The bootstrap registers the monitor as a scheduled task (Windows) or systemd service (Linux/macOS), so logging is active from first boot after setup — no extra configuration step required.</p>
+<p>This is intentional: some basic logging on implementation is better than none. Write detection covers the primary integrity surface (unauthorized changes to the AIOS system layer) without making any presumptions about the broader environment. Deeper logging — read detection, brain-internal activity, project-folder access — requires OS-level audit infrastructure that varies by environment and is left to the operator (see <em>Log Analysis and Alerting</em> below).</p>
+<p><strong>The monitor script is deliberately simple and easy to extend.</strong> If the default watched paths or log destination do not fit your environment, editing <code>aios_monitor.conf</code> or the script itself is straightforward. The configuration file, CLI flags, and environment variables cover the most common extension patterns without touching the script at all.</p>
+<p><strong>Dependency:</strong> Logging is only active if the scheduled task or service was successfully registered during bootstrap. Verify with:</p>
+<pre><code class="language-powershell"># Windows
+Get-ScheduledTask -TaskName &quot;AIOSMonitor&quot;
+</code></pre>
+<pre><code class="language-sh"># Linux
+systemctl status aios-monitor
+</code></pre>
+<p>If the task is absent or in an error state, logging is not running regardless of what the script can do. Re-register using the instructions in <em>Running as a Service</em> below.</p>
+<hr />
+<h2 id="quick-start">Quick Start</h2>
+<pre><code class="language-sh">pip install watchdog
+python $HORIZON_SYSTEM/sbin/horizon_aios_monitor.py
+</code></pre>
+<p>Logs write to <code>$HORIZON_SYSTEM/logs/horizon_aios_monitor/monitor_YYYYMMDD.log</code>.</p>
+<hr />
+<h2 id="what-is-watched">What Is Watched</h2>
+<p>By default the monitor watches the AIOS system directories — the OS layer's
+integrity surface:</p>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Recursive</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>$HORIZON_SYSTEM</code></td>
+<td>yes</td>
+<td>The AIOS layer (<code>bin</code>, <code>sbin</code>, <code>skills_bin</code>, <code>skills_sbin</code>, <code>ai_os_etc</code>, …)</td>
+</tr>
+<tr>
+<td><code>$HORIZON_USRBIN</code></td>
+<td>yes</td>
+<td>Shared tool repository + machine-local user skills</td>
+</tr>
+<tr>
+<td><code>$HORIZON_ROOT/.claude</code></td>
+<td>yes</td>
+<td>OS-layer harness config</td>
+</tr>
+<tr>
+<td><code>$HORIZON_ROOT</code></td>
+<td>no</td>
+<td>Top-level OS files (<code>agents.md</code>, <code>CLAUDE.md</code>, <code>.gitignore</code>) and structural changes — does <strong>not</strong> descend into <code>Projects/</code>, <code>brains/</code>, etc.</td>
+</tr>
+<tr>
+<td><code>$HORIZON_ROOT/brains/</code></td>
+<td>no</td>
+<td>The brains root is functionally a system folder; structural changes (a brain folder created/deleted/renamed) are tracked</td>
+</tr>
+</tbody>
+</table>
+<p>The monitor's own log directory is always excluded (it sits inside the watched
+tree; logging its own writes would loop).</p>
+<p><strong>Brain internals are out of scope by default.</strong> AIOS makes no presumption about
+what happens <em>inside</em> a brain — the memory system, file layout, and what counts
+as a problem there are the operator's domain. So brain home <em>contents</em> are not
+watched unless you opt in with <code>--brain-dirs</code> (or <code>brain_dirs = true</code> in the
+config), which escalates the brains-root watch to recursive.</p>
+<p><strong>Excluded by design:</strong> <code>$HORIZON_PROJECTS</code> (the user's personal workspace) and
+<code>handoffs/</code> / <code>objectives/</code> (ephemeral session output) — they are not OS-layer
+state. Add any of them explicitly if you want them logged (see below).</p>
+<hr />
+<h2 id="extending-to-additional-paths">Extending to Additional Paths</h2>
+<p>Three additive mechanisms, in precedence order (highest first):</p>
+<ol>
+<li><strong>CLI</strong> — repeat <code>--watch</code> (recursive), toggle brains with <code>--brain-dirs</code> /
+   <code>--no-brains-root</code>:
+   <code>sh
+   python horizon_aios_monitor.py --watch $HORIZON_PROJECTS/my-project --brain-dirs</code></li>
+<li><strong>Environment</strong> — <code>AIOS_MONITOR_PATHS</code> (OS path separator), plus
+   <code>AIOS_MONITOR_BRAIN_DIRS=1</code> / <code>AIOS_MONITOR_BRAINS_ROOT=0</code>.</li>
+<li><strong>Config file</strong> — see below.</li>
+</ol>
+<hr />
+<h2 id="configuration-file">Configuration File</h2>
+<p><code>$HORIZON_SYSTEM/sbin/horizon_aios_monitor.py</code> reads <code>$HORIZON_ETC/aios_monitor.conf</code>
+if present (override with <code>--config</code> or <code>AIOS_MONITOR_CONFIG</code>). Copy the
+template to create it:</p>
+<pre><code class="language-sh">cp $HORIZON_SYSTEM/templates/aios_monitor.conf.template \
+   $HORIZON_ETC/aios_monitor.conf
+</code></pre>
+<p>It is machine-local and gitignored (like <code>aios_local.conf</code>). Directives:</p>
+<pre><code class="language-ini">watch = /abs/path          # extra path to watch recursively (repeatable)
+/abs/path                  # bare line — shorthand for &quot;watch =&quot;
+brain_dirs = true          # also watch into brain home dirs (recursive)
+watch_brains_root = false  # disable the default brains-root watch
+log_dir = /abs/path        # override the log directory
+</code></pre>
+<hr />
+<h2 id="log-format">Log Format</h2>
+<p>Each line is a JSON object. Every record carries provenance — <code>source</code> and the
+<code>horizon_root</code> it came from — so an aggregator can attribute events to a
+specific AIOS install:</p>
+<pre><code class="language-json">{&quot;ts&quot;: &quot;2026-06-20T14:32:01.123456+00:00&quot;, &quot;source&quot;: &quot;Horizon.AIOS&quot;, &quot;horizon_root&quot;: &quot;C:\\devroot&quot;, &quot;event&quot;: &quot;monitor_start&quot;, &quot;watching&quot;: [{&quot;path&quot;: &quot;C:\\devroot\\horizon_system&quot;, &quot;recursive&quot;: true}], &quot;brain_dirs&quot;: false, &quot;config&quot;: null}
+{&quot;ts&quot;: &quot;2026-06-20T14:32:03.123456+00:00&quot;, &quot;source&quot;: &quot;Horizon.AIOS&quot;, &quot;horizon_root&quot;: &quot;C:\\devroot&quot;, &quot;event&quot;: &quot;modified&quot;, &quot;src&quot;: &quot;C:\\devroot\\horizon_system\\bin\\foo.py&quot;}
+{&quot;ts&quot;: &quot;2026-06-20T14:32:05.654321+00:00&quot;, &quot;source&quot;: &quot;Horizon.AIOS&quot;, &quot;horizon_root&quot;: &quot;C:\\devroot&quot;, &quot;event&quot;: &quot;moved&quot;, &quot;src&quot;: &quot;/old&quot;, &quot;dest&quot;: &quot;/new&quot;}
+</code></pre>
+<p>Events: <code>created</code>, <code>modified</code>, <code>deleted</code>, <code>moved</code>, plus lifecycle
+<code>monitor_start</code> / <code>monitor_stop</code>.</p>
+<p><strong>Note:</strong> This monitor detects file changes (writes). Read detection requires
+OS-level audit (Linux: <code>auditd</code> with <code>IN_ACCESS</code>; Windows: Security Audit /
+Object Access). Enabling OS audit is optional and outside the AIOS scope.</p>
+<hr />
+<h2 id="consuming-the-logs-administrators-siem">Consuming the Logs (Administrators / SIEM)</h2>
+<p><strong>Where the logs live.</strong> Events are written to <strong>disk</strong> as newline-delimited
+JSON (JSON Lines) — one file per UTC day:</p>
+<pre><code>$HORIZON_SYSTEM/logs/horizon_aios_monitor/monitor_YYYYMMDD.log
+</code></pre>
+<p>Each line is a complete JSON object (see <em>Log Format</em>). There is no database
+and no network listener — the monitor only appends to these files. Every record
+is self-describing: <code>source</code> is always <code>"Horizon.AIOS"</code> and <code>horizon_root</code>
+identifies the install, so logs from multiple machines or installs can be
+merged and still attributed unambiguously.</p>
+<p><strong>Getting them into your logging pipeline.</strong> Because the format is plain
+JSON-lines on disk, any standard log shipper can tail the directory and forward
+to your SIEM with no transformation:</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Pointer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Elastic <strong>Filebeat</strong> / <strong>Winlogbeat</strong></td>
+<td><code>filebeat.inputs</code> → <code>type: filestream</code>, <code>paths: [".../logs/horizon_aios_monitor/monitor_*.log"]</code>, <code>parsers: [{ndjson: {}}]</code></td>
+</tr>
+<tr>
+<td><strong>Fluent Bit</strong> / Fluentd</td>
+<td><code>[INPUT] tail</code> on <code>monitor_*.log</code>, <code>[FILTER] parser</code> = <code>json</code></td>
+</tr>
+<tr>
+<td><strong>NXLog</strong> (common on Windows)</td>
+<td><code>im_file</code> reading the directory, <code>xm_json</code> to parse</td>
+</tr>
+<tr>
+<td><strong>Vector</strong></td>
+<td><code>sources.aios.type = "file"</code>, <code>include = [".../monitor_*.log"]</code>, decode as JSON</td>
+</tr>
+<tr>
+<td><strong>Splunk</strong> Universal Forwarder</td>
+<td>monitor stanza on the directory, <code>sourcetype=_json</code></td>
+</tr>
+</tbody>
+</table>
+<p>Point any of them at <code>$HORIZON_SYSTEM/logs/horizon_aios_monitor/</code>. Filter on
+<code>source="Horizon.AIOS"</code> to isolate AIOS integrity events in your SIEM.</p>
+<p><strong>Pushing to the OS event log.</strong> If you would rather consume events through the
+native OS log (Windows Event Log / Linux syslog) than tail files, run the
+analyzer with <code>--syslog</code> (see below) — it emits summaries to the OS log, which
+your existing collector already ingests.</p>
+<p><strong>Retention.</strong> <code>horizon_aios_maintain_logs.py</code> prunes/rotates these files
+(<code>AIOS_LOG_MAX_DAYS</code>, <code>AIOS_LOG_MAX_SIZE_MB</code>, <code>AIOS_LOG_MAX_ROTATIONS</code> in
+<code>aios_local.conf</code>). If your SIEM is the system of record, ship before pruning.</p>
+<hr />
+<h2 id="running-as-a-service">Running as a Service</h2>
+<h3 id="windows-nssm-recommended">Windows — NSSM (recommended)</h3>
+<ol>
+<li>Install <a href="https://nssm.cc">NSSM</a>: <code>winget install nssm</code> or download manually.</li>
+<li>Register the service:</li>
+</ol>
+<pre><code class="language-powershell">nssm install AIOSMonitor &quot;&lt;python-dir&gt;\pythonw.exe&quot; &quot;$HORIZON_SYSTEM\sbin\horizon_aios_monitor.py&quot;
+nssm set AIOSMonitor AppDirectory $HORIZON_SYSTEM\sbin
+nssm set AIOSMonitor ObjectName LocalSystem
+nssm start AIOSMonitor
+</code></pre>
+<ol>
+<li>Log directory access is already correct under the harden posture: SYSTEM has
+   FullControl on <code>$HORIZON_SYSTEM\logs</code> and the <code>horizon_humans</code> group is denied
+   write there, so a SYSTEM-run monitor can write while human/brain accounts cannot.
+   No extra <code>icacls</code> step is needed. (This is why the service runs as SYSTEM rather
+   than a human account, which the humans-write DENY would block.)</li>
+</ol>
+<h3 id="windows-task-scheduler-no-extra-dependency">Windows — Task Scheduler (no extra dependency)</h3>
+<pre><code class="language-powershell">$action = New-ScheduledTaskAction -Execute &quot;&lt;python-dir&gt;\pythonw.exe&quot; `
+    -Argument &quot;`&quot;$HORIZON_SYSTEM\sbin\horizon_aios_monitor.py`&quot;&quot;
+$trigger = New-ScheduledTaskTrigger -AtStartup
+$principal = New-ScheduledTaskPrincipal -UserId &quot;SYSTEM&quot; -RunLevel Highest
+Register-ScheduledTask -TaskName &quot;AIOSMonitor&quot; -Action $action -Trigger $trigger -Principal $principal
+</code></pre>
+<h3 id="linux-systemd">Linux — systemd</h3>
+<pre><code class="language-ini"># /etc/systemd/system/aios-monitor.service
+[Unit]
+Description=AIOS Filesystem Monitor
+After=network.target
+
+[Service]
+Type=simple
+User=&lt;admin-account&gt;
+ExecStart=python $HORIZON_SYSTEM/sbin/horizon_aios_monitor.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+</code></pre>
+<pre><code class="language-sh">sudo systemctl enable --now aios-monitor
+</code></pre>
+<h3 id="docker">Docker</h3>
+<p>Pass the paths in as environment variables and mount the log directory:</p>
+<pre><code class="language-dockerfile">ENV AIOS_MONITOR_PATHS=/horizon_system
+ENV AIOS_MONITOR_LOG_DIR=/logs/horizon_aios_monitor
+</code></pre>
+<pre><code class="language-yaml"># docker-compose.yml excerpt
+volumes:
+  - ./horizon_system:/horizon_system:ro
+  - ./logs/horizon_aios_monitor:/logs/horizon_aios_monitor
+</code></pre>
+<hr />
+<hr />
+<h2 id="log-analysis-and-alerting">Log Analysis and Alerting</h2>
+<p><code>$HORIZON_SYSTEM/sbin/horizon_aios_monitor_analyze.py</code> reads monitor logs, checks for
+file change events and uptime gaps, and writes a human-readable summary to
+<code>$HORIZON_SYSTEM/logs/horizon_aios_security.log</code>. Run it periodically from the administrative
+context.</p>
+<pre><code class="language-sh">python $HORIZON_SYSTEM/sbin/horizon_aios_monitor_analyze.py          # last 2 days
+python $HORIZON_SYSTEM/sbin/horizon_aios_monitor_analyze.py --days 7 # last 7 days
+python $HORIZON_SYSTEM/sbin/horizon_aios_monitor_analyze.py --syslog  # also emit to OS log
+</code></pre>
+<p>The security log records:
+- <code>monitor_start</code> / <code>monitor_stop</code> times per day (gaps indicate unmonitored periods)
+- Any file change events (creates/modifies/deletes/moves) detected in watched paths
+- Alert status: <code>OK</code> or <code>ALERT</code></p>
+<p><strong>Scheduling the analyzer (run it like a cron job):</strong></p>
+<p>Windows Task Scheduler:</p>
+<pre><code class="language-powershell">$action = New-ScheduledTaskAction -Execute &quot;&lt;python-dir&gt;\pythonw.exe&quot; `
+    -Argument &quot;`&quot;$HORIZON_SYSTEM\sbin\horizon_aios_monitor_analyze.py`&quot;&quot;
+$trigger = New-ScheduledTaskTrigger -Daily -At &quot;06:00&quot;
+$principal = New-ScheduledTaskPrincipal -UserId &quot;SYSTEM&quot; -RunLevel Highest
+Register-ScheduledTask -TaskName &quot;AIOSMonitorAnalyzer&quot; -Action $action `
+    -Trigger $trigger -Principal $principal
+</code></pre>
+<p>Linux cron (daily at 6am):</p>
+<pre><code class="language-sh">0 6 * * * /usr/bin/python3 $HORIZON_SYSTEM/sbin/horizon_aios_monitor_analyze.py --syslog
+</code></pre>
+<p><strong>Note on read detection:</strong> The monitor and analyzer detect file <em>changes</em>
+(writes/creates/deletes). Detecting unauthorized <em>reads</em> requires OS-level
+audit (<code>auditd</code> with <code>IN_ACCESS</code> on Linux; Windows Security Audit / Object
+Access Auditing). Enabling OS audit is optional, outside the AIOS scope, and
+documented in your OS vendor's security hardening guides.</p>
+<hr />
+<h2 id="logging-coverage-and-existing-infrastructure">Logging Coverage and Existing Infrastructure</h2>
+<p>The built-in monitor covers write detection on AIOS system directories. Everything it does not cover — read detection, brain-internal activity, network access, process-level audit — is already handled by standard infrastructure-level logging tools: <code>auditd</code>, Windows Security Audit, EDR agents, network flow collectors. Those tools are not absent; they are already running in any environment with a baseline security posture.</p>
+<p>What they need to cover the AIOS is the same thing they need for any new application onboarded into a secure environment: <strong>an understanding of which files and directories are significant.</strong> For AIOS, that is:</p>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Why it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>$HORIZON_SYSTEM/</code></td>
+<td>The AIOS system layer — changes here are integrity events</td>
+</tr>
+<tr>
+<td><code>$HORIZON_SYSTEM/sbin/</code> and <code>skills_sbin/</code></td>
+<td>Owner-only privileged tooling</td>
+</tr>
+<tr>
+<td><code>$HORIZON_SYSTEM/logs/</code></td>
+<td>The audit log directory itself</td>
+</tr>
+<tr>
+<td><code>$HORIZON_ROOT/.claude/</code></td>
+<td>OS-layer harness configuration</td>
+</tr>
+<tr>
+<td><code>$HORIZON_ROOT/brains/</code></td>
+<td>Brain workspace root — structural changes (account created, deleted, renamed)</td>
+</tr>
+<tr>
+<td><code>brains/&lt;name&gt;/</code></td>
+<td>Individual brain workspace — if brain-level audit is required</td>
+</tr>
+</tbody>
+</table>
+<p>Point your existing tooling at these paths with the same rules you use for any sensitive application directory. No AIOS-specific integration is needed beyond that. The onboarding effort is the same as bringing any new service into your logging pipeline.</p>
+<hr />
+<h2 id="modifying-or-disabling-the-monitor">Modifying or Disabling the Monitor</h2>
+<p>To extend the default watched paths, log destination, or behavior, edit <code>$HORIZON_ETC/aios_monitor.conf</code> (see <em>Configuration File</em> above) or pass CLI flags. No script changes are needed for common customizations.</p>
+<p>To disable monitoring entirely: remove or disable the scheduled task / systemd service. The scripts will not run on their own.</p>
+<pre><code class="language-powershell"># Windows — disable
+Unregister-ScheduledTask -TaskName &quot;AIOSMonitor&quot; -Confirm:$false
+Unregister-ScheduledTask -TaskName &quot;AIOSMonitorAnalyzer&quot; -Confirm:$false
+</code></pre>
+<pre><code class="language-sh"># Linux — disable
+sudo systemctl disable --now aios-monitor
+</code></pre>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "search.suggest", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

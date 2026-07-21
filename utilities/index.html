@@ -1,0 +1,3613 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for Horizon AIOS — a centralized, syncable AI operating-system config layer.">
+      
+      
+      
+      
+        <link rel="prev" href="../skills/">
+      
+      
+        <link rel="next" href="../sync_setup/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Utilities Reference - Horizon AIOS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#horizon-aios-utilities-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Horizon AIOS" class="md-header__button md-logo" aria-label="Horizon AIOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Horizon AIOS
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Utilities Reference
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../getting_started/getting_started.index/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../user_guides/user_guides.index/" class="md-tabs__link">
+          
+  
+  
+  User Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../system/system.index/" class="md-tabs__link">
+          
+  
+  
+  System
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../deployment/deployment.index/" class="md-tabs__link">
+          
+  
+  
+  Deployment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../security/security.index/" class="md-tabs__link">
+          
+  
+  
+  Security
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../authoring/authoring.index/" class="md-tabs__link">
+          
+  
+  
+  Authoring
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../build_decisions/build_decisions.index/" class="md-tabs__link">
+          
+  
+  
+  Build Decisions
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../development_tools/development_tools.index/" class="md-tabs__link">
+          
+  
+  
+  Development Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../philosophy/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Horizon AIOS" class="md-nav__button md-logo" aria-label="Horizon AIOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Horizon AIOS
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting_started/getting_started.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting_started/ReadMeToSetupYourSystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting_started/dependencies_and_footprint/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dependencies & Footprint
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting_started/updating/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Updating
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting_started/lifecycle_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lifecycle Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user_guides/user_guides.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user_guides/using_your_aios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using Your AIOS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user_guides/using_Horizon.AIOS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using Horizon.AIOS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user_guides/deployment_howtos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment How-Tos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    System
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system/system.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system/aios_options_packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Options Packages
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system/aios_switching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AIOS Switching
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system/distribution_and_updates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Distribution & Updates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system/memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system/system_configuration_reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system/model_preferences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Preferences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system/agent_teams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Teams
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system/skill_model_groups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skill Model Groups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system/uninstall/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Uninstall
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/deployment.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/desktop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Desktop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/multi_brain_deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Brain Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/brain_automation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Brain Automation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Security
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/security.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/audit_logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit Logging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/brain_isolation_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Brain Isolation Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security_architecture_invariants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security Architecture Invariants
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Authoring
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../authoring/authoring.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../authoring/claude_md_authoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLAUDE.md Authoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build Decisions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Build Decisions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build_decisions/build_decisions.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build_decisions/architecture_decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Tools
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development_tools/development_tools.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development_tools/consistency_checks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consistency Checks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development_tools/windows_install_switch_uninstall_test_prompt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Windows Install/Switch/Uninstall Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../philosophy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Philosophy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev_values/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Values
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development_pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../context_loading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Context Loading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../model_prefs_details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Preferences Details
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utilities Reference
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utilities Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context_costpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        context_cost.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_doctorpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_doctor.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_monitorpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_monitor.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_hardenpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_harden.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_acl_posturepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_acl_posture.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_maintain_logspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_maintain_logs.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_brain_credentialpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_brain_credential.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_switchpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_switch.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_relocatepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_relocate.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#uninstallps1-uninstallsh" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        uninstall.ps1 / uninstall.sh
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_register_user_skillspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_register_user_skills.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_create_brainpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_create_brain.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_remove_brainpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_remove_brain.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_brain_logon_rightspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_brain_logon_rights.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_verify_isolationpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_verify_isolation.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_syncpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_sync.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_setup_sync_schedulepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_setup_sync_schedule.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_setup_maintenance_schedulepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_setup_maintenance_schedule.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_nightly_maintenancepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_nightly_maintenance.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_redirect_memorypy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_redirect_memory.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_backup_user_datapy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_backup_user_data.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_monitor_analyzepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_monitor_analyze.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#monitor_statuspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        monitor_status.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resolve_agent_teamspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        resolve_agent_teams.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resolve_soundpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        resolve_sound.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sync_setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sync Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cloud_sync_exclusions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloud Sync Exclusions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tested_configurations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tested Configurations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../terseness_contract_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Terseness Contract Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../branding_invariants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Branding Invariants
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context_costpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        context_cost.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_doctorpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_doctor.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_monitorpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_monitor.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_hardenpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_harden.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_acl_posturepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_acl_posture.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_maintain_logspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_maintain_logs.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_brain_credentialpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_brain_credential.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_switchpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_switch.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_relocatepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_relocate.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#uninstallps1-uninstallsh" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        uninstall.ps1 / uninstall.sh
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_register_user_skillspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_register_user_skills.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_create_brainpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_create_brain.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_remove_brainpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_remove_brain.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_brain_logon_rightspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_brain_logon_rights.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_verify_isolationpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_verify_isolation.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_syncpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_sync.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_setup_sync_schedulepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_setup_sync_schedule.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_setup_maintenance_schedulepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_setup_maintenance_schedule.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_nightly_maintenancepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_nightly_maintenance.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_redirect_memorypy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_redirect_memory.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_backup_user_datapy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_backup_user_data.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#horizon_aios_monitor_analyzepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        horizon_aios_monitor_analyze.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#monitor_statuspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        monitor_status.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resolve_agent_teamspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        resolve_agent_teams.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resolve_soundpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        resolve_sound.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="horizon-aios-utilities-reference">Horizon AIOS — Utilities Reference</h1>
+<p>Most utilities here live in <code>$HORIZON_SYSTEM/sbin/</code> and are
+administrative: they operate on the AIOS layer itself — hardening its
+permissions, monitoring its integrity, maintaining its logs, provisioning brain
+accounts and credentials, syncing upstream, and wiring its configuration. They
+run as the primary OS user or elevated (Administrator/root) and are excluded
+from brain accounts by explicit Deny ACLs enforced by <code>horizon_aios_harden.py</code>. A few
+unprivileged helpers in <code>$HORIZON_SYSTEM/bin/</code> (readable by brains) are also
+catalogued where they are useful to invoke directly.</p>
+<p>Several utilities are surfaced as Claude skills — when invoked through a skill,
+Claude drives the script with appropriate arguments and interprets the output.
+The scripts also work standalone from any shell.</p>
+<hr />
+<h2 id="context_costpy">context_cost.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/bin/context_cost.py</code></p>
+<p>Measures the Claude Code harness context overhead (token count, word count,
+KB) contributed by <code>CLAUDE.md</code>, <code>CLAUDE.local.md</code>, <code>agents.md</code>, and all
+<code>@</code>-imports that the harness would load for a given path. It walks the ancestor
+chain from the target directory up to the filesystem root and includes
+<code>~/.claude/</code> as the global config layer, matching the harness's own lookup
+order.</p>
+<p><strong>When to use it:</strong> When you want to know how much context a working directory
+costs before starting a session, or after adding or modifying <code>CLAUDE.md</code>
+files or <code>@</code>-imports to confirm the overhead stayed in budget (see
+<code>dev_values.md</code> §2 on token economy).</p>
+<p><strong>Key flags:</strong></p>
+<ul>
+<li><code>[path]</code> — file or directory to evaluate; defaults to CWD</li>
+<li><code>--json</code> — emit machine-readable JSON instead of the summary table</li>
+</ul>
+<p><strong>Referenced by a skill?</strong> Yes — the <code>context-cost</code> skill.</p>
+<hr />
+<h2 id="horizon_aios_doctorpy">horizon_aios_doctor.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/sbin/horizon_aios_doctor.py</code></p>
+<p>System health check. Verifies that the AIOS install is correctly bootstrapped:
+environment variables are set and point to real directories, the skills symlink
+(<code>~/.claude/skills/</code>) resolves to <code>skills_sbin/</code>, git hooks are installed, the
+local config file exists, the AIOS registry is valid and its active entry
+points to a real AIOS root, and ACLs on <code>sbin/</code>, <code>skills_sbin/</code>, and <code>logs/</code>
+include an explicit Deny for the <code>brains</code> group. The ACL checks read the same
+config-driven posture the enforcer applies (via <code>horizon_aios_acl_posture.py</code> /
+<code>file_acl_hardening.toml</code> + <code>.local</code> override), so verifier and enforcer can
+never disagree; the four <code>horizon_humans</code> self-service areas and their <code>shared/</code>
+drop-zones are verified from the same source. Also checks monitor status
+(advisory — a stopped monitor is a warning, not a failure).</p>
+<p><strong>When to use it:</strong> After initial bootstrap, after pulling an upstream update
+that touches the bootstrap sequence, or whenever something behaves unexpectedly
+and you need a quick status read.</p>
+<p><strong>Key flags:</strong></p>
+<ul>
+<li><code>--post-setup</code> — after the standard checks, run three post-install
+  verifications: a test sound through the canonical sound chokepoint
+  (<code>resolve_sound.py</code>), statusline command resolution, and git
+  <code>commit.gpgsign</code>. A muted sound config (<code>sounds_enabled</code> off) reports a
+  clean <code>[SKIP]</code> rather than a failure; the summary then reports a skipped
+  count alongside passed/warnings/failures.</li>
+</ul>
+<p>Exit semantics are unchanged by <code>--post-setup</code>: exit 1 if any check FAILs, 0
+otherwise (SKIP and WARN never fail the run).</p>
+<p><strong>Referenced by a skill?</strong> Yes — <code>/doctor</code>.</p>
+<hr />
+<h2 id="horizon_aios_monitorpy">horizon_aios_monitor.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/sbin/horizon_aios_monitor.py</code></p>
+<p>Filesystem integrity monitor. Watches the AIOS system directories for
+unexpected creates, modifies, deletes, and moves, and appends each event as a
+JSON line to a daily log file in <code>$HORIZON_SYSTEM/logs/horizon_aios_monitor/</code>. The
+default watch set covers <code>$HORIZON_SYSTEM</code> (recursive), <code>$HORIZON_USRBIN</code>
+(recursive), <code>$HORIZON_ROOT/.claude</code> (recursive), <code>$HORIZON_ROOT</code> top-level
+(non-recursive), and the brains root (non-recursive, structural changes only).
+Brain home contents are excluded by default; opt in with <code>--brain-dirs</code>.</p>
+<p>Runs as the administrative context. Brain accounts must not have write access
+to the log directory — <code>horizon_aios_harden.py</code> enforces this.</p>
+<p><strong>When to use it:</strong> Run it as a persistent background process (or service) on
+any installation where audit logging is required. For full setup instructions
+and log consumption guidance see <code>$HORIZON_DOCS/security/audit_logging.md</code>.</p>
+<p><strong>Key flags:</strong></p>
+<ul>
+<li><code>--watch PATH</code> — add an extra path to watch recursively (repeatable; additive)</li>
+<li><code>--brain-dirs</code> — escalate brains-root watch to recursive (logs brain internals)</li>
+<li><code>--no-brains-root</code> — disable the default brains-root watch</li>
+<li><code>--config PATH</code> — config file (default: <code>$HORIZON_ETC/aios_monitor.conf</code>)</li>
+<li><code>--log-dir PATH</code> — log directory (default: <code>$HORIZON_SYSTEM/logs/horizon_aios_monitor/</code>)</li>
+</ul>
+<p><strong>Referenced by a skill?</strong> Yes — <code>/monitor</code>.</p>
+<hr />
+<h2 id="horizon_aios_hardenpy">horizon_aios_harden.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/sbin/horizon_aios_harden.py</code></p>
+<p>Applies the authoritative AIOS ACL posture. The posture is <strong>config-driven</strong>:
+it is declared as abstract-intent rules in <code>$HORIZON_ETC/file_acl_hardening.toml</code>
+(shipped default) deep-merged with the gitignored
+<code>$HORIZON_ETC/file_acl_hardening.local.toml</code> (deployer override, local wins), and
+translated to the native mechanism per OS by the shared
+<code>horizon_aios_acl_posture.py</code> engine — <code>icacls</code> (Windows), <code>setfacl</code> (Linux),
+<code>chmod +a</code> (macOS). The posture grants the <code>brains</code> group Read+Execute on <code>bin/</code>
+and <code>skills_bin/</code>, a broad no-write Deny across <code>$HORIZON_SYSTEM</code>, and an explicit
+full Deny on <code>sbin/</code>, <code>skills_sbin/</code>, and <code>logs/</code>; it also enforces the
+<code>horizon_humans</code> self-service isolation on the four human areas (<code>projects/</code>,
+<code>handoffs/</code>, <code>objectives/</code>, <code>usrbin/</code>) plus each area's group-shared <code>shared/</code>
+drop-zone. If the config is missing or corrupt the engine FAILs SECURE to an
+embedded copy of the shipped posture, so hardening never silently no-ops.
+Requires Administrator/root. Run by bootstrap (Section 9); re-run after structural
+changes to <code>$HORIZON_SYSTEM</code>. Customize the stance by editing
+<code>file_acl_hardening.local.toml</code>, never the tracked default (the sync reclaims it).</p>
+<p><strong>When to use it:</strong> Initial bootstrap, after adding or removing directories
+under <code>$HORIZON_SYSTEM</code>, or when <code>horizon_aios_doctor.py</code> reports a missing Deny ACE.</p>
+<p><strong>Key flags:</strong></p>
+<ul>
+<li><code>--strict</code> — additionally strip inherited ACEs (Windows: <code>/inheritance:r</code>;
+  Unix: <code>chown -R</code> + mode bits) for a locked-down standalone install; default
+  (additive) preserves existing ACLs and enforces the model by adding ACEs only</li>
+<li><code>--dry-run</code> — print every action that would be taken without executing anything</li>
+<li><code>--horizon-root PATH</code> — explicit root path; otherwise derived from the
+  script's own location</li>
+</ul>
+<p><strong>Referenced by a skill?</strong> No.</p>
+<hr />
+<h2 id="horizon_aios_acl_posturepy">horizon_aios_acl_posture.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/sbin/horizon_aios_acl_posture.py</code></p>
+<p>The shared ACL-posture engine consumed by <strong>both</strong> <code>horizon_aios_harden.py</code>
+(apply) and <code>horizon_aios_doctor.py</code> (verify), so enforcer and verifier can never
+disagree about the stance. It (1) loads the shipped default
+<code>$HORIZON_ETC/file_acl_hardening.toml</code>, (2) deep-merges the gitignored deployer
+override <code>$HORIZON_ETC/file_acl_hardening.local.toml</code> over it keyed by rule/group
+<code>name</code> (local wins; <code>disabled = true</code> drops a rule), (3) FAILs SECURE to an
+embedded copy of the shipped posture if the default is missing/corrupt or
+<code>tomllib</code> is unavailable, and (4) translates each abstract-intent rule to native
+ops per OS — <code>setfacl</code> (Linux), <code>chmod +a</code> (macOS), <code>icacls</code> with OWNER RIGHTS
+<code>S-1-3-4</code> for child isolation (Windows). Not normally run directly; it is a
+library. Standalone it offers a self-check and a translated-command dump for
+review.</p>
+<p><strong>Key flags:</strong></p>
+<ul>
+<li><code>--self-check</code> — verify the embedded fail-secure fallback still matches the
+  shipped <code>file_acl_hardening.toml</code>, then exit (non-zero on drift)</li>
+<li><code>--os {Linux,Darwin,Windows}</code> — force an OS for the translated-command dump
+  (defaults to the host OS)</li>
+<li><code>--owner NAME</code> — owner principal used in the Windows dump</li>
+<li><code>--horizon-root PATH</code> — explicit root; otherwise derived from the script's
+  own location</li>
+</ul>
+<p><strong>Referenced by a skill?</strong> No (indirectly, via <code>/harden</code> and <code>/doctor</code>, which
+drive the two consumers).</p>
+<hr />
+<h2 id="horizon_aios_maintain_logspy">horizon_aios_maintain_logs.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/sbin/horizon_aios_maintain_logs.py</code></p>
+<p>Prunes and rotates the AIOS log directory. Deletes log files older than the
+configured retention window (<code>AIOS_LOG_MAX_DAYS</code>, default 30 days), rotates
+oversized <code>.log</code> files (<code>AIOS_LOG_MAX_SIZE_MB</code>, default 10 MB) up to a
+configurable number of generations, and separately prunes the <code>handoffs/</code>
+directory by total size budget (<code>AIOS_HANDOFFS_MAX_SIZE_MB</code>, default 500 MB)
+and the <code>objectives/</code> directory by age (<code>AIOS_OBJECTIVES_MAX_DAYS</code>, default 90
+days). All thresholds are read from <code>$HORIZON_ETC/aios_local.conf</code> and can be
+set to <code>0</code> to disable that category. Requires Administrator/root because it
+modifies ACL-protected log paths.</p>
+<p><strong>When to use it:</strong> Schedule as a recurring task (e.g., weekly) to prevent
+unbounded log growth. Also run manually after a prolonged monitor run or before
+a disk-space-sensitive operation.</p>
+<p><strong>Key flags:</strong> None — all configuration is in <code>aios_local.conf</code>.</p>
+<p><strong>Referenced by a skill?</strong> No.</p>
+<hr />
+<h2 id="horizon_aios_brain_credentialpy">horizon_aios_brain_credential.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/sbin/horizon_aios_brain_credential.py</code></p>
+<p>Manages brain OS-account passwords in the native OS keystore (Windows
+Credential Manager, macOS Keychain, Linux Secret Service via the <code>keyring</code>
+library). Provides CLI commands to store, retrieve, rotate, delete, and list
+brain credentials. <code>rotate</code> generates a cryptographically random 64-character
+password, updates the OS account, and stores the new value in the keystore
+atomically. Requires Administrator/root. Also importable as a library
+(<code>from brain_credential import store_password</code>) for use by <code>horizon_aios_create_brain.py</code>
+during provisioning.</p>
+<p><strong>When to use it:</strong> After creating a brain account, when rotating credentials
+per policy, or when recovering a stored password (use <code>get --show</code> with
+caution).</p>
+<p><strong>Key flags:</strong></p>
+<ul>
+<li><code>get &lt;brain-name&gt; [--show]</code> — retrieve credential; masked unless <code>--show</code></li>
+<li><code>rotate &lt;brain-name&gt;</code> — generate and store a new password</li>
+<li><code>delete &lt;brain-name&gt;</code> — remove credential from keystore</li>
+<li><code>list</code> — list brain names with stored credentials (backend-dependent)</li>
+</ul>
+<p><strong>Referenced by a skill?</strong> No.</p>
+<hr />
+<h2 id="horizon_aios_switchpy">horizon_aios_switch.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/sbin/horizon_aios_switch.py</code></p>
+<p>Switches the local machine's Claude Code harness configuration to point at a
+different named Horizon AIOS install. A machine is normally bound to one AIOS
+by five pointers (environment variables, <code>~/.claude/CLAUDE.md</code>, the skills
+symlink, <code>settings.json</code> hooks, and the sync schedule). This tool rewrites the
+volatile three — env snippet (<code>~/.horizon/active_env.{ps1,sh}</code>),
+<code>~/.claude/CLAUDE.md</code>, and the <code>~/.claude/skills/</code> symlink — while leaving
+<code>settings.json</code> stable by routing it through AIOS-independent wrapper scripts
+in <code>~/.horizon/bin/</code>. The registry at <code>~/.horizon/aios_registry.json</code> records
+all known AIOS installs and the active one; it self-heals if missing.</p>
+<p><strong>When to use it:</strong> When running more than one AIOS install on the same machine
+(e.g., a dev fork alongside a production install) and switching which one the
+harness uses. Also used during initial bootstrap (<code>init</code> subcommand) to
+generate the env snippets and wrapper scripts for the first time.</p>
+<p><strong>Key flags (subcommands):</strong></p>
+<ul>
+<li><code>list</code> — show all registered AIOSs; active marked with <code>*</code></li>
+<li><code>current</code> — print the active AIOS name and root</li>
+<li><code>init</code> — register this tree and generate env/wrappers (bootstrap entry point)</li>
+<li><code>register &lt;name&gt; &lt;path&gt;</code> — add or replace a named AIOS in the registry</li>
+<li><code>unregister &lt;name&gt;</code> — remove a registration (files untouched)</li>
+<li><code>switch &lt;name&gt; [--dry-run]</code> — repoint all pointers to the named AIOS</li>
+<li><code>setup [--yes]</code> — one-shot new-machine installer: orchestrates the full setup
+  procedure (preflight, root resolution, profile line, bootstrap, git identity,
+  local settings, model prefs, doctor <code>--post-setup</code> gate); unprivileged and
+  idempotent. See <code>$HORIZON_DOCS/getting_started/ReadMeToSetupYourSystem.md</code>.</li>
+<li><code>uninstall [--dry-run] [--yes]</code> — delegate to <code>uninstall.ps1</code> / <code>uninstall.sh</code>
+  to remove the bootstrap footprint (a real removal must be run elevated;
+  <code>--dry-run</code> previews and needs none)</li>
+</ul>
+<p>Short-form commands are available once <code>$HORIZON_BIN</code> is on PATH (bootstrap
+adds it): <code>aios switch home</code>, <code>aios list</code>, etc. The wrappers <code>aios</code> (bash)
+and <code>aios.ps1</code> (PowerShell) in <code>$HORIZON_BIN</code> delegate to this script and
+derive their path from their own location, so they work from any AIOS root.</p>
+<p><strong>Referenced by a skill?</strong> No. See <code>$HORIZON_DOCS/system/aios_switching.md</code>
+for the full switching guide.</p>
+<hr />
+<h2 id="horizon_aios_relocatepy">horizon_aios_relocate.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/sbin/horizon_aios_relocate.py</code></p>
+<p>Updates the machine-local instance pointers when an AIOS install is moved to a
+new root path (e.g., <code>C:\devroot</code> → <code>D:\aios</code>). Auto-detects the old root from
+<code>~/.horizon/aios_registry.json</code> and rewrites it in: the registry, <code>active_env.{ps1,sh}</code>,
+<code>~/.claude/CLAUDE.md</code>, and (if present) <code>aios_local.conf</code>. Framework source
+files are deliberately left alone — they derive <code>HORIZON_*</code> from their own
+location, not from hardcoded paths. Also detects if the <code>~/.claude/skills</code>
+symlink needs re-pointing and prints the exact <code>horizon_aios_switch.py</code> command
+to fix it.</p>
+<p><strong>Safety:</strong> dry-run is the <strong>default</strong>. Run without <code>--apply</code> first to preview
+every change. Pass <code>--apply</code> only when the output looks correct.</p>
+<p><strong>When to use it:</strong> After physically moving or renaming the AIOS root directory,
+to update all machine-local pointers in one step instead of manually editing
+each file.</p>
+<p><strong>Key flags:</strong></p>
+<ul>
+<li><code>--new-root PATH</code> — target root the install now lives at (default: the root
+  derived from the script's own location, so running it from the new location
+  auto-detects the target)</li>
+<li><code>--old-root PATH</code> — override old root detection (default: read from registry)</li>
+<li><code>--apply</code> — write changes; without this flag the tool runs in dry-run mode</li>
+<li><code>--home PATH</code> — override home directory for locating <code>~/.horizon/</code> and <code>~/.claude/</code></li>
+</ul>
+<p><strong>Referenced by a skill?</strong> No.</p>
+<hr />
+<h2 id="uninstallps1-uninstallsh">uninstall.ps1 / uninstall.sh</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/sbin/uninstall.ps1</code> (Windows) / <code>$HORIZON_SYSTEM/sbin/uninstall.sh</code> (Linux/macOS)</p>
+<p>Section-by-section mirror of <code>bootstrap.ps1</code> / <code>bootstrap.sh</code> — reverses every
+configuration bootstrap wrote. Requires Administrator (Windows) or root (Linux/macOS)
+because ACL reversal needs elevation.</p>
+<p>Removes: skills symlink (<code>~/.claude/skills/</code>), CLAUDE.md redirect, active-env
+snippets, aios-exec wrappers, AIOS registry, <code>aios_local.conf</code>, <code>.git/hooks/commit-msg</code>
+and <code>pre-commit</code>, <code>core.hooksPath</code> git config, system PATH entry
+(<code>$HORIZON_BIN</code> from Machine-scope PATH on Windows; <code>/etc/profile.d/horizon_aios.sh</code>
+and <code>/etc/paths.d/horizon-aios</code> on Linux/macOS), <code>$HORIZON_SYSTEM/logs/</code> /
+<code>handoffs/</code> / <code>objectives/</code> if empty, brains-group ACEs from <code>$HORIZON_SYSTEM</code>
+subtrees, and the on-by-default nightly maintenance schedule (best-effort, via
+<code>horizon_aios_setup_maintenance_schedule.py --remove</code>). Offers optional deletion of
+<code>~/.claude/settings.json</code>.</p>
+<p>Emits <code>[MANUAL]</code> advisories for the steps that cannot be automated: shell profile
+line, global gitconfig <code>include.path</code>, sync schedule/cron, <code>brains</code> OS group, and
+brain user accounts.</p>
+<p>Does <strong>not</strong> delete the AIOS repo, brain home directories, or non-empty user data.</p>
+<p><strong>When to use it:</strong> When decommissioning AIOS from a machine.</p>
+<p><strong>Invocation:</strong> Run <code>aios uninstall [--dry-run] [--yes]</code> (delegates to the platform
+script via <code>horizon_aios_switch.py</code>), or invoke the script directly. A real removal must be
+run elevated; <code>--dry-run</code> needs no elevation.</p>
+<p><strong>Key flags (both scripts):</strong></p>
+<ul>
+<li><code>--dry-run</code> — preview every action without making any changes (no elevation needed)</li>
+<li><code>--yes</code> / <code>-y</code> — skip interactive confirmations (non-interactive)</li>
+</ul>
+<p>Unknown arguments are rejected (exit code 2) rather than silently ignored.</p>
+<p><strong>Referenced by a skill?</strong> No. See <code>$HORIZON_DOCS/system/aios_switching.md</code> §Uninstalling.</p>
+<hr />
+<h2 id="horizon_aios_register_user_skillspy">horizon_aios_register_user_skills.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/sbin/horizon_aios_register_user_skills.py</code></p>
+<p>Aggregates the owner's complete skill view into <code>skills_sbin/</code> by creating
+per-skill symlinks for skills from two sources:
+<code>$HORIZON_SYSTEM/skills_bin/</code> (brain-tier skills tracked in the OS repo) and
+<code>$HORIZON_USRBIN/usr_skills/</code> (machine-local owner skills, gitignored). Skills
+from both sources appear flat alongside the native <code>skills_sbin/</code> skills that
+<code>~/.claude/skills/</code> already exposes. The script is idempotent: stale links are
+pruned, existing correct links are left in place, and a native OS skill of the
+same name always takes precedence over an aggregated link.</p>
+<p><strong>When to use it:</strong> After an upstream sync that adds or removes skills in
+<code>skills_bin/</code>, after creating a machine-local skill in <code>usr_skills/</code>, or
+whenever the <code>/resync-user-skills</code> skill reports drift.</p>
+<p><strong>Key flags:</strong></p>
+<ul>
+<li><code>--dry-run</code> — print what would change without modifying anything</li>
+<li><code>--check</code> — report drift and exit 1 if out of sync; exit 0 if clean (used
+  by the <code>/resync-user-skills</code> skill's check mode)</li>
+</ul>
+<p><strong>Referenced by a skill?</strong> Yes — the <code>resync-user-skills</code> skill.</p>
+<hr />
+<h2 id="horizon_aios_create_brainpy">horizon_aios_create_brain.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py</code></p>
+<p>Provisions a new AI brain: creates the <code>&lt;brain-name&gt;</code> OS user, the shared
+<code>brains</code> group (Read+Execute on <code>bin/</code> and <code>skills_bin/</code>) and a per-brain group
+(<code>&lt;brain-name&gt;_group</code> on Windows to avoid the shared user/group namespace;
+<code>&lt;brain-name&gt;</code> on Linux/macOS), the workspace at <code>$HORIZON_ROOT/brains/&lt;brain-name&gt;/</code>,
+and a login shell profile that exports the <code>HORIZON_*</code> vars and cds into the
+brain folder. The account password is auto-generated (random 64-char) and stored
+in the OS native keystore via <code>horizon_aios_brain_credential.py</code>. The <code>sbin/skills_sbin/logs</code>
+Deny ACEs are always (re)applied after all grants, per the security invariants.
+Requires Administrator/root; stdlib only (Python 3.6+).</p>
+<p><strong>When to use it:</strong> When standing up a new isolated brain account.</p>
+<p><strong>Key flags:</strong></p>
+<ul>
+<li><code>&lt;brain-name&gt;</code> — required positional name (lowercase, <code>[a-z][a-z0-9_]{1,31}</code>)</li>
+<li><code>--horizon-root PATH</code> — explicit root; otherwise derived from script location</li>
+<li><code>--dry-run</code> — print every action without making changes</li>
+</ul>
+<p><strong>Referenced by a skill?</strong> No.</p>
+<hr />
+<h2 id="horizon_aios_remove_brainpy">horizon_aios_remove_brain.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/sbin/horizon_aios_remove_brain.py</code></p>
+<p>Deprovisioning counterpart to <code>horizon_aios_create_brain.py</code>. Removes a brain's OS user
+account, its per-brain group (<code>&lt;brain-name&gt;_group</code> on Windows, <code>&lt;brain-name&gt;</code> on
+Linux/macOS), its workspace folder, its user-profile config
+(including the <code>~/.claude/skills</code> symlink, deleted as a reparse point so the
+<code>skills_bin</code> target is never followed), and its stored credential. The
+shared <code>brains</code> group is left intact. Validates the name and refuses reserved
+names (brains, root/administrator, the invoking user, etc.). Requires
+Administrator/root.</p>
+<p><strong>When to use it:</strong> When retiring a brain account created by <code>horizon_aios_create_brain.py</code>.</p>
+<p><strong>Key flags:</strong></p>
+<ul>
+<li><code>&lt;brain-name&gt;</code> — required positional name</li>
+<li><code>--horizon-root PATH</code> — explicit root; otherwise derived from script location</li>
+<li><code>--yes</code> — skip the confirmation prompt</li>
+<li><code>--dry-run</code> — print what would be removed without changing anything</li>
+</ul>
+<p><strong>Referenced by a skill?</strong> No.</p>
+<hr />
+<h2 id="horizon_aios_brain_logon_rightspy">horizon_aios_brain_logon_rights.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/sbin/horizon_aios_brain_logon_rights.py</code></p>
+<p>Surgical helper for the opt-in brain <em>automation</em> tiers: grants, revokes, or
+queries a single Windows LSA logon right on one brain account via
+<code>LsaAddAccountRights</code> / <code>LsaRemoveAccountRights</code> / <code>LsaEnumerateAccountRights</code>,
+touching nothing else in local security policy (mirrors the additive-ACL model
+in <code>horizon_aios_harden.py</code>). <code>SeBatchLogonRight</code> ("Log on as a batch job") backs the
+<code>scheduled</code> tier; <code>SeServiceLogonRight</code> is reserved for a future <code>daemon</code> tier.
+Normally invoked for you by <code>horizon_aios_create_brain.py --automation scheduled</code> and revoked
+by <code>horizon_aios_remove_brain.py</code> on teardown; use it directly only for manual right
+management. <strong>Windows only</strong> (no-op/NotImplementedError elsewhere). Requires
+elevation. See <code>$HORIZON_DOCS/deployment/brain_automation.md</code>.</p>
+<p><strong>When to use it:</strong> To grant, check, or revoke a brain's logon right by hand
+(e.g. the reserved service tier) outside the normal <code>--automation</code> flow.</p>
+<p><strong>Key flags:</strong></p>
+<ul>
+<li><code>grant|check|revoke &lt;brain&gt;</code> — the action and target account</li>
+<li><code>--right NAME</code> — target a specific LSA right (default <code>SeBatchLogonRight</code>)</li>
+</ul>
+<p><strong>Referenced by a skill?</strong> No. See <code>$HORIZON_DOCS/deployment/brain_automation.md</code>.</p>
+<hr />
+<h2 id="horizon_aios_verify_isolationpy">horizon_aios_verify_isolation.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/sbin/horizon_aios_verify_isolation.py</code></p>
+<p>Verifies the central AIOS isolation claim — a brain OS account can read
+<code>$HORIZON_BIN</code> but is denied <code>$HORIZON_SYSTEM/sbin</code> (verification criterion #5).
+Runs in two modes. <strong>Default (safe)</strong> is non-destructive and needs no elevation:
+it confirms the static ACL posture — an explicit, non-inherited <code>brains</code> Deny on
+<code>sbin</code>/<code>skills_sbin</code>/<code>logs</code> (Windows, via <code>Get-Acl</code>, the same check
+<code>horizon_aios_doctor.py</code> makes) or owner-only mode <code>0o700</code> (Unix). <strong>Live mode
+(<code>--live</code>)</strong> is the opt-in, elevated, destructive proof: it provisions a throwaway
+brain, logs on <em>as</em> that brain to empirically read <code>bin</code> (expect OK) and <code>sbin</code>
+(expect denied), then removes it. Because live mode adds and deletes an OS user
+and requires Administrator/root, the account-touching behaviour is gated behind
+<code>--live</code>; the default does nothing to user accounts. Windows is fully
+implemented and verified; Linux/macOS have the safe check and a live-probe
+framework (<code>runuser</code>/<code>su</code>/<code>sudo -u</code>) not yet validated on real hardware.</p>
+<p><strong>When to use it:</strong> Quick, safe re-confirmation that hardening is intact (default
+mode, any time); or the full empirical isolation proof on a test machine when
+validating a fresh install or change (<code>--live</code>, elevated). Useful to contributors
+validating the security model.</p>
+<p><strong>Key flags:</strong></p>
+<ul>
+<li><em>(none)</em> — default safe ACL check, non-destructive, no elevation</li>
+<li><code>--live</code> — opt-in: provision a throwaway brain, run the as-the-brain probe,
+  remove it (requires elevation)</li>
+<li><code>--brain-name NAME</code> — throwaway account name for <code>--live</code> (default <code>aios_isotest</code>)</li>
+<li><code>--keep</code> — <code>--live</code>: leave the brain provisioned for inspection</li>
+<li><code>--yes</code> / <code>-y</code> — skip the <code>--live</code> confirmation prompt</li>
+<li><code>--dry-run</code> — print what <code>--live</code> would do without changing anything</li>
+<li><code>--horizon-root PATH</code> — explicit root; otherwise derived from script location</li>
+</ul>
+<p><strong>Referenced by a skill?</strong> No. See <code>$HORIZON_DOCS/security/brain_isolation_test.md</code>.</p>
+<hr />
+<h2 id="horizon_aios_syncpy">horizon_aios_sync.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/sbin/horizon_aios_sync.py</code></p>
+<p>Pulls AIOS updates into the local tree via a <strong>two-lane sync</strong>. Reads sync
+settings from <code>$HORIZON_ETC/aios_local.conf</code>. The <strong>official lane</strong>
+(<code>AIOS_OFFICIAL_REMOTE</code> / <code>AIOS_OFFICIAL_BRANCH</code>) is authoritative: it OVERWRITES
+every path except <code>projects/</code>, <code>usrbin/</code>, <code>brains/</code> via a scoped hard-restore
+(<code>git checkout &lt;ref&gt; -- &lt;official paths&gt;</code>) and commits the result. The
+<strong>personal lane</strong> (<code>AIOS_PERSONAL_REMOTE</code> / <code>AIOS_PERSONAL_BRANCH</code>) covers exactly
+those three personal paths and is local-wins: it keeps local by default, allows a
+fast-forward-only advance with <code>SYNC_PERSONAL_FROM_REMOTE=yes</code>, and overwrites
+only under <code>--force-personal</code>. <code>SYNC_AIOS_FROM_REMOTE=no</code> disables both lanes.
+The deprecated <code>AIOS_REPO_REMOTE</code> / <code>AIOS_REPO_BRANCH</code> keys are honored as
+back-compat aliases mapped onto the official lane. Activity is logged to the
+configured AIOS log dir; after a sync the script re-registers machine-local user
+skills. Its automated commits pass <code>git commit --no-verify</code> to bypass the DCO
+<code>commit-msg</code> hook (machine housekeeping, not a human contribution). This is the
+script driven by the auto-sync scheduled task; run it manually to sync on demand.</p>
+<p><strong>When to use it:</strong> To pull the latest AIOS layer manually, or as the body of the
+scheduled sync job installed by <code>horizon_aios_setup_sync_schedule.py</code>.</p>
+<p><strong>Key flags:</strong></p>
+<ul>
+<li><code>--lane official | personal | both</code> — select which lane(s) to run (default
+  <code>both</code>).</li>
+<li><code>--force-personal</code> — DANGER: overwrite local <code>projects/</code>, <code>usrbin/</code>, <code>brains/</code>
+  from the personal remote (discards local personal changes).</li>
+<li><code>--status</code> — read-only health check: reports whether auto-sync is installed,
+  both lanes' configuration, and when it last ran/succeeded. Never triggers a
+  sync. (See <code>sync_setup.md</code> for the exit-code contract.)</li>
+<li><code>--help</code> — usage.</li>
+</ul>
+<p>Default (no flags) runs both lanes; all sync behaviour comes from
+<code>aios_local.conf</code>.</p>
+<p><strong>Referenced by a skill?</strong> No.</p>
+<hr />
+<h2 id="horizon_aios_setup_sync_schedulepy">horizon_aios_setup_sync_schedule.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/sbin/horizon_aios_setup_sync_schedule.py</code></p>
+<p>Installs (or updates) the recurring auto-sync job that runs <code>horizon_aios_sync.py</code>: a
+Windows Scheduled Task or a Unix cron entry. Reads the schedule settings
+(<code>AIOS_SYNC_FREQ</code>, <code>AIOS_SYNC_TIME</code>, …) from <code>$HORIZON_ETC/aios_local.conf</code> and
+registers the task accordingly. Requires the privilege needed to register a
+system task (Administrator/root).</p>
+<p><strong>When to use it:</strong> During bootstrap, or after changing the sync frequency/time
+in <code>aios_local.conf</code> and wanting the schedule re-registered.</p>
+<p><strong>Key flags:</strong></p>
+<ul>
+<li><code>--yes</code> — auto-confirm prompts (non-interactive install)</li>
+</ul>
+<p><strong>Referenced by a skill?</strong> No.</p>
+<hr />
+<h2 id="horizon_aios_setup_maintenance_schedulepy">horizon_aios_setup_maintenance_schedule.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/sbin/horizon_aios_setup_maintenance_schedule.py</code></p>
+<p>Installs (or removes) the <strong>nightly maintenance</strong> schedule that runs
+<code>horizon_aios_nightly_maintenance.py</code>: a Windows Scheduled Task
+(<code>HorizonAIOS_NightlyMaintenance</code>) or a Unix/macOS cron entry (marked
+<code># HorizonAIOS_NightlyMaintenance</code>), defaulting to ~03:00. Idempotent — the
+marker comment / fixed task name prevents duplicate installs on re-run. Requires
+the privilege needed to register a system task (Administrator/root). Installed
+on by default at onboarding; opt out with bootstrap's <code>--no-nightly</code> /
+<code>-NoNightly</code>.</p>
+<p><strong>When to use it:</strong> Automatically at bootstrap, or manually to (re-)install or
+uninstall the nightly job.</p>
+<p><strong>Key flags:</strong></p>
+<ul>
+<li><code>--yes</code> — auto-confirm prompts (non-interactive install)</li>
+<li><code>--time HH:MM</code> — override the nightly run time (default <code>03:00</code>)</li>
+<li><code>--remove</code> — uninstall the schedule (cron marker / scheduled task)</li>
+</ul>
+<p><strong>Referenced by a skill?</strong> No.</p>
+<hr />
+<h2 id="horizon_aios_nightly_maintenancepy">horizon_aios_nightly_maintenance.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/sbin/horizon_aios_nightly_maintenance.py</code></p>
+<p>The unattended runner invoked by the nightly maintenance schedule. Runs, in
+order and non-interactively: (1) <code>horizon_aios_doctor.py</code> to report drift
+(the pass/warn/fail summary is captured to the log; a non-zero doctor result is
+recorded but does <strong>not</strong> abort the run), then (2) <code>horizon_aios_harden.py</code> to
+re-assert the brains-group ACL / permission model (idempotent). Logs each step
+to <code>$HORIZON_SYSTEM/logs/horizon_aios_nightly_maintenance.log</code> (honouring
+<code>AIOS_LOG_DIR</code>). Safe to run repeatedly; exits 0 unless the runner itself errors.</p>
+<p><strong>When to use it:</strong> Automatically each night via the schedule; run manually
+(optionally <code>--dry-run</code>) to verify maintenance behaviour on demand.</p>
+<p><strong>Key flags:</strong></p>
+<ul>
+<li><code>--dry-run</code> — print the steps that would run without executing them</li>
+</ul>
+<p><strong>Referenced by a skill?</strong> No.</p>
+<hr />
+<h2 id="horizon_aios_redirect_memorypy">horizon_aios_redirect_memory.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/sbin/horizon_aios_redirect_memory.py</code></p>
+<p>Redirects the owner's harness per-project state — conversation transcripts and
+agent memory — into the AIOS by replacing <code>~/.claude/projects/</code> with a symlink
+to <code>$HORIZON_ROOT/memory/</code>, so the state is governed
+by the AIOS gitignore, sync-exclusion, and monitor rules. Backup-first and
+idempotent: it copies existing content to <code>~/.claude/projects.backup-&lt;timestamp&gt;</code>,
+<em>moves</em> it into the memory root (skipping name collisions), then links. Run with
+Claude Code CLOSED, then restart it. Brains are handled separately by
+<code>horizon_aios_create_brain.py</code>. See <code>$HORIZON_DOCS/system/memory.md</code>.</p>
+<p><strong>When to use it:</strong> Once on the owner's machine to bring harness memory under
+AIOS governance; safe to re-run (it no-ops if already linked).</p>
+<p><strong>Key flags:</strong></p>
+<ul>
+<li><code>--horizon-root PATH</code> — target root (default: <code>$HORIZON_ROOT</code>, else derived)</li>
+<li><code>--dry-run</code> — show actions, change nothing</li>
+<li><code>--no-backup</code> — skip the pre-migration safety copy</li>
+</ul>
+<p><strong>Referenced by a skill?</strong> No. See <code>$HORIZON_DOCS/system/memory.md</code>.</p>
+<hr />
+<h2 id="horizon_aios_backup_user_datapy">horizon_aios_backup_user_data.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/sbin/horizon_aios_backup_user_data.py</code></p>
+<p>Backs up your gitignored user data (<code>memory/</code>, <code>handoffs/</code>, <code>objectives/</code>) to
+<strong>your own</strong> git remote without ever editing the framework <code>.gitignore</code>. It
+force-adds the data paths into a temporary git index, builds a commit containing
+only those paths, and pushes it to a per-machine branch (<code>aios-backup/&lt;hostname&gt;</code>
+by default) — the working tree, staging area, and framework branch are never
+touched, so it is safe to run from an active session. <strong>Refuses</strong> to push to the
+public Horizon upstream (exit 2) to avoid publishing private transcripts. Reads
+<code>AIOS_BACKUP_REMOTE</code> / <code>AIOS_BACKUP_BRANCH</code> / <code>AIOS_BACKUP_PATHS</code> from
+<code>aios_local.conf</code>. See <code>$HORIZON_DOCS/system/distribution_and_updates.md</code>.</p>
+<p><strong>When to use it:</strong> To version-control your memory/handoffs/objectives on your
+own remote for backup and cross-machine awareness; manually or on a schedule.</p>
+<p><strong>Key flags:</strong></p>
+<ul>
+<li><code>--remote R</code> — git remote name or URL (or <code>AIOS_BACKUP_REMOTE</code>); required</li>
+<li><code>--branch B</code> — backup branch (default <code>aios-backup/&lt;host&gt;</code>)</li>
+<li><code>--paths P …</code> — paths to back up (default <code>memory handoffs objectives</code>)</li>
+<li><code>--message M</code> — commit message (default: timestamped)</li>
+<li><code>--dry-run</code> — show what would be backed up; do not commit or push</li>
+</ul>
+<p><strong>Referenced by a skill?</strong> No. See <code>$HORIZON_DOCS/system/distribution_and_updates.md</code>.</p>
+<hr />
+<h2 id="horizon_aios_monitor_analyzepy">horizon_aios_monitor_analyze.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/sbin/horizon_aios_monitor_analyze.py</code></p>
+<p>Reads the JSON-line logs produced by <code>horizon_aios_monitor.py</code>, summarizes file-change
+events and monitor uptime gaps, and appends a report to
+<code>$HORIZON_SYSTEM/logs/horizon_aios_security.log</code>. Can optionally forward alerts to the OS
+system log (syslog on Linux; Windows Event Log when <code>pywin32</code> is present). Meant
+to run as the administrative context on a schedule. See
+<code>$HORIZON_DOCS/security/audit_logging.md</code> for scheduling guidance.</p>
+<p><strong>When to use it:</strong> Periodically (e.g., daily) to triage monitor output into a
+single security log, or ad hoc to review recent integrity events.</p>
+<p><strong>Key flags:</strong></p>
+<ul>
+<li><code>--days N</code> — number of days back to analyze</li>
+<li><code>--log-dir PATH</code> — monitor log dir (default: <code>logs/horizon_aios_monitor/</code>)</li>
+<li><code>--security-log PATH</code> — output report path (default: <code>logs/horizon_aios_security.log</code>)</li>
+<li><code>--syslog</code> — also emit alerts to the OS system log</li>
+</ul>
+<p><strong>Referenced by a skill?</strong> No.</p>
+<hr />
+<h2 id="monitor_statuspy">monitor_status.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/bin/monitor_status.py</code></p>
+<p>Tiny status probe: reports whether a <code>horizon_aios_monitor.py</code> process is currently
+running. Prints <code>running</code>, <code>stopped</code>, or <code>unknown</code>. Cross-platform (CIM query on
+Windows, <code>pgrep</code> on Unix). Used by <code>horizon_aios_doctor.py</code> and the status line to surface
+monitor health without requiring elevation.</p>
+<p><strong>When to use it:</strong> For a quick check that the integrity monitor is up.</p>
+<p><strong>Key flags:</strong> None.</p>
+<p><strong>Referenced by a skill?</strong> No.</p>
+<hr />
+<h2 id="resolve_agent_teamspy">resolve_agent_teams.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/bin/resolve_agent_teams.py</code></p>
+<p>Resolves the Agent Teams in effect for a given path. Walks the scope cascade from
+the path up to <code>$HORIZON_ROOT</code>, reads the shipped <code>agent_teams.md</code> plus every
+machine-local <code>local.agent_teams.md</code> override (root, <code>.claude/</code>, and any
+project/brain/subfolder scope), and reports each source with its team names — in
+<code>--json</code>, also each team's roles, model groups, and loop flag — plus the resolved
+set (most-specific scope wins; same-name overrides shipped, new names unioned).
+Only definition files are read; a file merely named <code>agent_teams.md</code> elsewhere
+(e.g. the doc under <code>documentation/</code>) is excluded.</p>
+<p><strong>When to use it:</strong> The deterministic discovery behind a bare <code>/agent-teams</code> — the
+skill calls it so the model does not hand-glob. Run by hand to see which teams
+apply in a directory.</p>
+<p><strong>Key flags:</strong></p>
+<ul>
+<li><code>[path]</code> — directory (or file) to resolve the cascade for (default: cwd)</li>
+<li><code>--root DIR</code> — override <code>$HORIZON_ROOT</code> instead of auto-resolving</li>
+<li><code>--flags</code> — print the full SAILL flag vocabulary (from <code>agent_team_flags.md</code> and any in-scope <code>local.agent_team_flags.md</code>); does not resolve teams</li>
+<li><code>--json</code> — emit structured JSON (sources + resolved set, with roles/groups/loop/flags)</li>
+</ul>
+<hr />
+<h2 id="resolve_soundpy">resolve_sound.py</h2>
+<p><strong>Path:</strong> <code>$HORIZON_SYSTEM/bin/resolve_sound.py</code></p>
+<p>Resolves an AIOS event name (e.g. <code>task_complete</code>) to an absolute sound-file
+path using the nearest <code>aios_sounds.conf</code> ancestor override, then the
+per-harness <code>sounds.map</code>, then the system default <code>sounds/sounds.map</code>. Prints the
+path or nothing (a missing sound is not an error — always exit 0). Intended to be
+called from harness hooks, which pipe its output to <code>sounds/play_sound.sh</code>.</p>
+<p>Honors the <code>sounds_enabled</code> mute flag before resolving: <code>sounds_enabled = false</code>
+in the master <code>sounds/aios_sounds.conf</code> silences every event everywhere (absolute);
+the same key in a per-project <code>aios_sounds.conf</code> mutes only that subtree. When
+muted it prints nothing. See file_structure_invariants §10.6.</p>
+<p><strong>When to use it:</strong> From a notification hook to look up which sound to play for an
+event; rarely run by hand.</p>
+<p><strong>Key flags:</strong></p>
+<ul>
+<li><code>&lt;event&gt;</code> — required event name to resolve</li>
+<li><code>--harness NAME</code> — consult the named harness's <code>sounds.map</code> layer</li>
+<li><code>--cwd PATH</code> — directory whose ancestor chain is searched for overrides</li>
+</ul>
+<p><strong>Referenced by a skill?</strong> No.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

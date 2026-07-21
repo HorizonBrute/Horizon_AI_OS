@@ -1,0 +1,3628 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for Horizon AIOS — a centralized, syncable AI operating-system config layer.">
+      
+      
+      
+      
+        <link rel="prev" href="../build_decisions.index/">
+      
+      
+        <link rel="next" href="../../development_tools/development_tools.index/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Architecture Decisions - Horizon AIOS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#architecture-decisions-horizon-aios" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Horizon AIOS" class="md-header__button md-logo" aria-label="Horizon AIOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Horizon AIOS
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Architecture Decisions
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting_started/getting_started.index/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../user_guides/user_guides.index/" class="md-tabs__link">
+          
+  
+  
+  User Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../system/system.index/" class="md-tabs__link">
+          
+  
+  
+  System
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../deployment/deployment.index/" class="md-tabs__link">
+          
+  
+  
+  Deployment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../security/security.index/" class="md-tabs__link">
+          
+  
+  
+  Security
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../authoring/authoring.index/" class="md-tabs__link">
+          
+  
+  
+  Authoring
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../build_decisions.index/" class="md-tabs__link">
+          
+  
+  
+  Build Decisions
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../development_tools/development_tools.index/" class="md-tabs__link">
+          
+  
+  
+  Development Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../philosophy/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Horizon AIOS" class="md-nav__button md-logo" aria-label="Horizon AIOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Horizon AIOS
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/getting_started.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/ReadMeToSetupYourSystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/dependencies_and_footprint/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dependencies & Footprint
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/updating/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Updating
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/lifecycle_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lifecycle Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guides/user_guides.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guides/using_your_aios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using Your AIOS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guides/using_Horizon.AIOS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using Horizon.AIOS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guides/deployment_howtos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment How-Tos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    System
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/system.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/aios_options_packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Options Packages
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/aios_switching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AIOS Switching
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/distribution_and_updates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Distribution & Updates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/system_configuration_reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/model_preferences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Preferences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/agent_teams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Teams
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/skill_model_groups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skill Model Groups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/uninstall/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Uninstall
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/deployment.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/desktop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Desktop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/multi_brain_deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Brain Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/brain_automation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Brain Automation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Security
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/security.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/audit_logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit Logging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/brain_isolation_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Brain Isolation Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security_architecture_invariants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security Architecture Invariants
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Authoring
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authoring/authoring.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authoring/claude_md_authoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLAUDE.md Authoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build Decisions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Build Decisions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build_decisions.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Decisions
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Purpose
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-file-synchronization-manifest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. File Synchronization Manifest
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. File Synchronization Manifest">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-synced-pairs-source-deployed-copy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Synced Pairs (source → deployed copy)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-local-only-files-not-in-repo-not-synced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Local-Only Files (not in repo, not synced)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-repo-tracked-files-synced-via-git-clonepull" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Repo-Tracked Files (synced via git clone/pull)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-architectural-decisions-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Architectural Decisions Log
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Architectural Decisions Log">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#2026-07-20-human-projects-isolation-mount-view-rejected-self-healing-harden-land-in-own-dir-on-the-self-service-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-07-20 — Human projects/ isolation: mount-view rejected; self-healing harden + land-in-own-dir on the self-service model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-07-19-acl-posture-externalized-to-config-full-cross-platform-linuxmacoswindows-parity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-07-19 — ACL posture externalized to config + full cross-platform (Linux/macOS/Windows) parity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-07-19-self-service-per-user-isolation-per-area-shared-drop-zone-on-the-four-human-shared-areas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-07-19 — Self-service per-user isolation + per-area shared/ drop-zone on the four human shared areas
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-23-standardized-on-symlinks-across-all-platforms-junction-terminology-retired" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-23 — Standardized on symlinks across all platforms; junction terminology retired
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-22-distribution-update-model-framework-vs-user-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-22 — Distribution &amp; update model: framework vs. user-space
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-22-aios-switcher-machine-local-registry-indirection-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-22 — AIOS switcher: machine-local registry + indirection layer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-21-skills-redirect-via-junctionsymlink-supersedes-copy-based-deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-21 — Skills redirect via junction/symlink supersedes copy-based deploy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-21-docker-deployment-model-brain-isolation-via-containers-not-os-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-21 — Docker deployment model: brain isolation via containers, not OS users
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-21-formalized-brain-vs-aios-vocabulary-created-philosophymd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-21 — Formalized Brain vs. AIOS vocabulary; created philosophy.md
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-two-group-model-per-brain-brains-common-group-brain-specific-group" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — Two-group model per brain (brains common group + brain-specific group)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-brain-provisioning-via-python-script-horizon_aios_create_brainpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — Brain provisioning via Python script (horizon_aios_create_brain.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-project-overrides-via-aios_overridesmd-at-project-root" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — Project overrides via aios_overrides.md at project root
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-self-activating-handoff-document-header" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — Self-activating handoff document header
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-handoffs-are-session-artifacts-gitignored" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — Handoffs are session artifacts, gitignored
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-binsbin-boundary-for-brain-isolation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — bin/sbin boundary for brain isolation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-claudeclaudemd-is-a-stub-redirect-not-a-copy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — ~/.claude/CLAUDE.md is a stub redirect, not a copy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-skills-have-dual-location-source-and-deployed-copy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — Skills have dual location: source and deployed copy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-two-tier-sounds-directory-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — Two-tier sounds directory structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-global-settings-own-hooks-and-statusline-devroot-settings-own-devroot-permissions-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — Global settings own hooks and statusLine; devroot settings own devroot permissions only
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-files-that-need-ongoing-synchronization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Files That Need Ongoing Synchronization
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Files That Need Ongoing Synchronization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-skills-horizon_systemskills_sbin-live-via-symlink" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Skills: $HORIZON_SYSTEM/skills_sbin/ (live via symlink)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-template-derived-settings-horizon_systemtemplatesclaude_codesettingsjson-claudesettingsjson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Template-derived settings: $HORIZON_SYSTEM/templates/claude_code/settings.json → ~/.claude/settings.json
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-what-is-not-in-the-repo-local-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. What Is NOT In the Repo (Local-Only)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. What Is NOT In the Repo (Local-Only)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-centralized-logging-taxonomy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — Centralized logging taxonomy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-token-economy-for-context-loaded-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — Token economy for context-loaded files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-23-sounds-directory-moved-to-horizon_systemsounds-supersedes-2026-06-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-23 — Sounds directory moved to $HORIZON_SYSTEM/sounds/ (supersedes 2026-06-20)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-07-04-two-lane-sync-supersedes-fast-forward-only-refines-2026-06-22-distribution-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-07-04 -- Two-lane sync supersedes fast-forward-only (refines 2026-06-22 distribution model)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Tools
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development_tools/development_tools.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development_tools/consistency_checks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consistency Checks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development_tools/windows_install_switch_uninstall_test_prompt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Windows Install/Switch/Uninstall Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../philosophy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Philosophy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_values/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Values
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development_pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../context_loading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Context Loading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../model_prefs_details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Preferences Details
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utilities Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sync_setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sync Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cloud_sync_exclusions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloud Sync Exclusions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tested_configurations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tested Configurations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../terseness_contract_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Terseness Contract Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../branding_invariants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Branding Invariants
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Purpose
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-file-synchronization-manifest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. File Synchronization Manifest
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. File Synchronization Manifest">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-synced-pairs-source-deployed-copy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Synced Pairs (source → deployed copy)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-local-only-files-not-in-repo-not-synced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Local-Only Files (not in repo, not synced)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-repo-tracked-files-synced-via-git-clonepull" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Repo-Tracked Files (synced via git clone/pull)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-architectural-decisions-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Architectural Decisions Log
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Architectural Decisions Log">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#2026-07-20-human-projects-isolation-mount-view-rejected-self-healing-harden-land-in-own-dir-on-the-self-service-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-07-20 — Human projects/ isolation: mount-view rejected; self-healing harden + land-in-own-dir on the self-service model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-07-19-acl-posture-externalized-to-config-full-cross-platform-linuxmacoswindows-parity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-07-19 — ACL posture externalized to config + full cross-platform (Linux/macOS/Windows) parity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-07-19-self-service-per-user-isolation-per-area-shared-drop-zone-on-the-four-human-shared-areas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-07-19 — Self-service per-user isolation + per-area shared/ drop-zone on the four human shared areas
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-23-standardized-on-symlinks-across-all-platforms-junction-terminology-retired" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-23 — Standardized on symlinks across all platforms; junction terminology retired
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-22-distribution-update-model-framework-vs-user-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-22 — Distribution &amp; update model: framework vs. user-space
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-22-aios-switcher-machine-local-registry-indirection-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-22 — AIOS switcher: machine-local registry + indirection layer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-21-skills-redirect-via-junctionsymlink-supersedes-copy-based-deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-21 — Skills redirect via junction/symlink supersedes copy-based deploy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-21-docker-deployment-model-brain-isolation-via-containers-not-os-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-21 — Docker deployment model: brain isolation via containers, not OS users
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-21-formalized-brain-vs-aios-vocabulary-created-philosophymd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-21 — Formalized Brain vs. AIOS vocabulary; created philosophy.md
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-two-group-model-per-brain-brains-common-group-brain-specific-group" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — Two-group model per brain (brains common group + brain-specific group)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-brain-provisioning-via-python-script-horizon_aios_create_brainpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — Brain provisioning via Python script (horizon_aios_create_brain.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-project-overrides-via-aios_overridesmd-at-project-root" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — Project overrides via aios_overrides.md at project root
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-self-activating-handoff-document-header" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — Self-activating handoff document header
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-handoffs-are-session-artifacts-gitignored" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — Handoffs are session artifacts, gitignored
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-binsbin-boundary-for-brain-isolation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — bin/sbin boundary for brain isolation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-claudeclaudemd-is-a-stub-redirect-not-a-copy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — ~/.claude/CLAUDE.md is a stub redirect, not a copy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-skills-have-dual-location-source-and-deployed-copy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — Skills have dual location: source and deployed copy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-two-tier-sounds-directory-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — Two-tier sounds directory structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-global-settings-own-hooks-and-statusline-devroot-settings-own-devroot-permissions-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — Global settings own hooks and statusLine; devroot settings own devroot permissions only
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-files-that-need-ongoing-synchronization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Files That Need Ongoing Synchronization
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Files That Need Ongoing Synchronization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-skills-horizon_systemskills_sbin-live-via-symlink" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Skills: $HORIZON_SYSTEM/skills_sbin/ (live via symlink)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-template-derived-settings-horizon_systemtemplatesclaude_codesettingsjson-claudesettingsjson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Template-derived settings: $HORIZON_SYSTEM/templates/claude_code/settings.json → ~/.claude/settings.json
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-what-is-not-in-the-repo-local-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. What Is NOT In the Repo (Local-Only)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. What Is NOT In the Repo (Local-Only)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-centralized-logging-taxonomy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — Centralized logging taxonomy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-20-token-economy-for-context-loaded-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-20 — Token economy for context-loaded files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-06-23-sounds-directory-moved-to-horizon_systemsounds-supersedes-2026-06-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-06-23 — Sounds directory moved to $HORIZON_SYSTEM/sounds/ (supersedes 2026-06-20)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2026-07-04-two-lane-sync-supersedes-fast-forward-only-refines-2026-06-22-distribution-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2026-07-04 -- Two-lane sync supersedes fast-forward-only (refines 2026-06-22 distribution model)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="architecture-decisions-horizon-aios">Architecture Decisions — Horizon AIOS</h1>
+<p>This document memorializes the "why" behind structural decisions made as Horizon AIOS is built. It is a living document — new decisions are appended as they are made. Existing entries are never deleted or revised; if a decision is superseded, a new entry records the reversal and its rationale.</p>
+<p><strong>How to use this document:</strong> When making a structural or design decision, append a new entry to the Architectural Decisions Log (Section 3) with the current date, a short title, what was decided, why, and any implications for future work.</p>
+<hr />
+<h2 id="1-purpose">1. Purpose</h2>
+<p>Architecture decisions accumulate silently. Six months into a project it becomes impossible to reconstruct why a particular structure was chosen, and the team (human or AI) makes decisions that unknowingly conflict with prior constraints. This document prevents that.</p>
+<p>Every time a non-obvious structural choice is made — about file placement, sync strategy, naming convention, permission model, or anything else that affects how the system fits together — an entry is added here. The "why" is more important than the "what"; the what is visible in the files themselves.</p>
+<hr />
+<h2 id="2-file-synchronization-manifest">2. File Synchronization Manifest</h2>
+<p>This section is the authoritative reference for which files have a source-of-truth location, which have a deployed/machine-local copy, and how they are kept in sync.</p>
+<h3 id="21-synced-pairs-source-deployed-copy">2.1 Synced Pairs (source → deployed copy)</h3>
+<table>
+<thead>
+<tr>
+<th>File / Directory</th>
+<th>Source (in repo)</th>
+<th>Deployed / Machine-Local</th>
+<th>Sync Mechanism</th>
+<th>In Git Repo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CLAUDE.md instructions</td>
+<td><code>$HORIZON_ROOT/.claude/CLAUDE.md</code></td>
+<td><code>~/.claude/CLAUDE.md</code></td>
+<td>One-time stub creation (@ redirect, not a copy)</td>
+<td>Source only — stub is machine-local</td>
+</tr>
+<tr>
+<td>settings.json template</td>
+<td><code>$HORIZON_SYSTEM/templates/claude_code/settings.json</code></td>
+<td><code>~/.claude/settings.json</code></td>
+<td>Copy template + substitute <code>AIOS_EXEC_WRAPPER</code> (bootstrap §5 / <code>horizon_aios_switch.py init</code>)</td>
+<td>Template only — local copy is NOT committed</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note on settings.json:</strong> The deployed <code>~/.claude/settings.json</code> is a copy of the template with the single <code>AIOS_EXEC_WRAPPER</code> placeholder substituted to the machine-local <code>aios-exec</code> wrapper (<code>~/.horizon/bin/aios-exec.{ps1,sh}</code>). It is AIOS-independent — the wrapper resolves the active AIOS at run time — so it is not rewritten on <code>aios switch</code>. The bootstrap script (Section 5) does the substitution. See <code>$HORIZON_DOCS/getting_started/ReadMeToSetupYourSystem.md</code> §6.2 and <code>$HORIZON_DOCS/system/aios_switching.md</code>.</p>
+<p><strong>Note on skills:</strong> Skills are no longer synced via copy. <code>~/.claude/skills/</code> is a symlink pointing directly to <code>$HORIZON_SYSTEM/skills_sbin/</code> for the primary user, and to <code>$HORIZON_SYSTEM/skills_bin/</code> for brain users. Changes to skills in the repo are live immediately — only a Claude Code session restart is needed. See the 2026-06-21 ADR entry for the skills redirect decision.</p>
+<h3 id="22-local-only-files-not-in-repo-not-synced">2.2 Local-Only Files (not in repo, not synced)</h3>
+<p>These files exist only on the local machine. Anyone who clones the repo will not have them — they must be created during setup.</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Location</th>
+<th>Why Local-Only</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Global Claude settings</td>
+<td><code>~/.claude/settings.json</code></td>
+<td>Contains machine-specific paths; configured from template at setup time</td>
+</tr>
+<tr>
+<td>CLAUDE.md stub redirect</td>
+<td><code>~/.claude/CLAUDE.md</code></td>
+<td>One-line <code>@</code> pointer to repo CLAUDE.md; machine-local bootstrap artifact</td>
+</tr>
+<tr>
+<td>Local git config</td>
+<td><code>$HORIZON_ROOT/.git/config</code></td>
+<td>Git-managed, machine-local (e.g., <code>core.hooksPath</code> setting)</td>
+</tr>
+<tr>
+<td>Brain-specific configs</td>
+<td><code>$HORIZON_ROOT/brains/&lt;brain_name&gt;/</code></td>
+<td>Per-brain, scoped to brain user; sensitive; gitignored</td>
+</tr>
+<tr>
+<td>Handoff documents</td>
+<td><code>$HORIZON_ROOT/handoffs/</code></td>
+<td>Session-specific artifacts; machine-local continuity; gitignored</td>
+</tr>
+</tbody>
+</table>
+<h3 id="23-repo-tracked-files-synced-via-git-clonepull">2.3 Repo-Tracked Files (synced via git clone/pull)</h3>
+<p>These files are committed to the OS repo and present on every machine after cloning.</p>
+<table>
+<thead>
+<tr>
+<th>File / Directory</th>
+<th>Path</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Canonical AI instructions</td>
+<td><code>$HORIZON_ROOT/.claude/CLAUDE.md</code></td>
+<td>System-level instructions for all Claude sessions</td>
+</tr>
+<tr>
+<td>Devroot permissions</td>
+<td><code>$HORIZON_ROOT/.claude/settings.json</code></td>
+<td>Devroot-scoped tool permissions only (no hooks, no statusLine)</td>
+</tr>
+<tr>
+<td>Skills (primary user)</td>
+<td><code>$HORIZON_SYSTEM/skills_sbin/</code></td>
+<td>Live via symlink at <code>~/.claude/skills/</code> → no copy needed</td>
+</tr>
+<tr>
+<td>Skills (brain users)</td>
+<td><code>$HORIZON_SYSTEM/skills_bin/</code></td>
+<td>Live via symlink at brain <code>~/.claude/skills/</code> → no copy needed</td>
+</tr>
+<tr>
+<td>Sounds (generic)</td>
+<td><code>$HORIZON_SYSTEM/sounds/*.wav</code></td>
+<td>Vendor-agnostic event audio</td>
+</tr>
+<tr>
+<td>Sounds (vendor-voiced)</td>
+<td><code>$HORIZON_SYSTEM/sounds/&lt;vendor&gt;_event_sounds/</code></td>
+<td>Vendor-specific voiced audio</td>
+</tr>
+<tr>
+<td>Statusline scripts</td>
+<td><code>$HORIZON_BIN/statusline/</code></td>
+<td>Terminal statusline scripts for Claude Code</td>
+</tr>
+<tr>
+<td>Harness configs</td>
+<td><code>$HORIZON_SYSTEM/harness_configs/</code></td>
+<td>Per-harness config templates (git hooks, etc.)</td>
+</tr>
+<tr>
+<td>Config templates</td>
+<td><code>$HORIZON_SYSTEM/templates/</code></td>
+<td>Setup templates; contain placeholders, not real paths</td>
+</tr>
+<tr>
+<td>Invariant documents</td>
+<td><code>$HORIZON_ETC/</code></td>
+<td>File structure, security, and personalization invariants</td>
+</tr>
+<tr>
+<td>Documentation</td>
+<td><code>$HORIZON_DOCS/</code></td>
+<td>User-facing docs including this file</td>
+</tr>
+<tr>
+<td>Privileged scripts</td>
+<td><code>$HORIZON_SYSTEM/sbin/</code></td>
+<td>Owner-only; brain users may not access</td>
+</tr>
+<tr>
+<td>Gitignore</td>
+<td><code>$HORIZON_ROOT/.gitignore</code></td>
+<td>Repo-wide ignore rules</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-architectural-decisions-log">3. Architectural Decisions Log</h2>
+<p>Entries are in reverse-chronological order at the top (newest first). Each entry is immutable once added.</p>
+<hr />
+<h3 id="2026-07-20-human-projects-isolation-mount-view-rejected-self-healing-harden-land-in-own-dir-on-the-self-service-model">2026-07-20 — Human <code>projects/</code> isolation: mount-view rejected; self-healing harden + land-in-own-dir on the self-service model</h3>
+<p><strong>Status:</strong> Accepted. <strong>Owner:</strong> HorizonBrute (package developer).</p>
+<p><strong>Refines:</strong> the two 2026-07-19 entries below. The self-service isolation guarantees (<code>-wx</code> create-traverse parent, born-owner-only children, per-area <code>shared/</code> drop-zone) are UNCHANGED. This entry records (A) why a per-user mount view was rejected in favour of the POSIX home-directory model, (B) that <code>horizon_aios_harden.py</code> now ASSERTS &amp; REPAIRS the posture on every run rather than only applying it, and (C) the per-user provisioning + landing affordance that makes the "you cannot <code>ls</code> the parent" cost (2026-07-19 Implications #1) ergonomic without weakening isolation. It does NOT return to the pre-<code>9a26089</code> admin-precreate model — self-service creation via <code>-wx</code> still stands; provisioning is additive convenience.</p>
+<p><strong>Context.</strong> A human could write into <code>projects/</code> but got <code>Permission denied</code> on <code>ls</code> of the root — correct by design (<code>horizon_humans</code> has <code>-wx</code>, no read). The intent "let me <code>ls</code> and see only MY folders, never anyone else's, with zero metadata leak" runs into a hard POSIX constraint: directory <code>read</code> is all-or-nothing over entries — a listing cannot be filtered by per-entry ownership. The three-way tradeoff (shared dir listable at its root / see only yours / zero leak) admits at most two; only a per-user mount view satisfies all three.</p>
+<p><strong>Decision A — Reject the mount-view; keep the POSIX home-directory model.</strong> A per-user <code>pam_namespace</code> / bind-mount view of <code>projects/</code> (so the root resolves to only the caller's subtree) was considered and rejected:</p>
+<ol>
+<li>No clean cross-platform parity — Windows has no <code>pam_namespace</code>; matching it would need per-user junctions / FSLogix-style machinery, breaking the single-posture, three-OS symmetry the ACL engine is built on.</li>
+<li>Operational risk — it depends on a login-time mount (<code>session required pam_namespace.so</code>); a misconfigured <code>namespace.conf</code> can block ALL logins, including console.</li>
+<li>The home-directory model already delivers the intent with pure ACLs: each human's working root is their own owner-only <code>projects/&lt;user&gt;</code> (they <code>ls</code> that, like <code>ls ~</code>, never the shared parent). Zero metadata leak, identical on Linux/macOS/Windows. Traverse (<code>x</code>) on the parent does not expose siblings — it only resolves a path to the caller's own dir; each sibling is independently owner-only, and listing still needs read, which the group never gets.</li>
+</ol>
+<p><strong>Decision B — <code>harden</code> is self-healing: assert &amp; repair, not just apply.</strong> Previously <code>horizon_aios_harden.py</code> applied grants blindly and only <code>horizon_aios_doctor.py</code> READ and reported drift (never repairing). A new <code>assert_repair_selfservice</code> pass now runs AFTER the grant/deny loops on all three OSes:</p>
+<ol>
+<li>Parent: STRIP everything not in the config, then re-establish exactly the configured entries — Linux <code>setfacl -b</code>, macOS <code>chmod -N</code>, Windows <code>icacls /reset</code> + <code>/inheritance:r</code> — so a stray named-principal ACE (e.g. someone adding <code>u:x:r-x</code> to the root) cannot survive. The shipped <code>-wx</code> + isolating default are re-pinned; <code>other::---</code> clamped; sticky preserved.</li>
+<li>Children: each existing <code>projects/&lt;user&gt;</code> forced back to owner-only (<code>setfacl -R -b</code> + <code>chmod 700</code>; <code>icacls</code> owner/SYSTEM/Administrators + OWNER RIGHTS, <code>horizon_humans</code> removed), repairing a drifted mode (<code>chmod 755</code>) or an added group ACE. <code>shared/</code> and any <code>exclude_children</code> are excluded.</li>
+</ol>
+<p><code>doctor</code> still verifies; <code>harden</code> now also corrects, so the two never diverge and drift self-heals on every onboarding + nightly maintenance run.</p>
+<p><strong>Decision C — Per-user provisioning parity + land-in-own-dir.</strong> So a human lands where <code>ls</code> shows only their own entries:</p>
+<ol>
+<li>Per-user <code>projects/&lt;user&gt;</code> is provisioned owner-only at enrollment and RE-ASSERTED every run (self-heals drift). <code>bootstrap.sh</code> already did this on Linux; <code>bootstrap.ps1</code> was MISSING it entirely and now provisions with <code>icacls</code> parity (break inheritance; Full to owner + SYSTEM + Administrators via well-known SIDs; nothing to <code>horizon_humans</code>).</li>
+<li>An idempotent, interactive-only, fail-soft landing hook (<code>~/.bashrc</code> managed block on Linux; PowerShell profile managed block on Windows, sentinel-guarded) starts a human's interactive shell in their own <code>projects/&lt;user&gt;</code> if not already under it. Non-interactive shells, missing dirs, and unresolved profiles all fail soft and never abort enrollment.</li>
+</ol>
+<p><strong>Finding (Windows latent inherited read — follow-up).</strong> The root <code>humans-userspace-full</code> grant is <code>horizon_humans (OI)(CI)F</code> inheritable at <code>$HORIZON_ROOT</code>, which inherits READ down onto <code>projects/</code>; the this-folder-only <code>(WD,AD,X)</code> create-traverse grant cannot subtract an inherited allow. Both the apply path and the new repair close this by breaking inheritance (<code>/inheritance:r</code>) at the parent, reaching no-read parity with Linux <code>-wx</code> without an explicit Deny. A permanent defense-in-depth fix — an explicit no-read posture on <code>projects/</code> itself, or narrowing the root grant — is deferred as a follow-up so the guarantee does not depend on the repair having run.</p>
+<p><strong>Implications:</strong></p>
+<ol>
+<li>Isolation guarantees are unchanged; humans still cannot <code>ls</code> the shared parent (by design) — the landing hook makes that ergonomic rather than a friction point, and the shared parent stays non-listable.</li>
+<li>Drift in the self-service posture now self-heals on every <code>harden</code> run; <code>doctor</code> remains the read-only verifier.</li>
+<li>The mount-view option is closed; revisiting it would reopen the cross-platform-parity and login-lockout costs recorded here.</li>
+<li>Windows carries a tracked follow-up for the latent inherited-read hole above.</li>
+</ol>
+<hr />
+<h3 id="2026-07-19-acl-posture-externalized-to-config-full-cross-platform-linuxmacoswindows-parity">2026-07-19 — ACL posture externalized to config + full cross-platform (Linux/macOS/Windows) parity</h3>
+<p><strong>Status:</strong> Accepted. <strong>Owner:</strong> HorizonBrute (package developer).</p>
+<p><strong>Refines:</strong> the 2026-07-19 "Self-service per-user isolation + per-area <code>shared/</code> drop-zone on the four human shared areas" entry (immediately below). That entry defined WHAT the posture guarantees on the four human areas; this entry records WHERE the posture now lives (an externalized, deployer-customizable config) and that all three OSes now implement it from that single source. The guarantees themselves are unchanged.</p>
+<p><strong>Decision A — Externalize the whole ACL posture to a deployer-customizable config.</strong> The complete hardening stance — previously hardcoded in <code>horizon_aios_harden.py</code> — is now declared as abstract-intent rules in a git-tracked TOML file, deep-merged with a gitignored local override:</p>
+<ol>
+<li><code>horizon_system/ai_os_etc/file_acl_hardening.toml</code> — the shipped default (git-tracked). Encodes the entire posture: humans full / system-read-only / canon-read-only / brains-read-write, the four self-service areas, each area's <code>shared/</code> drop-zone, brains read-exec on <code>bin</code>/<code>skills_bin</code>, brains deny on <code>sbin</code>/<code>skills_sbin</code>/<code>logs</code>, and the system-wide no-write catch-all. Rules are ABSTRACT INTENT, never platform syntax; the schema notes at the file's foot are the authoritative field/rights vocabulary.</li>
+<li><code>horizon_system/ai_os_etc/file_acl_hardening.local.toml</code> — a GITIGNORED deployer override, deep-merged over the default keyed by rule/group <code>name</code> (local wins: a matching name replaces that rule's fields, a new name adds a rule, <code>disabled = true</code> drops a rule). It ships as <code>file_acl_hardening.local.toml.template</code>. It is sync-safe by construction: the two-lane sync's official-lane hard-restore only reclaims official tracked paths, so the gitignored <code>.local.toml</code> is never overwritten.</li>
+<li><code>horizon_system/sbin/horizon_aios_acl_posture.py</code> — a NEW shared module: TOML loader + deep-merge + a FAIL-SECURE embedded fallback (a missing or corrupt config still hardens from the built-in posture) + the three-OS translator. Both <code>horizon_aios_harden.py</code> (apply) and <code>horizon_aios_doctor.py</code> (verify) consume this one module, so they can never disagree about the posture.</li>
+</ol>
+<p><strong>Decision B — Full cross-platform parity driven by the same posture.</strong> The translator emits native mechanisms from the same abstract rules on every OS — <code>setfacl</code> (Linux), <code>chmod +a</code> (macOS), <code>icacls</code> (Windows). Windows and macOS now reach parity with the previously Linux-first self-service/isolation model:</p>
+<ol>
+<li>Windows child isolation uses OWNER RIGHTS (<code>S-1-3-4</code>), never a group Deny — a Deny would lock out the owner, who is itself a <code>horizon_humans</code> member.</li>
+<li>macOS uses <code>chmod +a</code> ACEs for the same guarantees.</li>
+<li>On a non-native host the foreign-OS branch is dry-run only.</li>
+</ol>
+<p><strong>Rationale:</strong> Hardcoding the posture made every stance tweak a code edit to a privileged script, and the framework-vs-user-space contract forbids local edits to tracked framework files (they are reclaimed on the next official-lane sync). Externalizing to a tracked default plus a gitignored, local-wins override gives deployers a durable, sync-safe customization seam that needs no code change, while the fail-secure embedded fallback guarantees the machine still hardens if the config is missing or malformed. Sharing one posture module between the applier and the verifier eliminates the classic drift where <code>harden.py</code> grants one thing and <code>doctor.py</code> checks another. Abstract-intent rules keep single-OS deployers out of platform ACL syntax and let one declaration harden all three OSes identically.</p>
+<p><strong>Implications:</strong></p>
+<ol>
+<li>The stance is customized by editing <code>file_acl_hardening.local.toml</code> (copied from the <code>.template</code>), never by editing <code>file_acl_hardening.toml</code> or the Python — direct edits to the tracked default are reclaimed on the next official-lane sync.</li>
+<li>Any future rule / field / rights-vocabulary change lives in the TOML schema and the shared posture module; <code>harden.py</code> and <code>doctor.py</code> inherit it automatically from the one source.</li>
+<li>A genuine platform-specific need uses a per-rule <code>[rules.raw]</code> escape hatch (verbatim per-OS args), applied at the deployer's responsibility.</li>
+<li><code>security_invariants.md</code>, <code>file_structure_invariants.md §14</code>, and this log now describe a config-driven posture; the authoritative field vocabulary is the schema notes in <code>file_acl_hardening.toml</code>.</li>
+</ol>
+<hr />
+<h3 id="2026-07-19-self-service-per-user-isolation-per-area-shared-drop-zone-on-the-four-human-shared-areas">2026-07-19 — Self-service per-user isolation + per-area <code>shared/</code> drop-zone on the four human shared areas</h3>
+<p><strong>Status:</strong> Accepted. <strong>Owner:</strong> HorizonBrute (package developer).</p>
+<p><strong>Supersedes:</strong> the earlier <code>projects/</code>-only isolation approach (commit <code>9a26089</code>), which made the <code>projects/</code> parent traverse-only (<code>--x</code>, no write) and therefore BLOCKED self-service creation — a user's <code>projects/&lt;user&gt;</code> folder had to be pre-created by an admin (<code>bootstrap --add-human</code>). This entry reverses that for all four areas: creation is now self-service, no admin or enrollment tooling required.</p>
+<p><strong>Note:</strong> This entry records the decision. The <code>horizon_aios_harden.py</code> / <code>horizon_aios_doctor.py</code> code changes that implement and guard the model are being made separately (in progress at time of writing); the ADR is not gated on the implementation status of every check.</p>
+<p><strong>Decision A — Self-service per-user isolation on shared human areas.</strong> The four human-facing shared areas — <code>projects/</code>, <code>handoffs/</code>, <code>objectives/</code>, <code>usrbin/</code> — adopt a uniform "self-service isolation" model: any member of the <code>horizon_humans</code> group can create their own folders/files directly, while being unable to see, read, enter, or delete another user's entries. On Linux/Unix this is set by <code>setfacl</code> in <code>horizon_aios_harden.py</code>:</p>
+<ol>
+<li>The parent grants <code>horizon_humans</code> <code>-wx</code> (write + traverse, NO read) — members self-create but cannot enumerate the parent listing.</li>
+<li>The sticky bit (<code>+t</code>) on the parent is mandatory — without it a group member could delete or rename another member's entry in a group-writable dir.</li>
+<li>NO setgid — so a newly created entry's group is the CREATOR'S PRIVATE GROUP (e.g. <code>lvcol:lvcol</code>), satisfying the requirement that both the owner and the group of a creation are the creating user and that user's own user-group.</li>
+<li>A default ACL makes every new entry born owner-only: <code>default:group:horizon_humans:---</code>, <code>default:other::---</code>. Other humans are denied on the entry itself.</li>
+</ol>
+<p>Windows parity: broken inheritance plus OWNER RIGHTS (<code>S-1-3-4</code>) on children — NOT a group Deny, because a Deny would lock the owner out (the owner is itself a <code>horizon_humans</code> member).</p>
+<p><strong>Decision B — Per-area <code>shared/</code> drop-zone.</strong> Full per-user isolation would prevent genuine cross-user / cross-utility handoffs, so each of the four areas also contains a single <code>shared/</code> subdirectory that is group-readable/writable by <code>horizon_humans</code> (setgid so shared content is group-owned; sticky so members can't clobber each other's shared files). Default per-user isolation applies to everything else; <code>shared/</code> is the explicit escape hatch for A→B handoffs between utilities.</p>
+<p><strong>Rationale:</strong> The prior admin-pre-create model added enrollment friction and a privileged step for what is fundamentally self-service scratch space. A flat shared namespace with <code>-wx</code> (write+traverse, no read) on the parent plus sticky-bit and a born-owner-only default ACL lets each human own their own subtree with zero tooling, while structurally denying visibility into peers' entries. Dropping setgid is deliberate: it is what makes a creation land under the creator's private group rather than a shared group, which is the ownership invariant we want for isolated entries. The single <code>shared/</code> per area preserves the one legitimate need the isolation would otherwise break — deliberate cross-utility handoff — behind an explicit, group-owned, clobber-safe directory rather than by weakening the default.</p>
+<p><strong>Implications:</strong></p>
+<ol>
+<li>Users cannot <code>ls</code> the top of these four dirs (no read on the parent) — they must know/keep their own paths. This is the inherent cost of a flat shared namespace with per-entry isolation.</li>
+<li>The model is enforced by <code>horizon_system/sbin/horizon_aios_harden.py</code> (applied by onboarding and nightly maintenance) and guarded by <code>horizon_system/sbin/horizon_aios_doctor.py</code> checks.</li>
+<li>Windows and Unix diverge in mechanism (OWNER RIGHTS vs. sticky + default ACL) but converge on the same guarantee: a creation is owned by its creator, invisible to peers, and undeletable by peers; <code>shared/</code> is the sole group-visible exception.</li>
+</ol>
+<hr />
+<h3 id="2026-06-23-standardized-on-symlinks-across-all-platforms-junction-terminology-retired">2026-06-23 — Standardized on symlinks across all platforms; junction terminology retired</h3>
+<p><strong>Decision:</strong> The AIOS now uses symbolic links (symlinks) exclusively across all platforms — Windows, macOS, and Linux — for skills discovery (<code>~/.claude/skills/</code>), memory redirect (<code>~/.claude/projects/</code>), and brain <code>.claude</code> home wiring (<code>&lt;brain-home&gt;/.claude</code>). The previous Windows-specific NTFS directory junction approach is retired. All documentation terminology updated from "junction" (or "junction/symlink") to "symlink."</p>
+<p><strong>Rationale:</strong> NTFS directory junctions are a Windows-only construct; using junction terminology alongside symlink terminology created per-platform documentation branches and reader confusion. Windows supports symbolic links natively (via <code>mklink /D</code> or <code>New-Item -ItemType SymbolicLink</code>); they are functionally equivalent to junctions for directory redirection and do not require administrator rights when Developer Mode is enabled. Standardizing on symlinks unifies the vocabulary, eliminates the dual-terminology burden in documentation, and makes the implementation description accurate across all platforms.</p>
+<p><strong>Implications:</strong> Any script or tool that previously created NTFS junctions (<code>New-Item -ItemType Junction</code>) should be updated to create directory symlinks (<code>New-Item -ItemType SymbolicLink</code>). Existing junctions on already-deployed machines are functionally equivalent and do not need to be recreated. All documentation (KB, AIOS working copy) updated to use "symlink" uniformly.</p>
+<hr />
+<h3 id="2026-06-22-distribution-update-model-framework-vs-user-space">2026-06-22 — Distribution &amp; update model: framework vs. user-space</h3>
+<p><strong>Decision:</strong> A downstream install tracks Horizon AIOS as an <code>upstream</code> remote and keeps its own work + backups on its own <code>origin</code>; updates arrive via <code>horizon_aios_sync.py</code> (fast-forward-only) or <code>git merge upstream/&lt;branch&gt;</code>. The repo splits into <strong>framework</strong> (upstream-owned: <code>horizon_system/**</code>, the tracked <code>.gitignore</code>, templates) and <strong>user-space</strong>, which upstream never writes: <code>.gitignore.user</code>, <code>aios_local.conf</code>, <code>~/.horizon/</code>, <code>~/.claude/</code>, <code>memory/</code>, <code>handoffs/</code>, <code>objectives/</code>, <code>brains/</code>, <code>*.local.*</code>, <code>aios_overrides.md</code>. The contract: <strong>customize only through the user-space/override layers, never by editing framework files.</strong> User data is backed up to the user's OWN remote via <code>sbin/horizon_aios_backup_user_data.py</code> — it force-adds data to a per-machine branch, never edits the framework <code>.gitignore</code>, and refuses to push to the public upstream. <code>.gitattributes</code> sets <code>merge=union</code> on <code>.gitignore</code>/<code>.gitignore.user</code> so upstream and local ignore additions never conflict.</p>
+<p><strong>Rationale:</strong> Editing the framework <code>.gitignore</code> to un-ignore data (the obvious but wrong move) makes every upstream update conflict. Force-adding to a separate per-machine backup branch keeps framework history clean and updates conflict-free while still giving cross-machine awareness. Fast-forward-only sync is a guardrail — if the user edited a framework file, the sync refuses rather than silently clobbering. The leak guard prevents the catastrophic case of pushing private transcripts to the public upstream.</p>
+<p><strong>Implications:</strong> New <code>sbin/horizon_aios_backup_user_data.py</code> + <code>AIOS_BACKUP_*</code> config keys; <code>.gitattributes</code> union-merge; <code>documentation/system/distribution_and_updates.md</code> is the authoritative model. Every future feature must respect the framework/user-space line: a feature that produces user data places it in user-space (gitignored), never tracked in the framework.</p>
+<hr />
+<h3 id="2026-06-22-aios-switcher-machine-local-registry-indirection-layer">2026-06-22 — AIOS switcher: machine-local registry + indirection layer</h3>
+<p><strong>Decision:</strong> A machine can host multiple Horizon AIOS installs and switch which one its local Claude config points at, via <code>horizon_system/sbin/horizon_aios_switch.py</code> and a self-healing named registry at <code>~/.horizon/aios_registry.json</code>. Two of the five machine-global pointers are decoupled through an indirection layer so a switch is a pointer write, not a re-stamp: env vars are sourced from a generated <code>~/.horizon/active_env.{ps1,sh}</code>, and <code>~/.claude/settings.json</code> points once at stable <code>~/.horizon/bin/aios-exec.{ps1,sh}</code> wrappers that resolve the active AIOS at run time. The CLAUDE.md redirect and skills symlink are rewritten per switch; the sync schedule is advisory.</p>
+<p><strong>Rationale:</strong> Previously every pointer hardcoded one <code>HORIZON_ROOT</code>, so running a second AIOS meant hand-editing the profile, settings.json, the CLAUDE.md redirect, and the skills symlink. Indirecting the two highest-churn pointers (env + settings.json) means they never change on switch — only a generated file does. A named registry (vs. path-based) suits long-lived AIOSs switched often; it self-heals — any command rebuilds it from the current tree if missing — so a fresh machine never hard-fails.</p>
+<p><strong>Implications:</strong> New machine-local state lives in <code>~/.horizon/</code> (registry, <code>active_env</code>, wrappers), outside <code>$HORIZON_ROOT</code>, never committed or synced. <code>settings.json</code> gains a single AIOS-independent placeholder <code>AIOS_EXEC_WRAPPER</code> (replacing <code>HORIZON_BIN_PATH</code>/<code>HORIZON_SYSTEM_PATH</code>). The profile now sources <code>active_env</code> instead of hardcoding <code>HORIZON_*</code>. Bootstrap Section 5 runs <code>horizon_aios_switch.py init</code>. Switching the operator's config does not touch brain users (pinned per AIOS). A switch requires a Claude restart + new shell (env changes do not reach running sessions). See <code>documentation/system/aios_switching.md</code>.</p>
+<hr />
+<h3 id="2026-06-21-skills-redirect-via-junctionsymlink-supersedes-copy-based-deploy">2026-06-21 — Skills redirect via junction/symlink supersedes copy-based deploy</h3>
+<p><strong>Decision:</strong> Supersedes "2026-06-20 — Skills have dual location: source and deployed copy." <code>~/.claude/skills/</code> is now a directory junction (Windows) or symlink (Unix/macOS) pointing directly to <code>$HORIZON_SYSTEM/skills_sbin/</code> for the primary user, and to <code>$HORIZON_SYSTEM/skills_bin/</code> for brain users. No copy step exists; skills are live on disk as soon as they are written to the repo directory.</p>
+<p><strong>Rationale:</strong> The copy-based model required a manual deploy step after every skill change, with no way to detect drift between source and deployed copies. Per-skill symlinks inside <code>~/.claude/skills/</code> were considered but rejected as inelegant (one symlink per skill, all pointing into the same source tree). Redirecting the entire directory via a single junction/symlink is simpler, drift-proof, and consistent with how other AIOS config files are managed (the CLAUDE.md stub uses the same pattern). Windows directory junctions require no administrator rights, keeping the bootstrap friction-free.</p>
+<p><strong>Implications:</strong> Skills are split across two source directories mirroring the bin/sbin security model: <code>skills_sbin/</code> (primary user only) and <code>skills_bin/</code> (brain-readable). Bootstrap creates the primary user junction to <code>skills_sbin/</code>; <code>horizon_aios_create_brain.py</code> creates the brain junction to <code>skills_bin/</code>. A session restart is the only action needed after adding or editing a skill. The "deployed copy" concept no longer applies to skills.</p>
+<hr />
+<h3 id="2026-06-21-docker-deployment-model-brain-isolation-via-containers-not-os-users">2026-06-21 — Docker deployment model: brain isolation via containers, not OS users</h3>
+<p><strong>Decision:</strong> Added Docker deployment templates (<code>horizon_system/templates/docker/</code>): Dockerfile, docker-compose.yml, .dockerignore. Added <code>bootstrap_docker.sh</code> to <code>sbin/</code> as a thin wrapper around <code>bootstrap.sh</code> that sets <code>AIOS_DEPLOY_MODE=docker</code> (suppresses shell profile instructions and sync schedule setup). Added <code>documentation/deployment/docker.md</code> and <code>documentation/tested_configurations.md</code>.</p>
+<p>In the Docker deployment model, brain isolation is container-level rather than OS-user-level. Each brain runs as a separate Docker container. The AIOS OS layer runs in the primary <code>horizon-aios</code> container; brains are defined as additional services in <code>docker-compose.yml</code> with per-brain volume mounts for their directories and keys. The audit log volume is not mounted into brain containers.</p>
+<p><strong>Rationale:</strong> IaC/containerization compatibility is a first-class design goal (see <code>philosophy.md §5</code>). The native OS user model and the Docker container model are isomorphic at the security boundary level — both use OS-enforced isolation with explicit provisioning of tools and credentials per brain. Docker adds network isolation and makes deployment reproducible and portable. The two models coexist: the Docker templates wrap the native AIOS layer without modifying it.</p>
+<p><strong>Implications:</strong> <code>horizon_aios_create_brain.py</code> is not yet Docker-aware — it provisions OS accounts, not containers. Brain container provisioning in Docker is currently manual (duplicate the compose service template). This is tracked as a gap in <code>tested_configurations.md</code>. The Dockerfile is harness-agnostic except for Claude Code CLI installation; the BYOH principle is documented in the Dockerfile and <code>docker.md</code>.</p>
+<hr />
+<h3 id="2026-06-21-formalized-brain-vs-aios-vocabulary-created-philosophymd">2026-06-21 — Formalized Brain vs. AIOS vocabulary; created philosophy.md</h3>
+<p><strong>Decision:</strong> The conceptual distinction between a "Brain" (an atomic expert system — an App) and an "AI Operating System" (the config, harness, security, and logging layer that Brains run on top of) is now formally documented in <code>$HORIZON_DOCS/philosophy.md</code>. The term "Brain" in all AIOS documentation refers specifically to a purpose-scoped agentic workflow running as an isolated OS user account. What the broader industry often calls an "AI OS" (a highly tuned expert system for a specific domain) maps to "Brain" in Horizon vocabulary.</p>
+<p><strong>Rationale:</strong> The vocabulary was implicit in the implementation but never stated. Contributors, auditors, and new AI sessions had to infer the distinction from context. The gap also meant the "blue team answerability" design goals — what is the agent doing, how is it doing it, how is it enforced, what data/tools does it have access to — were scattered across technical documents rather than stated as a unified design objective. <code>philosophy.md</code> also documents the IaC/containerization deployment model, the BYOH principle, and an evaluation of where the current implementation aligns with or falls short of these values.</p>
+<p><strong>Implications:</strong> Any document, skill, or AI instruction that introduces a new use of "brain," "AIOS," or "second brain" must be consistent with the vocabulary in <code>philosophy.md</code>. Architectural decisions that affect the Brain/AIOS boundary (e.g., adding capabilities to <code>sbin</code> vs. provisioning them to individual brains) should be evaluated against the conceptual separation documented there.</p>
+<hr />
+<h3 id="2026-06-20-two-group-model-per-brain-brains-common-group-brain-specific-group">2026-06-20 — Two-group model per brain (brains common group + brain-specific group)</h3>
+<p><strong>Decision:</strong> Each brain belongs to two groups: <code>brains</code> (common AIOS group, grants read+execute on <code>$HORIZON_BIN</code>) and <code>&lt;brain-name&gt;</code> (brain-specific group, grants full control on the brain's own folder). The invoking primary user is added to the brain-specific group for oversight but is not added to every brain's group.</p>
+<p><strong>Rationale:</strong> Separates two distinct privileges into two distinct groups. The <code>brains</code> group answers "can this account use shared AIOS tooling?" The <code>&lt;brain-name&gt;</code> group answers "who owns this brain's data?" Adding the primary user to the brain-specific group enables oversight (read/write to the brain folder) without placing the primary user in a catch-all group that spans all brains. This keeps group membership semantics clean and least-privilege.</p>
+<p><strong>Implications:</strong> The <code>brains</code> group ACL on <code>$HORIZON_BIN</code> must never cascade to <code>$HORIZON_BIN/sbin</code>. The <code>sbin</code> ACL must be explicitly set and verified <em>after</em> any <code>$HORIZON_BIN</code> group change — this is enforced structurally in <code>horizon_aios_create_brain.py</code> (Phase 3 always re-locks <code>sbin</code> last). On Windows, <code>sbin</code> requires an explicit <code>/inheritance:r</code> ACE reset, not just absence of a grant, because inherited permissions take precedence over "no entry."</p>
+<hr />
+<h3 id="2026-06-20-brain-provisioning-via-python-script-horizon_aios_create_brainpy">2026-06-20 — Brain provisioning via Python script (<code>horizon_aios_create_brain.py</code>)</h3>
+<p><strong>Decision:</strong> OS-level provisioning of new brains (user account, groups, folder, permissions) is performed by a single Python script at <code>$HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py</code>, invoked by the primary user with admin/root privileges.</p>
+<p><strong>Rationale:</strong> Python is cross-platform. A shell script would require separate <code>.sh</code> and <code>.ps1</code> variants to handle Linux/macOS and Windows, leading to two codebases that can drift. A single Python script with platform branches (<code>platform.system()</code>) keeps provisioning logic in one place, makes cross-platform divergences explicit and auditable, and is readable by any contributor without needing to know both Bash and PowerShell. Python 3.6+ is a reasonable dependency for a developer tooling system.</p>
+<p><strong>Implications:</strong> Python 3.6+ is a documented dependency for brain provisioning (added to the "Adding a Brain" section of <code>ReadMeToSetupYourSystem.md</code>). The script must be run as Administrator/root. (Update 2026-06-22: originally placed in <code>$HORIZON_SYSTEM/scripts/</code> to signal explicit, intentional invocation rather than a privileged daemon; later consolidated into <code>$HORIZON_SYSTEM/sbin/</code> alongside the other privileged admin scripts. It is still invoked explicitly by the primary user; the <code>sbin</code> brains-Deny ACL is appropriate since brains must never run provisioning.) No automatic rollback is implemented by design: partial state is preserved and cleanup instructions are printed so the primary user retains full control over what gets undone.</p>
+<hr />
+<h3 id="2026-06-20-project-overrides-via-aios_overridesmd-at-project-root">2026-06-20 — Project overrides via <code>aios_overrides.md</code> at project root</h3>
+<p><strong>Decision:</strong> Projects that need to override AIOS defaults (e.g., handoffs output directory, display name) do so via a file named <code>aios_overrides.md</code> placed at the project root directory — not inside <code>.claude/</code>.</p>
+<p><strong>Rationale:</strong> Placing the override file at the project root (not in <code>.claude/</code>) makes it easy to discover, not specific to Claude Code, and extensible to other harnesses or tooling that reads the same file. The <code>/handoff</code> skill and other AIOS skills walk upward from the working directory to find it before falling back to AIOS defaults.</p>
+<p><strong>Implications:</strong> Any AIOS skill that has configurable behavior must check for <code>aios_overrides.md</code> before acting. The template at <code>$HORIZON_SYSTEM/templates/aios_overrides.md</code> is the canonical reference for supported keys.</p>
+<hr />
+<h3 id="2026-06-20-self-activating-handoff-document-header">2026-06-20 — Self-activating handoff document header</h3>
+<p><strong>Decision:</strong> Every handoff document produced by the <code>/handoff</code> skill begins with a block instructing any AI agent reading it to treat it as a directive to begin work, with any accompanying user text as additional instructions.</p>
+<p><strong>Rationale:</strong> Handoff files need to be directly usable as session starters — paste the file path or its contents and work begins without additional prompting. The self-activating header eliminates the intermediate "explain what to do with this" step. This is a UX property of the artifact, not a technical constraint.</p>
+<p><strong>Implications:</strong> The <code>/handoff</code> skill template must include the activation header. Agents should be designed to honor it when reading a handoff.</p>
+<hr />
+<h3 id="2026-06-20-handoffs-are-session-artifacts-gitignored">2026-06-20 — Handoffs are session artifacts, gitignored</h3>
+<p><strong>Decision:</strong> <code>$HORIZON_ROOT/handoffs/</code> is gitignored. Handoff documents are not committed to the OS repo.</p>
+<p><strong>Rationale:</strong> Handoffs contain session-specific state and potentially sensitive context (partial code, personal workflow notes, in-progress work). They serve as machine-local continuity between sessions, not as version history. Committing them would pollute the repo with ephemeral content and risk exposing session-sensitive information if the repo is shared.</p>
+<p><strong>Implications:</strong> Handoffs do not survive a fresh clone. Anyone setting up a new machine starts fresh. If cross-machine continuity is needed in the future, it must be implemented as an explicit export/import mechanism, not via git.</p>
+<hr />
+<h3 id="2026-06-20-binsbin-boundary-for-brain-isolation">2026-06-20 — bin/sbin boundary for brain isolation</h3>
+<p><strong>Decision:</strong> <code>$HORIZON_BIN/</code> (bin) is group-readable — brain user accounts may read and execute scripts and assets there. <code>$HORIZON_SYSTEM/sbin/</code> is owner-only — brain user accounts must never have access.</p>
+<p><strong>Rationale:</strong> Mirrors the Unix <code>/bin</code> and <code>/sbin</code> filesystem convention. Brains need access to shared tooling (sounds, templates, status scripts) without needing elevated authority. Privileged scripts that manage brain accounts or modify OS-level config require primary-user authority. The explicit directory boundary enforces this without needing per-file permission management.</p>
+<p><strong>Implications:</strong> Any script that requires primary-user authority must be placed in <code>sbin/</code>. Scripts placed in <code>$HORIZON_BIN/</code> root or subdirectories other than <code>sbin/</code> must not assume elevated privileges. On Windows, <code>sbin/</code> requires an explicit Deny ACL for brain users (not just absence of a grant) because inherited permissions can otherwise leak access.</p>
+<hr />
+<h3 id="2026-06-20-claudeclaudemd-is-a-stub-redirect-not-a-copy">2026-06-20 — <code>~/.claude/CLAUDE.md</code> is a stub redirect, not a copy</h3>
+<p><strong>Decision:</strong> The machine-local <code>~/.claude/CLAUDE.md</code> contains a single line: <code>@$HORIZON_ROOT/.claude/CLAUDE.md</code>. It is not a copy of the repo's CLAUDE.md.</p>
+<p><strong>Rationale:</strong> A single source of truth for AI instructions. If <code>~/.claude/CLAUDE.md</code> were a copy, updates to the canonical instructions would require a manual copy step and would introduce drift risk. The <code>@</code> import syntax in Claude Code resolves the redirect at load time, so the deployed stub never needs updating when instructions change.</p>
+<p><strong>Implications:</strong> New machines only need the stub created once during bootstrap. The stub itself is machine-local and not committed. The canonical instructions live entirely in <code>$HORIZON_ROOT/.claude/CLAUDE.md</code> and are versioned with the repo.</p>
+<hr />
+<h3 id="2026-06-20-skills-have-dual-location-source-and-deployed-copy">2026-06-20 — Skills have dual location: source and deployed copy</h3>
+<blockquote>
+<p><strong>SUPERSEDED by 2026-06-21 — Skills redirect via junction/symlink.</strong> The copy-based model below is no longer in use. <code>~/.claude/skills/</code> is now a directory junction/symlink pointing directly at the source. No deploy step exists.</p>
+</blockquote>
+<p><strong>Decision:</strong> AIOS skills (markdown files defining slash commands) are stored in two locations: <code>$HORIZON_BIN/skills/</code> (source of truth, committed to repo) and <code>~/.claude/skills/</code> (deployed copy, where Claude Code reads them).</p>
+<p><strong>Rationale:</strong> Claude Code reads skills exclusively from <code>~/.claude/skills/</code> — it cannot read them from an arbitrary path. The repo must track the canonical versions for community sharing and version history. Therefore, a deploy step is required. The bootstrap script handles initial deployment; subsequent skill updates require a manual re-copy or re-run of bootstrap.</p>
+<p><strong>Implications:</strong> The deployed copy is ephemeral and not committed. Editing skills directly in <code>~/.claude/skills/</code> creates invisible local changes that will be lost on the next deploy. All skill edits must happen at the source location. A future improvement would be a file-watch daemon or symlinks (where OS supports them) to eliminate the manual sync step.</p>
+<hr />
+<h3 id="2026-06-20-two-tier-sounds-directory-structure">2026-06-20 — Two-tier sounds directory structure</h3>
+<p><strong>Decision:</strong> <code>$HORIZON_BIN/sounds/</code> uses a two-tier structure. Generic sounds (usable by any harness) live at the root. Vendor-voiced sounds (containing AI product names or branded audio) live in subdirectories named <code>&lt;vendor&gt;_event_sounds/</code>.</p>
+<p><strong>Rationale:</strong> Generic sounds allow a hook to play audio without locking to a specific vendor. When a new harness is added, community contributors can add a vendor subdirectory with appropriate voiced audio without touching or conflicting with the generic tier. The naming convention (<code>&lt;vendor&gt;_event_sounds/</code>) is explicit and consistent.</p>
+<p><strong>Implications:</strong> Hooks that are shared across harnesses must use root-level generic sounds. Per-harness hooks may use the appropriate vendor subdirectory. No vendor sound should ever be placed at the root tier — it would break harness-agnosticism.</p>
+<hr />
+<h3 id="2026-06-20-global-settings-own-hooks-and-statusline-devroot-settings-own-devroot-permissions-only">2026-06-20 — Global settings own hooks and statusLine; devroot settings own devroot permissions only</h3>
+<p><strong>Decision:</strong> Event hooks (sounds on WorkComplete, InputNeeded, etc.) and the statusLine configuration live in <code>~/.claude/settings.json</code> (the global Claude Code settings). The devroot-scoped <code>$HORIZON_ROOT/.claude/settings.json</code> owns only devroot-specific tool permissions.</p>
+<p><strong>Rationale:</strong> Hooks and the statusline are system-level behaviors that should fire in every Claude Code session, regardless of which directory Claude is launched from. If they were configured in the devroot settings, they would only be active when Claude is run from inside <code>$HORIZON_ROOT</code>. The global settings layer is the correct scope for OS-level behaviors.</p>
+<p><strong>Implications:</strong> When updating hooks or statusline config, edit <code>~/.claude/settings.json</code> (the global file, not committed to the repo). The template at <code>$HORIZON_SYSTEM/templates/claude_code/settings.json</code> is the reference for what the global settings should contain. The devroot <code>.claude/settings.json</code> must never acquire hook or statusLine entries — if it does, those hooks will be double-fired when in devroot and silent elsewhere.</p>
+<hr />
+<h2 id="4-files-that-need-ongoing-synchronization">4. Files That Need Ongoing Synchronization</h2>
+<p>These pairs are the most likely to drift and require attention after any update.</p>
+<h3 id="41-skills-horizon_systemskills_sbin-live-via-symlink">4.1 Skills: <code>$HORIZON_SYSTEM/skills_sbin/</code> (live via symlink)</h3>
+<p>Skills no longer require a copy/sync step. <code>~/.claude/skills/</code> is a symlink pointing directly to <code>$HORIZON_SYSTEM/skills_sbin/</code>. Changes to skill files in the repo are live on disk immediately.</p>
+<p>The only action needed after adding or editing a skill: <strong>restart the Claude Code session</strong> so it re-reads <code>~/.claude/skills/</code>.</p>
+<p>Signs of a problem: a skill change in the repo has no effect after session restart. Verify that <code>~/.claude/skills/</code> is a symlink (not a real directory) and that its target is <code>$HORIZON_SYSTEM/skills_sbin/</code>. Re-run bootstrap if the symlink is missing.</p>
+<h3 id="42-template-derived-settings-horizon_systemtemplatesclaude_codesettingsjson-claudesettingsjson">4.2 Template-derived settings: <code>$HORIZON_SYSTEM/templates/claude_code/settings.json</code> → <code>~/.claude/settings.json</code></h3>
+<p>The template is the reference for what global settings should contain. When the template is updated (new hooks, new sounds, statusline changes), review whether your local <code>~/.claude/settings.json</code> needs the same update.</p>
+<p>The local file is NOT automatically updated — it is machine-local, with the single <code>AIOS_EXEC_WRAPPER</code> placeholder substituted to the home-relative <code>aios-exec</code> wrapper path. That substitution is AIOS-independent, so the file does not change on <code>aios switch</code>; only template content changes (new hooks/sounds) warrant a manual re-merge. Review the diff manually and merge changes.</p>
+<p>Signs of drift: a new sound or hook that works on another machine does not work on yours. Compare your <code>~/.claude/settings.json</code> against the template.</p>
+<hr />
+<h2 id="5-what-is-not-in-the-repo-local-only">5. What Is NOT In the Repo (Local-Only)</h2>
+<p>Anyone who clones the Horizon AIOS repo will not have these. They must be created during setup (the bootstrap script handles most of them).</p>
+<ol>
+<li>
+<p><code>~/.claude/settings.json</code> — Global Claude Code settings with machine-specific paths, hooks, and statusLine config. Created from the template at <code>$HORIZON_SYSTEM/templates/claude_code/settings.json</code>.</p>
+</li>
+<li>
+<p><code>~/.claude/CLAUDE.md</code> — Machine-local stub containing a single <code>@</code> redirect to the repo's CLAUDE.md. Created during bootstrap (one line, never changes).</p>
+</li>
+<li>
+<p><code>~/.claude/skills/</code> — A symlink created by bootstrap pointing to <code>$HORIZON_SYSTEM/skills_sbin/</code>. Not a deployed copy — skills are live on disk. The symlink itself is machine-local; the skills it points to are in the repo.</p>
+</li>
+<li>
+<p><code>$HORIZON_ROOT/.git/config</code> — Local git configuration, including <code>core.hooksPath</code> which wires the pre-commit hook. Set by bootstrap via <code>git config core.hooksPath</code>.</p>
+</li>
+<li>
+<p><code>$HORIZON_ROOT/handoffs/</code> — Handoff documents from Claude Code sessions. Directory created by bootstrap; contents are session-local and not committed.</p>
+</li>
+<li>
+<p>Brain folders and their contents — <code>$HORIZON_ROOT/brains/&lt;brain_name&gt;/</code> and everything inside. Brain configurations are per-machine and per-user; they are never committed to the shared repo.</p>
+</li>
+<li>
+<p>Any <code>*.local.json</code> files — Machine-specific config overrides. Gitignored by convention.</p>
+</li>
+</ol>
+<hr />
+<h3 id="2026-06-20-centralized-logging-taxonomy">2026-06-20 — Centralized logging taxonomy</h3>
+<p><strong>Decision:</strong> <em>(Path superseded — see Update below; canonical root is now <code>$HORIZON_SYSTEM/logs/</code>.)</em> All AIOS operational logs are centralized under <code>$HORIZON_ROOT/logs/</code> with subdirectories: <code>bootstrap/</code>, <code>brain_provisioning/</code>, <code>agents_output/</code>, <code>hooks/</code>, <code>brains/</code>. Log behavior is configurable via <code>aios_local.conf</code> (<code>AIOS_LOG_MAX_DAYS</code>, <code>AIOS_LOG_MAX_SIZE_MB</code>, <code>AIOS_LOG_MAX_ROTATIONS</code>). Weekly <code>horizon_aios_maintain_logs.py</code> in <code>sbin/</code> handles pruning and rotation. The <code>logs/</code> directory content is gitignored; a <code>.gitkeep</code> scaffold is tracked.</p>
+<p><strong>Rationale:</strong> Scattered log files make debugging cross-component issues difficult. A single root with a defined taxonomy makes logs discoverable and allows a single maintenance script to handle all log hygiene. Configurable retention keeps logs useful without unbounded disk growth. Gitignoring content but tracking <code>.gitkeep</code> ensures the directory structure is reproducible from a fresh clone without committing machine-specific log data.</p>
+<p><strong>Implications:</strong> Any new component that emits logs must write under <code>$HORIZON_SYSTEM/logs/&lt;subdirectory&gt;/</code>. The log directory is not created by the repo — bootstrap or the writing script must create it on first run (<code>mkdir -p</code>). <code>horizon_aios_maintain_logs.py</code> must be kept in sync with the taxonomy if new subdirectories are added.</p>
+<blockquote>
+<p><strong>Update (2026-06-21):</strong> The canonical log root moved from <code>$HORIZON_ROOT/logs/</code> to <code>$HORIZON_SYSTEM/logs/</code> so the audit log lives inside the AIOS layer that <code>horizon_aios_harden.py</code> locks down (explicit brains-group Deny). All writers and <code>$HORIZON_LOGS</code> now resolve to <code>$HORIZON_SYSTEM/logs/</code>. The subdirectory taxonomy is unchanged.</p>
+</blockquote>
+<hr />
+<h3 id="2026-06-20-token-economy-for-context-loaded-files">2026-06-20 — Token economy for context-loaded files</h3>
+<p><strong>Decision:</strong> All files regularly loaded into Claude context (CLAUDE.md files, invariant docs, <code>@</code> import chain) must be short, direct, and token-efficient. Verbose documentation belongs in <code>$HORIZON_DOCS</code>, not in context-loaded config.</p>
+<p><strong>Rationale:</strong> Every token in a context-loaded file costs tokens on every session that loads it. A verbose invariant document read hundreds of times per week accumulates significant token overhead. Documentation that provides background, rationale, and examples is valuable — but it belongs in files that are read by humans on demand, not in files that are injected into every AI context window automatically.</p>
+<p><strong>Implications:</strong> When adding to CLAUDE.md files or invariant documents, write for density: one sentence per concept, no illustrative examples, no repeated caveats. If elaboration is needed, put it in <code>$HORIZON_DOCS</code> and link to it. Review context-loaded files periodically and trim any content that is not load-bearing for AI behavior.</p>
+<hr />
+<h3 id="2026-06-23-sounds-directory-moved-to-horizon_systemsounds-supersedes-2026-06-20">2026-06-23 — Sounds directory moved to <code>$HORIZON_SYSTEM/sounds/</code> (supersedes 2026-06-20)</h3>
+<p><strong>Supersedes:</strong> "2026-06-20 — Two-tier sounds directory structure" (which referred to <code>$HORIZON_BIN/sounds/</code>).</p>
+<p><strong>Decision:</strong> The sounds directory is <code>$HORIZON_SYSTEM/sounds/</code> (env var <code>$HORIZON_SOUNDS</code>), not <code>$HORIZON_BIN/sounds/</code>. The two-tier structure (generic sounds at root, vendor-voiced sounds in <code>&lt;vendor&gt;_event_sounds/</code> subdirectories) is unchanged.</p>
+<p><strong>Rationale:</strong> Sounds are AIOS-layer assets, not bin-layer executables. Placing them under <code>$HORIZON_SYSTEM</code> co-locates them with the rest of the AIOS layer, is consistent with how other non-executable assets (templates, harness_configs) are organized, and keeps <code>$HORIZON_BIN</code> reserved for executable scripts.</p>
+<p><strong>Implications:</strong> Any hook, script, or doc referencing <code>$HORIZON_BIN/sounds/</code> must be updated to <code>$HORIZON_SYSTEM/sounds/</code> (or <code>$HORIZON_SOUNDS</code>). The 2026-06-20 entry's two-tier structure and naming convention remain authoritative; only the root path changes.</p>
+<hr />
+<h3 id="2026-07-04-two-lane-sync-supersedes-fast-forward-only-refines-2026-06-22-distribution-model">2026-07-04 -- Two-lane sync supersedes fast-forward-only (refines 2026-06-22 distribution model)</h3>
+<p><strong>Refines:</strong> "2026-06-22 -- Distribution &amp; update model: framework vs. user-space." The framework-vs-user-space split, the own-remote backup, the leak guard, and the union-merge <code>.gitignore</code> rule are unchanged. Only the sync MECHANISM changes: <code>horizon_aios_sync.py</code> is no longer fast-forward-only, and the "fast-forward-only sync is a guardrail -- the sync refuses rather than silently clobbering" clause of the 2026-06-22 rationale no longer holds for official paths.</p>
+<p><strong>Decision:</strong> <code>horizon_aios_sync.py</code> runs a two-lane sync keyed on a fixed path partition (personal-owned = <code>projects/</code>, <code>usrbin/</code>, <code>brains/</code>; everything else = official-owned). The <strong>official lane</strong> (<code>AIOS_OFFICIAL_REMOTE</code> / <code>AIOS_OFFICIAL_BRANCH</code>) is authoritative and OVERWRITES official paths from upstream via a scoped hard-restore (<code>git fetch</code>, then <code>git checkout &lt;ref&gt; -- &lt;official paths&gt;</code>, then commit) -- it no longer refuses on a locally edited framework file; it reclaims it. The <strong>personal lane</strong> (<code>AIOS_PERSONAL_REMOTE</code> / <code>AIOS_PERSONAL_BRANCH</code>) is local-wins: default keeps local, <code>SYNC_PERSONAL_FROM_REMOTE=yes</code> opts in to a fast-forward-only advance, and <code>--force-personal</code> is the logged danger override that overwrites personal paths. <code>SYNC_AIOS_FROM_REMOTE=no</code> disables both lanes. The pre-two-lane <code>AIOS_REPO_REMOTE</code> / <code>AIOS_REPO_BRANCH</code> keys are retained as back-compat aliases mapped onto the official lane. Both lanes' automated commits pass <code>git commit --no-verify</code> to bypass the DCO <code>commit-msg</code> hook.</p>
+<p><strong>Rationale:</strong> The fast-forward-only guardrail assumed the operator would resolve any divergence by hand. In practice the system layer must track upstream unconditionally, so "upstream is authoritative and overwrites" is the correct default for official paths; the framework-vs-user-space contract already declares framework files are not a place to keep local edits, so reclaiming them is consistent, not surprising. Personal-owned paths are the operator's, hence local-wins with an explicit force override. The <code>--no-verify</code> carve-out exists because a machine sync commit is housekeeping, not a human contribution: the shipped DCO hook rejects any message lacking <code>Signed-off-by</code>, so without the bypass every automated sync commit would be rejected and abort the sync, leaving official paths overwritten-but-uncommitted (a dirty tree that re-overwrites each run).</p>
+<p><strong>Implications:</strong> New config keys <code>AIOS_OFFICIAL_*</code>, <code>AIOS_PERSONAL_*</code>, <code>SYNC_PERSONAL_FROM_REMOTE</code>; new <code>--lane</code> and <code>--force-personal</code> flags. Local edits to framework files are now silently reclaimed on the next sync -- the only durable customization seam remains the override layer. <code>documentation/sync_setup.md</code> is the authoritative operational reference; <code>system/distribution_and_updates.md</code> and <code>getting_started/updating.md</code> describe the model. The DCO bypass is scoped to the sync utility's own commits; all other commits remain subject to the hook. Follow-ups still open at time of writing: <code>aios_local.conf.template</code> and <code>horizon_aios_setup_sync_schedule.py</code> still emit only the deprecated <code>AIOS_REPO_*</code> names.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "search.suggest", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

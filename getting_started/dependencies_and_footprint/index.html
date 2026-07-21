@@ -1,0 +1,3818 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for Horizon AIOS — a centralized, syncable AI operating-system config layer.">
+      
+      
+      
+      
+        <link rel="prev" href="../ReadMeToSetupYourSystem/">
+      
+      
+        <link rel="next" href="../updating/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Dependencies & Footprint - Horizon AIOS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#horizon-aios-dependencies-and-system-footprint-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Horizon AIOS" class="md-header__button md-logo" aria-label="Horizon AIOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Horizon AIOS
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Dependencies & Footprint
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../getting_started.index/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../user_guides/user_guides.index/" class="md-tabs__link">
+          
+  
+  
+  User Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../system/system.index/" class="md-tabs__link">
+          
+  
+  
+  System
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../deployment/deployment.index/" class="md-tabs__link">
+          
+  
+  
+  Deployment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../security/security.index/" class="md-tabs__link">
+          
+  
+  
+  Security
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../authoring/authoring.index/" class="md-tabs__link">
+          
+  
+  
+  Authoring
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../build_decisions/build_decisions.index/" class="md-tabs__link">
+          
+  
+  
+  Build Decisions
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../development_tools/development_tools.index/" class="md-tabs__link">
+          
+  
+  
+  Development Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../philosophy/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Horizon AIOS" class="md-nav__button md-logo" aria-label="Horizon AIOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Horizon AIOS
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting_started.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ReadMeToSetupYourSystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dependencies & Footprint
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dependencies & Footprint
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#section-1-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 1 — Dependencies
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 1 — Dependencies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#privilege-requirement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Privilege requirement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#harness-installation-is-a-per-user-and-per-brain-responsibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Harness installation is a per-user (and per-Brain) responsibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-2-system-footprint-aios-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 2 — System Footprint: AIOS Install
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 2 — System Footprint: AIOS Install">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#files-created" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files created
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#directories-created" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Directories created
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#symlinks-created" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Symlinks created
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#os-level-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OS-level changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#git-config-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Git config changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acls-permissions-set-by-horizon_aios_hardenpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ACLs / permissions set by horizon_aios_harden.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-is-not-changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is NOT changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-3-system-footprint-adding-one-brain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 3 — System Footprint: Adding One Brain
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 3 — System Footprint: Adding One Brain">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#os-user-account-created" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OS user account created
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#os-group-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OS group changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#directories-created_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Directories created
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acls-set-per-brain-in-addition-to-aios-layer-hardening" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ACLs set (per-brain, in addition to AIOS-layer hardening)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skills-symlink-created" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skills symlink created
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#credential-stored" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Credential stored
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files-written-inside-the-brain-folder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files written inside the brain folder
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shell-profile-written-brain-users-login-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shell profile written (brain user's login environment)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hooks-services" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hooks / services
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See Also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../updating/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Updating
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lifecycle_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lifecycle Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guides/user_guides.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guides/using_your_aios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using Your AIOS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guides/using_Horizon.AIOS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using Horizon.AIOS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guides/deployment_howtos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment How-Tos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    System
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/system.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/aios_options_packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Options Packages
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/aios_switching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AIOS Switching
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/distribution_and_updates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Distribution & Updates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/system_configuration_reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/model_preferences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Preferences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/agent_teams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Teams
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/skill_model_groups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skill Model Groups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/uninstall/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Uninstall
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/deployment.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/desktop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Desktop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/multi_brain_deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Brain Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/brain_automation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Brain Automation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Security
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/security.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/audit_logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit Logging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/brain_isolation_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Brain Isolation Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security_architecture_invariants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security Architecture Invariants
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Authoring
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authoring/authoring.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authoring/claude_md_authoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLAUDE.md Authoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build Decisions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Build Decisions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../build_decisions/build_decisions.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../build_decisions/architecture_decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Tools
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development_tools/development_tools.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development_tools/consistency_checks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consistency Checks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development_tools/windows_install_switch_uninstall_test_prompt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Windows Install/Switch/Uninstall Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../philosophy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Philosophy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_values/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Values
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development_pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../context_loading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Context Loading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../model_prefs_details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Preferences Details
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utilities Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sync_setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sync Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cloud_sync_exclusions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloud Sync Exclusions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tested_configurations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tested Configurations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../terseness_contract_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Terseness Contract Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../branding_invariants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Branding Invariants
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#section-1-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 1 — Dependencies
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 1 — Dependencies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#privilege-requirement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Privilege requirement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#harness-installation-is-a-per-user-and-per-brain-responsibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Harness installation is a per-user (and per-Brain) responsibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-2-system-footprint-aios-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 2 — System Footprint: AIOS Install
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 2 — System Footprint: AIOS Install">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#files-created" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files created
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#directories-created" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Directories created
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#symlinks-created" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Symlinks created
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#os-level-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OS-level changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#git-config-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Git config changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acls-permissions-set-by-horizon_aios_hardenpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ACLs / permissions set by horizon_aios_harden.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-is-not-changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is NOT changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-3-system-footprint-adding-one-brain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 3 — System Footprint: Adding One Brain
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 3 — System Footprint: Adding One Brain">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#os-user-account-created" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OS user account created
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#os-group-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OS group changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#directories-created_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Directories created
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acls-set-per-brain-in-addition-to-aios-layer-hardening" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ACLs set (per-brain, in addition to AIOS-layer hardening)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skills-symlink-created" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skills symlink created
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#credential-stored" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Credential stored
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files-written-inside-the-brain-folder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files written inside the brain folder
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shell-profile-written-brain-users-login-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shell profile written (brain user's login environment)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hooks-services" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hooks / services
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See Also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="horizon-aios-dependencies-and-system-footprint-reference">Horizon AIOS — Dependencies and System Footprint Reference</h1>
+<p>Declarative reference for what Horizon AIOS requires before installation and what
+it changes on the machine. Use this document to answer "what do I need?" and "what
+will change?" without reading through the procedural setup guide.</p>
+<p>For step-by-step installation instructions, see
+<code>getting_started/ReadMeToSetupYourSystem.md</code>.</p>
+<hr />
+<h2 id="section-1-dependencies">Section 1 — Dependencies</h2>
+<p>All dependencies must be satisfied before running bootstrap. No bootstrap step
+installs these for you.</p>
+<table>
+<thead>
+<tr>
+<th>Dependency</th>
+<th>Required / Optional</th>
+<th>Why needed</th>
+<th>Windows</th>
+<th>macOS</th>
+<th>Linux</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Git 2.9+</strong></td>
+<td>Required</td>
+<td><code>core.hooksPath</code> (introduced in 2.9) wires the version-controlled pre-commit hook; earlier versions silently ignore it</td>
+<td><code>winget install Git.Git</code></td>
+<td><code>brew install git</code></td>
+<td><code>apt install git</code> / <code>dnf install git</code></td>
+</tr>
+<tr>
+<td><strong>Claude Code CLI</strong></td>
+<td>Required</td>
+<td>The AI harness AIOS configures; must exist at <code>~/.claude/</code> before bootstrap. Installed <strong>per user</strong> — see "Harness installation is a per-user (and per-Brain) responsibility" below</td>
+<td><code>npm install -g @anthropic-ai/claude-code</code></td>
+<td>Same</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><strong>Python 3.6+</strong></td>
+<td>Required</td>
+<td><code>bootstrap.ps1</code>/<code>bootstrap.sh</code> call <code>horizon_aios_switch.py</code>, <code>horizon_aios_register_user_skills.py</code>, and <code>horizon_aios_harden.py</code>; <code>horizon_aios_create_brain.py</code> uses stdlib only</td>
+<td><code>winget install Python.Python.3</code></td>
+<td><code>brew install python3</code></td>
+<td><code>apt install python3</code></td>
+</tr>
+<tr>
+<td><strong>Bash</strong></td>
+<td>Required</td>
+<td>Git hook scripts and the statusline dispatcher (<code>statusline.sh</code>) run in bash</td>
+<td>Provided by Git for Windows (Git Bash) — no separate install</td>
+<td>Built-in</td>
+<td>Built-in</td>
+</tr>
+<tr>
+<td><strong>PowerShell 5.1+</strong></td>
+<td>Required on Windows; optional on macOS/Linux</td>
+<td>Windows statusline (<code>statusline-context-alerts.ps1</code>) and sound playback use PowerShell; Linux/macOS use bash equivalents and do not require <code>pwsh</code></td>
+<td>Built-in (Windows PowerShell 5.1); PowerShell 7 optional</td>
+<td><code>brew install --cask powershell</code> (optional)</td>
+<td><code>apt install powershell</code> (optional)</td>
+</tr>
+<tr>
+<td><strong>jq</strong></td>
+<td>Required</td>
+<td>Some statusline scripts parse JSON output from Claude Code</td>
+<td><code>winget install jqlang.jq</code></td>
+<td><code>brew install jq</code></td>
+<td><code>apt install jq</code></td>
+</tr>
+<tr>
+<td><strong>GPG</strong></td>
+<td>Required</td>
+<td><code>commit.gpgsign = true</code> is set globally — every commit on the machine will be signed; a key must exist before the first commit</td>
+<td><code>winget install GnuPG.GnuPG</code></td>
+<td><code>brew install gnupg</code></td>
+<td><code>apt install gnupg</code></td>
+</tr>
+<tr>
+<td><strong>SSH client</strong></td>
+<td>Required</td>
+<td>All remote Git operations use SSH; no HTTPS and no <code>gh</code> CLI is used anywhere</td>
+<td>Built-in (OpenSSH, Windows 10+)</td>
+<td>Built-in</td>
+<td>Built-in (<code>openssh-client</code>)</td>
+</tr>
+<tr>
+<td><strong>SSH key pair</strong></td>
+<td>Required</td>
+<td>Public key must be registered with the Git host (<code>~/.ssh/id_ed25519</code> or similar)</td>
+<td><code>ssh-keygen -t ed25519</code></td>
+<td>Same</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><strong>GPG key in local keyring</strong></td>
+<td>Required</td>
+<td>Fingerprint is written to <code>$HORIZON_SYSTEM/harness_configs/git/gitconfig</code> during setup</td>
+<td><code>gpg --full-generate-key</code></td>
+<td>Same</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><strong><code>watchdog</code> Python library</strong></td>
+<td>Optional</td>
+<td>Required only by <code>sbin/horizon_aios_monitor.py</code> (filesystem audit monitor); the monitor is opt-in and not auto-started</td>
+<td><code>pip install watchdog</code></td>
+<td><code>pip3 install watchdog</code></td>
+<td><code>pip3 install watchdog</code></td>
+</tr>
+<tr>
+<td><strong><code>keyring</code> Python library</strong></td>
+<td>Optional</td>
+<td>Used by <code>sbin/horizon_aios_brain_credential.py</code> to store brain account passwords in the OS native keystore; brain provisioning continues (with a warning) if absent</td>
+<td><code>pip install keyring</code></td>
+<td><code>pip3 install keyring</code></td>
+<td><code>pip3 install keyring</code></td>
+</tr>
+<tr>
+<td><strong>Audio player</strong></td>
+<td>Optional</td>
+<td>Required for event hook sounds to play; hooks fail silently if no player is found</td>
+<td>Built-in (<code>Media.SoundPlayer</code> via PowerShell)</td>
+<td>Built-in (<code>afplay</code>)</td>
+<td>One of: <code>paplay</code> (PulseAudio), <code>aplay</code> (ALSA), <code>ffplay</code> (ffmpeg), <code>mpg123</code></td>
+</tr>
+<tr>
+<td><strong>OS user/group management</strong></td>
+<td>Required for brain provisioning only</td>
+<td><code>horizon_aios_create_brain.py</code> creates OS user accounts and groups; requires the platform tools to be present</td>
+<td>Built-in (<code>New-LocalUser</code>, <code>New-LocalGroup</code> PowerShell cmdlets)</td>
+<td>Built-in (<code>dscl</code>, <code>dseditgroup</code>, <code>createhomedir</code>)</td>
+<td>Built-in (<code>useradd</code>, <code>groupadd</code>, <code>usermod</code>)</td>
+</tr>
+<tr>
+<td><strong><code>icacls</code></strong></td>
+<td>Required for brain/harden on Windows</td>
+<td><code>horizon_aios_harden.py</code> and <code>horizon_aios_create_brain.py</code> use <code>icacls</code> to set filesystem ACLs</td>
+<td>Built-in</td>
+<td>N/A</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td><strong><code>setfacl</code></strong></td>
+<td>Optional on Linux</td>
+<td>Used by <code>horizon_aios_harden.py</code> for POSIX ACL hardening (additive mode); falls back to <code>chmod</code> mode bits if absent</td>
+<td>N/A</td>
+<td>N/A</td>
+<td><code>apt install acl</code></td>
+</tr>
+<tr>
+<td><strong><code>chmod</code> / <code>chown</code></strong></td>
+<td>Required for brain/harden on Unix</td>
+<td>Used by <code>horizon_aios_harden.py</code> and <code>horizon_aios_create_brain.py</code> for permission hardening</td>
+<td>N/A</td>
+<td>Built-in</td>
+<td>Built-in</td>
+</tr>
+<tr>
+<td><strong><code>openssl</code></strong></td>
+<td>Optional on Linux</td>
+<td>Used to hash brain account passwords (<code>openssl passwd -6</code>); if absent, <code>useradd</code> creates a locked account and the password must be set manually</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Built-in on most distros</td>
+</tr>
+</tbody>
+</table>
+<h3 id="privilege-requirement">Privilege requirement</h3>
+<p>Bootstrap and brain provisioning both call <code>horizon_aios_harden.py</code>, which sets OS-level
+filesystem ACLs. This is a hard requirement — bootstrap exits immediately with an
+error if not run elevated.</p>
+<ul>
+<li><strong>Windows:</strong> Run bootstrap in an Administrator PowerShell (<code>Run as administrator</code>).</li>
+<li><strong>Linux/macOS:</strong> Run bootstrap with <code>sudo bash horizon_system/sbin/bootstrap.sh</code>.</li>
+</ul>
+<p>All other bootstrap steps (CLAUDE.md redirect, skills symlink, settings.json copy,
+git hooks, directories) are non-destructive and do not require elevation.</p>
+<h3 id="harness-installation-is-a-per-user-and-per-brain-responsibility">Harness installation is a per-user (and per-Brain) responsibility</h3>
+<p><strong>AIOS does not install any harness, and it does not verify that a harness is
+installed or pointed at AIOS.</strong> It assumes a harness is <em>already</em> present and works.
+Concretely, the contract AIOS relies on is:</p>
+<ul>
+<li>Each user who will run AIOS — the owner <strong>and every Brain</strong> — already has a harness
+  installed whose executable is on a <code>PATH</code> that user can resolve, runnable by that
+  user with valid execute permissions. This holds regardless of <em>which</em> harness is in
+  use (Claude Code is the reference harness, but AIOS is bring-your-own-harness).</li>
+</ul>
+<p>What AIOS <em>does</em> do is <strong>redirect the harness's default configuration folders</strong> —
+<code>~/.claude/CLAUDE.md</code>, <code>~/.claude/settings.json</code>, <code>~/.claude/skills/</code>, and the memory /
+transcript locations — so that prompting, knowledge, and memory are centralized under
+<code>$HORIZON_ROOT</code> instead of living in each user's private harness defaults. That
+redirection is the integration; it is not an installation.</p>
+<p><strong>Why this is a per-user concern, and why Brains make it per-Brain.</strong> The default
+Claude Code install (<code>npm install -g @anthropic-ai/claude-code</code>) is a <strong>per-user</strong>
+install — its config home is the per-user <code>~/.claude/</code>. A Brain is a <strong>separate OS user
+account</strong> (see Section 3). A harness that was installed only for the owner is therefore
+<strong>not guaranteed to be available to a Brain user</strong>: the Brain may need its own
+per-user harness install, or a system-/all-users install whose executable is on a
+<code>PATH</code> the Brain account can run with valid permissions. Each Brain that is expected to
+run a harness must independently satisfy the contract above.</p>
+<p><strong>Two setup steps AIOS deliberately does not perform (today).</strong> These are left as
+<strong>operator/user responsibilities</strong> and are out of scope for the current
+release — they may be automated for common harnesses in a future version:</p>
+<ol>
+<li><strong>Installing the harness</strong> for each user / Brain that needs one.</li>
+<li><strong>Verifying that each user's / Brain's harness is actually using the AIOS
+   redirection</strong> (i.e. that the harness resolves its config from the
+   AIOS-redirected locations rather than untouched private defaults).</li>
+</ol>
+<p>If you provision a Brain that will run a harness, treat both of the above as manual
+prerequisites for that Brain. AIOS provisioning wires the Brain's <em>config</em>
+(<code>brains/&lt;brain-name&gt;/.claude/...</code>, see Section 3); it does not install the Brain's
+harness or confirm the harness is honoring that config.</p>
+<hr />
+<h2 id="section-2-system-footprint-aios-install">Section 2 — System Footprint: AIOS Install</h2>
+<p>What changes on the machine when <code>bootstrap.ps1</code> / <code>bootstrap.sh</code> runs.</p>
+<h3 id="files-created">Files created</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Windows</th>
+<th>macOS</th>
+<th>Linux</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>~/.claude/CLAUDE.md</code></td>
+<td>Created</td>
+<td>Created</td>
+<td>Created</td>
+<td>Single-line <code>@</code> redirect to <code>$HORIZON_ROOT/.claude/CLAUDE.md</code>; also appends a second <code>@</code> import for <code>$HORIZON_ROOT/.claude/CLAUDE.aios-dev.md</code> (owner-only dev context)</td>
+</tr>
+<tr>
+<td><code>~/.claude/settings.json</code></td>
+<td>Created (if absent; interactive prompt)</td>
+<td>Created (if absent; interactive prompt)</td>
+<td>Created (if absent; interactive prompt)</td>
+<td>Copied from <code>$HORIZON_SYSTEM/templates/claude_code/settings.json</code> (Windows) or <code>settings_unix.json</code> (macOS/Linux); <code>AIOS_EXEC_WRAPPER</code> placeholder substituted with path to <code>~/.horizon/bin/aios-exec.{ps1,sh}</code></td>
+</tr>
+<tr>
+<td><code>~/.horizon/aios_registry.json</code></td>
+<td>Created</td>
+<td>Created</td>
+<td>Created</td>
+<td>AIOS named-registry; created by <code>horizon_aios_switch.py init</code> (Section 5 of bootstrap)</td>
+</tr>
+<tr>
+<td><code>~/.horizon/active_env.ps1</code></td>
+<td>Created</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>Sourced by PowerShell <code>$PROFILE</code> to load <code>HORIZON_*</code> env vars</td>
+</tr>
+<tr>
+<td><code>~/.horizon/active_env.sh</code></td>
+<td>N/A</td>
+<td>Created</td>
+<td>Created</td>
+<td>Sourced by <code>~/.bashrc</code> / <code>~/.zshrc</code> to load <code>HORIZON_*</code> env vars</td>
+</tr>
+<tr>
+<td><code>~/.horizon/bin/aios-exec.ps1</code></td>
+<td>Created</td>
+<td>N/A (<code>.sh</code> instead)</td>
+<td>N/A (<code>.sh</code> instead)</td>
+<td>Stable wrapper called by <code>settings.json</code>; resolves the active AIOS at run time so <code>aios switch</code> never rewrites settings</td>
+</tr>
+<tr>
+<td><code>~/.horizon/bin/aios-exec.sh</code></td>
+<td>N/A</td>
+<td>Created</td>
+<td>Created</td>
+<td>Same wrapper purpose, POSIX shell</td>
+</tr>
+<tr>
+<td><code>$HORIZON_ETC/aios_local.conf</code></td>
+<td>Created from template (interactive prompt)</td>
+<td>Created from template (interactive prompt)</td>
+<td>Created from template (interactive prompt)</td>
+<td>Machine-local AIOS config; copied from <code>$HORIZON_SYSTEM/templates/aios_local.conf.template</code></td>
+</tr>
+<tr>
+<td><code>$HORIZON_ROOT/.git/hooks/pre-commit</code></td>
+<td>Copied</td>
+<td>Copied</td>
+<td>Copied</td>
+<td>Installed by bootstrap into <code>.git/hooks/</code>; syncs <code>.gitignore.user</code> to <code>.git/info/exclude</code> on commit</td>
+</tr>
+<tr>
+<td><code>$HORIZON_ROOT/.git/hooks/commit-msg</code></td>
+<td>Copied</td>
+<td>Copied</td>
+<td>Copied</td>
+<td>DCO sign-off enforcement: rejects commits lacking a <code>Signed-off-by</code> line. The auto-sync utility (<code>horizon_aios_sync.py</code>) is the one exception -- its housekeeping commits pass <code>--no-verify</code> to bypass the hook</td>
+</tr>
+<tr>
+<td><code>$HORIZON_ROOT/local.agents.md</code></td>
+<td>Created from template (if absent)</td>
+<td>Created from template (if absent)</td>
+<td>Created from template (if absent)</td>
+<td>Materialized by <code>aios setup</code> (<code>setup_local_agents</code>) from <code>local.agents.md.template</code>; gitignored; machine-local override imported last by <code>agents.md</code> (see §12.6)</td>
+</tr>
+<tr>
+<td><code>$HORIZON_ROOT/.claude/local.agents.md</code></td>
+<td>Created from template (if absent)</td>
+<td>Created from template (if absent)</td>
+<td>Created from template (if absent)</td>
+<td>Same pattern for the <code>.claude/</code> scope</td>
+</tr>
+</tbody>
+</table>
+<h3 id="directories-created">Directories created</h3>
+<table>
+<thead>
+<tr>
+<th>Directory</th>
+<th>Windows</th>
+<th>macOS</th>
+<th>Linux</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>$HORIZON_ROOT/handoffs/</code></td>
+<td>Created</td>
+<td>Created</td>
+<td>Created</td>
+<td>Default output dir for <code>/handoff</code> skill</td>
+</tr>
+<tr>
+<td><code>$HORIZON_ROOT/objectives/</code></td>
+<td>Created</td>
+<td>Created</td>
+<td>Created</td>
+<td>Default store for <code>/objective</code> skill</td>
+</tr>
+<tr>
+<td><code>$HORIZON_SYSTEM/logs/</code></td>
+<td>Created</td>
+<td>Created</td>
+<td>Created</td>
+<td>Canonical audit and operational log directory (<code>$HORIZON_LOGS</code>); created by bootstrap and <code>horizon_aios_harden.py</code> if absent</td>
+</tr>
+<tr>
+<td><code>~/.claude/</code></td>
+<td>Created if absent</td>
+<td>Created if absent</td>
+<td>Created if absent</td>
+<td>Bootstrap creates it if Claude Code has not been launched yet; Claude Code itself creates it on first launch</td>
+</tr>
+<tr>
+<td><code>~/.horizon/bin/</code></td>
+<td>Created</td>
+<td>Created</td>
+<td>Created</td>
+<td>Created by <code>horizon_aios_switch.py init</code> alongside the wrapper scripts</td>
+</tr>
+</tbody>
+</table>
+<h3 id="symlinks-created">Symlinks created</h3>
+<table>
+<thead>
+<tr>
+<th>Link</th>
+<th>Windows</th>
+<th>macOS</th>
+<th>Linux</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>~/.claude/skills/</code></td>
+<td>Symlink → <code>$HORIZON_SYSTEM/skills_sbin/</code></td>
+<td>Symlink → <code>$HORIZON_SYSTEM/skills_sbin/</code></td>
+<td>Symlink → <code>$HORIZON_SYSTEM/skills_sbin/</code></td>
+<td>Created by Section 3 of bootstrap; no admin/root required for this step on any platform</td>
+</tr>
+</tbody>
+</table>
+<h3 id="os-level-changes">OS-level changes</h3>
+<table>
+<thead>
+<tr>
+<th>Change</th>
+<th>Windows</th>
+<th>macOS</th>
+<th>Linux</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>System PATH</strong></td>
+<td><code>$HORIZON_BIN</code> added to Machine-scope PATH via <code>[System.Environment]::SetEnvironmentVariable("Path", ..., "Machine")</code>; stale <code>horizon_system\bin</code> entries removed first</td>
+<td><code>$HORIZON_BIN</code> written to <code>/etc/paths.d/horizon-aios</code> (for <code>zsh</code> via <code>path_helper</code>) and to <code>/etc/profile.d/horizon_aios.sh</code></td>
+<td><code>$HORIZON_BIN</code> written to <code>/etc/profile.d/horizon_aios.sh</code> (mode 644); stale entries removed first</td>
+</tr>
+<tr>
+<td><strong>Shell profile (per-user, owner only)</strong></td>
+<td>Written by <code>aios setup</code>: one line in PowerShell <code>$PROFILE</code> — <code>if (Test-Path "$HOME\.horizon\active_env.ps1") { . "$HOME\.horizon\active_env.ps1" }</code></td>
+<td>Written by <code>aios setup</code>: one line in <code>~/.bashrc</code> — <code>[ -f "$HOME/.horizon/active_env.sh" ] &amp;&amp; . "$HOME/.horizon/active_env.sh"</code></td>
+<td>Same as macOS</td>
+</tr>
+<tr>
+<td><strong><code>/etc/profile.d/horizon_aios.sh</code></strong></td>
+<td>N/A</td>
+<td>Created/updated (root-owned, 644) — also used alongside <code>/etc/paths.d/</code></td>
+<td>Created/updated (root-owned, 644)</td>
+</tr>
+<tr>
+<td><strong><code>/etc/paths.d/horizon-aios</code></strong></td>
+<td>N/A</td>
+<td>Created/updated (644)</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td><strong><code>brains</code> OS group</strong></td>
+<td>Created (<code>New-LocalGroup</code>) if absent</td>
+<td>Created (<code>dseditgroup -o create</code>) if absent</td>
+<td>Created (<code>groupadd</code>) if absent</td>
+</tr>
+</tbody>
+</table>
+<h3 id="git-config-changes">Git config changes</h3>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Scope</th>
+<th>Value</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>core.hooksPath</code></td>
+<td>Local (OS repo only)</td>
+<td><code>./horizon_system/harness_configs/git/hooks</code></td>
+<td>Set by Section 6 of bootstrap; tells Git to use the version-controlled hooks directory</td>
+</tr>
+<tr>
+<td><code>include.path</code> (framework)</td>
+<td>Global (machine-wide)</td>
+<td><code>$HORIZON_SYSTEM/harness_configs/git/gitconfig</code></td>
+<td>Written automatically by <code>aios setup</code> (<code>git config --global --add include.path</code>); pulls in <code>commit.gpgsign</code>, <code>signoff</code>, <code>excludesfile</code></td>
+</tr>
+<tr>
+<td><code>include.path</code> (identity)</td>
+<td>Global (machine-wide)</td>
+<td><code>$HORIZON_ETC/git_identity.local.gitconfig</code></td>
+<td>Written automatically by <code>aios setup</code>; pulls in the machine-local <code>user.name</code> / <code>user.email</code> / <code>user.signingkey</code></td>
+</tr>
+<tr>
+<td><code>$HORIZON_ETC/git_identity.local.gitconfig</code></td>
+<td>Machine-local file (gitignored, under repo)</td>
+<td><code>[user]</code> name / email / signingkey</td>
+<td>Written by <code>aios setup</code>; never committed. The FILE dies with the repo folder; its global <code>include.path</code> entry (above) is removed by <code>uninstall.ps1</code> Section 8. <strong>Note:</strong> the first signed commit is decoupled from <code>--yes</code> — pass <code>--first-commit</code> to create it during setup; omit it (default) to defer until a GPG key is ready.</td>
+</tr>
+<tr>
+<td><code>commit.gpgsign</code></td>
+<td>Global (via included framework gitconfig)</td>
+<td><code>true</code></td>
+<td>Every commit on the machine is GPG-signed after setup</td>
+</tr>
+<tr>
+<td><code>user.signingkey</code></td>
+<td>Global (via included identity gitconfig)</td>
+<td>User's GPG fingerprint</td>
+<td>Collected by <code>aios setup</code> and written into <code>git_identity.local.gitconfig</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="acls-permissions-set-by-horizon_aios_hardenpy">ACLs / permissions set by <code>horizon_aios_harden.py</code></h3>
+<p><code>horizon_aios_harden.py</code> runs as the final bootstrap step. It enforces the brains-group ACL
+model on <code>$HORIZON_SYSTEM</code>. It has two modes: <strong>additive</strong> (default — preserves all
+existing ACLs, adds ACEs only) and <strong>strict</strong> (<code>--strict</code> — drops inherited ACEs and
+rebuilds from scratch).</p>
+<p><strong>Default (additive) mode — what is added:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Directory</th>
+<th>Windows (<code>icacls</code>)</th>
+<th>Linux (<code>setfacl</code> / <code>chmod</code>)</th>
+<th>macOS (<code>chmod</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>$HORIZON_SYSTEM</code> (root, inheritable)</td>
+<td><code>brains</code> group: inheritable Deny on write/create/delete mask <code>(WD,AD,WEA,WA,DE,DC)</code></td>
+<td><code>setfacl -R -m g:brains:r-x</code> + default ACL; or <code>chmod -R go-w</code> if <code>setfacl</code> absent</td>
+<td><code>chmod -R go-w</code></td>
+</tr>
+<tr>
+<td><code>$HORIZON_BIN</code></td>
+<td><code>brains</code> group: <code>(OI)(CI)RX</code> (Read+Execute, explicit grant)</td>
+<td><code>chown :brains</code>; <code>chmod g+rX</code></td>
+<td>Same</td>
+</tr>
+<tr>
+<td><code>$HORIZON_SYSTEM/skills_bin/</code></td>
+<td><code>brains</code> group: <code>(OI)(CI)RX</code> (explicit grant)</td>
+<td><code>chown :brains</code>; <code>chmod g+rX</code></td>
+<td>Same</td>
+</tr>
+<tr>
+<td><code>$HORIZON_SYSTEM/sbin/</code></td>
+<td><code>brains</code> group: <code>(OI)(CI)F</code> Deny (full, explicit; applied after grants)</td>
+<td><code>setfacl -R -m g:brains:---</code> + default; or <code>chmod 700</code></td>
+<td><code>chmod 700</code></td>
+</tr>
+<tr>
+<td><code>$HORIZON_SYSTEM/skills_sbin/</code></td>
+<td><code>brains</code> group: <code>(OI)(CI)F</code> Deny (full, explicit; applied after grants)</td>
+<td>Same as <code>sbin/</code></td>
+<td>Same</td>
+</tr>
+<tr>
+<td><code>$HORIZON_SYSTEM/logs/</code></td>
+<td><code>brains</code> group: <code>(OI)(CI)F</code> Deny (full, explicit; applied after grants)</td>
+<td>Same as <code>sbin/</code></td>
+<td>Same</td>
+</tr>
+</tbody>
+</table>
+<p>On Windows, owner + <code>SYSTEM</code> (<code>*S-1-5-18</code>) + <code>Administrators</code> (<code>*S-1-5-32-544</code>)
+always retain Full control and are never removed, in either mode.</p>
+<p>Deny ACEs are applied after all grants in every case — this ordering is a security
+invariant so no inherited permission can accidentally reach a privileged directory.</p>
+<h3 id="what-is-not-changed">What is NOT changed</h3>
+<ul>
+<li>No system-wide package installs (no <code>apt install</code>, <code>brew install</code>, <code>winget</code> runs are made by bootstrap).</li>
+<li>No registry writes beyond the Machine-scope PATH entry on Windows.</li>
+<li>No Windows services are installed or registered.</li>
+<li>One scheduled task / cron job is created by default: a <strong>nightly maintenance job</strong> (~03:00) that runs the health-check (<code>horizon_aios_doctor.py</code>) then re-asserts the permission model (<code>horizon_aios_harden.py</code>) so routine drift self-corrects. Installed at onboarding by <code>horizon_aios_setup_maintenance_schedule.py</code>; opt out with <code>--no-nightly</code> (bootstrap.sh) / <code>-NoNightly</code> (bootstrap.ps1). The optional upstream-sync scheduler (<code>horizon_aios_setup_sync_schedule.py</code>) remains a <strong>separate opt-in</strong> step.</li>
+<li><code>$HORIZON_ROOT/.claude/settings.json</code> (devroot project-level) is not modified; it is version-controlled and owns only devroot-scoped permissions. Only <code>~/.claude/settings.json</code> (global) is created/modified.</li>
+<li>The OS repo's <code>settings.local.json</code> is never created by bootstrap — this file is machine-local and must be created manually per machine.</li>
+</ul>
+<hr />
+<h2 id="section-3-system-footprint-adding-one-brain">Section 3 — System Footprint: Adding One Brain</h2>
+<p>What changes when <code>python $HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py &lt;brain-name&gt;</code> runs.
+Must be run as Administrator (Windows) or root (Unix).</p>
+<h3 id="os-user-account-created">OS user account created</h3>
+<table>
+<thead>
+<tr>
+<th>Detail</th>
+<th>Windows</th>
+<th>macOS</th>
+<th>Linux</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Command</td>
+<td><code>New-LocalUser</code> (PowerShell)</td>
+<td><code>dscl .</code> sequence</td>
+<td><code>useradd --create-home --shell /bin/bash</code></td>
+</tr>
+<tr>
+<td>Account name</td>
+<td><code>&lt;brain-name&gt;</code></td>
+<td><code>&lt;brain-name&gt;</code></td>
+<td><code>&lt;brain-name&gt;</code></td>
+</tr>
+<tr>
+<td>Home directory</td>
+<td><code>C:\Users\&lt;brain-name&gt;</code> (OS default)</td>
+<td><code>/Users/&lt;brain-name&gt;</code> (via <code>createhomedir</code>)</td>
+<td><code>/home/&lt;brain-name&gt;</code></td>
+</tr>
+<tr>
+<td>Shell</td>
+<td>Default (PowerShell)</td>
+<td><code>/bin/bash</code></td>
+<td><code>/bin/bash</code></td>
+</tr>
+<tr>
+<td>Password</td>
+<td>Random 64-char (URL-safe base64, <code>secrets.token_urlsafe(48)</code>); never printed; stored in OS keystore</td>
+<td>Same</td>
+<td>Same; hashed with <code>openssl passwd -6</code> for <code>useradd --password</code>; if <code>openssl</code> is absent, account is created locked (<code>!</code>) and must be unlocked manually</td>
+</tr>
+<tr>
+<td><code>PasswordNeverExpires</code></td>
+<td>Set</td>
+<td>N/A</td>
+<td>N/A</td>
+</tr>
+</tbody>
+</table>
+<h3 id="os-group-changes">OS group changes</h3>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Windows</th>
+<th>macOS</th>
+<th>Linux</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>brains</code> (shared, created once)</td>
+<td>Created via <code>New-LocalGroup</code> if absent; <code>&lt;brain-name&gt;</code> added as member</td>
+<td>Created via <code>dseditgroup -o create</code> if absent; <code>&lt;brain-name&gt;</code> added</td>
+<td>Created via <code>groupadd</code> if absent; <code>&lt;brain-name&gt;</code> added via <code>usermod -aG</code></td>
+</tr>
+<tr>
+<td><code>&lt;brain-name&gt;_group</code> (Windows) / <code>&lt;brain-name&gt;</code> (Unix)</td>
+<td>Created as <code>&lt;brain-name&gt;_group</code> via <code>New-LocalGroup</code> — Windows shares a namespace for local users and groups, so the group is named <code>&lt;brain-name&gt;_group</code> to avoid colliding with the <code>&lt;brain-name&gt;</code> user account; both <code>&lt;brain-name&gt;</code> user and the invoking (owner) user are added as members</td>
+<td>Created as <code>&lt;brain-name&gt;</code> via <code>dseditgroup</code>; both <code>&lt;brain-name&gt;</code> user and the invoking (owner) user are added</td>
+<td>Created as <code>&lt;brain-name&gt;</code> via <code>groupadd</code>; both <code>&lt;brain-name&gt;</code> user and invoking user added via <code>usermod -aG</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="directories-created_1">Directories created</h3>
+<table>
+<thead>
+<tr>
+<th>Directory</th>
+<th>Permissions (Windows)</th>
+<th>Permissions (Unix)</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>$HORIZON_ROOT/brains/&lt;brain-name&gt;/</code></td>
+<td><code>icacls /inheritance:r</code>; <code>&lt;brain-name&gt;:(OI)(CI)F</code>; <code>&lt;invoking-user&gt;:(OI)(CI)F</code>; <code>SYSTEM:(OI)(CI)F</code>; <code>Administrators:(OI)(CI)F</code></td>
+<td><code>chown -R &lt;brain-name&gt;:&lt;brain-name&gt;</code>; <code>chmod 770</code></td>
+<td>Created with <code>os.makedirs</code>; parents created if absent</td>
+</tr>
+<tr>
+<td><code>$HORIZON_ROOT/brains/&lt;brain-name&gt;/.claude/</code></td>
+<td>Inherits brain folder ACLs</td>
+<td><code>chown &lt;brain-name&gt;:&lt;brain-name&gt;</code></td>
+<td>Created by Phase 5 (template deployment)</td>
+</tr>
+<tr>
+<td><code>&lt;brain-home&gt;/.claude/</code></td>
+<td>Created by Phase 3 (<code>C:\Users\&lt;brain-name&gt;\.claude\</code>)</td>
+<td>Created by Phase 3</td>
+<td>Holds the brain's <code>~/.claude/skills</code> symlink</td>
+</tr>
+</tbody>
+</table>
+<h3 id="acls-set-per-brain-in-addition-to-aios-layer-hardening">ACLs set (per-brain, in addition to AIOS-layer hardening)</h3>
+<p>All Deny ACEs are applied after all grants — ordering is a security invariant.</p>
+<table>
+<thead>
+<tr>
+<th>Directory</th>
+<th>Windows</th>
+<th>Linux</th>
+<th>macOS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>$HORIZON_ROOT/brains/&lt;brain-name&gt;/</code></td>
+<td><code>icacls /inheritance:r</code> + explicit grants for brain user, owner, SYSTEM, Administrators (Full control)</td>
+<td><code>chown -R &lt;brain-name&gt;:&lt;brain-name&gt;</code>; <code>chmod 770</code></td>
+<td>Same as Linux</td>
+</tr>
+<tr>
+<td><code>$HORIZON_BIN</code></td>
+<td><code>brains</code> group: <code>(OI)(CI)RX</code> (additive; existing ACEs not disturbed)</td>
+<td><code>chown :brains</code>; <code>chmod g+rx</code></td>
+<td>Same</td>
+</tr>
+<tr>
+<td><code>$HORIZON_SYSTEM/skills_bin/</code></td>
+<td><code>brains</code> group: <code>(OI)(CI)RX</code> (additive)</td>
+<td><code>chown :brains</code>; <code>chmod g+rx</code></td>
+<td>Same</td>
+</tr>
+<tr>
+<td><code>$HORIZON_SYSTEM/sbin/</code></td>
+<td><code>brains</code> group: <code>(OI)(CI)F</code> Deny (additive, explicit; applied last)</td>
+<td><code>chmod 700</code> (applied last)</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><code>$HORIZON_SYSTEM/skills_sbin/</code></td>
+<td><code>brains</code> group: <code>(OI)(CI)F</code> Deny (additive, explicit; applied last)</td>
+<td><code>chmod 700</code> (applied last)</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><code>$HORIZON_SYSTEM/logs/</code></td>
+<td><code>brains</code> group: <code>(OI)(CI)F</code> Deny (additive, explicit; applied last)</td>
+<td><code>chmod 700</code> (applied last)</td>
+<td>Same</td>
+</tr>
+</tbody>
+</table>
+<h3 id="skills-symlink-created">Skills symlink created</h3>
+<table>
+<thead>
+<tr>
+<th>Link</th>
+<th>Windows</th>
+<th>macOS</th>
+<th>Linux</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&lt;brain-home&gt;/.claude/skills/</code></td>
+<td>Directory symlink → <code>$HORIZON_SYSTEM/skills_bin/</code> (via <code>mklink /D</code>)</td>
+<td>Symlink → <code>$HORIZON_SYSTEM/skills_bin/</code> (via <code>ln -sfn</code>)</td>
+<td>Same as macOS</td>
+</tr>
+</tbody>
+</table>
+<p>The brain's skills symlink points to <code>skills_bin/</code> (not <code>skills_sbin/</code>) — brains
+access only the group-readable skill tier; <code>skills_sbin/</code> is explicitly denied.</p>
+<h3 id="credential-stored">Credential stored</h3>
+<table>
+<thead>
+<tr>
+<th>Platform</th>
+<th>Store</th>
+<th>Mechanism</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Windows</td>
+<td>Windows Credential Manager</td>
+<td><code>keyring</code> library (via <code>horizon_aios_brain_credential.py</code>)</td>
+</tr>
+<tr>
+<td>macOS</td>
+<td>Keychain</td>
+<td><code>keyring</code> library</td>
+</tr>
+<tr>
+<td>Linux</td>
+<td>Secret Service (e.g., GNOME Keyring, KWallet)</td>
+<td><code>keyring</code> library</td>
+</tr>
+</tbody>
+</table>
+<p>The password is auto-generated (64 chars, <code>secrets.token_urlsafe(48)</code>) and is never
+written to any file and never printed to the terminal. Retrieve it with:
+<code>python $HORIZON_SYSTEM/sbin/horizon_aios_brain_credential.py get &lt;brain-name&gt;</code> (requires
+Administrator / root).</p>
+<p>If the <code>keyring</code> library is absent, a warning is printed and the password is not
+stored — it must be set manually: <code>passwd &lt;brain-name&gt;</code> (Unix) or
+<code>Set-LocalUser -Name &lt;brain-name&gt; -Password (...)</code> (Windows).</p>
+<h3 id="files-written-inside-the-brain-folder">Files written inside the brain folder</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Source</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>$HORIZON_ROOT/brains/&lt;brain-name&gt;/.claude/CLAUDE.md</code></td>
+<td><code>$HORIZON_ROOT/brains/.aioscommon/brain_CLAUDE.md.template</code></td>
+<td><code>[BRAIN_NAME]</code> and <code>[HORIZON_ROOT_PATH]</code> placeholders substituted; customize after provisioning to define the brain's persona</td>
+</tr>
+<tr>
+<td><code>$HORIZON_ROOT/brains/&lt;brain-name&gt;/.claude/settings.json</code></td>
+<td><code>$HORIZON_ROOT/brains/.aioscommon/brain_settings.json.template</code></td>
+<td><code>[BRAIN_NAME]</code> and <code>[HORIZON_ROOT_PATH]</code> placeholders substituted; customize to scope allowed tools</td>
+</tr>
+<tr>
+<td><code>$HORIZON_ROOT/brains/&lt;brain-name&gt;/.aios_provision.json</code></td>
+<td>Generated by <code>horizon_aios_create_brain.py</code> Phase 5</td>
+<td>Machine-readable provisioning manifest (timestamp, invoking user, groups, paths, credential store note) for auditors</td>
+</tr>
+</tbody>
+</table>
+<h3 id="shell-profile-written-brain-users-login-environment">Shell profile written (brain user's login environment)</h3>
+<table>
+<thead>
+<tr>
+<th>Platform</th>
+<th>File(s) written</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Windows</td>
+<td><code>C:\Users\&lt;brain-name&gt;\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1</code> and <code>...\PowerShell\Microsoft.PowerShell_profile.ps1</code></td>
+<td>Sets all <code>$env:HORIZON_*</code> variables and <code>Set-Location</code> to brain folder</td>
+</tr>
+<tr>
+<td>Linux</td>
+<td><code>&lt;brain-home&gt;/.bashrc</code></td>
+<td>Exports all <code>HORIZON_*</code> env vars, sets <code>HORIZON_BRAIN_NAME</code> and <code>HORIZON_BRAIN_HOME</code>, <code>cd</code>s to brain folder</td>
+</tr>
+<tr>
+<td>macOS</td>
+<td><code>&lt;brain-home&gt;/.zshrc</code> and <code>&lt;brain-home&gt;/.bash_profile</code></td>
+<td>Same content as Linux</td>
+</tr>
+</tbody>
+</table>
+<h3 id="hooks-services">Hooks / services</h3>
+<p>No hooks, services, scheduled tasks, or cron jobs are created by <code>horizon_aios_create_brain.py</code>.
+A brain can be wired to Task Scheduler (Windows) or cron/systemd (Unix) after
+provisioning — this is a manual post-provisioning step. The filesystem monitor
+(<code>sbin/horizon_aios_monitor.py</code>) is a separate opt-in tool and is not auto-started.</p>
+<hr />
+<h2 id="see-also">See Also</h2>
+<ul>
+<li><code>getting_started/ReadMeToSetupYourSystem.md</code> — procedural step-by-step instructions for AIOS installation</li>
+<li><code>documentation/utilities.md</code> — quick-lookup catalog for <code>horizon_aios_harden.py</code>, <code>horizon_aios_create_brain.py</code>, <code>horizon_aios_brain_credential.py</code>, and all other <code>sbin/</code> utilities</li>
+<li><code>documentation/security_architecture_invariants.md</code> — the ACL ownership model, the three-tier principal hierarchy, and why the Deny-after-grant ordering is a hard invariant</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "search.suggest", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

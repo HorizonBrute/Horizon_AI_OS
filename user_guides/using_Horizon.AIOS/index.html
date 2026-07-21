@@ -1,0 +1,5758 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for Horizon AIOS — a centralized, syncable AI operating-system config layer.">
+      
+      
+      
+      
+        <link rel="prev" href="../using_your_aios/">
+      
+      
+        <link rel="next" href="../deployment_howtos/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Using Horizon.AIOS - Horizon AIOS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#using-your-horizon-aios-operational-wiki" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Horizon AIOS" class="md-header__button md-logo" aria-label="Horizon AIOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Horizon AIOS
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Using Horizon.AIOS
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting_started/getting_started.index/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../user_guides.index/" class="md-tabs__link">
+          
+  
+  
+  User Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../system/system.index/" class="md-tabs__link">
+          
+  
+  
+  System
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../deployment/deployment.index/" class="md-tabs__link">
+          
+  
+  
+  Deployment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../security/security.index/" class="md-tabs__link">
+          
+  
+  
+  Security
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../authoring/authoring.index/" class="md-tabs__link">
+          
+  
+  
+  Authoring
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../build_decisions/build_decisions.index/" class="md-tabs__link">
+          
+  
+  
+  Build Decisions
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../development_tools/development_tools.index/" class="md-tabs__link">
+          
+  
+  
+  Development Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../philosophy/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Horizon AIOS" class="md-nav__button md-logo" aria-label="Horizon AIOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Horizon AIOS
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/getting_started.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/ReadMeToSetupYourSystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/dependencies_and_footprint/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dependencies & Footprint
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/updating/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Updating
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/lifecycle_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lifecycle Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user_guides.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../using_your_aios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using Your AIOS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using Horizon.AIOS
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using Horizon.AIOS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-security-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. The Security Model
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. The Security Model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-the-core-principle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 The Core Principle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-brains-in-the-security-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 Brains in the Security Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-bring-your-own-harness-in-the-security-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 Bring Your Own Harness in the Security Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-the-human-operator-boundary-secure-by-onboarding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.4 The Human Operator Boundary — Secure by Onboarding
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-building-and-configuring-a-brain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Building and Configuring a Brain
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Building and Configuring a Brain">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-provisioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Provisioning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-the-brains-home-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 The Brain's Home Directory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-building-the-memory-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Building the Memory System
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-giving-the-brain-access-to-tooling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Giving the Brain Access to Tooling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-running-the-harness-as-the-brain-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Running the Harness as the Brain User
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-projects-purpose-and-practical-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Projects — Purpose and Practical Patterns
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Projects — Purpose and Practical Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-what-projects-are" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 What Projects Are
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-why-separate-development-tooling-from-code-repos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Why Separate Development Tooling from Code Repos
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-practical-patterns-for-project-folders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Practical Patterns for Project Folders
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-project-level-aios-overrides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 Project-Level AIOS Overrides
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-session-continuity-handoffs-and-objectives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Session Continuity — Handoffs and Objectives
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Session Continuity — Handoffs and Objectives">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-the-problem-they-solve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 The Problem They Solve
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-handoff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 /handoff
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-objective" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 /objective
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-starting-a-new-session-from-a-handoff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 Starting a New Session from a Handoff
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-the-objective-handoff-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 The Objective-Handoff Chain
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-case-study-the-developer-brain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Case Study — The Developer Brain
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Case Study — The Developer Brain">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-the-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 The Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-provisioning-the-brain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Provisioning the Brain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-configuring-the-brains-workspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Configuring the Brain's Workspace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-the-automated-pr-monitoring-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 The Automated PR-Monitoring Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-the-interactive-development-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 The Interactive Development Workflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#56-why-this-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.6 Why This Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-bring-your-own-harness-and-localagentsmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Bring Your Own Harness and local.agents.md
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Bring Your Own Harness and local.agents.md">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-what-byoh-means-in-practice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 What BYOH Means in Practice
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-the-configuration-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 The Configuration Chain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-localagentsmd-the-primary-configuration-seam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 local.agents.md — The Primary Configuration Seam
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#64-adding-support-for-a-new-harness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.4 Adding Support for a New Harness
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-model-preferences-and-agent-teams" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Model Preferences and Agent Teams
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Model Preferences and Agent Teams">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-model-preferences-routing-work-to-the-right-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 Model Preferences — Routing Work to the Right Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-agent-teams-structured-multi-agent-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Agent Teams — Structured Multi-Agent Workflows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-loop-retry-constructs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 Loop / Retry Constructs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#74-conditional-roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.4 Conditional Roles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#75-saill-standardized-ai-loop-language" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.5 SAILL — Standardized AI Loop Language
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#76-agent-team-skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.6 Agent Team Skills
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-understanding-and-managing-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Understanding and Managing Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Understanding and Managing Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#81-what-context-is-and-why-it-costs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.1 What Context Is and Why It Costs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#82-what-gets-loaded-in-any-given-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2 What Gets Loaded in Any Given Directory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#83-measuring-context-overhead" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.3 Measuring Context Overhead
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#84-the-import-rule-unconditional-loading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.4 The @-Import Rule — Unconditional Loading
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#85-per-layer-configuration-guide" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.5 Per-Layer Configuration Guide
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#86-health-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.6 Health Check
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-the-terseness-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. The Terseness Contract
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. The Terseness Contract">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#91-what-it-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.1 What It Is
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#92-the-seven-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.2 The Seven Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#93-checking-compliance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.3 Checking Compliance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#94-the-terseness-contract-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.4 The Terseness Contract Index
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-gitignore-local-config-and-what-not-to-commit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Gitignore, Local Config, and What Not to Commit
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Gitignore, Local Config, and What Not to Commit">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#101-the-two-gitignore-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.1 The Two-Gitignore Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102-what-is-never-committed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.2 What Is Never Committed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#103-protecting-configuration-points-the-clobber-hazard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.3 Protecting Configuration Points — The Clobber Hazard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#104-checking-what-a-sync-would-overwrite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.4 Checking What a Sync Would Overwrite
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-enterprise-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Enterprise Deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. Enterprise Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#111-the-model-organization-fork-employee-clone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.1 The Model: Organization Fork, Employee Clone
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#112-where-organization-policy-lives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.2 Where Organization Policy Lives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#113-pulling-upstream-updates-into-the-org-fork" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.3 Pulling Upstream Updates into the Org Fork
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#114-centralized-deployment-and-force-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.4 Centralized Deployment and Force Install
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#115-multi-operator-and-team-environments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.5 Multi-Operator and Team Environments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#116-sync-schedule-and-drift-prevention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.6 Sync Schedule and Drift Prevention
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-containerization-cloud-and-infrastructure-as-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Containerization, Cloud, and Infrastructure as Code
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="12. Containerization, Cloud, and Infrastructure as Code">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#121-why-aios-is-iac-friendly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.1 Why AIOS Is IaC-Friendly
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#122-docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.2 Docker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#123-cloud-vm-provisioning-terraform-pulumi-cloud-init" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.3 Cloud VM Provisioning (Terraform / Pulumi / cloud-init)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#124-kubernetes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.4 Kubernetes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#125-container-registry-and-image-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.5 Container Registry and Image Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#126-secrets-management-in-cloud-environments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.6 Secrets Management in Cloud Environments
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-bring-your-own-infrastructure-integrated-identity-and-existing-security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. Bring Your Own Infrastructure — Integrated Identity and Existing Security
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="13. Bring Your Own Infrastructure — Integrated Identity and Existing Security">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#131-the-core-principle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.1 The Core Principle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#132-active-directory-and-integrated-identity-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.2 Active Directory and Integrated Identity Providers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#133-siem-and-security-monitoring-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.3 SIEM and Security Monitoring Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#134-group-policy-and-system-level-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.4 Group Policy and System-Level Controls
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#135-what-aios-adds-and-what-it-doesnt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.5 What AIOS Adds — and What It Doesn't
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reference-pointers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference Pointers
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment_howtos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment How-Tos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    System
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/system.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/aios_options_packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Options Packages
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/aios_switching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AIOS Switching
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/distribution_and_updates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Distribution & Updates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/system_configuration_reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/model_preferences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Preferences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/agent_teams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Teams
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/skill_model_groups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skill Model Groups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../system/uninstall/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Uninstall
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/deployment.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/desktop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Desktop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/multi_brain_deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Brain Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/brain_automation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Brain Automation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Security
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/security.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/audit_logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit Logging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/brain_isolation_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Brain Isolation Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security_architecture_invariants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security Architecture Invariants
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Authoring
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authoring/authoring.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../authoring/claude_md_authoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLAUDE.md Authoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build Decisions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Build Decisions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../build_decisions/build_decisions.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../build_decisions/architecture_decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Tools
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development_tools/development_tools.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development_tools/consistency_checks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consistency Checks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development_tools/windows_install_switch_uninstall_test_prompt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Windows Install/Switch/Uninstall Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../philosophy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Philosophy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev_values/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Values
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development_pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../context_loading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Context Loading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../model_prefs_details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Preferences Details
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utilities Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sync_setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sync Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cloud_sync_exclusions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloud Sync Exclusions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tested_configurations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tested Configurations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../terseness_contract_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Terseness Contract Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../branding_invariants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Branding Invariants
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-security-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. The Security Model
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. The Security Model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-the-core-principle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 The Core Principle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-brains-in-the-security-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 Brains in the Security Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-bring-your-own-harness-in-the-security-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 Bring Your Own Harness in the Security Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-the-human-operator-boundary-secure-by-onboarding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.4 The Human Operator Boundary — Secure by Onboarding
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-building-and-configuring-a-brain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Building and Configuring a Brain
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Building and Configuring a Brain">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-provisioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Provisioning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-the-brains-home-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 The Brain's Home Directory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-building-the-memory-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Building the Memory System
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-giving-the-brain-access-to-tooling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Giving the Brain Access to Tooling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-running-the-harness-as-the-brain-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Running the Harness as the Brain User
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-projects-purpose-and-practical-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Projects — Purpose and Practical Patterns
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Projects — Purpose and Practical Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-what-projects-are" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 What Projects Are
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-why-separate-development-tooling-from-code-repos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Why Separate Development Tooling from Code Repos
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-practical-patterns-for-project-folders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Practical Patterns for Project Folders
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-project-level-aios-overrides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 Project-Level AIOS Overrides
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-session-continuity-handoffs-and-objectives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Session Continuity — Handoffs and Objectives
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Session Continuity — Handoffs and Objectives">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-the-problem-they-solve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 The Problem They Solve
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-handoff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 /handoff
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-objective" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 /objective
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-starting-a-new-session-from-a-handoff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 Starting a New Session from a Handoff
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-the-objective-handoff-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 The Objective-Handoff Chain
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-case-study-the-developer-brain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Case Study — The Developer Brain
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Case Study — The Developer Brain">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-the-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 The Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-provisioning-the-brain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Provisioning the Brain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-configuring-the-brains-workspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Configuring the Brain's Workspace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-the-automated-pr-monitoring-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 The Automated PR-Monitoring Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-the-interactive-development-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 The Interactive Development Workflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#56-why-this-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.6 Why This Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-bring-your-own-harness-and-localagentsmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Bring Your Own Harness and local.agents.md
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Bring Your Own Harness and local.agents.md">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-what-byoh-means-in-practice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 What BYOH Means in Practice
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-the-configuration-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 The Configuration Chain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-localagentsmd-the-primary-configuration-seam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 local.agents.md — The Primary Configuration Seam
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#64-adding-support-for-a-new-harness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.4 Adding Support for a New Harness
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-model-preferences-and-agent-teams" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Model Preferences and Agent Teams
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Model Preferences and Agent Teams">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-model-preferences-routing-work-to-the-right-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 Model Preferences — Routing Work to the Right Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-agent-teams-structured-multi-agent-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Agent Teams — Structured Multi-Agent Workflows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-loop-retry-constructs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 Loop / Retry Constructs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#74-conditional-roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.4 Conditional Roles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#75-saill-standardized-ai-loop-language" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.5 SAILL — Standardized AI Loop Language
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#76-agent-team-skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.6 Agent Team Skills
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-understanding-and-managing-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Understanding and Managing Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Understanding and Managing Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#81-what-context-is-and-why-it-costs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.1 What Context Is and Why It Costs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#82-what-gets-loaded-in-any-given-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2 What Gets Loaded in Any Given Directory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#83-measuring-context-overhead" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.3 Measuring Context Overhead
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#84-the-import-rule-unconditional-loading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.4 The @-Import Rule — Unconditional Loading
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#85-per-layer-configuration-guide" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.5 Per-Layer Configuration Guide
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#86-health-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.6 Health Check
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-the-terseness-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. The Terseness Contract
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. The Terseness Contract">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#91-what-it-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.1 What It Is
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#92-the-seven-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.2 The Seven Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#93-checking-compliance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.3 Checking Compliance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#94-the-terseness-contract-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.4 The Terseness Contract Index
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-gitignore-local-config-and-what-not-to-commit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Gitignore, Local Config, and What Not to Commit
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Gitignore, Local Config, and What Not to Commit">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#101-the-two-gitignore-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.1 The Two-Gitignore Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102-what-is-never-committed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.2 What Is Never Committed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#103-protecting-configuration-points-the-clobber-hazard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.3 Protecting Configuration Points — The Clobber Hazard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#104-checking-what-a-sync-would-overwrite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.4 Checking What a Sync Would Overwrite
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-enterprise-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Enterprise Deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. Enterprise Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#111-the-model-organization-fork-employee-clone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.1 The Model: Organization Fork, Employee Clone
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#112-where-organization-policy-lives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.2 Where Organization Policy Lives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#113-pulling-upstream-updates-into-the-org-fork" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.3 Pulling Upstream Updates into the Org Fork
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#114-centralized-deployment-and-force-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.4 Centralized Deployment and Force Install
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#115-multi-operator-and-team-environments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.5 Multi-Operator and Team Environments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#116-sync-schedule-and-drift-prevention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.6 Sync Schedule and Drift Prevention
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-containerization-cloud-and-infrastructure-as-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Containerization, Cloud, and Infrastructure as Code
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="12. Containerization, Cloud, and Infrastructure as Code">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#121-why-aios-is-iac-friendly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.1 Why AIOS Is IaC-Friendly
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#122-docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.2 Docker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#123-cloud-vm-provisioning-terraform-pulumi-cloud-init" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.3 Cloud VM Provisioning (Terraform / Pulumi / cloud-init)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#124-kubernetes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.4 Kubernetes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#125-container-registry-and-image-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.5 Container Registry and Image Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#126-secrets-management-in-cloud-environments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.6 Secrets Management in Cloud Environments
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-bring-your-own-infrastructure-integrated-identity-and-existing-security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. Bring Your Own Infrastructure — Integrated Identity and Existing Security
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="13. Bring Your Own Infrastructure — Integrated Identity and Existing Security">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#131-the-core-principle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.1 The Core Principle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#132-active-directory-and-integrated-identity-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.2 Active Directory and Integrated Identity Providers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#133-siem-and-security-monitoring-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.3 SIEM and Security Monitoring Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#134-group-policy-and-system-level-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.4 Group Policy and System-Level Controls
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#135-what-aios-adds-and-what-it-doesnt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.5 What AIOS Adds — and What It Doesn't
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reference-pointers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference Pointers
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="using-your-horizon-aios-operational-wiki">Using Your Horizon AIOS — Operational Wiki</h1>
+<p>This wiki bridges the gap between initial setup and daily operation. It assumes AIOS is installed and running. If it is not, start with <code>$HORIZON_DOCS/getting_started/ReadMeToSetupYourSystem.md</code>.</p>
+<hr />
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="#1-the-security-model">The Security Model</a></li>
+<li><a href="#2-building-and-configuring-a-brain">Building and Configuring a Brain</a></li>
+<li><a href="#3-projects--purpose-and-practical-patterns">Projects — Purpose and Practical Patterns</a></li>
+<li><a href="#4-session-continuity--handoffs-and-objectives">Session Continuity — Handoffs and Objectives</a></li>
+<li><a href="#5-case-study--the-developer-brain">Case Study — The Developer Brain</a></li>
+<li><a href="#6-bring-your-own-harness-and-localagentsmd">Bring Your Own Harness and local.agents.md</a></li>
+<li><a href="#7-model-preferences-and-agent-teams">Model Preferences and Agent Teams</a></li>
+<li><a href="#8-understanding-and-managing-context">Understanding and Managing Context</a></li>
+<li><a href="#9-the-terseness-contract">The Terseness Contract</a></li>
+<li><a href="#10-gitignore-local-config-and-what-not-to-commit">Gitignore, Local Config, and What Not to Commit</a></li>
+<li><a href="#11-enterprise-deployment">Enterprise Deployment</a></li>
+<li><a href="#12-containerization-cloud-and-infrastructure-as-code">Containerization, Cloud, and Infrastructure as Code</a></li>
+<li><a href="#13-bring-your-own-infrastructure--integrated-identity-and-existing-security">Bring Your Own Infrastructure — Integrated Identity and Existing Security</a></li>
+</ol>
+<hr />
+<h2 id="1-the-security-model">1. The Security Model</h2>
+<h3 id="11-the-core-principle">1.1 The Core Principle</h3>
+<p>Horizon AIOS is not a security framework — it is a configuration layer that redirects existing OS security mechanisms toward AI workloads. The security model's governing question is the one a security team asks when approving any new application: <em>What is the agent doing? How? With what access? And how do we enforce it?</em></p>
+<p>AIOS answers all of these from the OS layer. There is no custom security engine. The enforcements are the same mechanisms your IT infrastructure already knows:</p>
+<ul>
+<li><strong>User isolation</strong> — OS user accounts and NTFS ACLs / POSIX permissions</li>
+<li><strong>Access control</strong> — <code>icacls</code> (Windows) / <code>chmod</code> (Unix), not reimplemented</li>
+<li><strong>Audit logging</strong> — the AIOS filesystem monitor writing JSON-line events, compatible with any SIEM</li>
+<li><strong>Credential containment</strong> — OS-native credential stores (Windows Credential Manager / macOS Keychain / Linux Secret Service)</li>
+</ul>
+<p>See <code>$HORIZON_DOCS/philosophy.md</code> §§3–4 for the full "Blue Team Answerability" treatment.</p>
+<h3 id="12-brains-in-the-security-model">1.2 Brains in the Security Model</h3>
+<p>A <strong>brain</strong> is a separate OS user account scoped to its own directory subtree. This is not a metaphor — the brain user is a real local account with a generated 64-character password stored in the OS keystore, never printed anywhere.</p>
+<p>The security model for a brain at provisioning time:</p>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Enforcement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Full access to its own workspace (<code>brains/&lt;name&gt;/</code>)</td>
+<td><code>brains_group</code> ACL grants full control; no other account has access</td>
+</tr>
+<tr>
+<td>Read + execute on <code>$HORIZON_BIN</code> and <code>skills_bin</code></td>
+<td><code>brains</code> group grant — the "can use AIOS tooling" gate</td>
+</tr>
+<tr>
+<td>Explicit Deny on <code>sbin</code>, <code>skills_sbin</code>, and <code>logs</code></td>
+<td>Non-inherited Deny ACE — cannot be overridden by any Allow</td>
+</tr>
+<tr>
+<td>Cannot write to the AIOS system layer</td>
+<td>Deny ACE on <code>$HORIZON_SYSTEM</code>; OS-enforced regardless of what the harness says</td>
+</tr>
+</tbody>
+</table>
+<p>The critical property: <strong>even a fully compromised harness cannot escalate past the OS boundary.</strong> The Deny ACEs are not app-layer promises. They are OS-level restrictions that the harness runs inside — not controls the harness can modify.</p>
+<p>A brain's access to data and tooling is zero by default. Every grant must be explicit and is answerable from the provisioning record (<code>.aios_provision.json</code> in the brain's folder).</p>
+<p>For isolation verification commands, see <code>$HORIZON_DOCS/security/brain_isolation_test.md</code>. To re-apply the ACL model after structural changes, run <code>/harden</code>.</p>
+<h3 id="13-bring-your-own-harness-in-the-security-model">1.3 Bring Your Own Harness in the Security Model</h3>
+<p>BYOH means the harness — Claude Code, Codex, Ollama, or any tool that reads <code>agents.md</code> — is a guest inside the AIOS layer, not the layer itself. A brain's harness is configured to point at the AIOS but runs as the brain OS user, so it is bounded by the brain's OS permissions.</p>
+<p>Harness-specific configuration lives in <code>$HORIZON_SYSTEM/harness_configs/&lt;vendor&gt;/</code> and extends — but never replaces — the cross-harness core. The security invariants (ACLs, isolation boundaries, credential containment) have no harness dependency. Swapping the harness does not change what the brain can reach.</p>
+<p>The implication: <strong>the security model is the same regardless of which harness the brain runs.</strong> A brain running Claude Code and a brain running Codex have the same filesystem restrictions. The harness governs what the AI can do within those bounds; the OS governs what the account can touch.</p>
+<p>See <code>$HORIZON_DOCS/philosophy.md</code> §7 (BYOH) and <code>$HORIZON_DOCS/security_architecture_invariants.md</code> §5 (the harness-is-bounded-by-the-OS invariant).</p>
+<h3 id="14-the-human-operator-boundary-secure-by-onboarding">1.4 The Human Operator Boundary — Secure by Onboarding</h3>
+<p>There is no separate "hardening" step. Onboarding (bootstrap) is the single secure entry point: it always creates the AIOS OS groups and applies the ACL model, so the tree is locked down from the first run. On Windows it breaks inheritance at <code>$HORIZON_ROOT</code> and re-grants only owner + SYSTEM + Administrators + the <code>horizon_humans</code> group, which removes broad inherited write grants (e.g. Authenticated Users) from the AIOS tree.</p>
+<p><code>horizon_humans</code> ("Horizon.AIOS Actual Humans") is an AIOS-managed OS group created on every install. Its members get <strong>Full control of the AIOS tree</strong> and <strong>Read/Write on <code>brains/</code></strong> — they are near-admins who maintain the brains and apps. Brain-to-brain isolation is preserved separately, riding on folder ownership plus each brain's private group, so humans having write access does not weaken it. Humans are instead <strong>isolated from each other on <code>projects/</code></strong> — traverse-only on the parent, owner-only on each <code>projects/&lt;user&gt;</code> child — which is the isolation that now mirrors the brain-side isolation from the other direction.</p>
+<p>Onboarding asks whether the machine is primarily a server or an active-use workstation:</p>
+<table>
+<thead>
+<tr>
+<th>Profile</th>
+<th>Humans enrolled</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Server</td>
+<td>None — group left empty</td>
+<td>Only owner / SYSTEM / Administrators write; a bare server reduces to admin-only write</td>
+</tr>
+<tr>
+<td>Workstation</td>
+<td>The human operator account(s)</td>
+<td>Enrolled humans get full day-to-day control of the tree without admin; Read/Write on <code>brains/</code>, isolated per-user on <code>projects/</code></td>
+</tr>
+</tbody>
+</table>
+<p>Human accounts are supplied by name or SID (cloud / Azure AD accounts are SIDs). Non-interactive runs must pass <code>--yes</code> or <code>--profile server|workstation [--humans &lt;name|sid&gt; ...]</code>. Enroll a human later without re-onboarding with <code>bootstrap --add-human &lt;name|sid&gt;</code>. The chosen profile and enrolled humans are recorded in the gitignored marker <code>$HORIZON_ROOT/.horizon_aios_deployment.json</code>.</p>
+<p>To re-apply the same ACL model onboarding installs (without changing enrollment), run <code>/harden</code>.</p>
+<hr />
+<h2 id="2-building-and-configuring-a-brain">2. Building and Configuring a Brain</h2>
+<h3 id="21-provisioning">2.1 Provisioning</h3>
+<p>Brain provisioning is a single elevated command:</p>
+<pre><code class="language-bash"># Windows (Administrator PowerShell)
+python &quot;$env:HORIZON_SYSTEM\sbin\horizon_aios_create_brain.py&quot; &lt;brain-name&gt;
+
+# Linux / macOS
+sudo python &quot;$HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py&quot; &lt;brain-name&gt;
+</code></pre>
+<p>Or use the <code>/create-brain</code> skill from an owner session. The script creates the OS user account, the <code>brains</code> group (if absent), a per-brain group, the workspace folder with correct ACLs, and a shell profile that loads the <code>HORIZON_*</code> environment variables on login. A <code>.aios_provision.json</code> manifest is written into the brain's folder.</p>
+<p>After provisioning, the brain user's <code>~/.claude/</code> is already pointed at <code>brains/&lt;name&gt;/.claude/</code> — the harness is wired to AIOS at provisioning time, not separately. There is no additional "connect harness to AIOS" step.</p>
+<p>Brain names must match <code>^[a-z][a-z0-9_]{1,31}$</code>. Use descriptive names that reflect the brain's function: <code>code_reviewer</code>, <code>inbox_triage</code>, <code>research_assistant</code>.</p>
+<h3 id="22-the-brains-home-directory">2.2 The Brain's Home Directory</h3>
+<p>The brain's workspace lives at <code>$HORIZON_ROOT/brains/&lt;name&gt;/</code>. This is the brain's entire world by default. Inside it:</p>
+<pre><code>brains/&lt;name&gt;/
+  .claude/
+    CLAUDE.md          # brain identity, persona, scope — edit this after provisioning
+    settings.json      # harness-layer permissions (defense-in-depth only; real isolation is the ACLs)
+    skills -&gt; $HORIZON_SYSTEM/skills_bin/   # symlink; brain sees group-readable skills only
+  .aios_provision.json  # provisioning manifest; do not delete
+  memory/               # the brain's memory system — your design, your choice
+  projects -&gt; ...        # optional: symlinks to project folders
+  tools/                 # optional: scripts, MCP configs, credentials the brain needs
+</code></pre>
+<h3 id="23-building-the-memory-system">2.3 Building the Memory System</h3>
+<p><strong>The AIOS does not implement a memory system.</strong> The <code>brains/&lt;name&gt;/</code> directory is a secure, isolated container. What you put inside it is your decision entirely.</p>
+<p>Common patterns:</p>
+<ul>
+<li><strong>File-based memory</strong> — Markdown documents, calibration files, few-shot examples, domain knowledge. The simplest form. The brain's <code>CLAUDE.md</code> tells it where to look and what the files mean.</li>
+<li><strong>Vector index</strong> — a ChromaDB, FAISS, or similar index stored in a subdirectory. The brain has a retrieval script in <code>tools/</code> that wraps it.</li>
+<li><strong>Structured knowledge base</strong> — SQLite database, JSON knowledge store, or any format the brain's tooling can query.</li>
+<li><strong>Conversation history</strong> — the harness writes transcripts to <code>brains/&lt;name&gt;/.claude/projects/</code> automatically (via the <code>~/.claude/projects</code> redirect). These are available to the brain across sessions.</li>
+</ul>
+<p>The memory system is what makes the brain an expert rather than a stateless query processor. When the brain's expertise is consolidated in self-contained artifacts within its directory — not embedded in a specific harness or model fine-tuning — the brain is portable: swap the harness, swap the model, move to another machine, and the expertise travels with the directory.</p>
+<p>See <code>$HORIZON_DOCS/philosophy.md</code> §6 for the design rationale and <code>$HORIZON_DOCS/system/memory.md</code> for how harness transcripts are redirected.</p>
+<h3 id="24-giving-the-brain-access-to-tooling">2.4 Giving the Brain Access to Tooling</h3>
+<p><strong>Bring the tooling to the brain — don't expect the brain to range for it.</strong></p>
+<p>Tools are delivered into the brain's boundary, externally provisioned. Every tool the brain holds is auditable and revocable. The provisioning question: "What tooling does this brain have?" is answerable from what was brought to it.</p>
+<p>Practical provisioning:</p>
+<p>1.1 <strong>Scripts and CLI tools</strong> — place in <code>brains/&lt;name&gt;/tools/</code>. These are files the brain's OS user owns and can execute. Keep them deterministic. The brain coordinates the tool; the tool does the computation.</p>
+<p>1.2 <strong>MCP servers</strong> — MCP configuration lives in the brain's harness settings (<code>brains/&lt;name&gt;/.claude/settings.local.json</code>) under the <code>mcpServers</code> key. Since the brain's <code>~/.claude</code> symlinks to <code>brains/&lt;name&gt;/.claude/</code>, MCP servers configured there are available only to that brain.</p>
+<pre><code class="language-json">{
+  &quot;mcpServers&quot;: {
+    &quot;filesystem&quot;: {
+      &quot;command&quot;: &quot;npx&quot;,
+      &quot;args&quot;: [&quot;-y&quot;, &quot;@modelcontextprotocol/server-filesystem&quot;, &quot;/path/to/allowed/dir&quot;]
+    }
+  }
+}
+</code></pre>
+<p>Scope MCP server paths to what the brain actually needs. An MCP server that exposes the full filesystem defeats the isolation model.</p>
+<p>1.3 <strong>Credentials</strong> — store in the OS-native credential store via <code>horizon_aios_brain_credential.py</code>, or place credential files inside <code>brains/&lt;name&gt;/</code>. Never store credentials in committed files or environment variables that could leak.</p>
+<p>1.4 <strong>Network access</strong> — the brain OS user has the same network access as any local account by default. To restrict it, apply OS-level firewall rules or network policies per account. AIOS does not manage network access; that is a standard IT infrastructure concern.</p>
+<p>1.5 <strong>Filesystem access beyond the brain's home</strong> — grant access to additional paths explicitly. On Windows: <code>icacls &lt;path&gt; /grant &lt;brain-name&gt;:(OI)(CI)RX</code>. On Unix: add the brain user to a group that owns the target directory, or set ACLs with <code>setfacl</code>. Document every grant in the brain's provisioning record.</p>
+<h3 id="25-running-the-harness-as-the-brain-user">2.5 Running the Harness as the Brain User</h3>
+<p>The harness must run as the brain OS user — not as the owner — to enforce the isolation boundary. The harness reads configuration from <code>~/.claude/</code>, and the brain's <code>~/.claude/</code> is symlinked to its workspace, so the harness automatically gets the brain's context when launched as the brain.</p>
+<p><strong>Interactive use:</strong></p>
+<pre><code class="language-powershell"># Windows — launch Claude Code as the brain
+runas /user:&lt;brain-name&gt; claude
+
+# Linux / macOS — switch to the brain user and launch
+su - &lt;brain-name&gt;
+claude
+</code></pre>
+<p>On Windows, the brain's password can be retrieved (as Administrator) for <code>runas</code>:</p>
+<pre><code class="language-powershell">python &quot;$env:HORIZON_SYSTEM\sbin\horizon_aios_brain_credential.py&quot; get &lt;brain-name&gt; --show
+</code></pre>
+<p><strong>Automated / unattended use:</strong></p>
+<p>For scheduled tasks or daemons, provision the brain with a logon right:</p>
+<pre><code class="language-bash">python $HORIZON_SYSTEM/sbin/horizon_aios_create_brain.py &lt;brain-name&gt; --automation scheduled
+</code></pre>
+<p>Then register a Windows Task Scheduler task or Linux cron job whose user account is the brain. The task launches the harness directly (<code>claude -p "&lt;prompt&gt;"</code>). Because the task runs as the brain user, all isolation guarantees apply — the scheduled harness cannot access anything the brain's ACLs deny it.</p>
+<p>See <code>$HORIZON_DOCS/deployment/brain_automation.md</code> for the full three-tier logon rights model (none / scheduled / daemon) and <code>$HORIZON_DOCS/deployment/desktop.md</code> for the complete wiring walkthrough.</p>
+<hr />
+<h2 id="3-projects-purpose-and-practical-patterns">3. Projects — Purpose and Practical Patterns</h2>
+<h3 id="31-what-projects-are">3.1 What Projects Are</h3>
+<p>A project is any folder inside <code>$HORIZON_ROOT</code> that you choose to work in. AIOS gives it no special treatment by default — it just inherits the full AIOS Claude Code environment automatically, with no per-project wiring.</p>
+<p>What makes a folder a project (in the meaningful sense) is that it has its own independent Git history:</p>
+<pre><code class="language-bash">mkdir &quot;$HORIZON_ROOT/my-project&quot;
+cd &quot;$HORIZON_ROOT/my-project&quot;
+git init
+</code></pre>
+<p>From this point, the folder is invisible to the OS repo. Git does not descend into subdirectories with their own <code>.git</code>. The OS repo tracks AIOS config; this project tracks its own source code, history, and remotes.</p>
+<p>No <code>.gitignore</code> entry is needed. The pre-commit hook handles any edge case where files were tracked before <code>git init</code> was run.</p>
+<h3 id="32-why-separate-development-tooling-from-code-repos">3.2 Why Separate Development Tooling from Code Repos</h3>
+<p>The AIOS layer (with all its configuration, skills, hooks, and harness settings) lives in the OS repo at <code>$HORIZON_ROOT</code>. Code projects live in nested repos. The separation serves several purposes:</p>
+<ul>
+<li><strong>Audit isolation</strong> — the AIOS monitor watches the OS layer for unexpected changes. Code repositories under their own git histories have different change patterns and are out of scope by default. You can extend the monitor's watch to specific project paths if you want to audit them.</li>
+<li><strong>Brain containment</strong> — a brain given access to a project folder can read and write within it, but the AIOS layer remains protected by its own ACLs regardless of what the brain does inside the project.</li>
+<li><strong>Config hygiene</strong> — AI development tooling (CLAUDE.md files, skills, model preferences, hooks) lives in the OS repo. Code lives in project repos. When you update the OS layer, code projects are unaffected. When code project files change, the OS layer is unaffected.</li>
+<li><strong>Harness portability</strong> — a project folder can be moved, shared, or synced independently. The AIOS layer stays on the machine.</li>
+</ul>
+<h3 id="33-practical-patterns-for-project-folders">3.3 Practical Patterns for Project Folders</h3>
+<p>Projects inside <code>$HORIZON_ROOT</code> are just directories. The OS provides standard filesystem semantics. This means you can use them however it makes sense for your workload:</p>
+<p><strong>Code repositories.</strong> The most common case. Each project is a git repo. The developer works inside it; the AIOS environment applies automatically.</p>
+<pre><code>$HORIZON_ROOT/
+  my-api/         # git repo — the backend
+  my-frontend/    # git repo — the frontend
+  shared-libs/    # git repo — shared code
+</code></pre>
+<p><strong>NTFS directory symlinks.</strong> A project folder can be a directory symlink (Windows) or symlink (Unix/macOS) pointing to a directory elsewhere on the machine or on a network share. From the AIOS and the brain's perspective, it looks like a normal folder. AIOS requires admin installation, so <code>mklink /D</code> (and <code>New-Item -ItemType SymbolicLink</code>) are available.</p>
+<pre><code class="language-powershell"># Windows — directory symlink to a network share or local path (run as administrator)
+New-Item -ItemType SymbolicLink -Path &quot;$env:HORIZON_ROOT\my-project&quot; -Target &quot;\\fileserver\share\my-project&quot;
+</code></pre>
+<p><strong>Cloud-synced storage.</strong> OneDrive, Google Drive, Dropbox, or cloud provider storage (AWS S3 via rclone, GCP Storage via Cloud Drive, Azure Storage via Azure File Sync) can be mounted or synced at a project folder path. The AIOS sees a local folder; the sync is handled by the OS and the cloud provider's tools. For what to exclude from sync, see <code>$HORIZON_DOCS/cloud_sync_exclusions.md</code>.</p>
+<p><strong>Brain access points.</strong> When you provision a brain to work on a project, you grant the brain's OS user access to the project folder and optionally create a symlink inside the brain's workspace pointing to it:</p>
+<pre><code class="language-bash"># Grant access
+icacls &quot;$HORIZON_ROOT\my-project&quot; /grant &lt;brain-name&gt;:(OI)(CI)RX
+
+# Optionally, link from inside the brain workspace (run as administrator)
+New-Item -ItemType SymbolicLink -Path &quot;$HORIZON_ROOT\brains\&lt;brain-name&gt;\my-project&quot; `
+  -Target &quot;$HORIZON_ROOT\my-project&quot;
+</code></pre>
+<p>The brain navigates to its symlink. From its perspective, the project folder is inside its home directory — its harness context starts there, and the AIOS environment applies.</p>
+<h3 id="34-project-level-aios-overrides">3.4 Project-Level AIOS Overrides</h3>
+<p>To customize AIOS behavior for a specific project, drop an <code>aios_overrides.md</code> at the project root:</p>
+<pre><code class="language-bash">cp &quot;$HORIZON_SYSTEM/templates/aios_overrides.md&quot; &quot;$HORIZON_ROOT/my-project/aios_overrides.md&quot;
+</code></pre>
+<p>This can override <code>handoffs_dir</code>, <code>objectives_dir</code>, <code>project_display_name</code>, and other per-project settings. It does not affect the OS-layer security model or the brain isolation boundary.</p>
+<p>Project-specific AI instructions go in <code>$HORIZON_ROOT/my-project/.claude/CLAUDE.md</code>. Claude Code loads these on top of the global CLAUDE.md when working inside that project.</p>
+<hr />
+<h2 id="4-session-continuity-handoffs-and-objectives">4. Session Continuity — Handoffs and Objectives</h2>
+<h3 id="41-the-problem-they-solve">4.1 The Problem They Solve</h3>
+<p>Every Claude Code session starts fresh. Context that mattered in the previous session is gone. For short tasks this is fine. For multi-session work — a complex feature, a weeks-long investigation, an evolving project — you need a way to carry state forward without manually re-explaining it every time.</p>
+<p>Horizon AIOS provides two complementary tools for this: <strong>handoffs</strong> (point-in-time session state) and <strong>objectives</strong> (durable, evolving goals).</p>
+<h3 id="42-handoff">4.2 /handoff</h3>
+<p>A handoff is a structured Markdown document that captures where a session ended and where the next one should pick up. Run <code>/handoff</code> at the end of any significant session.</p>
+<p>The handoff document contains:
+- What was accomplished in this session
+- What decisions were made and why
+- What is deferred or blocked
+- The recommended entry point for the next session
+- A link to the active objective (if one exists)</p>
+<p>Handoffs write to <code>$HORIZON_ROOT/handoffs/</code> by default (configurable per project via <code>aios_overrides.md</code>). At the start of a new session on the same topic, read the most recent handoff to restore context.</p>
+<p><strong>Usage:</strong></p>
+<pre><code>/handoff
+</code></pre>
+<p>Claude will ask clarifying questions if needed, then write the document. No flags or arguments are required for a basic handoff. The skill is owner-only (<code>skills_sbin/</code>).</p>
+<h3 id="43-objective">4.3 /objective</h3>
+<p>An objective is a durable goal document that persists across many sessions and many handoffs. Where a handoff captures a moment in time, an objective captures the sustained intent — what you are ultimately trying to accomplish and why.</p>
+<p>Objectives live in <code>$HORIZON_ROOT/objectives/</code> (configurable). They are plain Markdown files numbered sequentially. Handoffs reference objectives by number, so the goal survives even as the tactical details evolve across sessions.</p>
+<p><strong>Creating an objective:</strong></p>
+<pre><code>/objective create &quot;Migrate the authentication system to JWT by end of Q3&quot;
+</code></pre>
+<p><strong>Listing objectives:</strong></p>
+<pre><code>/objective
+</code></pre>
+<p><strong>Referencing in a handoff:</strong> When you run <code>/handoff</code> with an active objective in context, the handoff links back to it automatically. Future sessions can open the objective to understand the broader goal before reading the tactical handoff.</p>
+<p><strong>Updating an objective:</strong></p>
+<pre><code>/objective update 1 &quot;Migrate auth to JWT; RS256 algorithm confirmed, refresh token scope still open&quot;
+</code></pre>
+<p>Objectives are point-of-truth documents — not status dashboards. They record the goal and its key constraints. Daily status belongs in handoffs.</p>
+<h3 id="44-starting-a-new-session-from-a-handoff">4.4 Starting a New Session from a Handoff</h3>
+<p>When you start a session on a topic that has a handoff, pass the handoff filename directly at the start of the conversation:</p>
+<pre><code>C:\Users\you\horizon\handoffs\2026-06-22_141500_my-project.md
+</code></pre>
+<p>The agent reads the handoff silently into context — it does not reprint the document, which would bloat context and bury the useful output. Instead, it gives you a 2–4 line orientation: what was being worked on and where to start. You do not need to re-explain context.</p>
+<p>If the handoff references an active objective, load it directly:</p>
+<pre><code>/objective 3
+</code></pre>
+<p>The objective provides the durable goal; the handoff provides the tactical state. Together they restore full context in seconds.</p>
+<h3 id="45-the-objective-handoff-chain">4.5 The Objective-Handoff Chain</h3>
+<p>For sustained work spanning more than a couple of sessions, use handoffs and objectives together:</p>
+<ol>
+<li><strong>Create an objective</strong> at the start of the engagement: <code>/objective create "Migrate the authentication system to JWT by Q3"</code></li>
+<li><strong>Run <code>/handoff</code> at the end of each session.</strong> With an active objective in context, the handoff links to it automatically — the handoff's <code>Objective:</code> field carries the number, name, and file path.</li>
+<li><strong>Start the next session</strong> by reading the handoff. Its <code>Objective:</code> field points to the objective file. Reading the objective restores the durable goal; reading the handoff restores the tactical state.</li>
+<li><strong>Update the objective</strong> when something significant changes: <code>/objective update 1 "JWT migration: RS256 algorithm confirmed, refresh token scope still open"</code></li>
+</ol>
+<p>The chain persists as long as you run <code>/handoff</code> at the end of each session. The objective link carries forward automatically across as many sessions as the work takes.</p>
+<hr />
+<h2 id="5-case-study-the-developer-brain">5. Case Study — The Developer Brain</h2>
+<p>This case study illustrates how a developer builds a brain for code review and development assistance, and how the day-to-day workflow operates.</p>
+<h3 id="51-the-setup">5.1 The Setup</h3>
+<p><strong>Goal:</strong> Separate AI development tooling from the development environment itself. The brain holds all code conventions, review logic, and scripting. The code lives in project folders. The developer uses the brain to assist with their development work, and automated agentic flows use the brain to monitor PRs.</p>
+<p><strong>Brain name:</strong> <code>code_review</code></p>
+<p><strong>Project folders:</strong>
+- <code>$HORIZON_ROOT/backend-api/</code> — the primary backend code repo
+- <code>$HORIZON_ROOT/frontend/</code> — the frontend repo</p>
+<h3 id="52-provisioning-the-brain">5.2 Provisioning the Brain</h3>
+<pre><code class="language-powershell"># Windows, Administrator PowerShell
+python &quot;$env:HORIZON_SYSTEM\sbin\horizon_aios_create_brain.py&quot; code_review --automation scheduled
+</code></pre>
+<p>The <code>--automation scheduled</code> flag grants the <code>SeBatchLogonRight</code> so a Task Scheduler task can run the harness as <code>code_review</code> without a user being logged in. This is used for the PR-monitoring agentic flow.</p>
+<h3 id="53-configuring-the-brains-workspace">5.3 Configuring the Brain's Workspace</h3>
+<p>After provisioning, the brain's workspace at <code>$HORIZON_ROOT/brains/code_review/</code> receives:</p>
+<p><strong>1. Code conventions and requirements (<code>brains/code_review/conventions/</code>)</strong></p>
+<p>The developer drops all their coding conventions, style guides, architecture decision records, and review checklists as Markdown files here. These become the brain's domain knowledge.</p>
+<pre><code>brains/code_review/
+  conventions/
+    style_guide.md
+    api_design_principles.md
+    test_requirements.md
+    security_checklist.md
+    architecture_decisions.md
+</code></pre>
+<p><strong>2. Brain identity (<code>brains/code_review/.claude/CLAUDE.md</code>)</strong></p>
+<p>Edit the Role section of the provisioned template:</p>
+<pre><code class="language-markdown">## Role
+You are the code review brain for [developer name]. Your expertise covers:
+- This codebase's conventions — see `$BRAIN_HOME/conventions/`
+- API design patterns documented in `conventions/api_design_principles.md`
+- Security requirements in `conventions/security_checklist.md`
+
+When reviewing code, always apply the full conventions set. When assisting with
+development, your working context is the project the user names at session start.
+</code></pre>
+<p><strong>3. Granting project access</strong></p>
+<pre><code class="language-powershell"># Grant the brain read access to both project folders
+icacls &quot;$env:HORIZON_ROOT\backend-api&quot; /grant &quot;code_review:(OI)(CI)RX&quot;
+icacls &quot;$env:HORIZON_ROOT\frontend&quot; /grant &quot;code_review:(OI)(CI)RX&quot;
+
+# Create navigation symlinks inside the brain workspace (optional but convenient; run as administrator)
+New-Item -ItemType SymbolicLink -Path &quot;$env:HORIZON_ROOT\brains\code_review\backend-api&quot; `
+  -Target &quot;$env:HORIZON_ROOT\backend-api&quot;
+New-Item -ItemType SymbolicLink -Path &quot;$env:HORIZON_ROOT\brains\code_review\frontend&quot; `
+  -Target &quot;$env:HORIZON_ROOT\frontend&quot;
+</code></pre>
+<p><strong>4. Model preferences for the automated PR flow</strong></p>
+<p>The agentic PR-monitoring flow does status checks — a task that does not need a powerful model. In <code>brains/code_review/.claude/</code> (or in the OS-level extend file), configure the PR-check flows to use a token-conscious group:</p>
+<p>In the brain's <code>CLAUDE.md</code> or in the agentic prompt that drives the scheduled task:</p>
+<pre><code>Use #lowcost for PR status checks and summaries. Use #highcap when doing
+a full review pass with security checklist application.
+</code></pre>
+<p>Or in the model-prefs extend file (see <code>/model-prefs</code>):</p>
+<pre><code>## Task-Class Routing
+- pr status checks, inbox triage, summaries -&gt; #lowcost
+- full code review, security audit          -&gt; #highcap
+</code></pre>
+<h3 id="54-the-automated-pr-monitoring-flow">5.4 The Automated PR-Monitoring Flow</h3>
+<p>The scheduled task runs daily (or on a trigger) as the <code>code_review</code> OS user. It launches the harness with a non-interactive prompt:</p>
+<pre><code class="language-powershell"># Registered in Task Scheduler, runs as code_review user
+claude -p &quot;Check the status of open PRs in backend-api. For each PR: summarize the change, flag any that have been open more than 3 days without activity, and note any that touch the auth module. Write the summary to $BRAIN_HOME/reports/pr_status_$(date +%Y%m%d).md&quot;
+</code></pre>
+<p>Because the task runs as <code>code_review</code>, it:
+- Has read access to <code>backend-api/</code> (explicitly granted)
+- Has write access to <code>brains/code_review/</code> (its own workspace)
+- Cannot touch the AIOS system layer (Deny ACE enforced by OS)
+- Cannot access the owner's memory or other brains (isolation boundary)</p>
+<p>The harness runs with the brain's <code>CLAUDE.md</code> loaded — it knows the codebase conventions without the developer re-explaining them.</p>
+<h3 id="55-the-interactive-development-workflow">5.5 The Interactive Development Workflow</h3>
+<p>When the developer sits down to work, they log into their own user account (not the brain). They open Claude Code, which runs as themselves. When they want to use the brain for development assistance:</p>
+<pre><code class="language-powershell">runas /user:code_review claude
+</code></pre>
+<p>Claude opens in the <code>code_review</code> user context, with the brain's full conventions and memory loaded. The developer tells it which codebase they are working on:</p>
+<blockquote>
+<p>"I'm working on the backend-api today. Specifically I'm implementing the new rate-limiting middleware."</p>
+</blockquote>
+<p>The brain navigates to <code>backend-api/</code> (via the symlink in its workspace), loads the relevant conventions, and assists with development. All agentic work — file reads, writes (within the project folder), searches — happens within the brain's permission boundary. Any files the brain creates or modifies land in the project folder, which is where the developer's git history tracks them.</p>
+<p>At the end of the session, the developer runs <code>/handoff</code> to capture where the implementation stands. If there is an active objective ("Implement rate limiting for the v2 API"), the handoff links back to it.</p>
+<h3 id="56-why-this-works">5.6 Why This Works</h3>
+<ul>
+<li><strong>Conventions stay with the brain.</strong> The developer does not re-paste style guides or architecture docs into every conversation. They live in the brain's workspace, loaded at session start.</li>
+<li><strong>Code stays in project repos.</strong> The brain has access to read the code and write to the project folder, but the project's git history is independent. The developer's normal git workflow is unchanged.</li>
+<li><strong>Automated flows run as the brain.</strong> The scheduled PR check is a real OS-level isolation boundary — not a software promise. The PR-checking process cannot access anything outside its provisioned scope.</li>
+<li><strong>Token cost is managed.</strong> Routine agentic flows use <code>#lowcost</code>. Full review passes escalate to <code>#highcap</code>. The cost is proportionate to the task's reasoning requirement.</li>
+</ul>
+<hr />
+<h2 id="6-bring-your-own-harness-and-localagentsmd">6. Bring Your Own Harness and local.agents.md</h2>
+<h3 id="61-what-byoh-means-in-practice">6.1 What BYOH Means in Practice</h3>
+<p>BYOH means the AIOS does not prescribe which AI system you use. You bring the harness (Claude Code, Codex, Ollama, or anything that can read <code>agents.md</code>), the model (any the harness supports), and the tooling (MCP servers, scripts, APIs).</p>
+<p>The AIOS provides the structure: the standard directory layout, the cross-harness agent instruction conventions (<code>agents.md</code>), the security model, and the configuration management layer. These have no harness dependency.</p>
+<p>The current implementation is fully wired for Claude Code. Other harnesses (Codex, Ollama, LM Studio) have stubs in <code>$HORIZON_SYSTEM/harness_configs/</code> but are not yet fully integrated. See <code>$HORIZON_DOCS/philosophy.md</code> §9 for the honest current-state assessment.</p>
+<h3 id="62-the-configuration-chain">6.2 The Configuration Chain</h3>
+<p>Agent instructions load in a specific order, from most global to most local. Understanding this chain is how you configure a brain or a project without touching the shared OS layer:</p>
+<pre><code>~/.claude/CLAUDE.md              ← thin stub; points at the OS repo
+  ↓ @-imports
+$HORIZON_ROOT/.claude/CLAUDE.md  ← project harness entry; imports root CLAUDE.md
+  ↓ @-imports
+$HORIZON_ROOT/CLAUDE.md          ← AIOS-wide rules; imports agents.md
+  ↓ @-imports
+$HORIZON_ROOT/agents.md          ← cross-harness agent instructions
+  ↓ @-imports
+horizon_aios_agents.md           ← OS-layer agent config (skills, orchestration, session-start)
+  ↓ @-imports
+local.agents.md                  ← machine-local overrides (gitignored)
+</code></pre>
+<p>For a brain, the chain adds its workspace-root config at the innermost level:</p>
+<pre><code>brains/&lt;name&gt;/CLAUDE.md          ← thin entry; @-imports the files below
+  ↓ @-imports
+brains/&lt;name&gt;/brain_invariants.md ← brain hard rules
+brains/&lt;name&gt;/brain_core.md       ← brain identity, persona, role, knowledge, scope
+</code></pre>
+<h3 id="63-localagentsmd-the-primary-configuration-seam">6.3 local.agents.md — The Primary Configuration Seam</h3>
+<p><code>local.agents.md</code> is the gitignored override file at the end of the <code>agents.md</code> chain. It is the right place for any instruction that:
+- Is specific to this machine or this owner's preferences
+- Should not ship to other users or machines
+- Overrides or extends shipped behavior</p>
+<p><code>aios setup</code> creates it from the template at <code>$HORIZON_ROOT/local.agents.md</code> and <code>$HORIZON_ROOT/.claude/local.agents.md</code>. Edit it directly. It is never overwritten by syncs or updates.</p>
+<p><strong>Examples of what belongs in <code>local.agents.md</code>:</strong></p>
+<pre><code class="language-markdown"># Local Agent Instructions
+
+## Git
+- When the user says &quot;commit&quot;, always commit AND push. Do not stop at the local commit.
+
+## Session Behavior
+- This machine is the code review workstation. Default the working project to backend-api
+  unless the user specifies otherwise.
+
+## Developer Identity
+- Owner: Jane Smith. GitHub: @jsmith. GPG key fingerprint: ABCD1234...
+</code></pre>
+<p>Keep it short. <code>local.agents.md</code> loads into context every session. Every line costs tokens.</p>
+<h3 id="64-adding-support-for-a-new-harness">6.4 Adding Support for a New Harness</h3>
+<p>To add a new harness to the AIOS:</p>
+<p>1.1 Create <code>$HORIZON_SYSTEM/harness_configs/&lt;harness-name&gt;/</code> for runtime config (hooks, sounds map, README).
+1.2 Create <code>$HORIZON_SYSTEM/templates/&lt;harness-name&gt;/</code> for setup templates copied at bootstrap.
+1.3 Add an equivalent to the Claude Code settings.json template for the new harness's config format.
+1.4 Wire hooks to the sounds system in <code>$HORIZON_SYSTEM/sounds/</code>.
+1.5 Document the harness in <code>$HORIZON_DOCS/</code>.</p>
+<p>The brain model, ACL layer, and OS-level isolation are reusable as-is. The work is in the integration scaffolding, not the OS layer.</p>
+<p>See <code>$HORIZON_ETC/ai_os_personalizations.md</code> §3 for the full harness addition protocol and <code>$HORIZON_DOCS/getting_started/ReadMeToSetupYourSystem.md</code> → "Adding a New AI Harness."</p>
+<hr />
+<h2 id="7-model-preferences-and-agent-teams">7. Model Preferences and Agent Teams</h2>
+<h3 id="71-model-preferences-routing-work-to-the-right-model">7.1 Model Preferences — Routing Work to the Right Model</h3>
+<p>The model-preference layer lets you control which model handles different kinds of work — without changing your interactive session model. There is no resolver script, no engine, no env-var wiring. The mechanism is in-context instruction: you write a configuration file, the AIOS loads it each session, and the acting model honors it when spawning agents or delegating tasks.</p>
+<p><strong>Model groups</strong> are the core abstraction: named lists of models that define the capability tier for a class of work. The shipped groups:</p>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Intended use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>#lowcost</code></td>
+<td>Routine, mechanical work — status checks, summaries, formatting</td>
+</tr>
+<tr>
+<td><code>#midcost</code></td>
+<td>Standard development and writing tasks</td>
+</tr>
+<tr>
+<td><code>#highcap</code></td>
+<td>Complex reasoning, cross-document synthesis, architecture decisions</td>
+</tr>
+<tr>
+<td><code>#investigate</code></td>
+<td>Research-heavy tasks requiring deep comprehension</td>
+</tr>
+<tr>
+<td><code>#debug</code></td>
+<td>Debugging passes, root cause analysis</td>
+</tr>
+<tr>
+<td><code>#fast</code></td>
+<td>Latency-sensitive operations where speed matters more than depth</td>
+</tr>
+</tbody>
+</table>
+<p>The system selects the first runnable member of the group in your current runtime. Members that do not match your runtime (e.g., an Ollama model in a Claude Code session) are silently skipped — so you can define groups that include both Anthropic and local models and the right one is used automatically based on what is available.</p>
+<p><strong>What the preference layer governs.</strong> Your interactive session model is set by the harness at launch and is not changed by this configuration. What it governs — for the first time — is the model used for spawned agents and delegated tasks. Routine delegated work runs on a cheap model; complex delegated work escalates automatically. Cost becomes proportionate to task reasoning requirements, decided by your configuration rather than left to defaults.</p>
+<p><strong>Task-class routing</strong> directs entire categories of work to the right tier automatically:</p>
+<pre><code>## Task-Class Routing
+- pr status checks, inbox triage, summaries -&gt; #lowcost
+- full code review, security audit          -&gt; #highcap
+</code></pre>
+<p><strong>Setting up model preferences:</strong></p>
+<p>Run <code>/model-prefs</code> to configure interactively, or set up the extend file manually:</p>
+<pre><code class="language-bash"># Linux / macOS
+cp &quot;$HORIZON_ETC/horizon_aios_model_prefs.local.template.md&quot; \
+   &quot;$HORIZON_ETC/horizon_aios_model_prefs.local.md&quot;
+</code></pre>
+<pre><code class="language-powershell"># Windows
+Copy-Item &quot;$env:HORIZON_ETC\horizon_aios_model_prefs.local.template.md&quot; `
+          &quot;$env:HORIZON_ETC\horizon_aios_model_prefs.local.md&quot;
+</code></pre>
+<p>All choices go in this gitignored file — never in the OS-tracked base spec, which a sync would overwrite. Run <code>/model-catalog-refresh</code> to fetch current model IDs and pricing before filling in group members.</p>
+<p>Configuration cascades by scope: OS-global &lt; project root &lt; brain workspace, most-specific wins. A brain or project can override the global config by dropping its own extend file in its directory.</p>
+<p>See <code>$HORIZON_DOCS/system/model_preferences.md</code> for the full member grammar, scope cascade, and configuration walkthrough.</p>
+<h3 id="72-agent-teams-structured-multi-agent-workflows">7.2 Agent Teams — Structured Multi-Agent Workflows</h3>
+<p>Agent teams let you define coordinated multi-agent workflows with specific roles, model assignments, and loop constructs — invoked by name rather than assembled from scratch each time.</p>
+<p>A team definition specifies:
+- <strong>Roles</strong> — the participants, their charters, and their model groups
+- <strong>Loop constructs</strong> — loop-back conditions, pass/fail criteria, and iteration caps that govern when agents hand off to each other</p>
+<p>Four starter teams ship with the AIOS and are ready to use immediately:</p>
+<table>
+<thead>
+<tr>
+<th>Team</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Investigate &amp; Fix</td>
+<td>Diagnose a problem then apply the fix</td>
+</tr>
+<tr>
+<td>Full Team</td>
+<td>Full lifecycle for a sizable or ambiguous task (default for "send an agent team")</td>
+</tr>
+<tr>
+<td>Review &amp; Fix</td>
+<td>Audit a diff then apply findings</td>
+</tr>
+<tr>
+<td>Explore &amp; Summarize</td>
+<td>Fan out across a codebase or question then distill</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Using a team:</strong></p>
+<p>Name the team at the start of a task that fits its pattern:</p>
+<pre><code>Use the Review &amp; Fix team on the changes in this PR.
+</code></pre>
+<pre><code>Send an Investigate &amp; Fix team — the auth middleware is rejecting valid tokens intermittently.
+</code></pre>
+<p><strong>Defining your own team:</strong></p>
+<p>Create or edit <code>local.agent_teams.md</code> in any scope. The innermost scope wins. Example:</p>
+<pre><code class="language-markdown">### security-review-team
+Independent security audit of changed code.
+
+1. Auditor A (`#investigate`, parallel) — injection risks and input validation
+2. Auditor B (`#investigate`, parallel) — credential and secrets handling
+3. Synthesizer (`#highcap`, wait) — consolidated findings with remediation priority
+</code></pre>
+<p>Run <code>/agent-teams</code> to manage team definitions interactively. See <code>$HORIZON_DOCS/system/agent_teams.md</code> for the full invocation pattern, scope cascade, and loop/retry grammar.</p>
+<h3 id="73-loop-retry-constructs">7.3 Loop / Retry Constructs</h3>
+<p>A role in an agent team can declare a <strong>Loop</strong> to re-run an earlier role with feedback until a pass condition is met or an iteration cap is reached. Declare it inline below the role:</p>
+<blockquote>
+<p><strong>Loop:</strong> on <code>&lt;condition&gt;</code>, return feedback to <code>"&lt;role name&gt;"</code> and re-run from there; repeat until <code>&lt;pass condition&gt;</code> or <code>&lt;max&gt;</code> iterations, then <code>&lt;action at cap&gt;</code>.</p>
+</blockquote>
+<p>Four things a looping role must specify:</p>
+<ol>
+<li><strong>Condition</strong> — what counts as a failure and triggers another pass (e.g., "validation fails").</li>
+<li><strong>Loop-back target</strong> — the earlier role to re-run, by name (preferred over step number so renumbering never breaks the target).</li>
+<li><strong>Max iterations</strong> — a hard cap that bounds cost and guarantees termination.</li>
+<li><strong>Cap action</strong> — what to do if the cap is hit without passing: <code>report-failure</code> (stop and surface outstanding failures) or <code>proceed</code> (continue with a caveat). Prefer <code>report-failure</code>.</li>
+</ol>
+<p>The <code>full-team</code> Validator is the canonical example: if it fails, it returns specific feedback to the Implementer and re-runs from there — up to 3 iterations, then stops and reports rather than proceeding with broken output.</p>
+<h3 id="74-conditional-roles">7.4 Conditional Roles</h3>
+<p>A role may be marked conditional by appending a flag inside its model-group parenthetical:</p>
+<ul>
+<li><code>(#group, if needed)</code> — the acting model runs the role only when it judges the role adds value for the task; otherwise it skips to the next.</li>
+<li><code>(#group, if asked)</code> — the role runs only when the user explicitly requests it (e.g., "…and validate it"); skipped by default.</li>
+</ul>
+<p>Conditions combine with loops: a conditional looping role loops only on runs where it actually executes.</p>
+<p>The <code>full-team</code> Log-reader is an example: <code>(#lowcost, if needed)</code> — skipped for tasks that need no runtime evidence.</p>
+<h3 id="75-saill-standardized-ai-loop-language">7.5 SAILL — Standardized AI Loop Language</h3>
+<p>The conditional and loop flags above are part of <strong>SAILL</strong> (Standardized AI Loop Language) — a small, vendor-neutral vocabulary for expressing <em>how</em> a team runs, not just who is in it. A SAILL-annotated team definition is portable: the same notation is readable by a human, the acting model, and the <code>resolve_agent_teams.py</code> tooling.</p>
+<p><strong>The full flag vocabulary</strong> is cataloged in <code>$HORIZON_ETC/agent_team_flags.md</code>, loaded every session. Current flags:</p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Form</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>if needed</code></td>
+<td>inline</td>
+<td>Run only if it adds value; else skip</td>
+</tr>
+<tr>
+<td><code>if asked</code></td>
+<td>inline</td>
+<td>Run only when the user explicitly requests it; else skip</td>
+</tr>
+<tr>
+<td><code>ask user</code></td>
+<td>inline</td>
+<td>Pause and wait for the user's input, decision, or approval before continuing</td>
+</tr>
+<tr>
+<td><code>parallel</code></td>
+<td>inline</td>
+<td>Run concurrently with adjacent <code>parallel</code> roles</td>
+</tr>
+<tr>
+<td><code>wait</code></td>
+<td>inline</td>
+<td>Wait for the preceding <code>parallel</code> group to finish (sync point)</td>
+</tr>
+<tr>
+<td><code>Loop</code></td>
+<td>annotation</td>
+<td>Re-run an earlier role with feedback until pass/cap (see §7.3)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Extending the flag vocabulary:</strong> add your own flags in <code>local.agent_team_flags.md</code> (gitignored, any scope) or via <code>/agent-teams</code>. The resolver parses flags generically — a new term works as soon as it appears in the file. List the current vocabulary at any time:</p>
+<pre><code class="language-bash">resolve_agent_teams.py --flags
+</code></pre>
+<p>Do not add new flags to <code>$HORIZON_ETC/agent_team_flags.md</code> directly; that file is synced from upstream. Use <code>local.agent_team_flags.md</code> for machine- or project-local extensions and propose community-useful terms upstream.</p>
+<h3 id="76-agent-team-skills">7.6 Agent Team Skills</h3>
+<p>Three owner skills support the agent-team and SAILL workflow end-to-end:</p>
+<table>
+<thead>
+<tr>
+<th>Skill</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/agent-teams</code></td>
+<td>Lists teams in effect for the current path; creates or edits team definitions at any scope (OS, project, brain, subfolder); adds custom SAILL flags</td>
+</tr>
+<tr>
+<td><code>/test-agent-teams</code></td>
+<td>End-to-end self-test: spawns each role of every defined team, each echoes a nonce + role name + charter + actual model; reports per-team PASS/FAIL for resolution and model routing</td>
+</tr>
+<tr>
+<td><code>/convert-prompt-to-saill</code></td>
+<td>Converts a natural-language prompt into a SAILL agent-team flow (roles, model groups, flags, sub-team boxes, loops, <code>-context-</code> values); outputs the SAILL block with a gloss, then offers to save or run it</td>
+</tr>
+</tbody>
+</table>
+<p>Use <code>/test-agent-teams</code> after defining or modifying a team to confirm that roles resolve to the expected models before you invoke the team on real work. Use <code>/convert-prompt-to-saill</code> ad hoc to turn any workflow you can describe in plain language into SAILL, then feed that output into <code>/agent-teams</code> to populate a custom agent team — the on-ramp from "a workflow in my head" to standardized SAILL to a reusable named team (verify it with <code>/test-agent-teams</code>).</p>
+<p>See <code>$HORIZON_DOCS/system/agent_teams.md</code> for the full SAILL spec, scope cascade, and team-definition grammar.</p>
+<hr />
+<h2 id="8-understanding-and-managing-context">8. Understanding and Managing Context</h2>
+<h3 id="81-what-context-is-and-why-it-costs">8.1 What Context Is and Why It Costs</h3>
+<p>Every Claude Code session pays a fixed token cost before you type anything. The harness assembles a system prompt from files on disk. Every byte in those files is billed on every session — whether Claude uses it or not.</p>
+<p>The practical implication: the larger your auto-loaded context, the more every session costs. The AIOS baseline (excluding user-global <code>~/.claude/CLAUDE.md</code>) is approximately 3,660 tokens at the AIOS root. This is the fixed cost of running the OS layer. Everything you add on top of this is your cost to manage. Run <code>python $HORIZON_BIN/context_cost.py $HORIZON_ROOT</code> for the current number — it drifts as files are edited.</p>
+<h3 id="82-what-gets-loaded-in-any-given-directory">8.2 What Gets Loaded in Any Given Directory</h3>
+<p>Claude Code loads <code>CLAUDE.md</code> files from <code>~/.claude/</code> down to the current working directory — all of them, stacked. Then it resolves all <code>@</code>-imports recursively.</p>
+<p>The files loaded in a standard AIOS session starting at <code>$HORIZON_ROOT</code>:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+<th>~Tokens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>~/.claude/CLAUDE.md</code></td>
+<td>User-global; points at the OS repo</td>
+<td>varies</td>
+</tr>
+<tr>
+<td><code>$HORIZON_ROOT/.claude/CLAUDE.md</code></td>
+<td>Thin entry; imports root CLAUDE.md</td>
+<td>7</td>
+</tr>
+<tr>
+<td><code>$HORIZON_ROOT/CLAUDE.md</code></td>
+<td>AIOS-wide rules; imports agents.md</td>
+<td>~7</td>
+</tr>
+<tr>
+<td><code>$HORIZON_ROOT/agents.md</code></td>
+<td>Cross-harness instructions</td>
+<td>~291</td>
+</tr>
+<tr>
+<td><code>horizon_aios_agents.md</code></td>
+<td>OS-layer agent config</td>
+<td>~777</td>
+</tr>
+<tr>
+<td><code>horizon_aios_model_prefs.md</code></td>
+<td>Model preference spec</td>
+<td>~1367</td>
+</tr>
+<tr>
+<td><code>agent_teams.md</code></td>
+<td>Agent team definitions</td>
+<td>~1012</td>
+</tr>
+<tr>
+<td><code>agent_team_flags.md</code></td>
+<td>Role-flag vocabulary</td>
+<td>~198</td>
+</tr>
+<tr>
+<td><code>local.agents.md</code></td>
+<td>Machine-local overrides</td>
+<td>varies</td>
+</tr>
+</tbody>
+</table>
+<p>Run <code>/context-cost</code> or <code>python $HORIZON_BIN/context_cost.py $HORIZON_ROOT</code> for current numbers — counts drift as files are edited. The AIOS baseline (excluding user-global) is approximately 3,660 tokens.</p>
+<p>If you start a session inside <code>$HORIZON_ROOT/my-project/</code>, any <code>CLAUDE.md</code> in <code>my-project/</code> or <code>my-project/.claude/</code> is added on top. If you are running as a brain, the brain's <code>CLAUDE.md</code> is the innermost layer.</p>
+<h3 id="83-measuring-context-overhead">8.3 Measuring Context Overhead</h3>
+<p>To see exactly what is loaded in any directory and how much it costs:</p>
+<pre><code class="language-bash">python &quot;$HORIZON_SYSTEM/bin/context_cost.py&quot; [path]
+</code></pre>
+<p>Or run <code>/context-cost</code> inside a Claude Code session (available to brains and owner alike).</p>
+<p>Output: per-file KB, word count, and estimated token count, plus a total. Thresholds:
+- ≥ 1,000 tokens: note (moderate — review before adding more)
+- ≥ 2,000 tokens: warning (high — trim before adding more)</p>
+<p>Run <code>context_cost.py</code> after adding or modifying any <code>CLAUDE.md</code> or <code>@</code>-import. Confirm the overhead stayed in budget before committing.</p>
+<h3 id="84-the-import-rule-unconditional-loading">8.4 The @-Import Rule — Unconditional Loading</h3>
+<p>A critical misconception: <code>@file</code> in <code>CLAUDE.md</code> does not lazy-load. The harness inlines the file's full content into the system prompt before the session starts, unconditionally. Writing "only load if needed" on the same line as an <code>@</code>-import does not help — those words become part of the already-loaded content.</p>
+<p>For content you want available only when needed: <strong>do not <code>@</code>-import it</strong>. Instead, tell Claude in prose where to find it:</p>
+<pre><code class="language-markdown">If you need the API design principles, read `$BRAIN_HOME/conventions/api_design_principles.md`.
+</code></pre>
+<p>That costs a few tokens in the always-loaded context. The file itself costs nothing until Claude reads it mid-conversation.</p>
+<p>Only <code>CLAUDE.md</code> and <code>CLAUDE.local.md</code> trigger <code>@</code>-import resolution. <code>agents.md</code> <code>@</code>-references are passed to Claude as plain text — the harness does not inline them.</p>
+<p>See <code>$HORIZON_DOCS/authoring/claude_md_authoring.md</code> for the full authoring reference and <code>$HORIZON_DOCS/context_loading.md</code> for the complete loading mechanics.</p>
+<h3 id="85-per-layer-configuration-guide">8.5 Per-Layer Configuration Guide</h3>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Edit when</th>
+<th>Keep</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>~/.claude/CLAUDE.md</code></td>
+<td>User-global preferences that apply across all projects</td>
+<td>Minimal — it loads in every session including unrelated projects</td>
+</tr>
+<tr>
+<td><code>$HORIZON_ROOT/.claude/CLAUDE.md</code></td>
+<td>Never — thin entry point only</td>
+<td>One line: <code>@$HORIZON_ROOT/CLAUDE.md</code></td>
+</tr>
+<tr>
+<td><code>$HORIZON_ROOT/agents.md</code></td>
+<td>AIOS-wide cross-harness instructions</td>
+<td>Rules that apply to every session in every project</td>
+</tr>
+<tr>
+<td><code>local.agents.md</code></td>
+<td>Machine-local overrides</td>
+<td>Short — loads every session</td>
+</tr>
+<tr>
+<td><code>brains/&lt;name&gt;/CLAUDE.md</code> (+ <code>brain_core.md</code> / <code>brain_invariants.md</code>)</td>
+<td>Brain persona, scope, memory pointers</td>
+<td>Short — loads every brain session</td>
+</tr>
+<tr>
+<td><code>my-project/.claude/CLAUDE.md</code></td>
+<td>Project-specific context</td>
+<td>Only what Claude cannot derive from the code</td>
+</tr>
+</tbody>
+</table>
+<h3 id="86-health-check">8.6 Health Check</h3>
+<p>To verify the full AIOS installation and configuration is correct:</p>
+<pre><code class="language-bash"># From a Claude Code session
+/doctor
+
+# From the command line
+python &quot;$HORIZON_SYSTEM/sbin/horizon_aios_doctor.py&quot;
+</code></pre>
+<p>This checks env vars, the skills symlink, git hooks, the AIOS registry, and the Deny ACLs on <code>sbin</code>, <code>skills_sbin</code>, and <code>logs</code>.</p>
+<p>To verify documentation integrity (canon structure, doc index, cross-references):</p>
+<pre><code class="language-bash"># From a Claude Code session
+/doc-check
+
+# From the command line
+python &quot;$HORIZON_SYSTEM/sbin/horizon_aios_doc_integrity.py&quot;
+</code></pre>
+<p>This checks that required canon files are present, all docs are indexed, and cross-references resolve. Exits 0 if clean (warnings are expected for gitignored local configs).</p>
+<hr />
+<h2 id="9-the-terseness-contract">9. The Terseness Contract</h2>
+<h3 id="91-what-it-is">9.1 What It Is</h3>
+<p>The <strong>Terseness Contract</strong> is a set of authoring rules that governs every file loaded unconditionally into every AIOS session — the always-loaded chain. Because each byte in those files is billed on every session for every user and every brain, verbosity in them is a cost imposed on all interactions the AIOS will ever have.</p>
+<p>The always-loaded files subject to strict terseness enforcement are <code>agents.md</code> and <code>horizon_aios_agents.md</code>. Files such as <code>agent_teams.md</code>, <code>agent_team_flags.md</code>, and <code>horizon_aios_model_prefs.md</code> are in the always-loaded chain but are explicitly excluded from terseness enforcement — their content scope is the operator's prerogative. The authoritative index of which files are tracked, excluded, or advisory is <code>$HORIZON_DOCS/terseness_contract_index.md</code>.</p>
+<h3 id="92-the-seven-criteria">9.2 The Seven Criteria</h3>
+<p>A file in the always-loaded chain passes the Terseness Contract if, and only if:</p>
+<ol>
+<li><strong>Every line earns its keep.</strong> Removing it would break the file's function or leave a required instruction unspecified.</li>
+<li><strong>Instructions are imperative, not discursive.</strong> Tell the model what to do. Rationale belongs in <code>dev_values.md</code> or <code>philosophy.md</code>.</li>
+<li><strong>No rationale that belongs elsewhere.</strong> If the "why" is in a higher-authority doc, cut the prose and use a pointer.</li>
+<li><strong>No inline examples when a pointer suffices.</strong> "See <code>$HORIZON_DOCS/X.md</code>" is cheaper than an inline example.</li>
+<li><strong>No redundancy with sibling always-loaded files.</strong> If another indexed file already says it, one copy is the defect.</li>
+<li><strong>No commented-out content.</strong> Dead lines and <code># TODO</code> prose still cost tokens.</li>
+<li><strong>@-imports only for always-needed files.</strong> @-importing a large reference doc "for convenience" is a fail. Use a prose pointer instead.</li>
+</ol>
+<h3 id="93-checking-compliance">9.3 Checking Compliance</h3>
+<p>Run the terseness check from any owner session:</p>
+<pre><code>/terseness-check
+</code></pre>
+<p>The skill evaluates each tracked file in the index against the seven criteria and reports <code>PASS</code> or <code>FAIL</code> per criterion per file. Files in the Excluded section of the index are skipped entirely — no <code>FAIL</code>, <code>ADVISORY</code>, or <code>NOTED</code> findings are generated for them. Files in the gitignored / user-controlled section are checked and reported as <code>ADVISORY</code> — the user bears the cost of their own verbosity, so fixes are not applied without prompting.</p>
+<p>Run <code>/terseness-check</code> after adding or modifying any always-loaded file or @-import. Confirm all tracked files pass before committing.</p>
+<h3 id="94-the-terseness-contract-index">9.4 The Terseness Contract Index</h3>
+<p>The authoritative file list with loading paths and per-file constraints is:</p>
+<pre><code>$HORIZON_DOCS/terseness_contract_index.md
+</code></pre>
+<p>Update it whenever a file is added to or removed from the always-loaded chain (a new @-import in any indexed file, or a new CLAUDE.md layer inserted into the harness loading path). The index is the contract's scope boundary — if a file is not listed, it is not subject to the strict contract (though always-loaded files added without updating the index will be caught on the next <code>/terseness-check</code> pass as a gap finding).</p>
+<hr />
+<h2 id="10-gitignore-local-config-and-what-not-to-commit">10. Gitignore, Local Config, and What Not to Commit</h2>
+<h3 id="101-the-two-gitignore-model">10.1 The Two-Gitignore Model</h3>
+<p>AIOS uses two gitignore mechanisms that serve different purposes:</p>
+<p><strong><code>.gitignore</code></strong> — tracked, committed, ships with every clone. Contains patterns for OS-layer artifacts that should never be tracked on any machine (build outputs, temp files, the generated <code>active_env</code> files, <code>memory/</code>, <code>handoffs/</code>).</p>
+<p><strong><code>.gitignore.user</code></strong> — machine-local, gitignored itself, never committed. Contains patterns specific to this machine and this user's personal exclusions. Only <code>.gitignore.user.template</code> (the empty starting template) is tracked.</p>
+<p>The pre-commit hook syncs <code>.gitignore.user</code> to <code>.git/info/exclude</code> on every commit. To add a personal exclusion pattern:</p>
+<pre><code># Edit $HORIZON_ROOT/.gitignore.user
+MyPersonalNotes/
+scratch/
+RedTeam/
+</code></pre>
+<p>The pattern takes effect on the next commit — no manual sync step. The file is machine-local and does not travel with a clone.</p>
+<h3 id="102-what-is-never-committed">10.2 What Is Never Committed</h3>
+<p>These files are gitignored and must stay that way:</p>
+<table>
+<thead>
+<tr>
+<th>File / Directory</th>
+<th>What it holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>local.agents.md</code> (all instances)</td>
+<td>Machine-local agent instructions; overrides shipped content</td>
+</tr>
+<tr>
+<td><code>settings.local.json</code></td>
+<td>Machine-specific permission overrides</td>
+</tr>
+<tr>
+<td><code>horizon_aios_model_prefs.local.md</code></td>
+<td>Your private model groups and routing rules</td>
+</tr>
+<tr>
+<td><code>memory/</code></td>
+<td>Harness transcripts and agent memory (never publish)</td>
+</tr>
+<tr>
+<td><code>handoffs/</code></td>
+<td>Session handoff documents</td>
+</tr>
+<tr>
+<td><code>objectives/</code></td>
+<td>Durable objectives</td>
+</tr>
+<tr>
+<td><code>usrbin/usr_skills/</code></td>
+<td>Machine-local personal skills</td>
+</tr>
+<tr>
+<td><code>brains/&lt;name&gt;/</code></td>
+<td>Brain workspaces (sensitive — personal credentials, memory)</td>
+</tr>
+<tr>
+<td><code>$HORIZON_SYSTEM/logs/</code></td>
+<td>Audit and event logs</td>
+</tr>
+<tr>
+<td><code>aios_local.conf</code></td>
+<td>Local sync and log configuration</td>
+</tr>
+<tr>
+<td><code>~/.claude/settings.json</code></td>
+<td>Global settings (points at machine-specific wrapper paths)</td>
+</tr>
+<tr>
+<td><code>ai_os_etc/git_identity.local.gitconfig</code></td>
+<td>Machine-local git identity</td>
+</tr>
+</tbody>
+</table>
+<h3 id="103-protecting-configuration-points-the-clobber-hazard">10.3 Protecting Configuration Points — The Clobber Hazard</h3>
+<p>An upstream sync (<code>git pull</code> / <code>aios sync</code>) will update the OS layer. The files it can overwrite are tracked files: <code>agents.md</code>, <code>horizon_system/</code>, the shipped templates.</p>
+<p>What it <strong>cannot</strong> overwrite: anything gitignored. This is why your customizations belong in the gitignored seam files:</p>
+<ul>
+<li>Override <code>agents.md</code> behavior → use <code>local.agents.md</code></li>
+<li>Override model preferences → use the gitignored <code>extend.md</code></li>
+<li>Override permissions → use <code>settings.local.json</code></li>
+<li>Override session behavior per-machine → use <code>local.agents.md</code></li>
+</ul>
+<p>Never put machine-specific or personal configuration into the tracked files. A sync will clobber it, and other users' clones will break.</p>
+<p>If you want to ship a configuration change to all users (or to your own other machines), it belongs in the tracked files. If you want it only on this machine, it belongs in the gitignored files.</p>
+<h3 id="104-checking-what-a-sync-would-overwrite">10.4 Checking What a Sync Would Overwrite</h3>
+<p>Before pulling:</p>
+<pre><code class="language-bash">git fetch origin
+git diff HEAD..origin/master -- agents.md .claude/CLAUDE.md horizon_system/
+</code></pre>
+<p>Review the diff. If the upstream changed a file you have also customized, the update applies cleanly because your customizations are in the gitignored seam files — not in the tracked files. This is the purpose of the <code>local.agents.md</code> / <code>extend.md</code> pattern.</p>
+<p>See <code>$HORIZON_DOCS/system/distribution_and_updates.md</code> for the full framework vs. user-space model and <code>$HORIZON_DOCS/getting_started/updating.md</code> for the step-by-step update procedure.</p>
+<hr />
+<hr />
+<h2 id="11-enterprise-deployment">11. Enterprise Deployment</h2>
+<h3 id="111-the-model-organization-fork-employee-clone">11.1 The Model: Organization Fork, Employee Clone</h3>
+<p>The Horizon AIOS distribution model is designed for downstream customization without merge conflicts. An enterprise maps directly onto this model:</p>
+<pre><code>Official upstream (HorizonBrute/Horizon_AI_OS)
+  ↓ fork
+Organization repo (your-org/Horizon_AI_OS)    ← org-controlled; org policy lives here
+  ↓ clone
+Employee machine                               ← employee customizations in gitignored seam files
+</code></pre>
+<p>The organization forks the official upstream repo into their own Git infrastructure (GitHub Enterprise, GitLab, Bitbucket, Azure DevOps). That fork becomes the authoritative source of truth for the organization. Employees clone from the org fork, not from the official upstream. The org controls what ships to every employee; the official upstream controls what the org chooses to pull in.</p>
+<h3 id="112-where-organization-policy-lives">11.2 Where Organization Policy Lives</h3>
+<p>The framework/user-space split that protects individual user customizations from being clobbered by syncs works identically at the org level:</p>
+<table>
+<thead>
+<tr>
+<th>File / Layer</th>
+<th>Who owns it</th>
+<th>How the org enforces it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agents.md</code></td>
+<td>Org (in the fork)</td>
+<td>Org policy committed here ships to every clone</td>
+</tr>
+<tr>
+<td><code>horizon_system/</code></td>
+<td>Org (in the fork)</td>
+<td>Security templates, hook scripts, ACL defaults — all controlled</td>
+</tr>
+<tr>
+<td><code>horizon_system/ai_os_etc/security_invariants.md</code></td>
+<td>Org (in the fork)</td>
+<td>The org's authoritative security posture</td>
+</tr>
+<tr>
+<td><code>horizon_system/templates/</code></td>
+<td>Org (in the fork)</td>
+<td>The brain template, settings.json template, profile templates</td>
+</tr>
+<tr>
+<td><code>local.agents.md</code></td>
+<td>Employee (gitignored)</td>
+<td>Machine-local only; org cannot ship this</td>
+</tr>
+<tr>
+<td><code>settings.local.json</code></td>
+<td>Employee (gitignored)</td>
+<td>Machine-local only; org cannot ship this</td>
+</tr>
+<tr>
+<td><code>brains/</code>, <code>memory/</code></td>
+<td>Employee (gitignored)</td>
+<td>Never reaches the org repo</td>
+</tr>
+</tbody>
+</table>
+<p>The org commits policy directly into the tracked framework files in their fork. Employees who sync get the updated policy automatically. Employees' gitignored customizations are never touched.</p>
+<p><strong>What belongs in the org's fork:</strong>
+- Organization-wide agent instructions in <code>agents.md</code> (approved tools, prohibited actions, required session behaviors)
+- Standardized brain templates in <code>horizon_system/templates/</code> that reflect the org's compliance requirements
+- Security invariant documents that encode the org's control posture
+- Approved skill sets in <code>skills_bin/</code> and <code>skills_sbin/</code>
+- Model-preference routing that reflects the org's approved models and cost policy
+- Hook scripts that write to the org's SIEM or compliance logging infrastructure</p>
+<h3 id="113-pulling-upstream-updates-into-the-org-fork">11.3 Pulling Upstream Updates into the Org Fork</h3>
+<p>The org maintains the fork like any upstream-tracking fork:</p>
+<pre><code class="language-bash"># In the org fork repo (run by whoever manages the AIOS distribution)
+git remote add upstream git@github.com:HorizonBrute/Horizon_AI_OS.git
+git fetch upstream
+git merge upstream/master   # or rebase; review before merging
+
+# After review and any org-specific adjustments:
+git push origin master      # employees sync from here
+</code></pre>
+<p>The org can choose how aggressively to track upstream — immediate, quarterly, or only for specific security patches. The org's changes to tracked files (org policy additions to <code>agents.md</code>, etc.) merge with upstream changes normally. As long as the org has not duplicated content that lives in the user-space seam files, merges are clean by construction.</p>
+<h3 id="114-centralized-deployment-and-force-install">11.4 Centralized Deployment and Force Install</h3>
+<p>For managed machines, the org can distribute and install the AIOS through standard enterprise software deployment mechanisms:</p>
+<p><strong>Windows (Intune / SCCM / Group Policy):</strong>
+1.1 Package the clone + bootstrap as a deployment script. Intune Win32 app wraps <code>git clone &lt;org-fork-url&gt; C:\devroot &amp;&amp; powershell -File C:\devroot\horizon_system\sbin\bootstrap.ps1 --profile workstation --humans &lt;operator-name-or-SID&gt;</code>. A non-interactive deploy must declare the profile (<code>--profile server|workstation [--humans ...]</code>) or pass <code>--yes</code>, or the onboarding prompt will hang.
+1.2 Onboarding always creates the AIOS OS groups and applies the ACL model — there is no separate hardening step. It runs as the logged-in user for the Claude Code wiring steps, and as SYSTEM for the group/ACL steps (the bootstrap detects this and handles the split automatically). On managed workstations, enroll the assigned operator into <code>horizon_humans</code> via <code>--humans</code>; on kiosks or servers use <code>--profile server</code> so no human is enrolled.
+1.3 Use a managed GPO to set <code>HORIZON_ROOT</code> as a machine-level environment variable, removing the need for users to configure it.
+1.4 Deploy the org's approved <code>settings.json</code> template through the bootstrap — it is already templated for this.</p>
+<p><strong>Linux (Ansible / Chef / Puppet / Salt):</strong></p>
+<pre><code class="language-yaml"># Ansible playbook excerpt
+- name: Clone AIOS from org fork
+  git:
+    repo: &quot;git@git.your-org.com:aios/Horizon_AI_OS.git&quot;
+    dest: /opt/aios
+    version: main
+
+- name: Run AIOS bootstrap
+  command: bash /opt/aios/horizon_system/sbin/bootstrap.sh --yes
+  become: true
+</code></pre>
+<p>After the play runs, the system has a fully configured AIOS installation with org-approved configuration. User-specific customization happens afterward through the gitignored seam files.</p>
+<h3 id="115-multi-operator-and-team-environments">11.5 Multi-Operator and Team Environments</h3>
+<p>On a shared server or in a team environment where multiple humans operate the same AIOS installation:</p>
+<p>1.1 <strong>Each human operator gets their own OS user account.</strong> Do not share owner accounts. The global <code>~/.claude/settings.json</code> (hooks, statusLine) is per OS home directory — it must stay per-operator.
+1.2 <strong>Each operator runs bootstrap under their own account.</strong> Bootstrap installs each operator's personal <code>~/.claude/</code> from the org's template. The devroot <code>.claude/settings.json</code> (permissions only) is shared across all operators — that is intentional.
+1.3 <strong>Brains are AI agent accounts, not human accounts.</strong> A team member who needs to interact with a brain does so by running the harness as that brain user, not by sharing the brain's OS account.
+1.4 <strong>The <code>$HORIZON_ROOT</code> repo can be shared storage or separate clones.</strong> Shared storage keeps all operators on the same AIOS version automatically; separate clones give each operator independent upgrade control. Both models work.</p>
+<p>See <code>$HORIZON_DOCS/deployment/server.md</code> → "Multi-Operator Server Pattern" for the full treatment.</p>
+<h3 id="116-sync-schedule-and-drift-prevention">11.6 Sync Schedule and Drift Prevention</h3>
+<p>To keep employee machines current with the org fork without requiring manual pulls:</p>
+<pre><code class="language-bash"># Employees add the org fork as their origin (done at clone time):
+git clone git@git.your-org.com:aios/Horizon_AI_OS.git C:\devroot
+
+# horizon_aios_sync.py (fast-forward-only) can be scheduled:
+python &quot;$HORIZON_SYSTEM/sbin/horizon_aios_sync.py&quot;
+</code></pre>
+<p>The sync script is fast-forward-only by design. If an employee has edited a tracked framework file (violating the user-space principle), the sync refuses rather than silently overwriting. That refusal is the signal to move the change into the correct gitignored seam file. The org can schedule this via Windows Task Scheduler or Linux cron as a background maintenance task.</p>
+<p>See <code>$HORIZON_DOCS/system/distribution_and_updates.md</code> for the complete framework vs. user-space model.</p>
+<hr />
+<h2 id="12-containerization-cloud-and-infrastructure-as-code">12. Containerization, Cloud, and Infrastructure as Code</h2>
+<h3 id="121-why-aios-is-iac-friendly">12.1 Why AIOS Is IaC-Friendly</h3>
+<p>Horizon AIOS is, at its core, a set of files and filesystem ACL rules. There are no daemons that must be running, no databases to migrate, no external state to synchronize. The entire system state is:</p>
+<p>1.1 The repository contents (cloned from git — reproducible)
+1.2 The bootstrap outputs (symlinks, wrappers, <code>active_env.*</code> — generated by <code>bootstrap.{ps1,sh}</code>)
+1.3 The ACL assignments on the filesystem (applied by onboarding/<code>bootstrap</code> and <code>horizon_aios_create_brain.py</code>; re-applicable with <code>horizon_aios_harden.py</code>), including the <code>horizon_humans</code> group and its enrolled members recorded in <code>.horizon_aios_deployment.json</code>
+1.4 The OS user accounts for brains (provisioned by <code>horizon_aios_create_brain.py</code>)
+1.5 The credentials in the OS keystore (managed by <code>horizon_aios_brain_credential.py</code>)</p>
+<p>This maps directly to standard IaC patterns: declare the desired state, apply it, verify it.</p>
+<h3 id="122-docker">12.2 Docker</h3>
+<p>The AIOS ships Docker templates in <code>$HORIZON_SYSTEM/templates/docker/</code>:
+- <code>Dockerfile</code> — Ubuntu-based image; runs bootstrap as root before switching to the <code>aios</code> user; brains are OS users within the container
+- <code>docker-compose.yml</code> — single AIOS service with named volumes for <code>logs</code>, <code>handoffs</code>, <code>objectives</code>, and an optional host-path bind for <code>brains/</code>
+- <code>.dockerignore</code> — excludes <code>memory/</code>, <code>handoffs/</code>, <code>brains/</code>, and <code>logs/</code> from the build context</p>
+<pre><code class="language-bash"># Build and run
+docker build -f horizon_system/templates/docker/Dockerfile -t horizon-aios .
+docker compose -f horizon_system/templates/docker/docker-compose.yml up -d
+
+# Open a Claude Code session inside the container
+docker exec -it horizon-aios claude
+</code></pre>
+<p><strong>Mutable state</strong> (logs, handoffs, objectives, brain workspaces) is volume-mounted. The AIOS layer itself is baked into the image. After an AIOS update, rebuild the image; volumes persist unchanged.</p>
+<p><strong>Brain isolation in Docker:</strong> The default model runs all brains as OS users inside a single AIOS container — the same isolation model as a native OS deployment. For environments that require container-level isolation per brain, mount each brain's directory as a writable volume in a separate container definition. The AIOS audit log volume must not be mounted into any brain container.</p>
+<p>See <code>$HORIZON_DOCS/deployment/docker.md</code> for the full reference.</p>
+<h3 id="123-cloud-vm-provisioning-terraform-pulumi-cloud-init">12.3 Cloud VM Provisioning (Terraform / Pulumi / cloud-init)</h3>
+<p>Because AIOS setup is a clone + bootstrap, it maps to any cloud provisioning tool that can run a shell script on a new VM:</p>
+<p><strong>Terraform + cloud-init (AWS EC2 example):</strong></p>
+<pre><code class="language-hcl">resource &quot;aws_instance&quot; &quot;aios_server&quot; {
+  ami           = &quot;ami-ubuntu-22-04&quot;
+  instance_type = &quot;t3.medium&quot;
+
+  user_data = &lt;&lt;-EOF
+    #!/bin/bash
+    apt-get update &amp;&amp; apt-get install -y git python3 python3-pip
+    pip3 install watchdog
+    git clone git@git.your-org.com:aios/Horizon_AI_OS.git /opt/aios
+    bash /opt/aios/horizon_system/sbin/bootstrap.sh --yes
+    # Provision brains
+    python3 /opt/aios/horizon_system/sbin/horizon_aios_create_brain.py inbox_triage \
+      --automation scheduled
+  EOF
+
+  tags = { Name = &quot;aios-server&quot; }
+}
+</code></pre>
+<p><strong>Terraform + Pulumi on Azure / GCP:</strong> The same pattern — a VM resource with a <code>custom_data</code> / <code>metadata startup-script</code> block that runs the bootstrap. The AIOS has no cloud-provider dependencies; it runs on any Linux or Windows VM.</p>
+<p><strong>Ansible for configuration management:</strong></p>
+<pre><code class="language-yaml">- hosts: aios_servers
+  become: true
+  tasks:
+    - name: Clone org AIOS fork
+      git:
+        repo: &quot;git@git.your-org.com:aios/Horizon_AI_OS.git&quot;
+        dest: /opt/aios
+        version: main
+        key_file: /root/.ssh/deploy_key
+
+    - name: Bootstrap AIOS
+      command: bash /opt/aios/horizon_system/sbin/bootstrap.sh --yes
+
+    - name: Provision brain accounts
+      command: &gt;
+        python3 /opt/aios/horizon_system/sbin/horizon_aios_create_brain.py
+        {{ item }} --automation scheduled
+      loop: &quot;{{ brain_names }}&quot;
+      vars:
+        brain_names:
+          - inbox_triage
+          - code_review
+          - data_pipeline
+</code></pre>
+<h3 id="124-kubernetes">12.4 Kubernetes</h3>
+<p>Kubernetes is the right orchestration layer when you need multiple AIOS instances at scale, per-brain pod isolation, or cloud-native autoscaling of brain workloads.</p>
+<p><strong>Pattern 1 — AIOS-in-a-pod, brains as OS users (matches Docker model):</strong></p>
+<pre><code class="language-yaml">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aios-server
+spec:
+  template:
+    spec:
+      containers:
+      - name: aios
+        image: your-org/horizon-aios:latest
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000           # the 'aios' OS user baked into the image
+        volumeMounts:
+        - name: aios-logs
+          mountPath: /opt/aios/horizon_system/logs
+        - name: brain-workspaces
+          mountPath: /opt/aios/brains
+      volumes:
+      - name: aios-logs
+        persistentVolumeClaim:
+          claimName: aios-logs-pvc
+      - name: brain-workspaces
+        persistentVolumeClaim:
+          claimName: aios-brains-pvc
+</code></pre>
+<p><strong>Pattern 2 — One pod per brain (stronger isolation boundary):</strong></p>
+<p>Each brain runs in its own pod with a <code>securityContext.runAsUser</code> matching the brain's UID (provisioned at image build time). The AIOS system directory is mounted read-only from a shared volume; the brain's workspace is a dedicated writable volume. The audit log volume is mounted only into the administrative pod, never into brain pods.</p>
+<pre><code class="language-yaml"># Brain pod template
+containers:
+- name: brain-inbox-triage
+  image: your-org/horizon-aios:latest
+  securityContext:
+    runAsUser: 1001               # inbox_triage UID
+  volumeMounts:
+  - name: aios-system
+    mountPath: /opt/aios/horizon_system
+    readOnly: true                # brain cannot modify the AIOS layer
+  - name: inbox-triage-workspace
+    mountPath: /opt/aios/brains/inbox_triage
+                                  # writable; brain-scoped only
+</code></pre>
+<p>This mirrors the OS-level isolation model at the container boundary.</p>
+<h3 id="125-container-registry-and-image-management">12.5 Container Registry and Image Management</h3>
+<p>The standard image management workflow for an org:</p>
+<p>1.1 The org's CI pipeline builds <code>horizon-aios:latest</code> from the org fork on every merge to <code>main</code>.
+1.2 The image bakes in the AIOS layer (cloned repo + bootstrap). Brains are provisioned at container start time via an entrypoint script, or pre-provisioned in the image if the brain roster is stable.
+1.3 Mutable state (logs, handoffs, brain workspaces, credentials) lives in volumes — never in the image.
+1.4 An AIOS update = a new image build. Volumes are unaffected. Rollback = pin to the previous image tag.</p>
+<h3 id="126-secrets-management-in-cloud-environments">12.6 Secrets Management in Cloud Environments</h3>
+<p>The AIOS brain credential system uses OS-native keystores (<code>horizon_aios_brain_credential.py</code>). In containerized or cloud environments, the OS keystore is often not available. The operator-owned integration pattern:</p>
+<ul>
+<li><strong>Kubernetes Secrets</strong> — inject the brain's API key as an environment variable via a <code>secretKeyRef</code>. The brain's entrypoint script exports it.</li>
+<li><strong>HashiCorp Vault</strong> — use the Vault agent sidecar to write secrets to an in-memory tmpfs volume that the brain reads at startup.</li>
+<li><strong>AWS Secrets Manager / Azure Key Vault / GCP Secret Manager</strong> — use the cloud provider's secret store SDK or a secrets CSI driver to mount secrets into the brain pod.</li>
+</ul>
+<p>The AIOS does not prescribe a cloud secrets solution. <code>horizon_aios_brain_credential.py</code> is the local-machine path; cloud environments use whatever secret management the organization already operates.</p>
+<hr />
+<h2 id="13-bring-your-own-infrastructure-integrated-identity-and-existing-security">13. Bring Your Own Infrastructure — Integrated Identity and Existing Security</h2>
+<h3 id="131-the-core-principle">13.1 The Core Principle</h3>
+<p>Horizon AIOS is not a security framework. It does not implement its own identity model, its own access control engine, or its own audit pipeline. It is an AI-focused application layer that runs inside existing OS infrastructure using the same mechanisms IT has always used.</p>
+<p>This means everything your organization already operates for security and identity management applies to AIOS out of the box:</p>
+<ul>
+<li><strong>File system ACLs</strong> — NTFS (Windows) / POSIX permissions (Linux/macOS). Same <code>icacls</code>, same <code>chmod</code>. AIOS sets them; your IT team can audit and verify them with the same tools they use for everything else.</li>
+<li><strong>OS user accounts</strong> — same local accounts (or domain accounts — see §11.2). Same user management tooling, same password policy, same account lifecycle.</li>
+<li><strong>Audit logging</strong> — same OS audit infrastructure (<code>auditd</code>, Windows Security Event Log). AIOS writes to it; your SIEM ingests it.</li>
+<li><strong>Network controls</strong> — same firewall rules, same network segmentation. Brain OS accounts are subject to the same network policy as any service account.</li>
+</ul>
+<p>The security team's question "how does this work?" has a simple answer: <strong>the same way everything else works</strong>.</p>
+<h3 id="132-active-directory-and-integrated-identity-providers">13.2 Active Directory and Integrated Identity Providers</h3>
+<p>The AIOS security model is built on OS user accounts and filesystem group memberships. If those accounts and groups are managed by an identity provider — Active Directory, Azure AD/Entra ID, LDAP, FreeIPA — the model works identically. The ACLs reference group names; where those groups come from is the OS's concern, not AIOS's.</p>
+<p><strong>Windows domain-joined machines with Active Directory:</strong></p>
+<p>The Horizon.AIOS group primitives are:
+- <code>brains</code> — shared group; all brain accounts are members; grants <code>RX</code> on <code>$HORIZON_BIN</code> and <code>skills_bin</code>
+- <code>&lt;brain-name&gt;_group</code> — per-brain group; the brain account and the owner are members; grants full control on the brain's workspace
+- <code>horizon_humans</code> — the human-operator group created at onboarding; members get full control of the AIOS tree and Read/Write on <code>brains/</code> (near-admins), isolated from each other per-user on <code>projects/</code>. Enroll accounts by name or SID (Azure AD / Entra ID accounts are SIDs) via <code>--humans</code> at onboarding or <code>bootstrap --add-human &lt;name|sid&gt;</code> later</p>
+<p>These can be AD security groups rather than local groups. The brain OS account can be a domain account rather than a local account:</p>
+<pre><code class="language-powershell"># Create the brain as a domain account (domain admin required)
+New-ADUser -Name &quot;brain_inbox_triage&quot; -AccountPassword (Read-Host -AsSecureString) `
+  -Enabled $true -Path &quot;OU=AIBrains,DC=your-org,DC=com&quot;
+
+# Add to the brains AD group
+Add-ADGroupMember -Identity &quot;aios-brains&quot; -Members &quot;brain_inbox_triage&quot;
+
+# The icacls grants in horizon_aios_create_brain.py reference group names —
+# pass the domain-qualified group name to match your AD group:
+#   icacls $HORIZON_BIN /grant &quot;YOUR-ORG\aios-brains:(OI)(CI)RX&quot;
+</code></pre>
+<p>Group Policy applies to brain accounts the same way it applies to any domain account. Password policies, logon hour restrictions, audit policies — all enforced by the domain controller without any AIOS involvement.</p>
+<p><strong>Linux with SSSD / PAM (AD or LDAP):</strong></p>
+<p>When a Linux machine is joined to Active Directory via SSSD, domain users and groups are available to <code>chmod</code> and <code>chown</code> by their domain names. The AIOS bootstrap and <code>horizon_aios_create_brain.py</code> use standard POSIX group membership and permission commands — they work with SSSD-resolved groups without modification.</p>
+<p><strong>Azure AD / Entra ID managed devices:</strong></p>
+<p>On Intune-managed Windows machines with Azure AD join, local group membership and NTFS ACLs function normally. The <code>brains</code> local group and per-brain groups are machine-local (not synced to Azure AD), which is appropriate — they are machine-local security boundaries. Azure AD conditional access policies apply to interactive logons; the brain's non-interactive scheduled-task logon (<code>SeBatchLogonRight</code>) is governed by local security policy, not Azure AD, which is the correct separation.</p>
+<h3 id="133-siem-and-security-monitoring-integration">13.3 SIEM and Security Monitoring Integration</h3>
+<p>AIOS produces two audit streams:</p>
+<p><strong>Stream 1 — AIOS filesystem monitor</strong> (<code>horizon_aios_monitor.py</code>): JSON-lines written to <code>$HORIZON_SYSTEM/logs/horizon_aios_monitor/monitor_YYYYMMDD.log</code>. Events: file created, modified, deleted, moved in the AIOS system directories. One record per event, self-describing with <code>source: "Horizon.AIOS"</code> and <code>horizon_root</code> for multi-install attribution.</p>
+<p>Any standard log shipper can tail this directory and forward to your SIEM without transformation:</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Configuration</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Elastic Filebeat</td>
+<td><code>type: filestream</code>, <code>paths: [".../monitor_*.log"]</code>, <code>parsers: [{ndjson: {}}]</code></td>
+</tr>
+<tr>
+<td>Fluent Bit</td>
+<td><code>[INPUT] tail</code> on <code>monitor_*.log</code>, <code>[FILTER] parser = json</code></td>
+</tr>
+<tr>
+<td>Splunk UF</td>
+<td>Monitor stanza on the directory, <code>sourcetype=_json</code></td>
+</tr>
+<tr>
+<td>Vector</td>
+<td><code>sources.aios.type = "file"</code>, decode as JSON</td>
+</tr>
+<tr>
+<td>NXLog</td>
+<td><code>im_file</code> on the directory, <code>xm_json</code> to parse</td>
+</tr>
+</tbody>
+</table>
+<p>Filter on <code>source="Horizon.AIOS"</code> to isolate AIOS integrity events.</p>
+<p><strong>Stream 2 — OS-level audit (write-access detection)</strong>: The AIOS monitor detects file writes. For unauthorized read detection, use your OS's existing audit infrastructure — it does not require AIOS involvement:</p>
+<ul>
+<li><strong>Windows</strong>: Security Audit → Object Access Auditing via Group Policy. Set audit ACEs on brain folders. Events land in the Security Event Log, forwarded to your SIEM via Windows Event Forwarding.</li>
+<li><strong>Linux</strong>: <code>auditd</code> with <code>IN_ACCESS</code> rules: <code>auditctl -w /opt/aios/brains/brain_name -p rwxa -k brain_activity</code>. Forward via <code>auditd → rsyslog → your log aggregator</code>.</li>
+<li><strong>macOS</strong>: BSM / OpenBSM via <code>audit(8)</code>, configured in <code>/etc/security/audit_control</code>.</li>
+</ul>
+<p>AIOS gives you the structure and the log location. The integration with your SIEM is yours — it plugs directly into whatever audit infrastructure you already operate, using the same configuration you use for every other application.</p>
+<h3 id="134-group-policy-and-system-level-controls">13.4 Group Policy and System-Level Controls</h3>
+<p>Because brain accounts are real OS accounts, every system-level control that applies to service accounts applies to brains:</p>
+<p><strong>Windows Group Policy:</strong>
+- Password complexity and rotation policies apply automatically to brain accounts
+- Account lockout thresholds apply (relevant for the scheduled-task credential)
+- Software restriction policies and AppLocker rules apply — you can limit which executables the brain account can run to just the harness binary and its dependencies
+- Windows Defender Application Control (WDAC) policies apply per-user</p>
+<p><strong>Linux PAM and login restrictions:</strong>
+- <code>/etc/security/access.conf</code> — restrict which terminals or SSH hosts a brain account can log in from
+- PAM modules for two-factor authentication can be applied selectively to brain accounts
+- <code>pam_limits.conf</code> — CPU, memory, and file descriptor limits per brain account</p>
+<p><strong>Network segmentation:</strong>
+- Brain accounts can be assigned to specific network zones. If the brain only needs to reach the AI API endpoint and a specific internal data source, firewall rules can enforce that precisely — same as any service account.
+- On Windows domain environments, Windows Firewall rules can be scoped per-user via Group Policy.</p>
+<h3 id="135-what-aios-adds-and-what-it-doesnt">13.5 What AIOS Adds — and What It Doesn't</h3>
+<table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>Who handles it</th>
+<th>AIOS's role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OS user account lifecycle</td>
+<td>IT / IDP / HR workflow</td>
+<td>None — brain accounts are OS accounts like any other</td>
+</tr>
+<tr>
+<td>Password policy</td>
+<td>Group Policy / PAM / IDP</td>
+<td>None — brain passwords follow the same policy</td>
+</tr>
+<tr>
+<td>Network access control</td>
+<td>Firewall / network team</td>
+<td>None — brain accounts are standard service accounts</td>
+</tr>
+<tr>
+<td>SIEM and log aggregation</td>
+<td>Security team / existing SIEM</td>
+<td>Provides the log location and format; integration is the operator's</td>
+</tr>
+<tr>
+<td>Filesystem ACL model</td>
+<td>OS (NTFS / POSIX)</td>
+<td>Sets and enforces the specific ACEs for brain isolation</td>
+</tr>
+<tr>
+<td>Brain workspace isolation</td>
+<td>OS (ACL model above)</td>
+<td>Provisions the structure; verifiable with standard OS tools</td>
+</tr>
+<tr>
+<td>Credential storage</td>
+<td>OS keystore</td>
+<td>Stores brain passwords in the native credential store</td>
+</tr>
+<tr>
+<td>Audit of AI-layer file changes</td>
+<td>AIOS filesystem monitor</td>
+<td>Writes JSON-line events to <code>logs/</code>; SIEM integration is operator-owned</td>
+</tr>
+<tr>
+<td>Session-level AI audit (reads)</td>
+<td>OS audit infrastructure</td>
+<td>Provides the boundary; audit integration is operator-owned</td>
+</tr>
+</tbody>
+</table>
+<p>AIOS is the AI-focused application. Everything else — identity, access governance, network controls, security monitoring, compliance reporting — stays in the infrastructure your organization already runs and already trusts. The AIOS does not require you to trust a new security model. It requires you to apply the one you already have to a new class of workload.</p>
+<hr />
+<h2 id="reference-pointers">Reference Pointers</h2>
+<table>
+<thead>
+<tr>
+<th>Topic</th>
+<th>Document</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Full setup guide</td>
+<td><code>$HORIZON_DOCS/getting_started/ReadMeToSetupYourSystem.md</code></td>
+</tr>
+<tr>
+<td>Philosophy and conceptual vocabulary</td>
+<td><code>$HORIZON_DOCS/philosophy.md</code></td>
+</tr>
+<tr>
+<td>Security invariants (authoritative)</td>
+<td><code>$HORIZON_ETC/security_invariants.md</code></td>
+</tr>
+<tr>
+<td>Brain isolation test</td>
+<td><code>$HORIZON_DOCS/security/brain_isolation_test.md</code></td>
+</tr>
+<tr>
+<td>Audit logging and SIEM integration</td>
+<td><code>$HORIZON_DOCS/security/audit_logging.md</code></td>
+</tr>
+<tr>
+<td>Brain automation (scheduled / daemon)</td>
+<td><code>$HORIZON_DOCS/deployment/brain_automation.md</code></td>
+</tr>
+<tr>
+<td>Desktop deployment</td>
+<td><code>$HORIZON_DOCS/deployment/desktop.md</code></td>
+</tr>
+<tr>
+<td>Server / headless deployment</td>
+<td><code>$HORIZON_DOCS/deployment/server.md</code></td>
+</tr>
+<tr>
+<td>Docker deployment</td>
+<td><code>$HORIZON_DOCS/deployment/docker.md</code></td>
+</tr>
+<tr>
+<td>Distribution, updates, and backups</td>
+<td><code>$HORIZON_DOCS/system/distribution_and_updates.md</code></td>
+</tr>
+<tr>
+<td>Context loading mechanics</td>
+<td><code>$HORIZON_DOCS/context_loading.md</code></td>
+</tr>
+<tr>
+<td>CLAUDE.md authoring rules</td>
+<td><code>$HORIZON_DOCS/authoring/claude_md_authoring.md</code></td>
+</tr>
+<tr>
+<td>Model preferences</td>
+<td><code>$HORIZON_DOCS/system/model_preferences.md</code></td>
+</tr>
+<tr>
+<td>Agent teams and SAILL (full spec)</td>
+<td><code>$HORIZON_DOCS/system/agent_teams.md</code></td>
+</tr>
+<tr>
+<td>Memory and transcript redirect</td>
+<td><code>$HORIZON_DOCS/system/memory.md</code></td>
+</tr>
+<tr>
+<td>Skills reference</td>
+<td><code>$HORIZON_DOCS/skills.md</code></td>
+</tr>
+<tr>
+<td>System configuration reference</td>
+<td><code>$HORIZON_DOCS/system/system_configuration_reference.md</code></td>
+</tr>
+<tr>
+<td>File structure invariants (authoritative)</td>
+<td><code>$HORIZON_ETC/file_structure_invariants.md</code></td>
+</tr>
+<tr>
+<td>Updating AIOS</td>
+<td><code>$HORIZON_DOCS/getting_started/updating.md</code></td>
+</tr>
+<tr>
+<td>Cloud sync exclusions</td>
+<td><code>$HORIZON_DOCS/cloud_sync_exclusions.md</code></td>
+</tr>
+<tr>
+<td>Terseness Contract (authoritative index)</td>
+<td><code>$HORIZON_DOCS/terseness_contract_index.md</code></td>
+</tr>
+<tr>
+<td>Agent team flags / SAILL vocabulary</td>
+<td><code>$HORIZON_ETC/agent_team_flags.md</code></td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "search.suggest", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

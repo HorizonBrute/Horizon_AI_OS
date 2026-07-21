@@ -1,0 +1,3045 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for Horizon AIOS — a centralized, syncable AI operating-system config layer.">
+      
+      
+      
+      
+        <link rel="prev" href="../development_tools/windows_install_switch_uninstall_test_prompt/">
+      
+      
+        <link rel="next" href="../dev_values/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Philosophy - Horizon AIOS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#horizonaios-philosophy-and-conceptual-framework" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Horizon AIOS" class="md-header__button md-logo" aria-label="Horizon AIOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Horizon AIOS
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Philosophy
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../getting_started/getting_started.index/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../user_guides/user_guides.index/" class="md-tabs__link">
+          
+  
+  
+  User Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../system/system.index/" class="md-tabs__link">
+          
+  
+  
+  System
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../deployment/deployment.index/" class="md-tabs__link">
+          
+  
+  
+  Deployment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../security/security.index/" class="md-tabs__link">
+          
+  
+  
+  Security
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../authoring/authoring.index/" class="md-tabs__link">
+          
+  
+  
+  Authoring
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../build_decisions/build_decisions.index/" class="md-tabs__link">
+          
+  
+  
+  Build Decisions
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../development_tools/development_tools.index/" class="md-tabs__link">
+          
+  
+  
+  Development Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Horizon AIOS" class="md-nav__button md-logo" aria-label="Horizon AIOS" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Horizon AIOS
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting_started/getting_started.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting_started/ReadMeToSetupYourSystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting_started/dependencies_and_footprint/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dependencies & Footprint
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting_started/updating/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Updating
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting_started/lifecycle_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lifecycle Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user_guides/user_guides.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user_guides/using_your_aios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using Your AIOS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user_guides/using_Horizon.AIOS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using Horizon.AIOS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user_guides/deployment_howtos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment How-Tos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    System
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system/system.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system/aios_options_packages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Options Packages
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system/aios_switching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AIOS Switching
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system/distribution_and_updates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Distribution & Updates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system/memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system/system_configuration_reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system/model_preferences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Preferences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system/agent_teams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Teams
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system/skill_model_groups/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skill Model Groups
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system/uninstall/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Uninstall
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/deployment.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/desktop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Desktop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/multi_brain_deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Brain Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/brain_automation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Brain Automation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Security
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/security.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/audit_logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit Logging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/brain_isolation_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Brain Isolation Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security_architecture_invariants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security Architecture Invariants
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Authoring
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../authoring/authoring.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../authoring/claude_md_authoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLAUDE.md Authoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build Decisions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Build Decisions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build_decisions/build_decisions.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build_decisions/architecture_decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Decisions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Tools
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development_tools/development_tools.index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development_tools/consistency_checks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consistency Checks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development_tools/windows_install_switch_uninstall_test_prompt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Windows Install/Switch/Uninstall Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Philosophy
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Philosophy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-core-distinction-brain-vs-ai-operating-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. The Core Distinction: Brain vs. AI Operating System
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-the-second-brain-goal-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. The Second Brain: Goal State
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-the-security-teams-questions-blue-team-answerability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. The Security Team's Questions (Blue Team Answerability)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. The Security Team&#39;s Questions (Blue Team Answerability)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-improper-installation-risk-running-ai-as-root" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Improper Installation Risk — Running AI as Root
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-lean-into-existing-it-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Lean Into Existing IT Infrastructure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-infrastructure-as-code-and-containerization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Infrastructure as Code and Containerization
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-memory-systems-are-part-of-the-brain-and-entirely-the-users-choice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Memory Systems Are Part of the Brain — and Entirely the User's Choice
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-bring-your-own-harness-model-and-tooling-byoh" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Bring Your Own Harness, Model, and Tooling (BYOH)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-bring-the-tooling-and-the-data-access-to-the-brain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Bring the Tooling — and the Data Access — to the Brain
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-current-scope-claude-code-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Current Scope: Claude Code Only
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-evaluation-current-implementation-against-these-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Evaluation: Current Implementation Against These Values
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Evaluation: Current Implementation Against These Values">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#aligned" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Aligned
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gaps
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev_values/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Values
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development_pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../context_loading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Context Loading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../model_prefs_details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Preferences Details
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utilities Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sync_setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sync Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cloud_sync_exclusions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloud Sync Exclusions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tested_configurations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tested Configurations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../terseness_contract_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Terseness Contract Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../branding_invariants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Branding Invariants
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-core-distinction-brain-vs-ai-operating-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. The Core Distinction: Brain vs. AI Operating System
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-the-second-brain-goal-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. The Second Brain: Goal State
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-the-security-teams-questions-blue-team-answerability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. The Security Team's Questions (Blue Team Answerability)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. The Security Team&#39;s Questions (Blue Team Answerability)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-improper-installation-risk-running-ai-as-root" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Improper Installation Risk — Running AI as Root
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-lean-into-existing-it-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Lean Into Existing IT Infrastructure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-infrastructure-as-code-and-containerization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Infrastructure as Code and Containerization
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-memory-systems-are-part-of-the-brain-and-entirely-the-users-choice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Memory Systems Are Part of the Brain — and Entirely the User's Choice
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-bring-your-own-harness-model-and-tooling-byoh" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Bring Your Own Harness, Model, and Tooling (BYOH)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-bring-the-tooling-and-the-data-access-to-the-brain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Bring the Tooling — and the Data Access — to the Brain
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-current-scope-claude-code-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Current Scope: Claude Code Only
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-evaluation-current-implementation-against-these-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Evaluation: Current Implementation Against These Values
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Evaluation: Current Implementation Against These Values">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#aligned" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Aligned
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gaps
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="horizonaios-philosophy-and-conceptual-framework">Horizon.AIOS — Philosophy and Conceptual Framework</h1>
+<p>This document captures the design philosophy and conceptual vocabulary behind Horizon.AIOS. It is the "why" behind the architecture — readable by humans and AI alike, but not loaded into session context.</p>
+<hr />
+<h2 id="1-the-core-distinction-brain-vs-ai-operating-system">1. The Core Distinction: Brain vs. AI Operating System</h2>
+<p>The term "AI Operating System" is used inconsistently in the industry. Most products marketed as an "AI OS" are actually what Horizon.AIOS calls a <strong>Brain</strong> — an expert system finely tuned and calibrated to do one class of things well: write media, manage a business workflow, produce code, perform a specific business function.</p>
+<p>That framing maps more cleanly to "App" than "OS."</p>
+<p><strong>Horizon.AIOS vocabulary:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Brain</strong></td>
+<td>One atomic unit of an expert system. An agentic workflow given precise training and calibration to be an expert at one specific thing. A brain is an App — it runs inside Horizon.AIOS. Every brain includes a memory system; that is what makes it an expert rather than a stateless query processor.</td>
+</tr>
+<tr>
+<td><strong>Memory System</strong></td>
+<td>The memory subsystem owned and contained within a brain — entirely the brain author's choice. Horizon.AIOS does not implement or prescribe a memory technology; it provides only the secure, isolated directory where the brain's memory lives. A brain's self-contained memory is what makes it portable: when the directory moves, the expertise moves with it, regardless of harness or model.</td>
+</tr>
+<tr>
+<td><strong>AI Operating System (Horizon.AIOS)</strong></td>
+<td>The collection of configuration, harnesses, security boundaries, logging, and coordination scaffolding that brains run on top of. The OS layer is not itself an expert system. It is the infrastructure that makes expert systems safe, auditable, and controllable.</td>
+</tr>
+<tr>
+<td><strong>Second Brain</strong></td>
+<td>The goal-state user experience: an ecosystem of brains that collectively runs life and business tasks — things that require some level of cognition but not the user's full attention. Tedious, repetitive, or high-volume cognitive work delegated to purpose-built expert systems.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Why this matters:</strong> If you conflate Brain with Horizon.AIOS, you build a single large system that is opaque, hard to audit, and difficult to contain. The separation enables: independent deployment of brains, per-brain access control, per-brain audit trails, and a stable shared OS layer that can be updated without disrupting individual brains.</p>
+<p><strong>The harness is bound by the OS, not by itself.</strong> Because the harness runs as the brain OS user, it cannot modify the Horizon.AIOS-layer protections that govern it. This is an OS-enforced property: even a fully compromised harness cannot write to <code>$HORIZON_SYSTEM</code>, access <code>sbin/</code>, or escalate to the administrative context. The security boundary is maintained by the operating system independently of anything the harness does or is instructed to do. See <code>$HORIZON_DOCS/security_architecture_invariants.md §5</code> for the full invariant.</p>
+<hr />
+<h2 id="2-the-second-brain-goal-state">2. The Second Brain: Goal State</h2>
+<p>The common implementation of "second brain" as knowledge management (notes, links, documents) is a narrow reading. In Horizon's framing, a second brain is the <strong>ecosystem and operating system of the harness</strong> — the infrastructure underneath a collection of apps (Brains) that collectively run life and business on the user's behalf.</p>
+<p>The second brain goal state: multiple expert brains running in their own isolated contexts, each with precisely scoped tools and data access, collectively handling work the user finds flooring or tedious — and doing so in a way the user, and a security team, can inspect, audit, and trust.</p>
+<hr />
+<h2 id="3-the-security-teams-questions-blue-team-answerability">3. The Security Team's Questions (Blue Team Answerability)</h2>
+<p>Every architectural decision in Horizon.AIOS should be evaluable against the questions a security team would ask when approving any new application or infrastructure change:</p>
+<ol>
+<li><strong>What is the agent doing?</strong> — Audit trail; logged tool invocations and file access.</li>
+<li><strong>How is it doing it?</strong> — Defined, provisioned toolset; no capability beyond what was explicitly granted.</li>
+<li><strong>How do we enforce it?</strong> — OS-level filesystem permissions (not just app-layer promises). Explicit Deny ACLs, not just absence of grants.</li>
+<li><strong>How do we prevent insider threat or unintended AI risk?</strong> — Git commit enforcement, audit log immutability (brain cannot write to log directory), brain isolation (blast radius limited to own folder).</li>
+<li><strong>What data does the agent have access to?</strong> — Answerable per-brain from the provisioning record. Zero by default; explicit grants documented.</li>
+<li><strong>What tooling does the agent have access to?</strong> — Same model: zero by default; every tool provisioned to a brain must be explainable in one sentence tied to that brain's function.</li>
+<li><strong>How do we audit what it does?</strong> — The audit mechanism itself: where logs are written, who controls them, whether the brain can tamper with or delete them, and how they integrate with existing SIEM and security tooling. The answer must be structural, not a promise — the brain must be physically incapable of modifying the audit trail.</li>
+</ol>
+<p>The principle of least privilege is no longer sufficient as a statement of intent. It must be enforced at the OS layer. "The developer is smart enough not to delete the database" is not a security model. "The developer's brain cannot authenticate to the database because it holds no credential for it" is.</p>
+<p><strong>What Horizon.AIOS provides vs. what you must implement:</strong></p>
+<p>Horizon.AIOS answers questions 2–7 fully for the Horizon.AIOS layer: provisioning records, zero-default access, explicit ACLs, credential containment, and a log directory the brain cannot write to (enforced by Deny ACE). Question 1 — <em>what did the agent actually do during a session</em> — requires OS-level audit that Horizon.AIOS cannot provide portably across all platforms and deployments. Horizon.AIOS provides the log directory, the filesystem change monitor (<code>horizon_aios_monitor.py</code>), and the isolation boundary. Full session-level audit requires integration with the infrastructure your organization already runs.</p>
+<p>Recommended OS-level audit integrations (implement in your environment):</p>
+<ul>
+<li><strong>Linux:</strong> <code>auditd</code> with <code>IN_ACCESS</code> rules on brain home directories and <code>$HORIZON_SYSTEM</code>. Rules like <code>auditctl -w /path/to/brains/brain_name -p rwxa -k brain_activity</code> capture reads, writes, executes, and attribute changes per brain. Pipe to your SIEM via <code>auditd</code> → <code>rsyslog</code> → your log aggregator.</li>
+<li><strong>macOS:</strong> Basic Security Module (BSM) / OpenBSM via <code>audit(8)</code>. Configure <code>/etc/security/audit_control</code> to capture <code>fc</code> (file create), <code>fd</code> (file delete), <code>fw</code> (file write), <code>fr</code> (file read) classes for brain accounts.</li>
+<li><strong>Windows:</strong> Security Audit → Object Access Auditing. Enable via Group Policy (<code>Computer Configuration → Windows Settings → Security Settings → Advanced Audit Policy → Object Access → Audit File System</code>). Set audit ACEs on brain folders using <code>icacls</code> or the Security tab. Events land in the Security Event Log and can be forwarded to your SIEM via Windows Event Forwarding.</li>
+<li><strong>Docker:</strong> Mount the log volume to your host or a log aggregator sidecar. Add your preferred logging driver (<code>json-file</code>, <code>fluentd</code>, <code>awslogs</code>, etc.) in <code>docker-compose.yml</code>. OS-level audit inside a container requires <code>--cap-add AUDIT_READ</code> and <code>auditd</code> in the container, or relies on the host's audit subsystem if using Linux namespaces.</li>
+</ul>
+<p>Horizon.AIOS gives you the structure. The integration is yours to implement — it plugs directly into whatever audit and SIEM infrastructure your organization already operates.</p>
+<h3 id="the-improper-installation-risk-running-ai-as-root">The Improper Installation Risk — Running AI as Root</h3>
+<p>The security model Horizon.AIOS provides is contingent on one prerequisite: <strong>the human operator uses a separate administrative account to manage Horizon.AIOS, and AI harnesses run under brain accounts — not the operator's account.</strong></p>
+<p>When a developer runs an AI harness under their own full-control account — the default for most AI tooling installations — the harness inherits everything that account can touch. On a developer workstation where the user holds local Administrator rights (common by convention on developer machines), this is <strong>functionally equivalent to running the AI as <code>root</code> on Linux</strong>: the harness can read any file on the system, write to system directories, install software, access credential stores, modify network configuration, and potentially reach anything the OS allows the account to touch — including sensitive paths like <code>/etc/passwd</code>, <code>/etc/shadow</code>, <code>C:\Windows\System32</code>, and the Windows Registry.</p>
+<p>UAC (Windows User Account Control) provides some protection, but is not a containment boundary. UAC governs elevation prompts for interactive sessions; it does not prevent a process running under an admin-group account from accessing most of the filesystem. It can be bypassed by misconfigured auto-elevation settings, COM object abuse, or elevation grants the developer has applied for development convenience. A harness that the user has granted broad tool permissions "for ease of use" may operate with effectively unrestricted access regardless of UAC state.</p>
+<p><strong>Horizon.AIOS was intentionally designed to address this exact risk.</strong> The brain OS account model exists to remove AI harnesses from the administrative trust boundary. When Horizon.AIOS is correctly deployed — with a separate administrative account and dedicated brain accounts for harness execution — the risk above does not apply. The harness's access is structurally bounded by the brain account's ACLs, not by what the operator happens to own.</p>
+<p><strong>When the basic model is not followed, the user is assuming significant risk:</strong>
+- Running a harness under an administrator or full-control account means the harness can reach everything that account can reach. There is no Horizon.AIOS configuration that compensates for this — not <code>settings.json</code>, not <code>agents.md</code>, not any harness-level deny list.
+- The <code>settings.json</code> deny array and harness-layer permissions in Horizon.AIOS are defense-in-depth. They are not the containment boundary. The containment boundary is the OS account. Without a separate, restricted OS account for the brain, there is no containment boundary.
+- An improperly installed Horizon.AIOS — one where the harness runs as the owner account — short-circuits the entire security model the system was built to provide. The user retains all the configuration overhead of Horizon.AIOS with none of the security properties.</p>
+<p>The Horizon.AIOS security model is not self-enforcing if its deployment prerequisites are ignored. It requires the operator to implement the basic administrative hygiene the model depends on: a dedicated administrative account for Horizon.AIOS management, and brain OS accounts for AI workloads. Without this, the system is not insecure because of a flaw — it is insecure because the fundamental premise was not applied.</p>
+<hr />
+<h2 id="4-lean-into-existing-it-infrastructure">4. Lean Into Existing IT Infrastructure</h2>
+<p>Horizon.AIOS is not a security framework. It is a configuration layer that redirects existing security frameworks toward AI workloads.</p>
+<ul>
+<li><strong>User isolation</strong> is done by the OS (NTFS ACLs / POSIX permissions), not by Horizon.AIOS code.</li>
+<li><strong>Audit logging</strong> uses the OS filesystem and optionally <code>auditd</code> / Windows Security Audit — tools the security team already knows.</li>
+<li><strong>Credential containment</strong> uses OS-native credential stores accessed via <code>horizon_aios_brain_credential.py</code> in sbin, not a custom secrets store.</li>
+<li><strong>Centralized logging</strong> follows the standard log taxonomy the ops team already has tooling for.</li>
+<li><strong>Access control</strong> is enforced by <code>icacls</code> / <code>chmod</code> — not reimplemented.</li>
+</ul>
+<p><strong>The design cribs directly from Linux.</strong> The POSIX model — dedicated service accounts, group memberships, <code>chmod</code> / <code>setfacl</code> filesystem permissions, process identity = OS user — is the conceptual reference for brain isolation. A brain account is a service account. Its permissions are set by an administrator at provisioning time using exactly the same tools used for any other service (<code>icacls</code> on Windows, <code>chmod</code> / <code>setfacl</code> on Linux), not by anything the AI does. On Linux the model is native. On Windows, NTFS ACLs map directly onto the same concepts with different syntax. The blue team questions in §3 — <em>What is the agent doing? With what access? Enforced how?</em> — have the same answers as they would for a web service running under a dedicated <code>www-data</code> account: the OS account, the ACLs, and the audit log tell the story.</p>
+<p>The goal: when a security team asks "how does this work?", the answer should be "the same way everything else works — OS users, filesystem ACLs, and centralized logs." Not "we built a custom isolation layer."</p>
+<hr />
+<h2 id="5-infrastructure-as-code-and-containerization">5. Infrastructure as Code and Containerization</h2>
+<p>Horizon.AIOS must be deployable as infrastructure, not just installed by hand.</p>
+<p><strong>Deployment models, all first-class:</strong></p>
+<ol>
+<li>
+<p><strong>Desktop (native OS)</strong> — the primary and most personal deployment. The user installs Horizon.AIOS on their own machine via bootstrap scripts. Brains run as OS user accounts on the same machine. The AI harness (e.g., Claude Code desktop app) is launched by the user directly. This is the "run my life / run my business" model — always on, always local, tightly integrated with the user's workflow.</p>
+</li>
+<li>
+<p><strong>Backend / server (native OS)</strong> — same bootstrap as desktop, deployed on a remote or always-on server. Brains run as OS user accounts. Access is via SSH or remote session. Suitable for brains that run unattended (scheduled tasks, cron jobs, daemons) or for separating AI workloads from the user's desktop environment.</p>
+</li>
+<li>
+<p><strong>Docker container (Horizon.AIOS as container)</strong> — the entire Horizon.AIOS layer runs in a container. Brains run as OS users within the container, exactly as in the native OS model. Enables consistent deployment across machines, cloud environments, and CI/CD pipelines. This is the supported Docker deployment mode.</p>
+</li>
+<li>
+<p><strong>Docker container (per-brain)</strong> — each brain runs in its own container. This is outside Horizon.AIOS scope and is a user implementation choice. BYOH applies here: if a brain's expert function requires container isolation, the brain author provisions and manages that container. The Horizon.AIOS OS layer doesn't change; the brain's working directory and Claude configuration still live under <code>$HORIZON_ROOT/brains/&lt;name&gt;/</code>. The containerization of the brain itself is the author's engineering decision, not a Horizon.AIOS feature.</p>
+</li>
+</ol>
+<p>The desktop model is the design reference: if a feature works correctly on a user's desktop machine, it will work in server and container deployments. If a feature only works in server or container mode, it is not a core Horizon.AIOS feature — it is a deployment-specific extension.</p>
+<p><strong>IaC compatibility requirements:</strong>
+- No hardcoded paths in any committed file — all paths are env vars (<code>$HORIZON_ROOT</code>, <code>$HORIZON_SYSTEM</code>, etc.).
+- Bootstrap scripts are the single source of truth for setup — cloning the repo + running bootstrap produces a working Horizon.AIOS.
+- Brain provisioning is a single script invocation (<code>horizon_aios_create_brain.py</code>) — not a sequence of manual steps.
+- Configuration is file-driven — the entire Horizon.AIOS state can be recreated from the repo + a local config file.</p>
+<p>Horizon.AIOS Docker images are Linux-container based and run on Windows, macOS, and Linux hosts via the container runtime (Docker Desktop / WSL2 on Windows and macOS, Docker Engine on Linux). Native Windows containers are out of scope.</p>
+<p>Docker does not replace OS-level user isolation — it extends it. A Dockerized brain still runs as a non-root user inside the container. The container boundary adds network isolation and process isolation; the OS user boundary limits filesystem access.</p>
+<hr />
+<h2 id="6-memory-systems-are-part-of-the-brain-and-entirely-the-users-choice">6. Memory Systems Are Part of the Brain — and Entirely the User's Choice</h2>
+<p>An expert system cannot function without memory. Memory is not an optional add-on — it is what makes a brain an expert rather than a stateless query processor.</p>
+<p><strong>Horizon.AIOS does not implement a memory system. That is entirely the brain author's decision.</strong></p>
+<p>Horizon.AIOS provides one thing relevant to memory: a secure, isolated directory for each brain where anything the brain author wants to store can live — calibration documents, few-shot examples, vector indices, conversation history, retrieval scripts, domain knowledge files, or any other memory technology the author chooses. The directory has filesystem permissions that enforce isolation. What goes inside it is not Horizon.AIOS's concern.</p>
+<p>This is a deliberate non-decision:
+- Memory implementations vary enormously in kind (file-based, vector DB, graph DB, retrieval pipelines, structured knowledge bases) and the right choice depends entirely on the brain's expert domain.
+- Any memory system Horizon.AIOS prescribed would either be too constrained for some brains or too complex for simpler ones.
+- The "bring your own memory" model is the same as the broader BYOH principle — Horizon.AIOS provides the container and the security; the author provides the specialization.</p>
+<p><strong>Memory is what makes BYOH possible at the brain level.</strong></p>
+<p>When a brain's expertise is consolidated in self-contained memory artifacts (files, databases, indices) within its directory — rather than embedded in a specific harness's configuration or tied to a specific model's fine-tuning — the brain becomes portable:</p>
+<ul>
+<li>Swap the harness → the memory stays.</li>
+<li>Swap the frontier model → the memory stays.</li>
+<li>Swap the API provider → the memory stays.</li>
+<li>Move to a different machine or container → the memory moves with the directory.</li>
+</ul>
+<p>Without a self-contained memory system, a brain is coupled to its current toolchain. With one, it is a portable expert that can be brought to any harness, any frontier model, any API endpoint, any network topology — independently.</p>
+<p><strong>Horizon.AIOS's role is only:</strong>
+- Providing the brain's home directory (the container for whatever memory the author implements).
+- Enforcing filesystem isolation so memory cannot leak across brain boundaries.
+- Nothing else. Memory architecture is entirely outside the Horizon.AIOS layer.</p>
+<hr />
+<h2 id="7-bring-your-own-harness-model-and-tooling-byoh">7. Bring Your Own Harness, Model, and Tooling (BYOH)</h2>
+<p>Horizon.AIOS is a harness-agnostic configuration layer. It standardizes how AI workloads are structured and controlled — not which AI is doing the work.</p>
+<p>A user brings:
+- Their harness (Claude Code, Codex, Ollama, or any tool that reads <code>agents.md</code>)
+- Their model (any model the harness supports)
+- Their tooling (MCP servers, scripts, APIs)</p>
+<p>Horizon.AIOS provides:
+- The standard file and directory layout
+- The cross-harness agent instruction conventions (<code>agents.md</code>, CLAUDE.md)
+- The security model (brain isolation, least privilege, audit trail)
+- The configuration management layer (env vars, bootstrap, overrides)
+- The hook taxonomy and log schema</p>
+<p>Any workflow or knowledge base set up in Horizon.AIOS-standard format is portable across harnesses. The same brain configuration should work whether the harness is Claude Code today or something else tomorrow. Harness-specific configuration lives in <code>$HORIZON_SYSTEM/harness_configs/&lt;vendor&gt;/</code> and extends — but never replaces — the cross-harness core.</p>
+<hr />
+<h2 id="8-bring-the-tooling-and-the-data-access-to-the-brain">8. Bring the Tooling — and the Data Access — to the Brain</h2>
+<p>A brain is not a general-purpose system that reaches out for whatever it needs. Tooling and data access are <strong>brought to the brain</strong> — delivered into its scoped boundary, externally provisioned — rather than assumed or discovered by it. This is one principle with two faces.</p>
+<p><strong>Tooling.</strong> Lean on established, deterministic tooling to do the work that does not need machine-learning processing. A skill or workflow should push mechanical and deterministic work into scripts and CLI tools (e.g. <code>horizon_aios_create_brain.py</code> performs provisioning; the model only coordinates it) and reserve the model for what genuinely requires reasoning. This keeps the brain's context window — the scarce resource — free for the application that actually matters, and it means the model is <em>coordinating, not computing</em>. A coordinator over reliable tooling can run on a lean, inexpensive model; the gravity of what the tooling does is not the gravity of the reasoning required to drive it.</p>
+<p><strong>Data access.</strong> The same posture governs data. A brain reaches data only through access provisioned to it, within its own boundary — zero by default, explicit grants, OS-enforced (see §3, §4). Data is brought to the brain; the brain does not range across the system to find it. This is least privilege expressed as data locality: the brain holds exactly the data access delivered to it and no more, answerable per-brain from the provisioning record.</p>
+<p><strong>Why it is a security concept.</strong> Bringing tooling and data access to the brain is the enforcement side of blue-team answerability (§3). Because capability and reach are <em>delivered</em>, not inherent, every one is explainable, auditable, and revocable: "what tooling and data does this brain have?" is answered by what was brought to it. A brain cannot misuse a tool it was never given or leak data it cannot reach.</p>
+<p><strong>Why it is implementation flexibility.</strong> Because tooling and data access are delivered rather than baked in, they are swappable without re-engineering the brain. Change the helper script, the data source, the credential, or the model the coordinator runs on — the brain's expertise (its memory, §6) is untouched. This is BYOH (§7) applied one level in: Horizon.AIOS brings tooling and data to the brain; the brain author chooses what flows through.</p>
+<p><strong>A concrete expression — the model-preference layer.</strong> Horizon.AIOS skills coordinate deterministic tooling, so they default to lean model groups (<code>$HORIZON_ETC/horizon_aios_model_prefs.md</code>): a skill's model group reflects how much genuine reasoning it needs, not how consequential its tooling is. <code>/create-brain</code> runs on a cheap group because it coordinates a deterministic provisioning script — the privileged work is done by the script, reliably and auditably, not re-derived by an expensive model on every run.</p>
+<hr />
+<h2 id="9-current-scope-claude-code-only">9. Current Scope: Claude Code Only</h2>
+<p>Section 7 frames Horizon.AIOS as harness-agnostic, and that is the intended architecture. The current implementation is not there yet. Every concrete artifact — hook scripts, <code>settings.json</code> templates, the bootstrap paths, the statusline integration, the skill directory conventions — is implemented against Claude Code specifically. No other harness has a working integration.</p>
+<p>What is genuinely harness-neutral today: the conceptual model (brain isolation, the ACL boundary, the registry/switcher pattern, the provision record), the brain directory layout, and <code>agents.md</code> itself. <code>agents.md</code> is written in harness-neutral language deliberately — it should remain readable and actionable by any harness that supports an equivalent instruction file. The security model (OS users, explicit Deny ACLs, credential containment) has no Claude dependency and applies to any harness that runs as the brain OS user.</p>
+<p>Three harnesses have been identified as future targets to explore — not committed roadmap items, but the next logical candidates once the BYOH aspiration moves from design principle to implementation:</p>
+<ul>
+<li><strong>Ollama</strong> — a local model runtime with no equivalent to Claude Code's hook system or <code>~/.claude/</code> config. The open question: whether a parallel config convention (e.g., Modelfile SYSTEM blocks) can carry enough of the Horizon.AIOS context-loading and hook semantics to make brain isolation meaningful. A minimal stub exists under <code>harness_configs/ollama/</code>; it does not yet answer this question.</li>
+<li><strong>Codex</strong> (OpenAI) — OpenAI's coding agent / CLI tooling. The open question: whether it has a config home analogous to <code>~/.claude/</code>, supports something equivalent to hooks, and can load Horizon.AIOS context in the same way <code>@</code>-imports load it for Claude Code.</li>
+<li><strong>LM Studio</strong> — a local model GUI with an OpenAI-compatible API. The open question: whether the API compatibility layer is sufficient to share Codex-style integration, or whether the desktop GUI model requires a separate harness config path.</li>
+</ul>
+<p>For each of these, "adding harness support" would require at minimum: a parallel <code>settings_{harness}.json</code> template, equivalent hook scripts (or the best available substitute), a parallel bootstrap section, and a parallel <code>active_env</code> export in the switcher. The brain model, the ACL layer, and the registry are reusable as-is — they have no harness dependency. The work is in the integration scaffolding, not the OS layer.</p>
+<hr />
+<h2 id="10-evaluation-current-implementation-against-these-values">10. Evaluation: Current Implementation Against These Values</h2>
+<h3 id="aligned">Aligned</h3>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>How the current implementation delivers it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BYOH / Harness independence</td>
+<td><code>agents.md</code> + CLAUDE.md conventions; <code>harness_configs/</code> separation; explicit design constraint in <code>dev_values.md</code> §6</td>
+</tr>
+<tr>
+<td>Lean into existing IT infra</td>
+<td>OS user accounts for brain isolation; NTFS ACLs / <code>icacls</code>; no custom access control layer</td>
+</tr>
+<tr>
+<td>Least privilege, enforced</td>
+<td>Zero-default access posture; explicit Deny ACEs on <code>sbin</code>; <code>horizon_aios_create_brain.py</code> provisions the minimum; every tool grant requires a one-sentence justification</td>
+</tr>
+<tr>
+<td>Audit trail</td>
+<td><code>horizon_aios_monitor.py</code> writes to <code>$HORIZON_SYSTEM/logs/</code>; log dir has Deny ACE for brain users (set by <code>horizon_aios_harden.py</code>); documented in <code>security_architecture_invariants.md</code> §7</td>
+</tr>
+<tr>
+<td>Credential containment</td>
+<td>OS-native credential stores via <code>horizon_aios_brain_credential.py</code> in sbin; no brain has default key access; scoped credential grants</td>
+</tr>
+<tr>
+<td>IaC-ready paths</td>
+<td>All paths are env vars; no hardcoded values in committed files</td>
+</tr>
+<tr>
+<td>Reproducible bootstrap</td>
+<td><code>bootstrap.ps1</code> / <code>bootstrap.sh</code> cover setup end-to-end</td>
+</tr>
+<tr>
+<td>Brain isolation</td>
+<td>Separate OS user accounts; own folder only by default; blast radius limited</td>
+</tr>
+<tr>
+<td>Tooling &amp; data brought to the brain</td>
+<td>Deterministic helper scripts do the heavy lifting (<code>horizon_aios_create_brain.py</code>, etc.); zero-default data access via provisioning record; the model-preference layer (<code>horizon_aios_model_prefs.md</code>) routes skill/delegated work to lean model groups so the model coordinates rather than computes</td>
+</tr>
+</tbody>
+</table>
+<h3 id="gaps">Gaps</h3>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Gap</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IaC / Containerization</td>
+<td>~~No Dockerfile or Docker Compose template exists.~~</td>
+<td><strong>Addressed</strong> — <code>horizon_system/templates/docker/</code> contains Dockerfile, docker-compose.yml, and .dockerignore. <code>bootstrap_docker.sh</code> is the container-aware bootstrap. ACL hardening now runs as root before the <code>USER aios</code> switch. Per-brain containerization is outside Horizon.AIOS scope (see §5).</td>
+</tr>
+<tr>
+<td>Blue Team Answerability</td>
+<td>Horizon.AIOS logs lifecycle events (Stop/PermissionRequest/StopFailure) and Horizon.AIOS-layer file changes, but not tool invocations or reads inside brain folders. Full session-level audit requires OS-level infrastructure integration.</td>
+<td><strong>Addressed by design</strong> — Horizon.AIOS provides the boundary and the log location; §3 now documents concrete OS-level audit recommendations (Linux <code>auditd</code>, macOS BSM, Windows Security Audit, Docker logging drivers). Integration is the operator's responsibility, consistent with how every other application in their environment is audited.</td>
+</tr>
+<tr>
+<td>Brain vs. Horizon.AIOS conceptual vocabulary</td>
+<td>The distinction between Brain (expert app) and Horizon.AIOS (OS layer) was implicit.</td>
+<td><strong>Addressed</strong> — this document defines the vocabulary.</td>
+</tr>
+<tr>
+<td>Second Brain as goal state</td>
+<td>Not articulated in any existing document.</td>
+<td><strong>Addressed</strong> — §2 of this document.</td>
+</tr>
+<tr>
+<td>Per-brain provisioning record</td>
+<td>No generated audit artifact per brain.</td>
+<td><strong>Addressed</strong> — <code>horizon_aios_create_brain.py</code> Phase 5 writes <code>.aios_provision.json</code> to each brain's directory at provisioning time. Post-creation grants are not auto-recorded.</td>
+</tr>
+<tr>
+<td>Docker-aware bootstrap</td>
+<td>No container-aware bootstrap variant.</td>
+<td><strong>Addressed</strong> — <code>bootstrap_docker.sh</code> wraps <code>bootstrap.sh</code> with <code>AIOS_DEPLOY_MODE=docker</code>; <code>bootstrap_docker.ps1</code> is the equivalent wrapper for driving the build from a Windows host. Images are Linux containers (run on Windows/macOS/Linux via the container runtime).</td>
+</tr>
+<tr>
+<td>Brain verification on Windows</td>
+<td><code>horizon_aios_create_brain.py</code> Phase 4 verifies brain folder existence on Windows but does not verify ACL correctness — it trusts that the <code>icacls</code> commands in Phase 3 succeeded. A failed <code>icacls</code> call raises an exception and aborts provisioning, so catastrophic failures are detected; partial ACL success is not re-checked.</td>
+<td><strong>Open</strong> — full ACL re-verification on Windows would require parsing <code>icacls</code> output, which adds significant complexity. Current posture: fail-loudly on error, trust-on-success.</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
