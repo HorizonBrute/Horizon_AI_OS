@@ -453,7 +453,7 @@ def sync_official(config):
     if current != branch:
         log("INFO", f"Official lane: on '{current}', not the official branch '{branch}'; "
                     f"restoring OS-owned paths from {ref} onto '{current}' "
-                    f"(scoped — personal paths untouched).")
+                    f"(scoped - personal paths untouched).")
 
     # Scoped hard-restore: overwrite worktree+index for official paths only.
     checkout = run_git("checkout", ref, "--", *official_pathspec())
