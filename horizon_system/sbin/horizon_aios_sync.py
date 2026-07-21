@@ -439,16 +439,21 @@ def sync_official(config):
     # Expose the resolved branch so the run summary reports the real branch.
     config["AIOS_OFFICIAL_BRANCH"] = branch
 
-    # Branch guard: the hard-restore below overwrites the working tree + index
-    # for official paths on the CURRENT checkout. If we're not on the official
-    # branch, refuse and skip — a nightly run must never clobber a checked-out
-    # feature branch. Not a hard failure; housekeeping still runs.
+    # The scoped hard-restore below overwrites the working tree + index for
+    # OFFICIAL-owned paths only — official_pathspec() excludes projects/, usrbin/,
+    # brains/, and every registered options package. Restoring those from canon is
+    # an OS-file update and is safe on ANY branch: this is the fork model, where a
+    # local branch (e.g. 'main') tracks a personal remote for push but still pulls
+    # OS updates from the official 'master'. We therefore do NOT require the local
+    # branch name to match the official branch — that assumption was the long-
+    # standing footgun that made the official lane silently skip on 'main'. Local
+    # edits to official paths are overwritten by canon by design (recoverable via
+    # git: the pre-update commit / reflog).
     current = _current_branch()
     if current != branch:
-        log("WARN", f"Official lane: checked out on '{current}', not the official "
-                    f"branch '{branch}'; skipping the hard-restore to avoid clobbering it. "
-                    f"Check out '{branch}' to run the official lane.")
-        return 0
+        log("INFO", f"Official lane: on '{current}', not the official branch '{branch}'; "
+                    f"restoring OS-owned paths from {ref} onto '{current}' "
+                    f"(scoped — personal paths untouched).")
 
     # Scoped hard-restore: overwrite worktree+index for official paths only.
     checkout = run_git("checkout", ref, "--", *official_pathspec())
