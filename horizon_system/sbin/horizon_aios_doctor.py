@@ -885,7 +885,14 @@ def check_brains_workspace_ownership_unix(horizon_root):
         group = grp.getgrgid(st.st_gid).gr_name
         other_bits = st.st_mode & 0o007
         brains_ace = _acl_group_effective(child, BRAINS_GROUP)
+        try:
+            in_brains = b in set(grp.getgrnam(BRAINS_GROUP).gr_mem)
+        except KeyError:
+            in_brains = False
         problems = []
+        if not in_brains:
+            problems.append(f"not in '{BRAINS_GROUP}' group (traverse + toolbox grants "
+                            "won't reach it)")
         if owner != b:
             problems.append(f"owner={owner} (want {b})")
         if group != b:

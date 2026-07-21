@@ -707,6 +707,17 @@ def linux_brains_workspace_ops(posture, paths):
                           if os.path.isdir(os.path.join(brains_dir, d)))
     except OSError as exc:
         return [Op(None, 'warn', f'brains workspace: cannot enumerate {brains_dir}: {exc}')]
+    # Supplementary members of the `brains` group. A brain's PRIMARY group is its
+    # own private group (<name>), never `brains`, so gr_mem is the authoritative
+    # membership set here. Used to enroll a brain that a standalone/ AIOS-agnostic
+    # create_brain provisioned WITHOUT the brains group — the group-scoped traverse
+    # ACE (linux_traverse_ops) and the bin/skills_bin read-exec grants only reach a
+    # brain that is IN the group, so a brain outside it cannot even reach its own
+    # workspace (other=--- on the AIOS root) let alone the toolbox.
+    try:
+        brains_members = set(grp.getgrnam('brains').gr_mem)
+    except KeyError:
+        brains_members = set()
     ops = []
     for name in children:
         child = os.path.join(brains_dir, name)
@@ -718,6 +729,13 @@ def linux_brains_workspace_ops(posture, paths):
                           f'brains workspace: {name} has no matching user+group — '
                           f'not chowning {child} (not a provisioned brain?)'))
             continue
+        # Ensure the brain is in the `brains` group (idempotent; -a appends, so a
+        # brain already enrolled is untouched and its primary group is preserved).
+        if name not in brains_members:
+            ops.append(Op(['usermod', '-aG', 'brains', name], None, None))
+            ops.append(Op(None, 'grant',
+                          f'brains workspace: enrolled {name} in the brains group '
+                          '(traverse + bin/skills_bin grants now reach it)'))
         ops.append(Op(['chown', '-R', f'{name}:{name}', child], None, None))
         ops.append(Op(['chmod', '0770', child], None, None))
         # Explicit peer isolation (belt-and-braces over dir-group=<name> + other=---):
